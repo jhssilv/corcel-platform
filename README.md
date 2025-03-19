@@ -21,10 +21,5 @@ _Main application page_
 
 ---
 
-## **How to Use**:
-1. Clone the repository.
-2. Set up the environment using Docker:
-   ```bash
-   docker-compose up --build
-   ```
-3. Access the platform at `http://localhost:8081`.
+## Disclaimer
+This version of the project is not executable as it does not include the database, which contained sensitive data and could not be made public. The repository is primarily intended to showcase the user interface and core functionality of the platform. For a fully functional version, a database setup would be required.
