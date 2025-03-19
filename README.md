@@ -1,4 +1,5 @@
 ### **EssayCorrectorMVP**
+
 An MVP for an essay correction platform designed for Brazilian Portuguese texts. This project aims to automate the detection and suggestion of corrections for researchers, leveraging a pre-existing corpus of texts with their grades. This platform is aimed towards making gold standard error-tagging more user-friendly and faster.
 
 #### **Key Features**:
@@ -16,6 +17,12 @@ An MVP for an essay correction platform designed for Brazilian Portuguese texts.
 
 #### **Use Case**:
 This platform is designed for researchers and educators working with Brazilian Portuguese texts, providing an efficient way to analyze and improve written content.
+
+![Login page](images/userauth.png)
+_User authentication page_
+
+![Main page](images/mainpage.png)
+_Main application page_
 
 ---
 
