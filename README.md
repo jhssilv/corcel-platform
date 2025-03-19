@@ -25,7 +25,7 @@ This platform is designed for researchers and educators working with Brazilian P
    ```bash
    docker-compose up --build
    ```
-3. Access the platform at `http://localhost:3000`.
+3. Access the platform at `http://localhost:8081`.
 
 ---
 
