@@ -1,0 +1,16 @@
+.logo {
+    height: 3em;
+    padding: 1.5em;
+    transition: filter 300ms;
+}
+
+.logo:hover {
+    filter: drop-shadow(0 0 0.5em #00000042);
+    animation: logo-spin 0.2s ease-in-out;
+}
+
+@keyframes logo-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }

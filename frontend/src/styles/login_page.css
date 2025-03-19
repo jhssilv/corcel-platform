@@ -1,0 +1,19 @@
+#root {
+  max-width: 1280px;
+  margin: 0 auto; 
+  padding: 2rem;
+  text-align: center;
+}
+
+input {
+  padding: 0.3rem;
+  margin: 0.3rem;
+	z-index: 2;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+}
+
+.card {
+  padding: 2em;
+}

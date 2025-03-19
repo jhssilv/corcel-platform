@@ -1,0 +1,28 @@
+.clickable {
+    border-radius: 4px;
+    padding: 0.1em;
+}
+
+.clickable:hover {
+    background-color: gray;
+    cursor: pointer;
+}
+.candidates {
+    background-color: rgb(103, 91, 29);
+}
+
+.corrected {
+    background-color: rgb(0, 76, 0);
+}
+
+.selected {
+    background-color: gray;
+}
+
+pre {
+    border-radius: 7px;
+    padding: 2em;
+    background-color: rgb(28, 28, 28);
+    white-space: pre-wrap;
+    font-size: large;
+}
