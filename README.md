@@ -1,25 +1,59 @@
-# **EssayCorrectorMVP**
+# Corcel Platform
 
-An MVP for an essay correction platform designed for Brazilian Portuguese texts. This project aims to automate the detection and suggestion of corrections for researchers, leveraging a pre-existing corpus of texts with their grades. This platform is aimed towards making gold standard error-tagging more user-friendly and faster.
+**Corcel Platform** is a modular platform designed to automate the detection and suggestion of corrections for Brazilian Portuguese texts. It allows researchers and educators to analyze, grade, and improve essays using a pre-existing corpus, with a modern web interface and robust backend.
 
-## **Key Features**:
-- **Corpus Integration**: Works with a pre-existing dataset of graded essays with correction candidates for each unknown token.
-- **User-Friendly Interface**: A responsive web interface built with **React** for seamless user interaction.
-- **Backend API**: Powered by **Flask** for handling requests and processing corrections.
-- **Database**: Utilizes **Postgres** for storing essays, grades, and correction data.
-- **Deployment**: Containerized with **Docker** and served via **Nginx** for scalability and ease of deployment.
-
-## **Use Case**:
-This platform is designed for researchers and educators working with Brazilian Portuguese texts, providing an efficient way to analyze and improve written content.
-
-_User authentication page_
 ![Login page](images/userauth.png)
-
-_Main application page_
 ![Main page](images/mainpage.png)
 
+---
+
+## Features
+
+- **Corpus Integration:** Works with a dataset of graded essays and correction candidates for unknown tokens.
+- **User Interface:** Responsive web interface built with **React**.
+- **Backend API:** Powered by **Flask** for managing correction, grading, and user interaction.
+- **Database:** Uses **Postgres** for essays, users, grades, and correction data.
+- **Deployment:** Containerized with **Docker** and served via **Nginx** for scalable, reproducible deployments.
+
+## Architecture
+
+- `frontend/`: React app for user interaction.
+- `api/`: Flask-based API for data processing and communication.
+- `backups/`: (Optional) Backups and migration scripts.
+- `docker-compose.yml`: Orchestrates multi-container deployment (frontend, backend, database, nginx).
+- `images/`: Static images for documentation and UI.
+
+## Use Case
+
+The platform is ideal for:
+- Researchers in natural language processing for Portuguese.
+- Educators needing automated essay grading and feedback.
+- Anyone seeking to analyze and improve large volumes of written Brazilian Portuguese.
+
+## Quick Start
+
+> **Note:** This project does not include the original private database due to sensitive data. The public repo demonstrates architecture, UI, and integration points.
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/jhssilv/corcel-platform.git
+   cd corcel-platform
+   ```
+2. Copy or create your own Postgres database and update connection info in `docker-compose.yml` and backend configuration.
+3. Start the platform:
+   ```bash
+   docker-compose up --build
+   ```
+4. Access the web interface at `http://localhost:8080`.
+
+For a detailed setup and development guide, see [HOWTO.md](HOWTO.md).
+
+## Contributing
+
+Pull requests, bug reports, and feature suggestions are welcome! Please open an issue first to discuss major changes.
 
 ---
 
 ## Disclaimer
-This version of the project is not executable as it does not include the database, which contained sensitive data and could not be made public. The repository is primarily intended to showcase the user interface and core functionality of the platform. For a fully functional version, a database setup would be required.
+
+**This version is for demonstration and development.** It does not include the proprietary database used in production.
