@@ -1,6 +1,6 @@
 # Corcel Platform
 
-**Corcel Platform** is a modular platform designed to automate the detection and suggestion of corrections for Brazilian Portuguese texts. It allows researchers and educators to analyze, grade, and improve essays using a pre-existing corpus, with a modern web interface and robust backend.
+**Corcel Platform** is a modular platform designed to automate the detection of spelling variants and suggestion of form replacements for Brazilian Portuguese texts in order to normalize spelling. Once completed, it will allow researchers and educators to analyze, grade, and improve essays using a pre-existing corpus, with a modern web interface and robust backend.
 
 ![Login page](images/userauth.png)
 ![Main page](images/mainpage.png)
@@ -9,10 +9,10 @@
 
 ## Features
 
-- **Corpus Integration:** Works with a dataset of graded essays and correction candidates for unknown tokens.
+- **Corpus Integration:** Works with a dataset of graded essays and form replacement candidates for unknown tokens.
 - **User Interface:** Responsive web interface built with **React**.
-- **Backend API:** Powered by **Flask** for managing correction, grading, and user interaction.
-- **Database:** Uses **Postgres** for essays, users, grades, and correction data.
+- **Backend API:** Powered by **Flask** for managing normalization and user interaction.
+- **Database:** Uses **Postgres** for essays, users, grades, candidates and user input data.
 - **Deployment:** Containerized with **Docker** and served via **Nginx** for scalable, reproducible deployments.
 
 ## Architecture
@@ -27,7 +27,7 @@
 
 The platform is ideal for:
 - Researchers in natural language processing for Portuguese.
-- Educators needing automated essay grading and feedback.
+- Analysis of brazilian portuguese texts.
 - Anyone seeking to analyze and improve large volumes of written Brazilian Portuguese.
 
 ## Quick Start
