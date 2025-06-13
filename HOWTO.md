@@ -40,7 +40,7 @@ cd corcel-platform
 ### 3.3 Prepare Database
 
 - By default, the platform expects a Postgres database.
-- If you have essay/correction data, load it using scripts in `backups/` or via direct import.
+- If you have a migration file, load it using scripts in `backups/` or via direct import.
 - Update DB connection URLs as needed.
 
 ---
@@ -81,14 +81,18 @@ docker-compose up --build
 ## 5. Usage
 
 - **Login:** Use the authentication page to log in.
-- **Main UI:** Upload essays, view corrections, and interact with grading data.
-- **Admin/Research:** Access API endpoints (see `api/` docs) for advanced features or data export.
+- **Main UI:**
+  - Select and view text.
+  - View unrecognized tokens highlighted.
+  - See suggestions of token for replacement.
+  - Select or suggest replacements for one or more non-adjacent tokens.
+  - Save changes.
 
 ---
 
 ## 6. Customization
 
-- **Add Correction Models:** Place new models in `api/` and update endpoints.
+- **Add Different Models:** Place new models in `api/` and update endpoints.
 - **Change UI:** Modify React components in `frontend/`.
 - **Database Schema:** Update migrations and models in `api/`.
 
