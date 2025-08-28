@@ -28,7 +28,6 @@ function MainPage() {
             }
     
             const data = await response.json();
-            console.log(data);
             setEssayData({ ...data }); // Ensure a new reference
         } catch (error) {
             console.error(error);
