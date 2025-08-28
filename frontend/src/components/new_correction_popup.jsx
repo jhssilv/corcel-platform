@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types';
 import { useState, useEffect } from 'react';
 import '../styles/new_correction_popup.css'
+import { use } from 'react';
 
 // Displays a popup to confirm the addition of a new candidate
 
@@ -13,16 +14,17 @@ const NewCorrectionPopup = ({
     setSelectedCandidate, 
     refreshEssay}) => {
 
-    const [loggedUser, setLoggedUser] = useState(null);
+    const [username, setUsername] = useState(null);
+    const [userId, setUserId] = useState(null);
 
-    // Gets the username
     useEffect(() => {
-        const username = localStorage.getItem('loggedUser');
-        if (username) {
-            setLoggedUser(username);
-        }  
+        const storedUsername = localStorage.getItem('username');
+        const storedUserId = localStorage.getItem('userId');
+        setUsername(storedUsername);
+        setUserId(storedUserId);
     }, []);
 
+    // <> Event handlers <> \\
     const handleCloseButton = () => {
         setSelectedCandidate(null);
         setPopupIsActive(false);
@@ -37,9 +39,9 @@ const NewCorrectionPopup = ({
             essay_id: essay.index,
             word_index: selectedWordIndex,
             correction: candidate,
-            author: loggedUser,
+            userId: userId
         };
-    
+
         try {
             const response = await fetch('/api/correction', {
                 method: 'POST',
@@ -50,7 +52,6 @@ const NewCorrectionPopup = ({
             });
     
             if (response.ok) {
-                console.log(await response.text());
                 refreshEssay(); // Trigger a refresh of the essay
             } else {
                 console.error('Failed to save correction:', await response.text());
@@ -71,7 +72,7 @@ const NewCorrectionPopup = ({
             <>
             <div className="overlay" onClick={handleCloseButton}> 
                 <div className="popup">
-                    <p><strong>{loggedUser}</strong>, você deseja remover a correção?</p>
+                    <p><strong>{username}</strong>, você deseja remover a correção?</p>
                     <button 
                         onClick={handleAddButton}
                         onKeyDown={(event) => {
@@ -92,7 +93,7 @@ const NewCorrectionPopup = ({
         <>
         <div className="overlay" onClick={handleCloseButton}> 
             <div className="popup">
-                <p><strong>{loggedUser}</strong>, você deseja adicionar <i>{candidate}</i> como correção?</p>
+                <p><strong>{username}</strong>, você deseja adicionar <i>{candidate}</i> como correção?</p>
                 <button 
                     onClick={handleAddButton}
                     onKeyDown={(event) => {
