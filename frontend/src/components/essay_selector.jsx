@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 
 import DropdownSelect from './dropdown_select.jsx';
 import PropTypes from 'prop-types';
+import { useAuth } from './functions/useAuth.jsx';
 
 // ESSAY SELECTOR COMPONENT \\
 
@@ -18,19 +19,32 @@ const gradeOptions = [
     { value: 5, label: 'Nota 5' },
 ];
 
-const teachers = [
-    { value: 'Amanda', label: 'Amanda' },
-    { value: 'Brenda', label: 'Brenda' },
-    { value: 'Isabel', label: 'Isabel' },
-    { value: 'Isadora', label: 'Isadora' },
-    { value: 'Luiza', label: 'Luiza' },
-    { value: 'Elisa', label: 'Elisa' },
-    { value: 'Marine', label: 'Marine' },
-    { value: 'Deise', label: 'Deise' },
-    { value: 'Fernanda', label: 'Fernanda' },
-    { value: 'Tanara', label: 'Tanara' },
-    { value: 'Larissa', label: 'Larissa' },
-];
+async function getUsernames() {
+    try{
+        const response = await fetch('/api/getUsernames', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error('Error fetching usernames');
+        }
+
+        const data = await response.json();
+        return data; 
+    } catch (error) {
+        console.error(error);
+        return ["ERROR"]; 
+    }
+}
+const usernames = await getUsernames();
+
+const teachers = usernames.map((username) => ({
+    value: username,
+    label: username,
+}));
 
 const otherFilters = [
     { value: true, label: 'Corrigido'},
@@ -47,7 +61,6 @@ const EssaySelector = ({
     const [selectedOtherFilters, setSelectedOtherFilters] = useState(null);
     const [filteredEssays, setFilteredEssays] = useState(null);
 
-    // <> Event handlers <> \\
     // <> Event handlers <> \\
     useEffect(() => {
         const data = localStorage.getItem('essayIndexes');
@@ -70,8 +83,8 @@ const EssaySelector = ({
         const selectedTeacherList = selectedTeacher?.map(item => item.value) || [];
         
         // Extract other filters values (strings)
-        const selectedOtherFiltersList = selectedOtherFilters?.map(item => item.value) || [];
-      
+        const selectedOtherFiltersList = selectedOtherFilters?.map(item => item.value) || [];      
+
         const filteredEssays = essayIndexes
             .filter(([, grade, teacher, isCorrected]) => {
                 const matchesGrade =
@@ -83,16 +96,19 @@ const EssaySelector = ({
       
                 return matchesGrade && matchesTeacher && matchesCorrected;
           })
-            .map(([id]) => ({ value: id, label: id }));
+            .map(([id,,,,sourceFileName]) => ({ value: id, label: sourceFileName }));
         
         setFilteredEssays(filteredEssays);
     }
 
     
     const handleCorrectionChange = async (checked) => {
+
+        const userId = localStorage.getItem('userId');
+
         const payload = { 
-            essay_id: selectedEssay.value,  // Confirm this matches your backend expectation
-            correctionStatus: checked 
+            textId: selectedEssay.value,  // Confirm this matches your backend expectation
+            userId: userId
         };
         
         try {
@@ -195,7 +211,7 @@ const EssaySelector = ({
                     checked={essayIndexes.find((e) => e[0] === selectedEssay.value)?.[3] || false}
                     onChange={(e) => handleCorrectionChange(e.target.checked)}
                 />
-                <label htmlFor="cb-47">Corrigido?</label>
+                <label htmlFor="cb-47">Finalizado?</label>
                 </div>
             </div>
             )}
