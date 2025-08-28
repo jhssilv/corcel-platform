@@ -1,4 +1,4 @@
-import { createContext, useState } from 'react';
+import { createContext, useState, useEffect} from 'react';
 import PropTypes from 'prop-types';
 
 //          AUTH CONTEXT         \\
@@ -7,18 +7,42 @@ import PropTypes from 'prop-types';
 
 const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-    const login = () => {
+    const [isAuthenticated, setIsAuthenticated] = useState(() =>{
+        return localStorage.getItem('isAuthenticated') === 'true'    
+    });
+    
+    const [userId, setUserId] = useState(() => {
+        return localStorage.getItem('userId');
+    });
+
+    const [username, setUsername] = useState(() => {
+        return localStorage.getItem('username');
+    })
+
+
+    const login = (id, username) => {
         setIsAuthenticated(true);
+        setUserId(id);
+        setUsername(username);
+
+        localStorage.setItem('isAuthenticated', 'true');
+        localStorage.setItem('userId', id);
+        localStorage.setItem('username', username);
     };
 
     const logout = () => {
         setIsAuthenticated(false);
+        setUserId(null);
+        setUsername(null);
+
+        localStorage.removeItem('isAuthenticated');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('username');
     };
 
     return (
-        <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+        <AuthContext.Provider value={{ isAuthenticated, userId, login, logout }}>
             {children}
         </AuthContext.Provider>
     );
