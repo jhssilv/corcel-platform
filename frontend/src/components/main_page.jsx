@@ -1,13 +1,16 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useContext } from 'react';
 import '../styles/main_page.css';
 import EssaySelector from './essay_selector.jsx';
 import EssayDisplay from './essay_display.jsx';
+import AuthContext from './auth_context.jsx';
 
 // MAIN PAGE COMPONENT \\
 
 function MainPage() {
     const [selectedEssay, setSelectedEssay] = useState(null);
     const [essayData, setEssayData] = useState(null);
+
+    const userId = useContext(AuthContext).userId;
 
     const fetchEssay = useCallback(async () => {
         try {
@@ -16,7 +19,8 @@ function MainPage() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(selectedEssay),
+                body: JSON.stringify({ value: selectedEssay.value, 
+                                       userId: userId }),
             });
     
             if (!response.ok) {
@@ -24,7 +28,7 @@ function MainPage() {
             }
     
             const data = await response.json();
-            console.log('Fetched data:', data); // Check if the new corrections are present
+            console.log(data);
             setEssayData({ ...data }); // Ensure a new reference
         } catch (error) {
             console.error(error);
@@ -37,14 +41,14 @@ function MainPage() {
 
     return (
         <section>
-            <h1>CorCel</h1>
-            <h2>Corretor de textos</h2>
+            <h1>CorCel 🐴</h1>
+            <h2>Plataforma de Normalização Ortográfica</h2>
 
             <EssaySelector 
                 selectedEssay={selectedEssay}
                 setSelectedEssay={setSelectedEssay}
             />
-                
+
             <EssayDisplay 
                 essay={essayData}
                 refreshEssay={fetchEssay}

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './functions/useAuth.jsx';
+
 import '../styles/login_page.css';
 
 // LOGIN PAGE COMPONENT \\
@@ -42,11 +43,13 @@ function LoginPage() {
             }
 
             const data = await response.json();
+
             localStorage.setItem('essayIndexes', JSON.stringify(data.essayIndexes));
-            localStorage.setItem('loggedUser', username);
+
             console.log('Olá ', username);
-            login();
-            navigate('/main');
+            login(data.userId, username);
+            navigate('/main');           
+
 
         } catch (error) {
             console.error(error);
