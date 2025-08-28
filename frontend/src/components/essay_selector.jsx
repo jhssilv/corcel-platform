@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 
 import DropdownSelect from './dropdown_select.jsx';
 import PropTypes from 'prop-types';
-import { useAuth } from './functions/useAuth.jsx';
 
 // ESSAY SELECTOR COMPONENT \\
 
@@ -86,11 +85,11 @@ const EssaySelector = ({
         const selectedOtherFiltersList = selectedOtherFilters?.map(item => item.value) || [];      
 
         const filteredEssays = essayIndexes
-            .filter(([, grade, teacher, isCorrected]) => {
+            .filter(([, grade, teachers, isCorrected]) => {
                 const matchesGrade =
                 selectedGradesList.length === 0 || selectedGradesList.includes(Number(grade));
                 const matchesTeacher =
-                selectedTeacherList.length === 0 || selectedTeacherList.includes(teacher);
+                selectedTeacherList.length === 0 || teachers.some(teacher => selectedTeacherList.includes(teacher));
                 const matchesCorrected = 
                 selectedOtherFiltersList.length === 0 || selectedOtherFiltersList.includes(isCorrected);
       
