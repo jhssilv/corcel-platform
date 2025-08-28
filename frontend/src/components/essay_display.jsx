@@ -13,13 +13,16 @@ function EssayDisplay({ essay, refreshEssay }) {
     return <h3>Nenhum texto selecionado.</h3>;
   }
 
+  console.log(essay);
+
   return (
     <div>
-      <h3>{essay.index}</h3>
+      <h3>{essay.sourceFileName}</h3>
       <p>Responsável: {essay.teacher}</p>
       <p>Nota: <strong>{essay.grade}</strong></p>
       <p>
-        Alternativas para <i>{essay.tokens[selectedWordIndex]}</i>: 
+        {essay.candidates[selectedWordIndex] ? "Alternativas para " : null} 
+        <i>{essay.candidates[selectedWordIndex] ? essay.tokens[selectedWordIndex] + ": " : null}</i>
         <strong>
           <GeneratedCandidates 
             candidates={essay.candidates[selectedWordIndex]} 
