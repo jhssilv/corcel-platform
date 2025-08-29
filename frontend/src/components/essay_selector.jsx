@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-
 import DropdownSelect from './dropdown_select.jsx';
 import PropTypes from 'prop-types';
 
@@ -16,6 +15,11 @@ const gradeOptions = [
     { value: 3, label: 'Nota 3' },
     { value: 4, label: 'Nota 4' },
     { value: 5, label: 'Nota 5' },
+];
+
+const otherFilters = [
+    { value: true, label: 'Corrigido'},
+    { value: false, label: 'Não corrigido'}
 ];
 
 async function getUsernames() {
@@ -38,17 +42,6 @@ async function getUsernames() {
         return ["ERROR"]; 
     }
 }
-const usernames = await getUsernames();
-
-const teachers = usernames.map((username) => ({
-    value: username,
-    label: username,
-}));
-
-const otherFilters = [
-    { value: true, label: 'Corrigido'},
-    { value: false, label: 'Não corrigido'}
-];
 
 const EssaySelector = ({
     selectedEssay,
@@ -59,14 +52,24 @@ const EssaySelector = ({
     const [selectedTeacher, setSelectedTeacher] = useState(null);
     const [selectedOtherFilters, setSelectedOtherFilters] = useState(null);
     const [filteredEssays, setFilteredEssays] = useState(null);
+    const [teachers, setTeachers] = useState([]);
 
     // <> Event handlers <> \\
     useEffect(() => {
+        // Carrega usernames
+        const fetchUsernames = async () => {
+            const usernames = await getUsernames();
+            const teacherOptions = usernames.map(u => ({ value: u, label: u }));
+            setTeachers(teacherOptions);
+        };
+        fetchUsernames();
+
+        // Carrega essayIndexes do localStorage
         const data = localStorage.getItem('essayIndexes');
         if (data) {
             const parsedData = JSON.parse(data);
             setEssayIndexes(parsedData);
-            changeFilteredEssays(parsedData,null);
+            changeFilteredEssays(parsedData, null, null, null);
         }
     }, []);
 
