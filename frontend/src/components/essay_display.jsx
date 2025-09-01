@@ -13,7 +13,6 @@ function EssayDisplay({ essay, refreshEssay }) {
     return <h3>Nenhum texto selecionado.</h3>;
   }
 
-  console.log(essay);
 
   return (
     <div>
