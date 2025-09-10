@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './functions/useAuth.jsx';
 
+import { authenticateUser } from './functions/api_functions.jsx';
+
 import '../styles/login_page.css';
 
 // LOGIN PAGE COMPONENT \\
@@ -24,36 +26,13 @@ function LoginPage() {
     const handleSubmit = async (event) => {
         event.preventDefault();
             
-        const payload = {
-            username: username,
-            password: password,
-        };
+        const data = await authenticateUser(username, password);
 
-        try {
-            const response = await fetch('/api/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload),
-            });
+        localStorage.setItem('essayIndexes', JSON.stringify(data.essayIndexes));
 
-            if (!response.ok) {
-                throw new Error('Invalid username or password');
-            }
-
-            const data = await response.json();
-
-            localStorage.setItem('essayIndexes', JSON.stringify(data.essayIndexes));
-
-            console.log('Olá ', username);
-            login(data.userId, username);
-            navigate('/main');           
-
-
-        } catch (error) {
-            console.error(error);
-        }
+        console.log('Olá ', username);
+        login(data.userId, username);
+        navigate('/main');           
     };
 
     return (

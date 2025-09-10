@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import '../styles/new_correction_popup.css'
 import { use } from 'react';
 
+import { postNormalization } from './functions/api_functions';
+
 // Displays a popup to confirm the addition of a new candidate
 
 const NewCorrectionPopup = ({ 
@@ -34,32 +36,10 @@ const NewCorrectionPopup = ({
         if (event) {
             event.preventDefault(); // Only call preventDefault if event exists
         }
-    
-        const payload = {
-            essay_id: essay.index,
-            word_index: selectedWordIndex,
-            correction: candidate,
-            userId: userId
-        };
 
-        try {
-            const response = await fetch('/api/correction', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload),
-            });
-    
-            if (response.ok) {
-                refreshEssay(); // Trigger a refresh of the essay
-            } else {
-                console.error('Failed to save correction:', await response.text());
-            }
-        } catch (error) {
-            console.error('Error saving correction:', error);
-        }
-    
+        await postNormalization(essay.index, selectedWordIndex, candidate, userId);
+        refreshEssay();
+
         setSelectedCandidate(null);
         setPopupIsActive(false);
     };

@@ -4,6 +4,8 @@ import EssaySelector from './essay_selector.jsx';
 import EssayDisplay from './essay_display.jsx';
 import AuthContext from './auth_context.jsx';
 
+import { getTextById } from './functions/api_functions.jsx';
+
 // MAIN PAGE COMPONENT \\
 
 function MainPage() {
@@ -13,25 +15,8 @@ function MainPage() {
     const userId = useContext(AuthContext).userId;
 
     const fetchEssay = useCallback(async () => {
-        try {
-            const response = await fetch('/api/essay', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ value: selectedEssay.value, 
-                                       userId: userId }),
-            });
-    
-            if (!response.ok) {
-                throw new Error('Error fetching essay');
-            }
-    
-            const data = await response.json();
-            setEssayData({ ...data }); // Ensure a new reference
-        } catch (error) {
-            console.error(error);
-        }
+        const data = await getTextById(selectedEssay.value, userId);
+        setEssayData(data);
     }, [selectedEssay]);
 
     useEffect(() => {
