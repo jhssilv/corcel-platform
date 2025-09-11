@@ -60,15 +60,19 @@ def login():
 
     if auth:
         userId:int = result[0][1]
-        message:str = "Login Successful"
         essayIndexes = db_functions.get_texts_data(userId)
+        message = f"Olá, {username}!"
                 
         response["message"] = message
         response["userId"] = userId
         response["essayIndexes"] = essayIndexes
         status_code = 200
     else:
-        response["message"] = "Login failed"
+        message = "Usuário ou Senha incorretos. Tente novamente."
+        
+        response["message"] = message
+        response["userId"] = None
+        response["essayIndexes"] = []
         status_code = 401
 
     response["timestamp"] = str(datetime.now())

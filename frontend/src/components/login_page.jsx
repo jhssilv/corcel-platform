@@ -28,11 +28,17 @@ function LoginPage() {
             
         const data = await authenticateUser(username, password);
 
+        if (data.userId === undefined) {
+            alert(data.message);
+            return;
+        }
+
         localStorage.setItem('essayIndexes', JSON.stringify(data.essayIndexes));
 
         console.log('Olá ', username);
         login(data.userId, username);
         navigate('/main');           
+        alert(data.message);
     };
 
     return (
