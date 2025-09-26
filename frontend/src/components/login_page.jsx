@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './functions/useAuth.jsx';
 
-import { authenticateUser } from './functions/api_functions.jsx';
+import { authenticateUser, getTextsData } from './functions/api_functions.jsx';
 
 import '../styles/login_page.css';
 
@@ -26,19 +26,20 @@ function LoginPage() {
     const handleSubmit = async (event) => {
         event.preventDefault();
             
-        const data = await authenticateUser(username, password);
+        const login_data = await authenticateUser(username, password);
+        const texts_data = await getTextsData(login_data.userId);
 
-        if (data.userId === undefined) {
-            alert(data.message);
+        if (login_data.userId === undefined) {
+            alert(login_data.message);
             return;
         }
 
-        localStorage.setItem('essayIndexes', JSON.stringify(data.essayIndexes));
+        localStorage.setItem('textsData', JSON.stringify(texts_data.textsData));
 
         console.log('Olá ', username);
-        login(data.userId, username);
+        login(login_data.userId, username);
         navigate('/main');           
-        alert(data.message);
+        alert(login_data.message);
     };
 
     return (

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import DropdownSelect from './dropdown_select.jsx';
 import PropTypes from 'prop-types';
 
-import { getUsernames, changeCorrectionStatus } from './functions/api_functions.jsx';
+import { getUsernames, toggleNormalizedStatus } from './functions/api_functions.jsx';
 
 // ESSAY SELECTOR COMPONENT \\
 
@@ -28,7 +28,7 @@ const EssaySelector = ({
     selectedEssay,
     setSelectedEssay,
 }) => {
-    const [essayIndexes, setEssayIndexes] = useState(null);
+    const [textsData, setTextsData] = useState(null);
     const [selectedGrades, setSelectedGrades] = useState(null);
     const [selectedTeacher, setSelectedTeacher] = useState(null);
     const [selectedOtherFilters, setSelectedOtherFilters] = useState(null);
@@ -45,20 +45,21 @@ const EssaySelector = ({
         };
         fetchUsernames();
 
-        // Carrega essayIndexes do localStorage
-        const data = localStorage.getItem('essayIndexes');
+        // Carrega textsData do localStorage
+        const data = localStorage.getItem('textsData');
         if (data) {
             const parsedData = JSON.parse(data);
-            setEssayIndexes(parsedData);
+            setTextsData(parsedData);
             changeFilteredEssays(parsedData, null, null, null);
         }
     }, []);
 
-    if (!essayIndexes) {
+    if (!textsData) {
         return <p>Carregando dados...</p>;
     }
 
-    function changeFilteredEssays(essayIndexes, selectedGrades, selectedTeacher, selectedOtherFilters) {
+    function changeFilteredEssays(textsData, selectedGrades, selectedTeacher, selectedOtherFilters) {
+
         // Extract selected grade values (numbers)
         const selectedGradesList = selectedGrades?.map(item => item.value) || [];
 
@@ -68,7 +69,7 @@ const EssaySelector = ({
         // Extract other filters values (strings)
         const selectedOtherFiltersList = selectedOtherFilters?.map(item => item.value) || [];
 
-        const filteredEssays = essayIndexes
+        const filteredEssays = textsData
             .filter(([, grade, teachers, isCorrected]) => {
                 const matchesGrade =
                     selectedGradesList.length === 0 || selectedGradesList.includes(Number(grade));
@@ -87,18 +88,18 @@ const EssaySelector = ({
     const handleCorrectionChange = async (checked) => {
 
         const userId = localStorage.getItem('userId');
-        await changeCorrectionStatus(selectedEssay.value, userId);
+        await toggleNormalizedStatus(selectedEssay.value, userId);
 
-        // Update essayIndexes
-        const updatedIndexes = essayIndexes.map(essay => {
+        // Update textsData
+        const updatedTexts = textsData.map(essay => {
             if (essay[0] === selectedEssay.value) {
                 return [essay[0], essay[1], essay[2], checked];
             }
             return essay;
         });
 
-        setEssayIndexes(updatedIndexes);
-        changeFilteredEssays(updatedIndexes, selectedGrades, selectedTeacher, selectedOtherFilters);
+        setTextsData(updatedTexts);
+        changeFilteredEssays(updatedTexts, selectedGrades, selectedTeacher, selectedOtherFilters);
 
     };
 
@@ -108,7 +109,7 @@ const EssaySelector = ({
         setSelectedOtherFilters(selectedOptions);
 
         // Resets the filters
-        changeFilteredEssays(essayIndexes, selectedGrades, selectedTeacher, selectedOptions);
+        changeFilteredEssays(textsData, selectedGrades, selectedTeacher, selectedOptions);
     };
 
     const handleTeacherChange = (selectedOptions) => {
@@ -116,7 +117,7 @@ const EssaySelector = ({
         setSelectedTeacher(selectedOptions);
 
         // Resets the filters
-        changeFilteredEssays(essayIndexes, selectedGrades, selectedOptions, selectedOtherFilters);
+        changeFilteredEssays(textsData, selectedGrades, selectedOptions, selectedOtherFilters);
     };
 
     const handleGradeChange = (selectedOptions) => {
@@ -124,7 +125,7 @@ const EssaySelector = ({
         setSelectedGrades(selectedOptions);
 
         // Resets the filters
-        changeFilteredEssays(essayIndexes, selectedOptions, selectedTeacher, selectedOtherFilters);
+        changeFilteredEssays(textsData, selectedOptions, selectedTeacher, selectedOtherFilters);
     };
 
     const handleEssayChange = (selectedOption) => {
@@ -173,7 +174,7 @@ const EssaySelector = ({
                             type="checkbox"
                             name="cb"
                             id="cb-47"
-                            checked={essayIndexes.find((e) => e[0] === selectedEssay.value)?.[3] || false}
+                            checked={textsData.find((e) => e[0] === selectedEssay.value)?.[3] || false}
                             onChange={(e) => handleCorrectionChange(e.target.checked)}
                         />
                         <label htmlFor="cb-47">Finalizado?</label>
@@ -183,7 +184,7 @@ const EssaySelector = ({
             {/* Corrected texts count */}
             <div id="correctedCount">
                 Corrigidos: {filteredEssays.length} / {
-                    essayIndexes
+                    textsData
                         .filter(([essay_id, , , iscorrected]) =>
                             iscorrected === true &&
                             filteredEssays.some((essay) => essay.value === essay_id)

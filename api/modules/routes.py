@@ -1,4 +1,40 @@
 from modules import api, db_access
+"""
+Module routes — HTTP API endpoints for user authentication and text correction.
+# Routes summary:
+# - GET /users
+#     Returns list of usernames.
+# - POST /login
+#     Authenticates a user by username/password. Returns message, userId (or null), and timestamp.
+# - POST /texts/<user_id:int>
+#     Returns texts metadata of all texts for the given user_id [(id, grade, users_who_normalized, normalized_by_user, source_file_name, assigned_to_user)].
+# - GET /texts/<user_id:int>/<text_id:int> 
+#     Returns a single text's stored data (id, tokens, wordmap, grade, candidates, professorName, normalized_by_user, source_file_name, assigned_to_user).
+# - GET /texts/<user_id:int>/<text_id:int>/normalizations
+#     Returns all normalizations for a text as a mapping of word_index -> normalized_token.
+# - DELETE /texts/<user_id:int>/<text_id:int>/normalizations
+#     Deletes a normalization for a given word_index. Expects JSON { "word_index": <int> }.
+# - POST /texts/<user_id:int>/<text_id:int>/normalizations
+#     Adds/saves a normalization. Expects JSON { "word_index": <int>, "new_token": <str> }.
+# - PATCH /texts/<user_id:int>/<text_id:int>/normalizations
+#     Toggles the "normalized" status for a text (no body required).
+
+- Returned JSON shapes:
+    - /users: [ "username1", "username2", ... ]
+    - /login (success): { "message": "Olá, <username>!", "userId": <int>, "timestamp": "<iso-datetime>" }
+    - /login (fail): { "message": "Usuário ou Senha incorretos. Tente novamente.", "userId": null, "timestamp": "<iso-datetime>" }
+    - /texts/<user_id>: { "textsData": [ ... ] } (empty array if none)
+    - /texts/<user_id>/<text_id>: {
+          "index": <int>, "tokens": <...>, "word_map": <...>, "candidates": <...>,
+          "grade": <...>, "corrections": { ... }, "teacher": <...>, "isCorrected": <bool>,
+          "sourceFileName": <str>
+    - /normalizations (GET): { "<word_index>": "<corrected_token>", ... }
+    - /normalizations DELETE/POST/PATCH: success message JSON or error JSON on failure.
+Notes:
+- Payload keys expected for POST/DELETE endpoints are documented above; callers should ensure JSON content-type and include required fields.
+- Logging, authentication tokens, and more detailed validation are not handled in these routes and should be added as needed.
+"""
+
 from datetime import datetime
 from flask import request, jsonify
 
@@ -6,29 +42,7 @@ from modules.db_functions import DBFunctions
 
 db_functions = DBFunctions(db_access)
 
-# DEFINED ROUTES:
-# /api/login: authenticates user login information, updating their 'last seen' status and returns the essay indexes.
-# /api/essay: gets a single essay and its corrections.
-# /api/correction: posts a single correction into the DB.
-
-# @api.route('/api/normalizedBy', methods=['GET'])
-# def getUsersWhoNormalized(textId:int):
-#     try:
-#         users = db_functions.get_normalizations_by_text(textId, userId=None)
-#         user_list = [user[1] for user in users] if users else []
-#         return jsonify(user_list), 200
-#     except Exception as e:
-#         return jsonify({"error": str(e)}), 500
-
-@api.route('/api/essays/assignedTo', methods=['GET'])
-def getEssaysAssignedTo(userId:int):
-    try:
-        ids = db_functions.get_essays_assigned_to_user(userId)
-        return jsonify(ids), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@api.route('/api/getUsernames', methods=['GET'])
+@api.route('/api/users', methods=['GET'])
 def getUsernames():
     try:
         usernames = db_functions.get_usernames()
@@ -50,120 +64,125 @@ def login():
     if not username or not password:
         return jsonify({"message": "Missing username or password"}), 400
 
-    response = {}
-
     result = db_functions.authenticate_user(username, password)
 
     # Extract the boolean value from the result
     # Expected result: [(True, $userId)] or [(False, None)]
     auth = result[0][0] if result and len(result) > 0 and len(result[0]) > 0 else False
 
+    response = {}
     if auth:
-        userId:int = result[0][1]
-        essayIndexes = db_functions.get_texts_data(userId)
-        message = f"Olá, {username}!"
-                
-        response["message"] = message
-        response["userId"] = userId
-        response["essayIndexes"] = essayIndexes
         status_code = 200
+        response["message"] = f"Olá, {username}!"
+        response["userId"] = result[0][1]
     else:
-        message = "Usuário ou Senha incorretos. Tente novamente."
-        
-        response["message"] = message
-        response["userId"] = None
-        response["essayIndexes"] = []
         status_code = 401
-
+        response["userId"] = None
+        response["message"] = "Usuário ou Senha incorretos. Tente novamente."
+        
     response["timestamp"] = str(datetime.now())
+        
     return jsonify(response), status_code
 
 
-@api.route('/api/essay', methods=['POST'])
-def essay():
-    data = request.json
-    
-    if data is None:
-        return jsonify({"message": "No data provided"}), 400
-    
-    essay_id:int = data.get('value')
-    userId:int = data.get('userId')
+@api.route('/api/texts/<int:user_id>', methods=['GET'])
+def get_texts_data(user_id):
+    response = {}
+    textsData = db_functions.get_texts_data(user_id)
+    if textsData:
+        response["textsData"] = textsData
+    else:
+        response["textsData"] = []
+
+    return jsonify(response), 200
+
+@api.route('/api/texts/<int:user_id>/<int:text_id>', methods=['GET'])
+def text(user_id, text_id):
     response = {}
 
     # Gets and organizes the essay table response
-    essay = db_functions.get_text_by_id(essay_id, userId)
+    essay = db_functions.get_text_by_id(text_id, user_id)
 
-    index = essay[0][0]
-    tokens = essay[0][1]
-    word_map = essay[0][2]
-    grade = essay[0][3]
-    candidates = essay[0][4]
-    teacher = essay[0][5]
-    isCorrected = essay[0][6]
-    sourceFileName = essay[0][7]
-    response={'index':index, 
-              'tokens':tokens, 
-              'word_map':word_map, 
-              'candidates':candidates, 
-              'grade': grade, 
-              'corrections':{}, 
-              'teacher': teacher, 
-              'isCorrected': isCorrected,
-              'sourceFileName': sourceFileName}
+    (
+        index,
+        tokens,
+        word_map,
+        grade,
+        candidates,
+        teacher,
+        isCorrected,
+        sourceFileName,
+        correctedByUser
+    ) = essay[0]
 
-    # Gets and organizes the corrections table response
-    corrections = db_functions.get_normalizations_by_text(essay_id, userId=userId)
+    response = {
+        'index': index,
+        'tokens': tokens,
+        'word_map': word_map,
+        'candidates': candidates,
+        'grade': grade,
+        'corrections': {},
+        'teacher': teacher,
+        'isCorrected': isCorrected,
+        'sourceFileName': sourceFileName,
+        'correctedByUser': correctedByUser
+    }
 
-    # Loop through all corrections and add them to the response
-    if corrections:
-        for correction in corrections:
-            word_index = correction[2]
-            correction_text = correction[3]
-            response['corrections'][word_index] = correction_text
-            
     return jsonify(response)
 
-@api.route('/api/correction', methods=['POST'])
-def correction():
+@api.route('/api/texts/<int:user_id>/<int:text_id>/normalizations', methods=['GET'])
+def normalizations(user_id, text_id):
+    
+    data = db_functions.get_normalizations_by_text(textId=text_id, userId=user_id)
+
+    corrections = {}
+    for entry in data:
+        _, _ ,word_index, normalized_token, _ = entry
+        corrections[word_index] = normalized_token
+
+    return jsonify(corrections), 200
+
+@api.route('/api/texts/<int:user_id>/<int:text_id>/normalizations', methods=['DELETE'])
+def delete_normalization(user_id, text_id):
     try:
-        data = request.get_json()
+        data = request.json
         if not data:
             return jsonify({"error": "No data provided"}), 400
 
-        essay_id = data.get('essay_id')
         word_index = data.get('word_index')
-        correction = data.get('correction')
-        userId = data.get('userId')
+        if text_id is None or word_index is None or user_id is None:
+            return jsonify({"error": f"Missing required fields: word_index {word_index}"}), 400
 
-        # Check if required fields are present
-        if essay_id is None or word_index is None or userId is None:
-            return jsonify({"error": f"Missing required fields: ID {essay_id}, word_index {word_index}"}), 400
-
-        # If correction is empty or missing, delete the correction
-        if correction == '':
-            db_functions.delete_normalization(essay_id, userId, word_index)
-            return jsonify({"message": "Correction deleted successfully"}), 200
-
-        # Otherwise, save the correction
-        db_functions.save_normalization(essay_id, userId, word_index, correction)
-        return jsonify({"message": f"Correction added successfully: {correction}"}), 200
+        db_functions.delete_normalization(textId=text_id, userId=user_id, textTokenIndex=word_index)
+        return jsonify({"message": "Normalization deleted successfully"}), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@api.route('/api/changeCorrectionStatus', methods=['POST'])
-def changeCorrectionStatus():
+@api.route('/api/texts/<int:user_id>/<int:text_id>/normalizations', methods=['POST'])
+def correction(user_id, text_id):
     try:
-        
-        data = request.get_json()
+        data = request.json
         if not data:
             return jsonify({"error": "No data provided"}), 400
-        
-        textId = data.get('textId')
-        userId = data.get('userId')
-        
-        # Execute the Postgres function to update the correction status
-        db_functions.toggle_normalized(textId, userId)
+
+        word_index = data.get('word_index')
+        new_token = data.get('new_token')
+
+        if text_id is None or word_index is None or user_id is None:
+            return jsonify({"error": f"Missing required fields: ID {text_id}, word_index {word_index}"}), 400
+            
+        db_functions.save_normalization(textId=text_id, userId=user_id, textTokenIndex=word_index, newToken=new_token)
+        return jsonify({"message": f"Correction added successfully: {new_token}"}), 200
+
+    except Exception as e:
+        print(str(e))
+        return jsonify({"error": str(e)}), 500
+
+@api.route('/api/texts/<int:user_id>/<int:text_id>/normalizations', methods=['PATCH'])
+def toggleNormalizationStatus(user_id, text_id):
+    try:
+        db_functions.toggle_normalized(textId=text_id, userId=user_id)
 
         return jsonify({"message": "Correction status changed successfully"}), 200
 

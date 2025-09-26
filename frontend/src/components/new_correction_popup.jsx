@@ -1,9 +1,8 @@
 import PropTypes from 'prop-types';
 import { useState, useEffect } from 'react';
 import '../styles/new_correction_popup.css'
-import { use } from 'react';
 
-import { postNormalization } from './functions/api_functions';
+import { postNormalization, deleteNormalization } from './functions/api_functions';
 
 // Displays a popup to confirm the addition of a new candidate
 
@@ -33,11 +32,10 @@ const NewCorrectionPopup = ({
     }
 
     const handleAddButton = async (event) => {
-        if (event) {
-            event.preventDefault(); // Only call preventDefault if event exists
-        }
+        if (event) { event.preventDefault(); }
 
-        await postNormalization(essay.index, selectedWordIndex, candidate, userId);
+        if(!candidate) await deleteNormalization(essay.index, selectedWordIndex, userId);
+        else           await postNormalization(essay.index, selectedWordIndex, candidate, userId);
         refreshEssay();
 
         setSelectedCandidate(null);
