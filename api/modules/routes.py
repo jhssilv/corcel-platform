@@ -137,8 +137,8 @@ def normalizations(user_id, text_id):
 
     corrections = {}
     for entry in data:
-        _, _ ,word_index, normalized_token, _ = entry
-        corrections[word_index] = normalized_token
+        _, _ ,start_index, normalized_token, _, end_index  = entry
+        corrections[start_index] = (normalized_token, end_index)
 
     return jsonify(corrections), 200
 
@@ -166,13 +166,14 @@ def correction(user_id, text_id):
         if not data:
             return jsonify({"error": "No data provided"}), 400
 
-        word_index = data.get('word_index')
+        first_word_index = data.get('first_index')
+        last_word_index = data.get('last_index')
         new_token = data.get('new_token')
 
-        if text_id is None or word_index is None or user_id is None:
-            return jsonify({"error": f"Missing required fields: ID {text_id}, word_index {word_index}"}), 400
-            
-        db_functions.save_normalization(textId=text_id, userId=user_id, textTokenIndex=word_index, newToken=new_token)
+        if text_id is None or first_word_index is None or last_word_index is None or user_id is None:
+            return jsonify({"error": f"Missing required fields: ID {text_id}, first_index {first_word_index}, last_index {last_word_index}"}), 400
+
+        db_functions.save_normalization(textId=text_id, userId=user_id, firstIndex=first_word_index, lastIndex=last_word_index, newToken=new_token)
         return jsonify({"message": f"Correction added successfully: {new_token}"}), 200
 
     except Exception as e:

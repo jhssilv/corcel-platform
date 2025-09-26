@@ -21,9 +21,9 @@ class DBFunctions:
     def get_text_by_id(self, textId:int, userId:int):
         params = (textId, userId)
         return self._db_access.execute_function('get_text_by_id', params)
-    
-    def save_normalization(self, textId:int, userId:int, textTokenIndex:int, newToken:str):
-        params = (textId, userId, textTokenIndex, newToken)
+
+    def save_normalization(self, textId:int, userId:int, firstIndex:int, lastIndex:int, newToken:str):
+        params = (textId, userId, firstIndex, lastIndex, newToken)
         return self._db_access.execute_function('save_normalization', params)
     
     def get_normalizations_by_text(self, textId, userId):

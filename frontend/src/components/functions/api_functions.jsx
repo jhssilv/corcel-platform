@@ -121,10 +121,11 @@ async function getTextById(textId, userId) {
  * @param {string|number} userId - The user identifier
  * @returns {Promise<void>}
  */
-async function postNormalization(textId, wordIndex, newToken, userId) {
+async function postNormalization(textId, firstWordIndex, lastWordIndex, newToken, userId) {
     try {
         const payload = {
-            word_index: wordIndex,
+            first_index: firstWordIndex,
+            last_index: lastWordIndex,
             new_token: newToken,
         };
 

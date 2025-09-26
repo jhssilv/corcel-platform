@@ -3,10 +3,10 @@ import '../styles/generated_candidates.css'
 
 // Generates the candidate list and the new candidate input.
 
-const GeneratedCandidates = ({ candidates , selectedWordIndex, setSelectedCandidate, setPopupIsActive }) => {
+const GeneratedCandidates = ({ candidates , selectedStartIndex, selectedEndIndex, setSelectedCandidate, setPopupIsActive }) => {
     const spans = []; // Array to hold the span elements
 
-    if(selectedWordIndex == null)
+    if(selectedStartIndex == null)
         return
 
     const handleCandidateSelection = (candidate) => {     
@@ -16,7 +16,7 @@ const GeneratedCandidates = ({ candidates , selectedWordIndex, setSelectedCandid
 
     // Adds the candidate selection buttons
     let i = 0;
-    if(candidates)
+    if(candidates && selectedEndIndex === selectedStartIndex)
         for(;i<candidates.length;i++) {
             const candidate = candidates[i];
             spans.push(' ');

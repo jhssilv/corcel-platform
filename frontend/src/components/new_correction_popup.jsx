@@ -9,9 +9,10 @@ import { postNormalization, deleteNormalization } from './functions/api_function
 const NewCorrectionPopup = ({ 
     essay, 
     candidate='', 
-    selectedWordIndex, 
     isActive, 
     setPopupIsActive, 
+    selectedFirstIndex,
+    selectedLastIndex,
     setSelectedCandidate, 
     refreshEssay}) => {
 
@@ -34,8 +35,8 @@ const NewCorrectionPopup = ({
     const handleAddButton = async (event) => {
         if (event) { event.preventDefault(); }
 
-        if(!candidate) await deleteNormalization(essay.index, selectedWordIndex, userId);
-        else           await postNormalization(essay.index, selectedWordIndex, candidate, userId);
+        if(!candidate) await deleteNormalization(essay.index, selectedFirstIndex, userId);
+        else           await postNormalization(essay.index, selectedFirstIndex, selectedLastIndex, candidate, userId);
         refreshEssay();
 
         setSelectedCandidate(null);

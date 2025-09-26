@@ -5,7 +5,10 @@ import GeneratedCandidates from './generated_candidates';
 import NewCorrectionPopup from './new_correction_popup';
 
 function EssayDisplay({ essay, refreshEssay }) {
-  const [selectedWordIndex, setSelectedWordIndex] = useState(null);
+
+  const [selectedStartIndex, setSelectedStartIndex] = useState(null);
+  const [selectedEndIndex, setSelectedEndIndex] = useState(null);
+
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [popupIsActive, setPopupIsActive] = useState(false);
 
@@ -13,6 +16,8 @@ function EssayDisplay({ essay, refreshEssay }) {
     return <h3>Nenhum texto selecionado.</h3>;
   }
 
+  const singleWordSelected = selectedStartIndex !== null && selectedEndIndex === selectedStartIndex;
+  const selectedWordHasCandidates = essay.candidates[selectedStartIndex] ? true : false;
 
   return (
     <div>
@@ -20,12 +25,13 @@ function EssayDisplay({ essay, refreshEssay }) {
       <p>Responsável: {essay.teacher}</p>
       <p>Nota: <strong>{essay.grade}</strong></p>
       <p>
-        {essay.candidates[selectedWordIndex] ? "Alternativas para " : null} 
-        <i>{essay.candidates[selectedWordIndex] ? essay.tokens[selectedWordIndex] + ": " : null}</i>
+        {selectedWordHasCandidates  && singleWordSelected ? "Alternativas para " : null}
+        <i>{selectedWordHasCandidates && singleWordSelected? essay.tokens[selectedStartIndex] + ": " : null}</i>
         <strong>
           <GeneratedCandidates 
-            candidates={essay.candidates[selectedWordIndex]} 
-            selectedWordIndex={selectedWordIndex}
+            candidates={essay.candidates[selectedStartIndex]} 
+            selectedStartIndex={selectedStartIndex}
+            selectedEndIndex={selectedEndIndex}
             setSelectedCandidate={setSelectedCandidate}
             setPopupIsActive={setPopupIsActive}
           />
@@ -33,14 +39,17 @@ function EssayDisplay({ essay, refreshEssay }) {
       </p>
       <GeneratedEssay 
         essay={essay}
-        selectedWordIndex={selectedWordIndex}
-        setSelectedWordIndex={setSelectedWordIndex} 
+        selectedStartIndex={selectedStartIndex}
+        setSelectedStartIndex={setSelectedStartIndex}
+        selectedEndIndex={selectedEndIndex}
+        setSelectedEndIndex={setSelectedEndIndex}
       />
       <NewCorrectionPopup 
         essay={essay}
         candidate={selectedCandidate}
-        selectedWordIndex={selectedWordIndex}
         isActive={popupIsActive}
+        selectedFirstIndex={selectedStartIndex}
+        selectedLastIndex={selectedEndIndex}
         setSelectedCandidate={setSelectedCandidate}
         setPopupIsActive={setPopupIsActive}
         refreshEssay={refreshEssay}
