@@ -12,18 +12,19 @@ function MainPage() {
     const [selectedEssay, setSelectedEssay] = useState(null);
     const [currentText, setCurrentText] = useState(null);
 
-    const userId = useContext(AuthContext).userId;
+    const { userId } = useContext(AuthContext);
 
     const fetchEssay = useCallback(async () => {
         const text = await getTextById(selectedEssay.value, userId);
         const normalizations = await getNormalizationsByText(selectedEssay.value, userId);
         text.corrections = normalizations;
         setCurrentText(text);
-    }, [selectedEssay]);
+    }, [selectedEssay, userId]);
 
     useEffect(() => {
         if (selectedEssay) fetchEssay();
     }, [selectedEssay, fetchEssay]);
+
 
     return (
         <section>

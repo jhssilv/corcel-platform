@@ -1,29 +1,27 @@
 import { z } from 'zod';
 
-// --- Schemas Genéricos ---
-
 /**
- * Schema para respostas de sucesso com uma mensagem simples.
- * Ex: { "message": "Operação realizada com sucesso" }
+ * Schema for successful responses with a message.
+ * Ex: { "message": "Operation successful" }
  */
 export const MessageResponseSchema = z.object({
   message: z.string(),
 });
 
-// --- Schemas para /api/users ---
+// --- Schemas for /api/users ---
 
 /**
- * Valida a resposta da rota GET /api/users.
- * Espera um array de strings com os nomes de usuário.
+ * Validates the response from the GET /api/users route.
+ * Expects an array of strings with the usernames.
  */
 export const UsernamesResponseSchema = z.object({
   usernames: z.array(z.string())
 });
 
-// --- Schemas para /api/login ---
+// --- Schemas for /api/login ---
 
 /**
- * Valida o corpo da requisição para POST /api/login.
+ * Validates the request body for POST /api/login.
  */
 export const LoginRequestSchema = z.object({
   username: z.string().min(1, "O nome de usuário é obrigatório."),
@@ -31,19 +29,19 @@ export const LoginRequestSchema = z.object({
 });
 
 /**
- * Valida a resposta bem-sucedida da rota POST /api/login.
+ * Validates the successful response from the POST /api/login route.
  */
 export const LoginResponseSchema = z.object({
   message: z.string(),
-  timestamp: z.string(), // Valida se a string é uma data no formato ISO 8601
+  timestamp: z.string(), // Validates if the string is a date in ISO 8601 format
   userId: z.number(),
 });
 
 
-// --- Schemas para /api/texts ---
+// --- Schemas for /api/texts ---
 
 /**
- * Valida o objeto de metadados de um único texto na lista de textos.
+ * Validates the metadata object of a single text in the list of texts.
  */
 const TextMetadataSchema = z.object({
     id: z.number(),
@@ -62,36 +60,39 @@ export const TextsDataResponseSchema = z.object({
 });
 
 /**
- * Valida a resposta da rota GET /api/texts/<user_id>/<text_id>.
+ * Validates the response from the GET /api/texts/<user_id>/<text_id> route.
  */
 export const TextDetailResponseSchema = z.object({
   index: z.number(),
   tokens: z.array(z.string()),
-  word_map: z.array(z.boolean()),
-  candidates: z.record(z.any()).nullable(), // Representa um objeto JSONB genérico
+  wordMap: z.array(z.boolean()),
+  candidates: z.record(z.any()).nullable(), // Represents a generic JSONB object
   grade: z.number().nullable(),
   corrections: z.record(z.any()),
   teacher: z.string().nullable(),
   isCorrected: z.boolean(),
   sourceFileName: z.string().nullable(),
-  correctedByUser: z.boolean(),
+  correctedByUser: z.boolean()
 });
 
 
-// --- Schemas para /api/texts/.../normalizations ---
+// --- Schemas for /api/texts/.../normalizations ---
 
 /**
- * Valida a resposta da rota GET /api/texts/.../normalizations.
- * Espera um objeto onde as chaves são o índice da palavra (string)
- * e os valores são uma tupla [novo_token, indice_final].
+ * Validates the response from the GET /api/texts/.../normalizations route.
+ * Expects a series of objects indexed by the word index. In the format:
+ * {3: {last_index: 5, new_token: "correction"}, ...}
  */
-export const NormalizationsGetResponseSchema = z.record(
-  z.string(), // Valida que a chave é uma string
-  z.object({  // Valida que o valor é um objeto com a seguinte forma:
+const NormalizationItemSchema = z.object({
     last_index: z.number(),
-    new_token: z.string(),
-  })
+    new_token: z.string()
+});
+
+export const NormalizationsGetResponseSchema = z.record(
+  z.string(),
+  NormalizationItemSchema
 );
+
 
 /**
  * Valida o corpo da requisição para POST /api/texts/.../normalizations.

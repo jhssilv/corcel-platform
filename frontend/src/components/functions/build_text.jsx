@@ -8,7 +8,7 @@ function buildText(essay, selectedStartIndex, selectedEndIndex, handleSelectedWo
         i += token_length; // Skip the tokens that were part of a correction
         token_length = 0;
 
-        if(essay.word_map[i]) {
+        if(essay.wordMap[i]) {
             // Add a space before every word except the first
             if (i > 0)
                 spans.push(" ");
