@@ -1,2 +1,2 @@
-FLASK_APP=api.py
+FLASK_APP=routes.py
 FLASK_ENV=development
