@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine, func, literal, select
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import NoResultFound
+from sqlalchemy.exc import OperationalError
 import os
 
 from database_models import User, Text, Normalization, TextsAssignment, NormalizedTextsUsers

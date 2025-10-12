@@ -1,13 +1,33 @@
 from datetime import datetime
 from flask import Flask, jsonify, request 
 from flask_pydantic import validate
+from pydantic import ValidationError
 
 import api_schemas as schemas
 import database_queries as queries
 
-
 api = Flask(__name__)
+
+@api.errorhandler(ValidationError)
+def handle_validation_error(e: ValidationError):
+    """
+    Catches validation errors from Pydantic and returns a detailed 400 JSON response.
+    """
+    # e.errors() returns a list of dictionaries with details about each error
+    # Ex: [{'loc': ('body', 'username'), 'msg': 'Field required', 'type': 'missing'}]
+    error_details = [
+        {
+            "field": error.get("loc")[-1], # Gets the field name
+            "message": error.get("msg")
+        }
+        for error in e.errors()
+    ]
     
+    return jsonify({
+        "error": "Validation failed",
+        "details": error_details
+    }), 400
+
 @api.route('/api/users', methods=['GET'])
 def get_usernames():
     """Returns a list of all usernames."""
@@ -103,9 +123,9 @@ def get_text_detail(user_id: int, text_id: int):
                 grade=text_data.grade,
                 corrections={},
                 teacher=text_data.teacher,
-                isCorrected=text_data.normalizedbyuser,
-                sourceFileName=text_data.sourcefilename,
-                correctedByUser=text_data.assignedtouser
+                is_corrected=text_data.normalizedbyuser,
+                source_file_name=text_data.sourcefilename,
+                corrected_by_user=text_data.assignedtouser
             )
             return jsonify(response.model_dump()), 200
         
@@ -122,10 +142,10 @@ def get_normalizations(user_id: int, text_id: int):
             normalizations_from_db = queries.get_normalizations_by_text(db_session, text_id, user_id)
 
             corrections = {
-                str(norm.startindex): {
-                    "last_index": norm.endindex,
-                    "new_token": norm.newtoken
-                }
+                str(norm.startindex): schemas.NormalizationValue( 
+                    last_index=norm.endindex,
+                    new_token=norm.newtoken
+                )
                 for norm in normalizations_from_db
             }
 
