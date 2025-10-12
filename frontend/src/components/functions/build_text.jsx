@@ -19,9 +19,9 @@ function buildText(essay, selectedStartIndex, selectedEndIndex, handleSelectedWo
             // its correction
             const correction = essay.corrections[i];
             if(correction) {
-                token = correction[0];
+                token = correction['new_token'];
                 className+=" corrected";
-                token_length = correction[1] - i;
+                token_length = correction['last_index'] - i;
             }
 
             // If there are possible candidates for correction

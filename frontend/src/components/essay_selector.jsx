@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import DropdownSelect from './dropdown_select.jsx';
 import PropTypes from 'prop-types';
 
-import { getUsernames, toggleNormalizedStatus } from './functions/api_functions.jsx';
+import { getUsernames, toggleNormalizedStatus } from './api/api_functions.jsx';
 
 // ESSAY SELECTOR COMPONENT \\
 
@@ -39,7 +39,8 @@ const EssaySelector = ({
     useEffect(() => {
         // Carrega usernames
         const fetchUsernames = async () => {
-            const usernames = await getUsernames();
+            const usernames_data = await getUsernames();
+            const usernames = usernames_data.usernames || [];
             const teacherOptions = usernames.map(u => ({ value: u, label: u }));
             setTeachers(teacherOptions);
         };
@@ -69,18 +70,19 @@ const EssaySelector = ({
         // Extract other filters values (strings)
         const selectedOtherFiltersList = selectedOtherFilters?.map(item => item.value) || [];
 
+
         const filteredEssays = textsData
-            .filter(([, grade, teachers, isCorrected]) => {
+            .filter(({ grade, users_who_normalized, normalized_by_user }) => {
                 const matchesGrade =
                     selectedGradesList.length === 0 || selectedGradesList.includes(Number(grade));
                 const matchesTeacher =
-                    selectedTeacherList.length === 0 || teachers.some(teacher => selectedTeacherList.includes(teacher));
+                    selectedTeacherList.length === 0 || users_who_normalized.some(teacher => selectedTeacherList.includes(teacher));
                 const matchesCorrected =
-                    selectedOtherFiltersList.length === 0 || selectedOtherFiltersList.includes(isCorrected);
+                    selectedOtherFiltersList.length === 0 || selectedOtherFiltersList.includes(normalized_by_user);
 
                 return matchesGrade && matchesTeacher && matchesCorrected;
             })
-            .map(([id, , , , sourceFileName]) => ({ value: id, label: sourceFileName }));
+            .map(({ id, source_file_name }) => ({ value: id, label: source_file_name }));
 
         setFilteredEssays(filteredEssays);
     }
@@ -185,9 +187,9 @@ const EssaySelector = ({
             <div id="correctedCount">
                 Corrigidos: {filteredEssays.length} / {
                     textsData
-                        .filter(([essay_id, , , iscorrected]) =>
-                            iscorrected === true &&
-                            filteredEssays.some((essay) => essay.value === essay_id)
+                        .filter(({ id, normalized_by_user }) =>
+                            normalized_by_user === true &&
+                            filteredEssays.some((essay) => essay.value === id)
                         ).length
                 }
             </div>
