@@ -27,14 +27,15 @@ function LoginPage() {
         event.preventDefault();
             
         const login_data = await authenticateUser(username, password);
-        const texts_data = await getTextsData(login_data.userId);
-
+        
+        
         if (login_data.userId === undefined) {
             alert(login_data.message);
             return;
         }
-
-        localStorage.setItem('textsData', JSON.stringify(texts_data.textsData));
+        
+        const textsData = await getTextsData(login_data.userId);
+        localStorage.setItem('textsData', JSON.stringify(textsData));
 
         console.log('Olá ', username);
         login(login_data.userId, username);
