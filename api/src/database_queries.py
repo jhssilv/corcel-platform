@@ -1,10 +1,10 @@
 from sqlalchemy import create_engine, func, literal, select
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, joinedload
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.exc import OperationalError
 import os
 
-from database_models import User, Text, Normalization, TextsAssignment, NormalizedTextsUsers
+from database_models import Token, User, Text, Normalization, TextsUsers
 
 # --- Configuração da Conexão e Sessão ---
 
@@ -46,67 +46,62 @@ def get_texts_data(db_session, user_id):
     """
     Fetch a list of all texts with relevant metadata.
     """
-    # Subquery that checks if the text is assigned to the user
-    assigned_subquery = (
-        select(literal(True))
-        .where(TextsAssignment.textid == Text.id, TextsAssignment.userid == user_id)
-        .exists()
-    )
-
-    # Subquery that checks if the text has been normalized by the user
-    normalized_subquery = (
-        select(literal(True))
-        .where(NormalizedTextsUsers.textid == Text.id, NormalizedTextsUsers.userid == user_id)
-        .exists()
-    )
-
-    # Subquery that get the list of usernames from users that normalized the text.
-    users_subquery = (
-        select(User.username)
-        .join(TextsAssignment, User.id == TextsAssignment.userid)
-        .where(TextsAssignment.textid == Text.id)
-    )
-
-    users_normalized_array = func.array(users_subquery).label("userswhonormalized")
     
-    return db_session.query(
-        Text.id,
-        Text.grade,
-        users_normalized_array,
-        normalized_subquery.label("normalizedbyuser"),
-        Text.sourcefilename,
-        assigned_subquery.label("assignedtouser")
+    # Subquery that checks if the text was normalized by the user
+    normalized_subquery = select(TextsUsers.normalized).where(
+        TextsUsers.text_id == Text.id, 
+        TextsUsers.user_id == user_id
+    ).scalar_subquery()
+    
+    users_agg_subquery = (
+        select(func.array_agg(User.username))
+        .join(TextsUsers, User.id == TextsUsers.user_id)
+        .where(TextsUsers.text_id == Text.id, TextsUsers.assigned == True)
+        .correlate(Text)  
+        .scalar_subquery()
+    )
+    
+    result = db_session.query(
+        func.coalesce(normalized_subquery).label("normalized_by_user"),
+        users_agg_subquery.label("users_assigned"),
+        Text.id.label("id"),
+        Text.grade.label("grade"),
+        Text.source_file_name.label("source_file_name")
     ).all()
+
+    return result
     
 def get_text_by_id(db_session, text_id, user_id):
     """
     Fetch a specific text by its ID.
     """
-    # Subquery that checks if the text is assigned to the user
-    assigned_subquery = (
-        db_session.query(literal(True))
-        .filter(TextsAssignment.textid == text_id, TextsAssignment.userid == user_id)
-        .exists()
-    )
 
-    # Subquery that checks if the text has been normalized by the user
-    normalized_subquery = (
-        db_session.query(literal(True))
-        .filter(NormalizedTextsUsers.textid == text_id, NormalizedTextsUsers.userid == user_id)
-        .exists()
-    )
+    text_info = db_session.query(Text).filter(Text.id == text_id).options(joinedload(Text.tokens)).first()
+    if not text_info:
+        return None
+    
+    assoc = db_session.query(TextsUsers).filter_by(text_id=text_id, user_id=user_id).first()
 
-    return db_session.query(
-        Text.id,                                       # id in the database     
-        Text.tokens,                                   # tokens array           
-        Text.wordmap,                                  # word_map array - wordmap[i] = tokens[i].isalpha()
-        Text.grade,                                    # (usually) Found in the sourcefilename file, can be null
-        Text.candidates,                               # json for the replacements candidates
-        Text.professorname.label("teacher"),           # professor name - to be removed in future versions
-        normalized_subquery.label("normalizedbyuser"), # isCorrected
-        Text.sourcefilename,                           # name of the file the text came from
-        assigned_subquery.label("assignedtouser")      # if there is an entry in texts_assignments for this user and text
-    ).filter(Text.id == text_id).first()
+    
+    tokens_data = [
+        {
+            "text": token.token_text,
+            "isWord": token.is_word,
+            "position": token.position,
+            "candidates": token.candidates or [] 
+        }
+        for token in text_info.tokens 
+    ]
+
+    response_dict = {
+        'id': text_info.id,
+        'grade': text_info.grade,
+        'tokens': tokens_data, 
+        'normalized_by_user': assoc.normalized if assoc else False,
+        'source_file_name': text_info.source_file_name,
+        'assigned_to_user': assoc.assigned if assoc else False,
+    }
+    return response_dict
 
 
 def get_normalizations_by_text(db_session, text_id, user_id):
@@ -115,7 +110,7 @@ def get_normalizations_by_text(db_session, text_id, user_id):
     """
     return db_session.query(Normalization).filter(
         Normalization.textid == text_id,
-        Normalization.userid == user_id
+        Normalization.user_id == user_id
     ).all()
 
 
@@ -123,8 +118,12 @@ def assign_text_to_user(db_session, text_id, user_id):
     """
     Assigns a text to a user.
     """
-    assignment = TextsAssignment(textid=text_id, userid=user_id, done=False)
-    db_session.add(assignment)
+    assoc = db_session.query(TextsUsers).filter_by(text_id=text_id, user_id=user_id).first()
+    if assoc:
+        assoc.assigned = True
+    else:
+        new_assoc = TextsUsers(text_id=text_id, user_id=user_id, assigned=True, normalized=False)
+        db_session.add(new_assoc)
     db_session.commit()
 
 
@@ -133,68 +132,51 @@ def save_normalization(db_session, text_id, user_id, start_index, end_index, new
     Saves or updates a normalization.
     """
     # Verifies if the normalization already exists
-    existing_norm = db_session.query(Normalization).filter_by(
-        textid=text_id,
-        userid=user_id,
-        startindex=start_index
-    ).first()
+    existing_norm = db_session.query(Normalization).filter_by(text_id=text_id, user_id=user_id, start_index=start_index).first()
 
     if existing_norm:
         # (ON CONFLICT ... DO UPDATE)
-        existing_norm.endindex = end_index
-        existing_norm.newtoken = new_token
-        existing_norm.creationtime = func.now()
+        existing_norm.end_index = end_index
+        existing_norm.new_token = new_token
+        existing_norm.creation_time = func.now()
     else:
         # no conflict (normalization does not exist, insert new)
         new_norm = Normalization(
-            textid=text_id,
-            userid=user_id,
-            startindex=start_index,
-            endindex=end_index,
-            newtoken=new_token,
-            creationtime=func.now()
+            text_id=text_id,
+            user_id=user_id,
+            start_index=start_index,
+            end_index=end_index,
+            new_token=new_token,
+            creation_time=func.now()
         )
+        
         db_session.add(new_norm)
 
     if autocommit:
         db_session.commit()
 
 
-def delete_normalization(db_session, text_id, user_id, start_index, autocommit=True):
+def delete_normalization(db_session, text_id, user_id, start_index):
     """
     Deletes a specific normalization.
     """
-    norm_to_delete = db_session.query(Normalization).filter_by(
-        textid=text_id,
-        userid=user_id,
-        startindex=start_index
-    ).first()
-
+    norm_to_delete = db_session.query(Normalization).filter_by(text_id=text_id, user_id=user_id, start_index=start_index).first()
     if norm_to_delete:
         db_session.delete(norm_to_delete)
-        if autocommit:
-            db_session.commit()
+        db_session.commit()
 
 
-def toggle_normalized(db_session, text_id, user_id, autocommit=True):
+def toggle_normalized(db_session, text_id, user_id):
     """
     Adds or removes an entry in the 'normalized_texts_users' table.
     """
-    existing_entry = db_session.query(NormalizedTextsUsers).filter_by(
-        textid=text_id,
-        userid=user_id
-    ).first()
-
-    if existing_entry:
-        # If exists, delete it
-        db_session.delete(existing_entry)
+    assoc = db_session.query(TextsUsers).filter_by(text_id=text_id, user_id=user_id).first()
+    if assoc:
+        assoc.normalized = not assoc.normalized
     else:
-        # If not exists, insert it
-        new_entry = NormalizedTextsUsers(textid=text_id, userid=user_id)
-        db_session.add(new_entry)
-
-    if autocommit:
-        db_session.commit()
+        new_assoc = TextsUsers(text_id=text_id, user_id=user_id, assigned=False, normalized=True)
+        db_session.add(new_assoc)
+    db_session.commit()
 
 
 def get_usernames(db_session):

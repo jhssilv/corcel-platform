@@ -80,24 +80,23 @@ def get_texts_data(user_id: int):
     try:
         with queries.get_db_session() as db_session:
             texts_data_from_db = queries.get_texts_data(db_session, user_id)
-            
+                        
             # Transforming the raw DB data into the expected schema format
             # (list of dictionaries)
             texts_list = [
                 {
                     "id": row.id,
                     "grade": row.grade,
-                    "users_who_normalized": row.userswhonormalized or [],
-                    "normalized_by_user": row.normalizedbyuser,
-                    "source_file_name": row.sourcefilename,
-                    "assigned_to_user": row.assignedtouser,
+                    "normalized_by_user": row.normalized_by_user or False,
+                    "source_file_name": row.source_file_name,
+                    "users_assigned": row.users_assigned or [],
                 }
                 for row in texts_data_from_db
             ]
 
             # Using schema to ensure the response format
-            response = schemas.TextsDataResponse(textsData=texts_list)
-            return jsonify(response.model_dump()), 200
+        response = schemas.TextsDataResponse(textsData=texts_list)
+        return jsonify(response.model_dump(by_alias=True)), 200
     except Exception as e:
         error_response = schemas.ErrorResponse(error=str(e))
         return jsonify(error_response.model_dump()), 500
@@ -109,29 +108,18 @@ def get_text_detail(user_id: int, text_id: int):
     """Returns detailed data for a single text."""
     try:
         with queries.get_db_session() as db_session:
-            text_data = queries.get_text_by_id(db_session, text_id, user_id)
-
-            if not text_data:
+            text_data_dict = queries.get_text_by_id(db_session, text_id, user_id)
+            
+            if not text_data_dict:
                 return jsonify({"error": "Text not found"}), 404
-
-            # Using schema to ensure the response format
-            response = schemas.TextDetailResponse(
-                index=text_data.id,
-                tokens=text_data.tokens or [],
-                word_map=text_data.wordmap or [],
-                candidates=text_data.candidates or {},
-                grade=text_data.grade,
-                corrections={},
-                teacher=text_data.teacher,
-                is_corrected=text_data.normalizedbyuser,
-                source_file_name=text_data.sourcefilename,
-                corrected_by_user=text_data.assignedtouser
-            )
-            return jsonify(response.model_dump()), 200
         
+            response_schema = schemas.TextDetailResponse(**text_data_dict)
+            
+            return jsonify(response_schema.model_dump(by_alias=True)), 200
     except Exception as e:
         error_response = schemas.ErrorResponse(error=str(e))
         return jsonify(error_response.model_dump()), 500
+        
 
 @api.route('/api/texts/<int:user_id>/<int:text_id>/normalizations', methods=['GET'])
 @validate()

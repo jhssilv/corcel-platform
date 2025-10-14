@@ -2,8 +2,6 @@ from pydantic import BaseModel, Field, TypeAdapter
 from typing import List, Dict, Optional, Any, Tuple
 from datetime import datetime
 
-# --- Schemas Genéricos / Reutilizáveis ---
-
 class ErrorResponse(BaseModel):
     """Error Response Schema."""
     error: str = Field(..., example="Error description.")
@@ -37,29 +35,34 @@ class LoginResponse(BaseModel):
 
 class TextMetadata(BaseModel):
     """Schema for the metadata of a single text in the list."""
-    id: int = Field(..., example=101)
-    grade: Optional[int] = Field(None, example=5)
-    users_who_normalized: List[str] = Field(..., example=["corrector1", "corrector2"])
-    normalized_by_user: bool = Field(..., example=True)
-    source_file_name: Optional[str] = Field(None, example="20152t4000n4.docx")
-    assigned_to_user: bool = Field(..., example=True)
-
+    id: int
+    grade: Optional[int] = None
+    normalized_by_user: bool = Field(alias="normalizedByUser", default=False)
+    source_file_name: Optional[str] = Field(alias="sourceFileName", default=None)
+    users_assigned: List[str] = Field(alias="usersAssigned", default=[])
+    
 class TextsDataResponse(BaseModel):
     """Schema for the response of the list of texts for a user."""
-    textsData: List[TextMetadata]
+    texts_data: List[TextMetadata] = Field(alias="textsData")
+
+    class Config:
+        populate_by_name = True
+        title = "textsData"
 
 class TextDetailResponse(BaseModel):
     """Schema for the detailed response of a single text."""
-    index: int = Field(..., example=101)
-    tokens: List[str] = Field(..., example=["Eu", "gosto", "de", "sorvete", "."])
-    wordMap: List[bool] = Field(..., example=[True, True, True, True, False], alias="word_map")
-    candidates: Optional[Dict[str, Any]] = Field(None, example={"3": ["sorvetes", "picole"]})
-    grade: Optional[int] = Field(None, example=8)
-    corrections: Dict = Field(..., example={}) # This data will be filled by another endpoint
-    teacher: Optional[str] = Field(None, example="Prof. Silva") # This will be removed in future versions, use the table 'texts_assignments' and 'normalized_texts_users' instead
-    isCorrected: bool = Field(..., example=False, alias="is_corrected")
-    sourceFileName: Optional[str] = Field(None, example="redacao_joao.txt")
-    correctedByUser: bool = Field(..., example=True, alias="corrected_by_user")
+    id: int
+    grade: Optional[int] = None
+    
+    # As colunas tokens, word_map e candidates foram removidas do modelo principal,
+    # pois a sua query já as processa e monta a estrutura final.
+    
+    normalized_by_user: bool = Field(alias="normalizedByUser")
+    source_file_name: Optional[str] = Field(alias="sourceFileName")
+    assigned_to_user: bool = Field(alias="assignedToUser")
+
+    class Config:
+        populate_by_name = True
 
 # --- /normalizations ---
 

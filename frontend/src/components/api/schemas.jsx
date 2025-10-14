@@ -46,33 +46,37 @@ export const LoginResponseSchema = z.object({
 const TextMetadataSchema = z.object({
     id: z.number(),
     grade: z.number().nullable(),
-    users_who_normalized: z.array(z.string()),
-    normalized_by_user: z.boolean(),
-    source_file_name: z.string().nullable(),
-    assigned_to_user: z.boolean(),
+    usersAssigned: z.array(z.string()),
+    normalizedByUser: z.boolean(),
+    sourceFileName: z.string().nullable(),
 });
 
 /**
  * Valida a resposta da rota GET /api/texts/<user_id>.
  */
-export const TextsDataResponseSchema = z.object({
-  textsData: z.array(TextMetadataSchema),
+export const TextsDataResponseSchema = z.array(TextMetadataSchema);
+
+/**
+ * Validates each token object in the detailed text view.
+ */
+const TokenDetailSchema = z.object({
+  text: z.string(),
+  isWord: z.boolean(),
+  position: z.number(),
+  candidates: z.array(z.string()),
 });
 
 /**
  * Validates the response from the GET /api/texts/<user_id>/<text_id> route.
  */
 export const TextDetailResponseSchema = z.object({
-  index: z.number(),
-  tokens: z.array(z.string()),
-  wordMap: z.array(z.boolean()),
-  candidates: z.record(z.any()).nullable(), // Represents a generic JSONB object
+  id: z.number(),
   grade: z.number().nullable(),
-  corrections: z.record(z.any()),
-  teacher: z.string().nullable(),
-  isCorrected: z.boolean(),
+  tokens: z.array(TokenDetailSchema),
+  normalizedByUser: z.boolean(),
   sourceFileName: z.string().nullable(),
-  correctedByUser: z.boolean()
+  assignedToUser: z.boolean(),
+  usersWhoNormalized: z.array(z.string()),
 });
 
 

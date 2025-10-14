@@ -60,8 +60,9 @@ export async function authenticateUser(username, password) {
 export async function getTextsData(userId) {
   try {
     const data = await apiClient.get(`/texts/${userId}`);
+    console.log(data, typeof data);
     // Validates the response structure with the list of texts
-    return schemas.TextsDataResponseSchema.parse(data);
+    return schemas.TextsDataResponseSchema.parse(data.textsData);
   } catch (error) {
     return handleApiError(error, 'Error fetching texts data.');
   }

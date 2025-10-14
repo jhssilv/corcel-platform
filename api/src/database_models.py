@@ -9,7 +9,8 @@ from sqlalchemy import (
     TIMESTAMP,
     Text,
     ForeignKey,
-    PrimaryKeyConstraint
+    PrimaryKeyConstraint,
+    UniqueConstraint
 )
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import declarative_base, relationship
@@ -25,10 +26,10 @@ class User(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     username = Column(String(30), nullable=False, unique=True)
     password = Column(String(30), nullable=False)
-    lastlogin = Column(TIMESTAMP, nullable=True)
+    last_login = Column(TIMESTAMP, nullable=True)
 
     normalizations = relationship('Normalization', back_populates='user', cascade="all, delete-orphan")
-    assignments = relationship('TextsAssignment', back_populates='user', cascade="all, delete-orphan")
+    texts_association = relationship('TextsUsers', back_populates='user', cascade="all, delete-orphan")
 
 
 class Text(Base):
@@ -39,18 +40,36 @@ class Text(Base):
     __tablename__ = 'texts'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    tokens = Column(ARRAY(Text), nullable=True)
-    wordmap = Column(ARRAY(Boolean), nullable=True)
     grade = Column(SmallInteger, nullable=True)
-    candidates = Column(JSONB, nullable=True)
-    professorname = Column(String(30), nullable=True)
-    isnormalized = Column(Boolean, nullable=True)
-    sourcefilename = Column(String(30), nullable=True)
+    source_file_name = Column(String(30), nullable=True)
 
     normalizations = relationship('Normalization', back_populates='text', cascade="all, delete-orphan")
-    assignments = relationship('TextsAssignment', back_populates='text', cascade="all, delete-orphan")
+    texts_association = relationship('TextsUsers', back_populates='text', cascade="all, delete-orphan")
+    tokens = relationship('Token', back_populates='text', cascade="all, delete-orphan", order_by='Token.position')
 
+class Token(Base):
+    """
+    Model for the 'tokens' table.
+    Stores individual tokens extracted from texts.
+    """
+    __tablename__ = 'tokens'
 
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    text_id = Column(Integer, ForeignKey('texts.id', ondelete="CASCADE"), nullable=False, index=True)
+    
+    token_text = Column(String(64), nullable=False)
+    is_word = Column(Boolean, nullable=False)
+    position = Column(Integer, nullable=False)
+    
+    candidates = Column(ARRAY(String(64)), nullable=True)
+    
+    __table_args__ = (
+        UniqueConstraint('text_id', 'position', name='uq_text_position'), 
+    )
+
+    text = relationship('Text', back_populates='tokens')
+    
+    
 class Normalization(Base):
     """
     Model for the 'normalizations' table.
@@ -58,44 +77,28 @@ class Normalization(Base):
     """
     __tablename__ = 'normalizations'
 
-    textid = Column(Integer, ForeignKey('texts.id', ondelete="CASCADE"), primary_key=True)
-    userid = Column(Integer, ForeignKey('users.id', ondelete="CASCADE"), primary_key=True)
-    startindex = Column(Integer, primary_key=True)
-    endindex = Column(Integer, nullable=True)
-    newtoken = Column(String(64), nullable=False)
-    creationtime = Column(TIMESTAMP, nullable=False)
+    text_id = Column(Integer, ForeignKey('texts.id', ondelete="CASCADE"), primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete="CASCADE"), primary_key=True)
+    start_index = Column(Integer, primary_key=True)       # Substitutes tokens from start_index to end_index (inclusive)
+    end_index = Column(Integer, nullable=True)
+    new_token = Column(String(64), nullable=False)
+    creation_time = Column(TIMESTAMP, nullable=False)
 
-    # Relacionamentos
     user = relationship('User', back_populates='normalizations')
     text = relationship('Text', back_populates='normalizations')
 
 
-class TextsAssignment(Base):
+class TextsUsers(Base):
     """
-    Model for the 'textsassignments' table.
-    Association table that assigns texts to users for normalization.
+    Model for the 'textsusers' table.
+    Association table to track which texts have been assigned to which users.
     """
-    __tablename__ = 'textsassignments'
+    __tablename__ = 'textsusers'
 
-    textid = Column(Integer, ForeignKey('texts.id', ondelete="CASCADE"), primary_key=True)
-    userid = Column(Integer, ForeignKey('users.id', ondelete="CASCADE"), primary_key=True)
-    done = Column(Boolean, nullable=False, default=False)
+    text_id = Column(Integer, ForeignKey('texts.id', ondelete="CASCADE"), primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete="CASCADE"), primary_key=True)
+    assigned = Column(Boolean, nullable=False, default=False)
+    normalized = Column(Boolean, nullable=False, default=False)
 
-    user = relationship('User', back_populates='assignments')
-    text = relationship('Text', back_populates='assignments')
-
-
-class NormalizedTextsUsers(Base):
-    """
-    Model for the 'normalizedtextsusers' table.
-    Association table to mark when a user has completed the
-    normalization of a text.
-    """
-    __tablename__ = 'normalizedtextsusers'
-
-    textid = Column(Integer, ForeignKey('texts.id', ondelete="CASCADE"))
-    userid = Column(Integer, ForeignKey('users.id', ondelete="CASCADE"))
-
-    __table_args__ = (
-        PrimaryKeyConstraint('textid', 'userid'),
-    )
+    user = relationship('User', back_populates='texts_association')
+    text = relationship('Text', back_populates='texts_association')
