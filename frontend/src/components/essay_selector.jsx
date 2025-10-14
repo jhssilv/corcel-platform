@@ -72,17 +72,18 @@ const EssaySelector = ({
 
 
         const filteredEssays = textsData
-            .filter(({ grade, users_who_normalized, normalized_by_user }) => {
+            .filter(({ grade, usersAssigned, normalizedByUser }) => {
                 const matchesGrade =
                     selectedGradesList.length === 0 || selectedGradesList.includes(Number(grade));
                 const matchesTeacher =
-                    selectedTeacherList.length === 0 || users_who_normalized.some(teacher => selectedTeacherList.includes(teacher));
+                    selectedTeacherList.length === 0 || usersAssigned.some(teacher => selectedTeacherList.includes(teacher));
                 const matchesCorrected =
-                    selectedOtherFiltersList.length === 0 || selectedOtherFiltersList.includes(normalized_by_user);
+                    selectedOtherFiltersList.length === 0 || selectedOtherFiltersList.includes(normalizedByUser);
 
                 return matchesGrade && matchesTeacher && matchesCorrected;
             })
-            .map(({ id, source_file_name }) => ({ value: id, label: source_file_name }));
+            .map(({ id, sourceFileName }) => ({ value: id, label: sourceFileName }));
+
 
         setFilteredEssays(filteredEssays);
     }

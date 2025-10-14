@@ -41,6 +41,9 @@ class TextMetadata(BaseModel):
     source_file_name: Optional[str] = Field(alias="sourceFileName", default=None)
     users_assigned: List[str] = Field(alias="usersAssigned", default=[])
     
+    class Config:
+        populate_by_name = True
+    
 class TextsDataResponse(BaseModel):
     """Schema for the response of the list of texts for a user."""
     texts_data: List[TextMetadata] = Field(alias="textsData")
