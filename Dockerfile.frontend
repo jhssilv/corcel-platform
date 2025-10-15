@@ -1,17 +1,17 @@
 # Stage 1: Build the React app with Vite
-FROM node:18 AS builder
+FROM node:20-slim AS builder
 
 # Set the working directory in the container
 WORKDIR /app
 
 # Copy package.json and package-lock.json
-COPY package*.json ./
+COPY frontend/package*.json ./
 
 # Install dependencies
 RUN npm install
 
 # Copy the rest of the application code
-COPY . .
+COPY frontend/ .
 
 # Build the React application
 RUN npm run build
@@ -23,7 +23,7 @@ FROM nginx:alpine
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Copy Nginx configuration file
-COPY nginx.conf /etc/nginx/nginx.conf
+COPY frontend/nginx.conf /etc/nginx/nginx.conf
 
 # Expose port 80
 EXPOSE 80

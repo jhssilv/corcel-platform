@@ -1,6 +1,6 @@
 # Project specific ignores
 
-backups/dump*.sql
+backups/dumps
 package-lock.json
 
 # Byte-compiled / optimized / DLL files

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import DropdownSelect from './dropdown_select.jsx';
 import PropTypes from 'prop-types';
 
-import { getUsernames, toggleNormalizedStatus } from './functions/api_functions.jsx';
+import { getTextsData, getUsernames, toggleNormalizedStatus } from './api/api_functions.jsx';
 
 // ESSAY SELECTOR COMPONENT \\
 
@@ -39,7 +39,8 @@ const EssaySelector = ({
     useEffect(() => {
         // Carrega usernames
         const fetchUsernames = async () => {
-            const usernames = await getUsernames();
+            const usernames_data = await getUsernames();
+            const usernames = usernames_data.usernames || [];
             const teacherOptions = usernames.map(u => ({ value: u, label: u }));
             setTeachers(teacherOptions);
         };
@@ -69,38 +70,32 @@ const EssaySelector = ({
         // Extract other filters values (strings)
         const selectedOtherFiltersList = selectedOtherFilters?.map(item => item.value) || [];
 
+
         const filteredEssays = textsData
-            .filter(([, grade, teachers, isCorrected]) => {
+            .filter(({ grade, usersAssigned, normalizedByUser }) => {
                 const matchesGrade =
                     selectedGradesList.length === 0 || selectedGradesList.includes(Number(grade));
                 const matchesTeacher =
-                    selectedTeacherList.length === 0 || teachers.some(teacher => selectedTeacherList.includes(teacher));
+                    selectedTeacherList.length === 0 || usersAssigned.some(teacher => selectedTeacherList.includes(teacher));
                 const matchesCorrected =
-                    selectedOtherFiltersList.length === 0 || selectedOtherFiltersList.includes(isCorrected);
+                    selectedOtherFiltersList.length === 0 || selectedOtherFiltersList.includes(normalizedByUser);
 
                 return matchesGrade && matchesTeacher && matchesCorrected;
             })
-            .map(([id, , , , sourceFileName]) => ({ value: id, label: sourceFileName }));
+            .map(({ id, sourceFileName }) => ({ value: id, label: sourceFileName }));
+
 
         setFilteredEssays(filteredEssays);
     }
 
-    const handleCorrectionChange = async (checked) => {
+    const handleFinishedToggled = async () => {
 
         const userId = localStorage.getItem('userId');
         await toggleNormalizedStatus(selectedEssay.value, userId);
-
-        // Update textsData
-        const updatedTexts = textsData.map(essay => {
-            if (essay[0] === selectedEssay.value) {
-                return [essay[0], essay[1], essay[2], checked];
-            }
-            return essay;
-        });
+        const updatedTexts = await getTextsData(userId);
 
         setTextsData(updatedTexts);
         changeFilteredEssays(updatedTexts, selectedGrades, selectedTeacher, selectedOtherFilters);
-
     };
 
     // Handlers for dropdown changes
@@ -174,8 +169,8 @@ const EssaySelector = ({
                             type="checkbox"
                             name="cb"
                             id="cb-47"
-                            checked={textsData.find((e) => e[0] === selectedEssay.value)?.[3] || false}
-                            onChange={(e) => handleCorrectionChange(e.target.checked)}
+                            checked={textsData.find((e) => e.id === selectedEssay.value).normalized_by_user}
+                            onChange={() => handleFinishedToggled()}
                         />
                         <label htmlFor="cb-47">Finalizado?</label>
                     </div>
@@ -185,9 +180,9 @@ const EssaySelector = ({
             <div id="correctedCount">
                 Corrigidos: {filteredEssays.length} / {
                     textsData
-                        .filter(([essay_id, , , iscorrected]) =>
-                            iscorrected === true &&
-                            filteredEssays.some((essay) => essay.value === essay_id)
+                        .filter(({ id, normalized_by_user }) =>
+                            normalized_by_user === true &&
+                            filteredEssays.some((essay) => essay.value === id)
                         ).length
                 }
             </div>
