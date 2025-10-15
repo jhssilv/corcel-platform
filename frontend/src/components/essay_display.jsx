@@ -17,7 +17,7 @@ function EssayDisplay({ essay, refreshEssay }) {
   }
 
   const singleWordSelected = selectedStartIndex !== null && selectedEndIndex === selectedStartIndex;
-  const selectedWordHasCandidates = essay.tokens[selectedStartIndex].candidates ? true : false;
+  const selectedWordHasCandidates = selectedStartIndex && essay.tokens[selectedStartIndex].candidates ? true : false;
   const candidates = essay.tokens[selectedStartIndex] ? essay.tokens[selectedStartIndex]["candidates"] : [];
 
   return (
