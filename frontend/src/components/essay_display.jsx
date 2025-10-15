@@ -23,7 +23,6 @@ function EssayDisplay({ essay, refreshEssay }) {
   return (
     <div>
       <h3>{essay.sourceFileName}</h3>
-      <p>Responsável: {essay.teacher}</p>
       <p>Nota: <strong>{essay.grade}</strong></p>
       <p>
         {selectedWordHasCandidates  && singleWordSelected ? "Alternativas para " : null}
