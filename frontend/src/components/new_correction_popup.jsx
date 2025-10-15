@@ -35,8 +35,6 @@ const NewCorrectionPopup = ({
     const handleAddButton = async (event) => {
         if (event) { event.preventDefault(); }
 
-        console.log(essay.id, selectedFirstIndex, userId, !candidate);
-
         if(!candidate) await deleteNormalization(essay.id, selectedFirstIndex, userId);
         else           await postNormalization(essay.id, selectedFirstIndex, selectedLastIndex, candidate, userId);
         refreshEssay();
