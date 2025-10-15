@@ -17,7 +17,8 @@ function EssayDisplay({ essay, refreshEssay }) {
   }
 
   const singleWordSelected = selectedStartIndex !== null && selectedEndIndex === selectedStartIndex;
-  const selectedWordHasCandidates = essay.candidates[selectedStartIndex] ? true : false;
+  const selectedWordHasCandidates = essay.corrections[selectedStartIndex] ? true : false;
+  const candidates = essay.tokens[selectedStartIndex] ? essay.tokens[selectedStartIndex]["candidates"] : [];
 
   return (
     <div>
@@ -26,10 +27,10 @@ function EssayDisplay({ essay, refreshEssay }) {
       <p>Nota: <strong>{essay.grade}</strong></p>
       <p>
         {selectedWordHasCandidates  && singleWordSelected ? "Alternativas para " : null}
-        <i>{selectedWordHasCandidates && singleWordSelected? essay.tokens[selectedStartIndex] + ": " : null}</i>
+        <i>{selectedWordHasCandidates && singleWordSelected? essay.tokens[selectedStartIndex].text + ": " : null}</i>
         <strong>
           <GeneratedCandidates 
-            candidates={essay.candidates[selectedStartIndex]} 
+            candidates={candidates}
             selectedStartIndex={selectedStartIndex}
             selectedEndIndex={selectedEndIndex}
             setSelectedCandidate={setSelectedCandidate}

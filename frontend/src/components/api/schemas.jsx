@@ -60,11 +60,13 @@ export const TextsDataResponseSchema = z.array(TextMetadataSchema);
  * Validates each token object in the detailed text view.
  */
 const TokenDetailSchema = z.object({
-  text: z.string(),
-  isWord: z.boolean(),
-  position: z.number(),
-  candidates: z.array(z.string()),
+  [z.number()]: z.object({
+    text: z.string(),
+    isWord: z.boolean(),
+    candidates: z.array(z.string()),
+  })
 });
+
 
 /**
  * Validates the response from the GET /api/texts/<user_id>/<text_id> route.

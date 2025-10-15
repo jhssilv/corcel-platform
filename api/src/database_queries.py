@@ -85,10 +85,9 @@ def get_text_by_id(db_session, text_id, user_id):
     
     tokens_data = [
         {
-            "text": token.token_text,
-            "isWord": token.is_word,
-            "position": token.position,
-            "candidates": token.candidates or [] 
+                "text": token.token_text,
+                "isWord": token.is_word,
+                "candidates": token.candidates or []
         }
         for token in text_info.tokens 
     ]
@@ -109,7 +108,7 @@ def get_normalizations_by_text(db_session, text_id, user_id):
     Returns all normalizations made by a user on a specific text.
     """
     return db_session.query(Normalization).filter(
-        Normalization.textid == text_id,
+        Normalization.text_id == text_id,
         Normalization.user_id == user_id
     ).all()
 

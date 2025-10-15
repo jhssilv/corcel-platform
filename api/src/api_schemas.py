@@ -57,9 +57,7 @@ class TextDetailResponse(BaseModel):
     id: int
     grade: Optional[int] = None
     
-    # As colunas tokens, word_map e candidates foram removidas do modelo principal,
-    # pois a sua query já as processa e monta a estrutura final.
-    
+    tokens: List[Any] = Field(alias="tokens") # See database_queries.py for clarification 
     normalized_by_user: bool = Field(alias="normalizedByUser")
     source_file_name: Optional[str] = Field(alias="sourceFileName")
     assigned_to_user: bool = Field(alias="assignedToUser")

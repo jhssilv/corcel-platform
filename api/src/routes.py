@@ -130,9 +130,9 @@ def get_normalizations(user_id: int, text_id: int):
             normalizations_from_db = queries.get_normalizations_by_text(db_session, text_id, user_id)
 
             corrections = {
-                str(norm.startindex): schemas.NormalizationValue( 
-                    last_index=norm.endindex,
-                    new_token=norm.newtoken
+                str(norm.start_index): schemas.NormalizationValue( 
+                    last_index=norm.end_index,
+                    new_token=norm.new_token
                 )
                 for norm in normalizations_from_db
             }

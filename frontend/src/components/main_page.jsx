@@ -16,6 +16,7 @@ function MainPage() {
 
     const fetchEssay = useCallback(async () => {
         const text = await getTextById(selectedEssay.value, userId);
+        //console.log(text);
         const normalizations = await getNormalizationsByText(selectedEssay.value, userId);
         text.corrections = normalizations;
         setCurrentText(text);
