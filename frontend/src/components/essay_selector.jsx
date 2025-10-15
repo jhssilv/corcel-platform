@@ -92,16 +92,10 @@ const EssaySelector = ({
 
         const userId = localStorage.getItem('userId');
         await toggleNormalizedStatus(selectedEssay.value, userId);
-
-        console.log(textsData.find(e => e.id === selectedEssay.value).normalizedByUser);
         const updatedTexts = await getTextsData(userId);
-        console.log(updatedTexts.find(e => e.id === selectedEssay.value).normalizedByUser);
-
-        console.log(updatedTexts.find(e => e.id === selectedEssay.value));
 
         setTextsData(updatedTexts);
         changeFilteredEssays(updatedTexts, selectedGrades, selectedTeacher, selectedOtherFilters);
-
     };
 
     // Handlers for dropdown changes
