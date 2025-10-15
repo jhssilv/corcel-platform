@@ -14,12 +14,14 @@ function createSpan(essay, i, selectedStartIndex, selectedEndIndex, handleSelect
     else if(correction) className+=" corrected";
     else if(token.candidates !== undefined && token.candidates.length > 0) className+=" candidates";
 
+    let token_text = essay.corrections && essay.corrections[i] ? essay.corrections[i].new_token : token.text;
+
     return( 
         <span 
             key={i} 
             className={i >= selectedStartIndex && i <= selectedEndIndex ? className+' selected' : className}
             onClick={() => { handleSelectedWordIndex(i) ;}} >
-            {token.text}
+            {token_text}
         </span>
     )
 } 
@@ -34,8 +36,6 @@ function buildText(essay, selectedStartIndex, selectedEndIndex, handleSelectedWo
         let token_text = token.text;
         let token_isWord = token.isWord;
         let correction = essay.corrections[i];
-
-        console.log(token_text);
 
         i += token_length; // Skip the tokens that were part of a correction
         token_length = 0;

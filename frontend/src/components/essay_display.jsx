@@ -16,6 +16,8 @@ function EssayDisplay({ essay, refreshEssay }) {
     return <h3>Nenhum texto selecionado.</h3>;
   }
 
+  console.log(essay.corrections);
+
   const singleWordSelected = selectedStartIndex !== null && selectedEndIndex === selectedStartIndex;
   const selectedWordHasCandidates = essay.corrections[selectedStartIndex] ? true : false;
   const candidates = essay.tokens[selectedStartIndex] ? essay.tokens[selectedStartIndex]["candidates"] : [];

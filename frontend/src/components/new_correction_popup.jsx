@@ -35,8 +35,10 @@ const NewCorrectionPopup = ({
     const handleAddButton = async (event) => {
         if (event) { event.preventDefault(); }
 
-        if(!candidate) await deleteNormalization(essay.index, selectedFirstIndex, userId);
-        else           await postNormalization(essay.index, selectedFirstIndex, selectedLastIndex, candidate, userId);
+        console.log(essay.id, selectedFirstIndex, userId, !candidate);
+
+        if(!candidate) await deleteNormalization(essay.id, selectedFirstIndex, userId);
+        else           await postNormalization(essay.id, selectedFirstIndex, selectedLastIndex, candidate, userId);
         refreshEssay();
 
         setSelectedCandidate(null);
@@ -93,7 +95,8 @@ const NewCorrectionPopup = ({
 NewCorrectionPopup.propTypes = {
     essay: PropTypes.object,
     candidate: PropTypes.string,
-    selectedWordIndex: PropTypes.number,
+    selectedFirstIndex: PropTypes.number,
+    selectedLastIndex: PropTypes.number,
     isActive: PropTypes.bool,
     setSelectedCandidate: PropTypes.func,
     setPopupIsActive: PropTypes.func,
