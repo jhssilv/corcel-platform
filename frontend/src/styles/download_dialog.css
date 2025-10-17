@@ -1,0 +1,144 @@
+/*
+ * Novo Estilo para o Download Dialog
+ * Inspirado no tema de 'index.css' (dark mode, cor de destaque #646cff)
+*/
+
+@keyframes dialog-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* O fundo que cobre a tela */
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  
+  /* Cor de fundo com transparência */
+  background-color: rgba(10, 10, 10, 0.6);
+  
+  /* Efeito de blur (o mesmo que você tinha) */
+  backdrop-filter: blur(3px);
+  
+  /* Centraliza o popup */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  
+  z-index: 1000;
+}
+
+/* O popup em si */
+.dialog-popup {
+  /* Um pouco mais claro que o fundo #242424 de index.css */
+  background-color: #2f2f2f;
+  
+  color: rgba(255, 255, 255, 0.87); /* Cor do texto de index.css */
+  padding: 1.5em 2em;
+  
+  /* Borda sutil para definir o popup */
+  border: 1px solid #555;
+  
+  /* Mais arredondado que os botões (8px) para parecer um container */
+  border-radius: 12px; 
+  
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  max-width: 400px;
+  width: 90%;
+  
+  /* Animação de entrada */
+  animation: dialog-fade-in 0.2s ease-out;
+}
+
+.dialog-title {
+  /* Inspirado no h1 de index.css, mas menor */
+  font-size: 1.8em;
+  line-height: 1.1;
+  font-weight: 500;
+  margin-top: 0;
+  margin-bottom: 1em;
+}
+
+.dialog-content {
+  margin-bottom: 2em;
+}
+
+/* Um novo estilo de checkbox que usa a cor de destaque de index.css */
+.dialog-checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 0.5em;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
+
+.dialog-checkbox-wrapper:hover {
+  background-color: #3a3a3a;
+}
+
+/* Usamos a cor de destaque de index.css no checkbox nativo */
+.dialog-checkbox-wrapper input[type="checkbox"] {
+  width: 1.2em;
+  height: 1.2em;
+  margin-right: 0.75em;
+  cursor: pointer;
+  
+  /* Esta é a chave: usa a cor de destaque #646cff */
+  accent-color: #646cff; 
+}
+
+/* Container para os botões */
+.dialog-buttons {
+  display: flex;
+  justify-content: flex-end; /* Alinha botões à direita (padrão de dialogs) */
+  gap: 0.75em;
+}
+
+/* Estilo base do botão (herdando de index.css mas com ajustes) */
+.dialog-button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit; /* Herda a fonte de index.css */
+  cursor: pointer;
+  transition: all 0.25s;
+}
+.dialog-button:focus,
+.dialog-button:focus-visible {
+  /* Estilo de foco de index.css */
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+/* Botão Primário (Baixar) */
+.dialog-button.primary {
+  /* Usa a cor de destaque de index.css */
+  background-color: #646cff;
+  color: #ffffff;
+  border-color: #646cff;
+}
+.dialog-button.primary:hover {
+  background-color: #535bf2; /* Cor de hover de index.css */
+  border-color: #535bf2;
+}
+
+/* Botão Secundário (Cancelar) */
+.dialog-button.secondary {
+  background-color: #4a4a4a;
+  color: rgba(255, 255, 255, 0.87);
+  border-color: #4a4a4a;
+}
+.dialog-button.secondary:hover {
+  background-color: #5a5a5a;
+  border-color: #666;
+}
