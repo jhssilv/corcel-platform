@@ -82,3 +82,11 @@ class NormalizationCreateRequest(BaseModel):
     first_index: int = Field(..., example=15, description="Index from the first token.")
     last_index: int = Field(..., example=16, description="Index of the last token of the normalization.")
     new_token: str = Field(..., example="new corrected token", description="The new token that will replace the original.")
+    
+    
+# --- /downloads ---
+    
+class DownloadRequest(BaseModel):
+    """Schema for the download request body."""
+    text_ids: List[int] = Field(..., example=[1, 2, 3], description="List of text IDs to download.")
+    use_tags: bool = Field(False, description="Whether to use tags in the normalized tokens.")

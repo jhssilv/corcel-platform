@@ -1,10 +1,12 @@
 from datetime import datetime
-from flask import Flask, jsonify, request 
+import os
+from flask import Flask, jsonify, send_from_directory 
 from flask_pydantic import validate
 from pydantic import ValidationError
 
 import api_schemas as schemas
 import database_queries as queries
+from recover_texts import save_modified_texts, delete_saved_files
 
 api = Flask(__name__)
 
@@ -204,3 +206,15 @@ def toggle_normalization_status(user_id: int, text_id: int):
     except Exception as e:
         error_response = schemas.ErrorResponse(error=str(e))
         return jsonify(error_response.model_dump()), 500
+    
+
+@api.route('/api/download/<int:user_id>', methods=['POST'])
+def download_normalized_texts(user_id:int, body: schemas.DownloadRequest):
+    """Generates and saves normalized texts for the user."""
+    try:
+        parsed_user_id = int(user_id)
+        zip_path = save_modified_texts(parsed_user_id, body.text_ids, body.use_tags)
+        return send_from_directory(directory=os.path.dirname(zip_path), path=os.path.basename(zip_path), as_attachment=True)
+
+    except Exception as e:
+        pass
