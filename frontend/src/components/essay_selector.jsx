@@ -169,7 +169,7 @@ const EssaySelector = ({
                             type="checkbox"
                             name="cb"
                             id="cb-47"
-                            checked={textsData.find((e) => e.id === selectedEssay.value).normalized_by_user}
+                            checked={textsData.find((e) => e.id === selectedEssay.value).normalizedByUser}
                             onChange={() => handleFinishedToggled()}
                         />
                         <label htmlFor="cb-47">Finalizado?</label>
@@ -178,13 +178,12 @@ const EssaySelector = ({
             )}
             {/* Corrected texts count */}
             <div id="correctedCount">
-                Corrigidos: {filteredEssays.length} / {
-                    textsData
-                        .filter(({ id, normalized_by_user }) =>
-                            normalized_by_user === true &&
+                Corrigidos: {
+                    textsData.filter(({ id, normalizedByUser }) =>
+                            normalizedByUser === true &&
                             filteredEssays.some((essay) => essay.value === id)
                         ).length
-                }
+                } de {filteredEssays.length}.
             </div>
         </form>
     )
