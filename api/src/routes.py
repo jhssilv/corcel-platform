@@ -56,7 +56,6 @@ def get_usernames():
 @validate()
 def login(body: schemas.LoginRequest):
     """Authenticates a user and returns a userId and a message."""
-    print(body, flush=True)
     try:
         with queries.get_db_session() as db_session:
             success, user_id = queries.authenticate_user(db_session, body.username, body.password)
