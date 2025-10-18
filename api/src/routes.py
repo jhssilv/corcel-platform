@@ -1,12 +1,20 @@
 from datetime import datetime
-from flask import Flask, jsonify, request 
+import os
+import shutil
+from flask import Flask, after_this_request, jsonify, send_from_directory, request 
 from flask_pydantic import validate
 from pydantic import ValidationError
 
+from logging_config import DownloadLogger
+import logging
 import api_schemas as schemas
 import database_queries as queries
+from recover_texts import save_modified_texts
 
 api = Flask(__name__)
+
+download_log_manager = DownloadLogger(log_file='logs/download_activity.log')
+logger = download_log_manager.get_logger()
 
 @api.errorhandler(ValidationError)
 def handle_validation_error(e: ValidationError):
@@ -203,4 +211,55 @@ def toggle_normalization_status(user_id: int, text_id: int):
             return jsonify(response.model_dump()), 200
     except Exception as e:
         error_response = schemas.ErrorResponse(error=str(e))
+        return jsonify(error_response.model_dump()), 500
+    
+
+@api.route('/api/download/<int:user_id>', methods=['POST'])
+def download_normalized_texts(user_id: int):
+    try:
+        logger.info(f"Download request received for user ID: {user_id}")
+        body = request.get_json()
+        if not body:
+            logger.warning(f"Download request body is missing or not JSON for user ID: {user_id}")
+            error_response = schemas.ErrorResponse(error="Request body is missing or not JSON")
+            return jsonify(error_response.model_dump()), 400
+
+        text_ids = body.get('text_ids')
+        use_tags = body.get('use_tags', False)
+
+        if not isinstance(text_ids, list) or not text_ids:
+            logger.warning(f"Invalid 'text_ids' format for user ID: {user_id}")
+            return jsonify({"error": "'text_ids' must be a non-empty list"}), 400
+
+        parsed_user_id = int(user_id)
+        zip_abs_path = save_modified_texts(parsed_user_id, text_ids, use_tags)
+
+        if not os.path.exists(zip_abs_path):
+            error_response = schemas.ErrorResponse(error="Failed to generate zip file on server.")
+            logger.error(f"Failed to generate zip file on server for user ID: {user_id}")
+            return jsonify(error_response.model_dump()), 500
+
+        directory = os.path.dirname(zip_abs_path)
+        filename = os.path.basename(zip_abs_path)
+
+        @after_this_request
+        def cleanup(response):
+            try:
+                temp_dir = os.path.dirname(directory) # O diretório temporário pai
+                if os.path.exists(temp_dir):
+                    shutil.rmtree(temp_dir)
+            except Exception as cleanup_error:
+                logger.error(f"Error cleaning up temporary directory {temp_dir}: {cleanup_error}")
+            return response
+
+        logger.info(f"Serving zip file {filename} for user ID: {user_id}")
+        return send_from_directory(
+            directory=directory,
+            path=filename,
+            as_attachment=True
+        )
+
+    except Exception as e:
+        logger.exception("Error during generation or sending of download:")
+        error_response = schemas.ErrorResponse(error="Internal server error while generating the file.")
         return jsonify(error_response.model_dump()), 500

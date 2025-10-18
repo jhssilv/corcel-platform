@@ -2,6 +2,7 @@
 
 backups/dumps
 package-lock.json
+recovered_texts/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

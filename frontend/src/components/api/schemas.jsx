@@ -115,3 +115,8 @@ export const NormalizationCreateRequestSchema = z.object({
 export const NormalizationDeleteRequestSchema = z.object({
   word_index: z.number(),
 });
+
+export const DownloadRequestSchema = z.object({
+  text_ids: z.array(z.number()).min(1, "At least one text ID must be provided."),
+  use_tags: z.boolean().optional(),
+});

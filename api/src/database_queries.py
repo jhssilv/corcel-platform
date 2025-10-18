@@ -1,25 +1,12 @@
-from sqlalchemy import create_engine, func, literal, select
-from sqlalchemy.orm import sessionmaker, joinedload
+from sqlalchemy import func, select
+from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import NoResultFound
-from sqlalchemy.exc import OperationalError
+
+from database_models import User, Text, Normalization, TextsUsers
+from database_conn import get_db_session
 import os
 
-from database_models import Token, User, Text, Normalization, TextsUsers
-
-# --- Configuração da Conexão e Sessão ---
-
-DATABASE_URL = os.getenv("DATABASE_URL")
-
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-def get_db_session() -> sessionmaker | None:
-    """Database session creator."""
-    db = SessionLocal()
-    try:
-        return db
-    finally:
-        pass
+db_session = get_db_session()
 
 # --- Funções de Query Equivalentes ---
 

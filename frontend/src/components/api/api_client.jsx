@@ -7,6 +7,10 @@ const apiClient = axios.create({
   },
 });
 
+const apiClientBlob = axios.create({
+  baseURL: '/api',
+});
+
 apiClient.interceptors.response.use(
   // If the response is successful, just return the data
   (response) => response.data,
@@ -21,4 +25,4 @@ apiClient.interceptors.response.use(
   }
 );
 
-export default apiClient;
+export { apiClient, apiClientBlob };
