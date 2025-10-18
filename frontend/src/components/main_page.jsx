@@ -7,6 +7,7 @@ import AuthContext from './auth_context.jsx';
 import DownloadDialog from './download_dialog.jsx';
 import DownloadButton from './download_button.jsx';
 
+import downloadTexts from './api/download_texts.jsx';
 import { getTextById, getNormalizationsByText } from './api/api_functions.jsx';
 
 // MAIN PAGE COMPONENT \\
@@ -36,20 +37,14 @@ function MainPage() {
             <h1>CorCel 🐴</h1>
             <h2>Plataforma de Normalização Ortográfica</h2>
 
-
-
             <div> 
-
                 <DownloadButton onClick={() => setShowDownloadDialog(true)}>Baixar Textos
                     <span role="img" aria-label="download">⬇️</span>
                 </DownloadButton>
-
-
                 <EssaySelector 
                     selectedEssay={selectedEssay}
                     setSelectedEssay={setSelectedEssay}
                 />
-
             </div>
 
             <EssayDisplay 
@@ -60,10 +55,7 @@ function MainPage() {
             <DownloadDialog
                 show={showDownloadDialog}
                 onClose={() => setShowDownloadDialog(false)}
-                onDownload={(useBrackets) => {
-                    // Lógica para lidar com o download
-                    console.log("Iniciando download com useBrackets:", useBrackets);
-                }}
+                onDownload={(useBrackets) => downloadTexts(useBrackets)}
             />
         </section>
     );
