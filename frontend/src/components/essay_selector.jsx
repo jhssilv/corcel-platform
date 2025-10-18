@@ -84,7 +84,7 @@ const EssaySelector = ({
             })
             .map(({ id, sourceFileName }) => ({ value: id, label: sourceFileName }));
 
-
+        localStorage.setItem('textIds', JSON.stringify(filteredEssays.map(essay => essay.value)));
         setFilteredEssays(filteredEssays);
     }
 
