@@ -1,8 +1,10 @@
 from datetime import datetime
 import os
-from flask import Flask, jsonify, send_from_directory 
+import shutil
+from flask import Flask, after_this_request, jsonify, send_from_directory, request 
 from flask_pydantic import validate
 from pydantic import ValidationError
+import logging
 
 import api_schemas as schemas
 import database_queries as queries
@@ -50,6 +52,7 @@ def get_usernames():
 @validate()
 def login(body: schemas.LoginRequest):
     """Authenticates a user and returns a userId and a message."""
+    print(body, flush=True)
     try:
         with queries.get_db_session() as db_session:
             success, user_id = queries.authenticate_user(db_session, body.username, body.password)
@@ -209,12 +212,47 @@ def toggle_normalization_status(user_id: int, text_id: int):
     
 
 @api.route('/api/download/<int:user_id>', methods=['POST'])
-def download_normalized_texts(user_id:int, body: schemas.DownloadRequest):
-    """Generates and saves normalized texts for the user."""
+def download_normalized_texts(user_id: int):
     try:
+        body = request.get_json()
+        if not body:
+            error_response = schemas.ErrorResponse(error="Request body is missing or not JSON")
+            return jsonify(error_response.model_dump()), 400
+
+        text_ids = body.get('text_ids')
+        use_tags = body.get('use_tags', False)
+
+        if not isinstance(text_ids, list) or not text_ids:
+            return jsonify({"error": "'text_ids' must be a non-empty list"}), 400
+
         parsed_user_id = int(user_id)
-        zip_path = save_modified_texts(parsed_user_id, body.text_ids, body.use_tags)
-        return send_from_directory(directory=os.path.dirname(zip_path), path=os.path.basename(zip_path), as_attachment=True)
+
+        zip_abs_path = save_modified_texts(parsed_user_id, text_ids, use_tags)
+
+        if not os.path.exists(zip_abs_path):
+            error_response = schemas.ErrorResponse(error="Failed to generate zip file on server.")
+            return jsonify(error_response.model_dump()), 500
+
+        directory = os.path.dirname(zip_abs_path)
+        filename = os.path.basename(zip_abs_path)
+
+        @after_this_request
+        def cleanup(response):
+            try:
+                temp_dir = os.path.dirname(directory) # O diretório temporário pai
+                if os.path.exists(temp_dir):
+                    shutil.rmtree(temp_dir)
+            except Exception as cleanup_error:
+                logging.error(f"Error cleaning up temporary directory {temp_dir}: {cleanup_error}")
+            return response
+
+        return send_from_directory(
+            directory=directory,
+            path=filename,
+            as_attachment=True
+        )
 
     except Exception as e:
-        pass
+        logging.exception("Error during generation or sending of download:")
+        error_response = schemas.ErrorResponse(error="Internal server error while generating the file.")
+        return jsonify(error_response.model_dump()), 500
