@@ -245,11 +245,10 @@ def download_normalized_texts(user_id: int):
         @after_this_request
         def cleanup(response):
             try:
-                temp_dir = os.path.dirname(directory) # O diretório temporário pai
-                if os.path.exists(temp_dir):
-                    shutil.rmtree(temp_dir)
+                if os.path.exists(directory):
+                    shutil.rmtree(directory)
             except Exception as cleanup_error:
-                logger.error(f"Error cleaning up temporary directory {temp_dir}: {cleanup_error}")
+                logger.error(f"Error cleaning up temporary directory {directory}: {cleanup_error}")
             return response
 
         logger.info(f"Serving zip file {filename} for user ID: {user_id}")
