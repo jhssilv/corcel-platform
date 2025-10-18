@@ -1,3 +1,4 @@
+import tempfile
 import database_models as models
 from database_queries import get_normalizations_by_text
 from database_conn import get_db_session
@@ -9,7 +10,6 @@ db = get_db_session()
 
 def normalizations_to_dict(normalizations):
     return {n.start_index: n for n in normalizations}
-
 
 def get_normalized_tokens(text_ids:list[int], user_id:int, use_tags=False) -> dict[str, dict]:
     texts = db.query(models.Text).filter(models.Text.id.in_(text_ids)).all()
@@ -23,18 +23,17 @@ def get_normalized_tokens(text_ids:list[int], user_id:int, use_tags=False) -> di
         
         for token in tokens:
             norm = normalizations.get(token.position)
-            if norm:
-                if use_tags:
-                    token.token_text = f"{token.token_text}<{norm.new_token}>"
-                else:
-                    token.token_text = norm.new_token
-                texts_tokens[text.source_file_name]['tokens'].append(token)
-            else:
-                texts_tokens[text.source_file_name]['tokens'].append(token)
+            if norm and use_tags:
+                token.token_text = f"{token.token_text}<{norm.new_token}>"
+            elif norm and not use_tags:
+                token.token_text = norm.new_token
+
+            texts_tokens[text.source_file_name]['tokens'].append(token)
 
     return texts_tokens
 
 def rebuild_text(tokens:list[models.Token]) -> str:
+    # There may be a better way to do this
     NO_SPACE_BEFORE = {':', ',', '.', ')', '}', '>', '?', '!', ']', '\n', '\t', ';', ' '}
     NO_SPACE_AFTER = {'{', '(', '<', '[', '#', '\n', '\t', ' '}
 
@@ -42,51 +41,56 @@ def rebuild_text(tokens:list[models.Token]) -> str:
     previous_token = None
     
     for token in tokens:
+        # It's the first token
         if not previous_token:
             result += token.token_text
             previous_token = token
+        # It's not the first token...
         else:
+            # ...and there are rules for no space
             if (previous_token.token_text in NO_SPACE_AFTER) or (token.token_text in NO_SPACE_BEFORE):
                 result += token.token_text
                 previous_token = token
+            # ...and there are NO rules for no space
             else:
                 result += ' ' + token.token_text
                 previous_token = token
                 
     return result
 
-def save_result(source_file_name:str, user_id:int, text:str, grade:int):
-    output_path = f'recovered_texts/{user_id}/NOTA {grade}/{source_file_name}.txt'
+def save_result(base_dir: str, source_file_name: str, text: str, grade: int):
+    safe_filename = os.path.basename(source_file_name)
+    output_path = os.path.join(base_dir, f'NOTA {grade}', f'{safe_filename}.txt')
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    with open(output_path, 'w+') as f:
+    with open(output_path, 'w', encoding='utf-8') as f: # Specify UTF-8 encoding
         f.write(text)
 
-def save_modified_texts(user_id:int, text_ids:list[int], use_tags:bool = False) ->str:
-    tokens = get_normalized_tokens(text_ids, user_id, use_tags=use_tags)
-    for source_file, data in tokens.items():
+def save_modified_texts(user_id: int, text_ids: list[int], use_tags: bool = False) -> str:
+    # Create a temporary directory for this operation
+    temp_dir = tempfile.mkdtemp(prefix=f'recovered_texts_user_{user_id}_')
+    
+    txt_output_dir = os.path.join(temp_dir, 'texts')
+    os.makedirs(txt_output_dir, exist_ok=True)
+
+    tokens_by_file = get_normalized_tokens(text_ids, user_id, use_tags) 
+
+    for source_file, data in tokens_by_file.items():
+        # Rebuild the text from tokens and normalizations
         rebuilt_text = rebuild_text(data['tokens'])
-        save_result(source_file, user_id, rebuilt_text, data['grade'])
+        # Create subdirectory based on grade and save the file
+        save_result(txt_output_dir, source_file, rebuilt_text, data.get('grade', 0))
 
-    os.makedirs(os.path.dirname(f'recovered_texts/zip/{user_id}/recovered_texts.zip'), exist_ok=True)
-    shutil.make_archive(f'recovered_texts/zip/{user_id}/recovered_texts', 'zip', f'recovered_texts/{user_id}/')
+    # Zip the results
+    zip_basename = f'recovered_texts_user_{user_id}'
+    zip_path_base = os.path.join(temp_dir, zip_basename)
+    shutil.make_archive(zip_path_base, 'zip', txt_output_dir)
+    
+    return f"{zip_path_base}.zip"
 
-    return f'recovered_texts/zip/{user_id}/recovered_texts.zip'
-
-def delete_saved_files(user_id:int):
-    if int(user_id):
-        folder_path = f'recovered_texts/{user_id}/'
-        zip_path = f'recovered_texts/zip/{user_id}/recovered_texts.zip'
-        if os.path.exists(folder_path):
-            shutil.rmtree(folder_path)
-        if os.path.exists(zip_path):
-            os.remove(zip_path)
-            
-    else:
-        print("user_id must be an integer value.")
 
 if __name__ == '__main__':
     
-    user_id = 2
+    user_id = 1
     use_tags = True
     text_ids = [i for i in range(3)]
 
