@@ -62,23 +62,21 @@ const GeneratedCandidates = ({ candidates , selectedStartIndex, selectedEndIndex
                 setSuggestForAll(false);
 
             }}> &#128465; </button>
-
-            <span className="checkbox-wrapper-47" style={{display: 'inline-block', marginLeft: '10px' }}>
-                <input 
-                    type="checkbox"
-                    name="cb"
-                    id="cb-48"
-                    checked={suggestForAll}
-                    onChange={(e) => setSuggestForAll(e.target.checked)}
-                />
-                <label htmlFor="cb-48" 
-                title='Adiciona o novo token como sugestão para todas as ocorrências da palavra substituída na plataforma.'>
-                    Sugestão Global &#x1F6C8;
-                </label>
-                
-            </span>
         </span>
     );
+            //<span className="checkbox-wrapper-47" style={{display: 'inline-block', marginLeft: '10px' }}>
+            //    <input 
+            //        type="checkbox"
+            //        name="cb"
+            //        id="cb-48"
+            //        checked={suggestForAll}
+            //        onChange={(e) => setSuggestForAll(e.target.checked)}
+            //    />
+            //    <label htmlFor="cb-48" 
+            //    title='Adiciona o novo token como sugestão para todas as ocorrências da palavra substituída na plataforma.'>
+            //        Sugestão Global &#x1F6C8;
+            //    </label>  
+            //</span>
 
     return <>{spans}</>;
 };
