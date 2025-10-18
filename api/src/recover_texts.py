@@ -34,8 +34,8 @@ def get_normalized_tokens(text_ids:list[int], user_id:int, use_tags=False) -> di
 
 def rebuild_text(tokens:list[models.Token]) -> str:
     # There may be a better way to do this
-    NO_SPACE_BEFORE = {':', ',', '.', ')', '}', '>', '?', '!', ']', '\n', '\t', ';', ' '}
-    NO_SPACE_AFTER = {'{', '(', '<', '[', '#', '\n', '\t', ' '}
+    NO_SPACE_BEFORE = {':', ',', '.', ')', '}', '?', '!', ']', '\n', '\t', ';', ' '}
+    NO_SPACE_AFTER = {'{', '(', '[', '#', '\n', '\t', ' '}
 
     result = ""
     previous_token = None
@@ -81,7 +81,7 @@ def save_modified_texts(user_id: int, text_ids: list[int], use_tags: bool = Fals
         save_result(txt_output_dir, source_file, rebuilt_text, data.get('grade', 0))
 
     # Zip the results
-    zip_basename = f'recovered_texts_user_{user_id}'
+    zip_basename = 'recovered_texts'
     zip_path_base = os.path.join(temp_dir, zip_basename)
     shutil.make_archive(zip_path_base, 'zip', txt_output_dir)
     
