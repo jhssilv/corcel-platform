@@ -1,6 +1,7 @@
 import { z } from 'zod';
-import apiClient from './api_client';
+import {apiClient, apiClientBlob} from './api_client';
 import * as schemas from './schemas';
+import { saveAs } from 'file-saver';
 
 /**
  * Lida com erros da API e de validação, retornando um objeto de erro padronizado.
@@ -134,5 +135,31 @@ export async function toggleNormalizedStatus(textId, userId) {
     return schemas.MessageResponseSchema.parse(data);
   } catch (error) {
     return handleApiError(error, 'Erro ao alterar o status da normalização.');
+  }
+}
+
+/**
+ * Lets the user download the normalized texts.
+ */
+export async function requestDownload(textIds, useTags, userId) {
+  try {
+    const payload = {
+      text_ids: textIds,
+      use_tags: useTags
+    };
+
+    const response = await apiClientBlob.post(`/download/${userId}`, payload, {
+      responseType: 'blob',
+    });
+
+    let filename = 'normalized_texts.zip'; // Default filename
+    
+    saveAs(response.data, filename);
+
+    return { success: true, filename: filename };
+
+  } catch (error) {
+    console.error("Download request failed:", error);
+    return handleApiError(error, 'Error requesting download.');
   }
 }
