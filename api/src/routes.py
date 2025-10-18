@@ -8,7 +8,7 @@ import logging
 
 import api_schemas as schemas
 import database_queries as queries
-from recover_texts import save_modified_texts, delete_saved_files
+from recover_texts import save_modified_texts
 
 api = Flask(__name__)
 
