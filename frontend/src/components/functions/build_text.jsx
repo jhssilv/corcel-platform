@@ -6,6 +6,8 @@ function createSpan(essay, i, selectedStartIndex, selectedEndIndex, handleSelect
     // classname = "clickable corrected" - token has been corrected (blue background)
     // classname = "clickable candidates" - token has possible candidates for correction (red background)
 
+    //console.log(essay.tokens);
+
     let token = essay.tokens[i];
     let correction = essay.corrections[i];
     let className = "clickable";
@@ -19,7 +21,7 @@ function createSpan(essay, i, selectedStartIndex, selectedEndIndex, handleSelect
     return( 
         <span 
             key={i} 
-            className={i >= selectedStartIndex && i <= selectedEndIndex ? className+' selected' : className}
+            className={className}
             onClick={() => { handleSelectedWordIndex(i) ;}} >
             {token_text}
         </span>
@@ -27,30 +29,47 @@ function createSpan(essay, i, selectedStartIndex, selectedEndIndex, handleSelect
 } 
 
 function buildText(essay, selectedStartIndex, selectedEndIndex, handleSelectedWordIndex) {
-    const tokens_with_space = /[(]|\d+|\n/; // Tokens that need a preceding space
+    const NO_SPACE_BEFORE = [':', ',', '.', ')', '}', '?', '!', ']', '\n', '\t', ';', ' ']; // Tokens that need a preceding space
+    const NO_SPACE_AFTER = ['{', '(', '[', '#', '\n', '\t', ' '];
+    let QUOTE_CHARS = ['"', '“', '”', '‘', '’', "'"];
+    let quote_opened = false;
     let token_length = 0;
     const spans = []; 
 
     for (let i = 0; i < essay.tokens.length; i++) {
         let token = essay.tokens[i];
-        let token_text = token.text;
-        let token_isWord = token.isWord;
-        let correction = essay.corrections[i];
 
         i += token_length; // Skip the tokens that were part of a correction
         token_length = 0;
 
-        if(token_isWord) 
-        {
-            if (i > 0) spans.push(" ");
-            if(correction) { token_length = correction.last_index - i; }
+        if(i === 0){
+            spans.push(createSpan(essay, i, selectedStartIndex, selectedEndIndex, handleSelectedWordIndex));
+            spans.push(' ');
+            continue;
+        }
 
-            let newSpan = createSpan(essay, i, selectedStartIndex, selectedEndIndex, handleSelectedWordIndex);
-            spans.push(newSpan);
-        } 
-        else if(i > 0 && token_text.match(tokens_with_space)) {
-            spans.push(" ");
-            spans.push(token_text);
+        if(QUOTE_CHARS.includes(token.text)){
+            quote_opened = !quote_opened;
+            if(quote_opened){
+                spans.push(token.text);
+            }
+            else{
+                spans.pop();
+                spans.push(createSpan(essay, i, selectedStartIndex, selectedEndIndex, handleSelectedWordIndex));
+                spans.push(' ');
+            }
+        }
+        else if(NO_SPACE_BEFORE.includes(token.text)) {
+            spans.pop();
+            spans.push(token.text);
+            spans.push(' ');
+        }
+        else if(NO_SPACE_AFTER.includes(token.text)) {
+            spans.push(token.text);
+        }
+        else {
+            spans.push(createSpan(essay, i, selectedStartIndex, selectedEndIndex, handleSelectedWordIndex));
+            spans.push(' ');
         }
     }
     return <pre>{spans}</pre>;
