@@ -8,8 +8,8 @@ from pydantic import ValidationError
 from logging_config import DownloadLogger
 import logging
 import api_schemas as schemas
-import database_queries as queries
-from recover_texts import save_modified_texts
+import database.queries as queries
+from download_texts import save_modified_texts
 
 api = Flask(__name__)
 

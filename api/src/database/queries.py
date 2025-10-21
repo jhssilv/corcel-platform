@@ -2,8 +2,8 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import NoResultFound
 
-from database_models import User, Text, Normalization, TextsUsers
-from database_conn import get_db_session
+from database.models import User, Text, Normalization, TextsUsers
+from database.connection import get_db_session
 import os
 
 db_session = get_db_session()

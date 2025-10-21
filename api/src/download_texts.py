@@ -1,7 +1,7 @@
 import tempfile
-import database_models as models
-from database_queries import get_normalizations_by_text
-from database_conn import get_db_session
+import database.models as models
+from database.queries import get_normalizations_by_text
+from database.connection import get_db_session
 import os
 import shutil
 import time
