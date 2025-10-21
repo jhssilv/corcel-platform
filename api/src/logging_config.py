@@ -17,11 +17,11 @@ class DownloadLogger:
         Initializes and configures the logger.
 
         Args:
-            log_file (str): Caminho para o ficheiro onde os logs serão guardados.
-            log_name (str): Nome do logger (útil para filtragem).
-            level (int): Nível mínimo de logging (ex: logging.INFO, logging.DEBUG).
-            max_bytes (int): Tamanho máximo do ficheiro de log antes da rotação.
-            backup_count (int): Quantos ficheiros de log antigos manter.
+            log_file (str): Path for the file where logs will be stored.
+            log_name (str): Name of the logger (useful for filtering).
+            level (int): Minimum logging level (e.g., logging.INFO, logging.DEBUG).
+            max_bytes (int): Maximum log file size before rotation.
+            backup_count (int): How many old log files to keep.
         """
         self.log_file = log_file
         self.log_name = log_name
