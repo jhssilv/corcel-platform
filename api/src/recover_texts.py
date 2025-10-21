@@ -24,7 +24,7 @@ def get_normalized_tokens(text_ids:list[int], user_id:int, use_tags=False) -> di
         for token in tokens:
             norm = normalizations.get(token.position)
             if norm and use_tags:
-                token.token_text = f"{token.token_text}<{norm.new_token}>"
+                token.token_text = f"<norm orig='{token.token_text}'>{norm.new_token}</norm>"
             elif norm and not use_tags:
                 token.token_text = norm.new_token
 
