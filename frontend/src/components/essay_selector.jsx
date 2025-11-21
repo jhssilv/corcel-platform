@@ -55,9 +55,25 @@ const EssaySelector = ({
         }
     }, []);
 
+    const fuzzySearchLogic = (candidate, input) => {
+        if (!input) return true;
+
+        // regex: 2015n4 -> /2.*0.*1.*5.*n.*4/i
+        const pattern = input
+            .split(' ')
+            .map((char) => char.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+            .join('.*');
+        
+        const regex = new RegExp(pattern, 'i');
+        
+        return regex.test(candidate.label);
+    };
+
     if (!textsData) {
         return <p>Carregando dados...</p>;
     }
+
+    
 
     function changeFilteredEssays(textsData, selectedGrades, selectedTeacher, selectedOtherFilters) {
 
@@ -136,6 +152,7 @@ const EssaySelector = ({
                 selectedValues={selectedEssay}
                 onChange={handleEssayChange}
                 isMulti={false}
+                filterOption={fuzzySearchLogic}
             />
             {/* Grade Dropdown */}
             <DropdownSelect
