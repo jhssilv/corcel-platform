@@ -1,3 +1,4 @@
+/* Updated to match dark theme (#242424 background, light text) */
 .top-bar {
   position: fixed;
   top: 0;
@@ -217,6 +218,10 @@
 }
 
 .whitelist-button:hover {
+  border-color: #646cff;
+}
+
+.report-button:hover {
   border-color: #646cff;
 }
 
@@ -593,6 +598,44 @@
   opacity: 0.6;
   transform: none;
   box-shadow: none;
+}
+
+/* Added report modal styles */
+.report-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #1a1a1a;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  z-index: 2001;
+  width: 90%;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.3s ease;
+}
+
+.report-text {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.87);
+  text-align: center;
+  margin: 1rem 0;
+  line-height: 1.6;
+}
+
+.report-confirm {
+  background-color: #646cff;
+  color: white;
+  border: 1px solid #646cff;
+}
+
+.report-confirm:hover {
+  background-color: #535bf2;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(100, 108, 255, 0.3);
 }
 
 /* Responsive adjustments */

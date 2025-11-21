@@ -8,6 +8,7 @@ import downloadIcon from "../assets/download.svg"
 import uploadIcon from "../assets/upload.svg"
 import logoutIcon from "../assets/logout.svg"
 import whitelistIcon from "../assets/whitelist.svg"
+import reportIcon from "../assets/report.svg"
 import JSZip from "jszip"
 
 function TopBar({ onDownloadClick }) {
@@ -24,6 +25,9 @@ function TopBar({ onDownloadClick }) {
   const [isValidZip, setIsValidZip] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const [isValidating, setIsValidating] = useState(false)
+
+  const [isReportOpen, setIsReportOpen] = useState(false)
+  const [textCount, setTextCount] = useState(0)
 
   const togglePanel = () => {
     setIsPanelOpen(!isPanelOpen)
@@ -42,23 +46,27 @@ function TopBar({ onDownloadClick }) {
     setIsValidZip(false)
   }
 
-  // TODO: Implement logout button onClick handler
+  const handleReportClick = () => {
+    const textIds = JSON.parse(localStorage.getItem("textIds") || "[]")
+    setTextCount(textIds.length)
+    setIsReportOpen(true)
+    closePanel()
+  }
+
   const handleLogoutClick = () => {
     console.log("[TODO] Implement logout functionality here")
+    // Uncomment the line below when ready to implement:
     // logout();
   }
 
   const handleWhitelistClick = () => {
     setIsWhitelistOpen(true)
     closePanel()
-    // TODO: Implement API call to fetch whitelist words
     fetchWhitelist()
   }
 
   const fetchWhitelist = async () => {
     try {
-      // TODO: Replace this placeholder with actual API call
-      // Placeholder response - comma separated
       const placeholderWords = "word1, word2, word3, example, test"
       setWhitelistText(placeholderWords)
       setOriginalWhitelistText(placeholderWords)
@@ -70,12 +78,8 @@ function TopBar({ onDownloadClick }) {
   const handleWhitelistUpdate = async () => {
     setIsUpdating(true)
     try {
-      // TODO: Replace this placeholder with actual API call
       console.log("[TODO] Send whitelist update to API:", whitelistText)
-
-      // Simulate API delay
       await new Promise((resolve) => setTimeout(resolve, 500))
-
       setOriginalWhitelistText(whitelistText)
       setIsWhitelistOpen(false)
     } catch (error) {
@@ -98,14 +102,12 @@ function TopBar({ onDownloadClick }) {
     setIsValidZip(false)
 
     try {
-      // Check if file is a zip
       if (!file.name.toLowerCase().endsWith(".zip")) {
         setUploadError("O arquivo deve ser um ZIP.")
         setIsValidating(false)
         return
       }
 
-      // Load and validate ZIP contents
       const zip = new JSZip()
       const zipContents = await zip.loadAsync(file)
 
@@ -118,9 +120,8 @@ function TopBar({ onDownloadClick }) {
         return
       }
 
-      // Check if all files are .txt
       const allTxtFiles = fileEntries.every((name) => {
-        const fileName = name.split("/").pop() // Get filename without path
+        const fileName = name.split("/").pop()
         return fileName.toLowerCase().endsWith(".txt")
       })
 
@@ -130,7 +131,6 @@ function TopBar({ onDownloadClick }) {
         return
       }
 
-      // Valid ZIP with only .txt files
       setIsValidZip(true)
       setUploadError("")
     } catch (error) {
@@ -174,18 +174,7 @@ function TopBar({ onDownloadClick }) {
     if (!isValidZip || !uploadFile) return
 
     try {
-      // TODO: Implement API call to upload the ZIP file
-      // Example:
-      // const formData = new FormData();
-      // formData.append('file', uploadFile);
-      // const response = await fetch('/api/upload', {
-      //   method: 'POST',
-      //   body: formData
-      // });
-
       console.log("[TODO] Upload file to API:", uploadFile.name)
-
-      // Close modal after successful upload
       setIsUploadOpen(false)
       setUploadFile(null)
       setUploadError("")
@@ -204,6 +193,20 @@ function TopBar({ onDownloadClick }) {
     setIsDragging(false)
   }
 
+  const handleReportConfirm = async () => {
+    try {
+      const textIds = JSON.parse(localStorage.getItem("textIds") || "[]")
+      console.log("[TODO] Generate report for textIds:", textIds)
+      setIsReportOpen(false)
+    } catch (error) {
+      console.error("[TODO] Handle report generation error:", error)
+    }
+  }
+
+  const handleReportCancel = () => {
+    setIsReportOpen(false)
+  }
+
   return (
     <>
       <div className="top-bar">
@@ -214,8 +217,8 @@ function TopBar({ onDownloadClick }) {
         </button>
 
         <div className="app-title-container">
-          <h1 className="app-title">CorSpell</h1>
-          <p className="app-subtitle">Ferramenta de Normalização Ortográfica</p>
+          <h1 className="app-title">CorCel</h1>
+          <p className="app-subtitle">Sistema de Gerenciamento</p>
         </div>
 
         <div className="top-bar-spacer"></div>
@@ -233,13 +236,11 @@ function TopBar({ onDownloadClick }) {
 
         <div className="panel-content">
           <div className="panel-main-section">
-            {/* TODO: Implement download button onClick - currently passed from parent */}
             <button className="panel-button download-button" onClick={onDownloadClick}>
               <img src={downloadIcon || "/placeholder.svg"} alt="" className="button-icon-svg" />
               <span className="button-text">Download</span>
             </button>
 
-            {/* TODO: Implement upload button onClick in handleUploadClick function above */}
             <button className="panel-button upload-button" onClick={handleUploadClick}>
               <img src={uploadIcon || "/placeholder.svg"} alt="" className="button-icon-svg" />
               <span className="button-text">Upload</span>
@@ -249,10 +250,14 @@ function TopBar({ onDownloadClick }) {
               <img src={whitelistIcon || "/placeholder.svg"} alt="" className="button-icon-svg" />
               <span className="button-text">Whitelist</span>
             </button>
+
+            <button className="panel-button report-button" onClick={handleReportClick}>
+              <img src={reportIcon || "/placeholder.svg"} alt="" className="button-icon-svg" />
+              <span className="button-text">Gerar Relatório</span>
+            </button>
           </div>
 
           <div className="panel-logout-section">
-            {/* TODO: Implement logout button onClick in handleLogoutClick function above */}
             <button className="panel-button logout-button" onClick={handleLogoutClick}>
               <img src={logoutIcon || "/placeholder.svg"} alt="" className="button-icon-svg" />
               <span className="button-text">Sair</span>
@@ -307,14 +312,13 @@ function TopBar({ onDownloadClick }) {
           <div className="modal-overlay" onClick={handleUploadCancel}></div>
           <div className="upload-modal">
             <div className="modal-header">
-              <h2 className="modal-title">Upload de Textos</h2>
+              <h2 className="modal-title">Upload de Arquivo</h2>
               <button className="modal-close-button" onClick={handleUploadCancel} aria-label="Close">
                 ×
               </button>
             </div>
 
             <div className="modal-body">
-              Envie um zip contendo apenas arquivos .txt
               <div
                 className={`upload-dropzone ${isDragging ? "dragging" : ""} ${uploadFile ? "has-file" : ""}`}
                 onDragOver={handleDragOver}
@@ -369,6 +373,33 @@ function TopBar({ onDownloadClick }) {
                 onClick={handleUploadConfirm}
                 disabled={!isValidZip}
               >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {isReportOpen && (
+        <>
+          <div className="modal-overlay" onClick={handleReportCancel}></div>
+          <div className="report-modal">
+            <div className="modal-header">
+              <h2 className="modal-title">Gerar Relatório</h2>
+              <button className="modal-close-button" onClick={handleReportCancel} aria-label="Close">
+                ×
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <p className="report-text">Gerar relatório para os {textCount} textos filtrados?</p>
+            </div>
+
+            <div className="modal-footer">
+              <button className="modal-button cancel-button" onClick={handleReportCancel}>
+                Cancelar
+              </button>
+              <button className="modal-button confirm-button report-confirm" onClick={handleReportConfirm}>
                 Confirmar
               </button>
             </div>
