@@ -3,11 +3,11 @@
 import Select from "react-select"
 import PropTypes from "prop-types"
 
-// GRADES FILTER COMPONENT \\
+// GRADES FILTER COMPONENT \\   
 
 // Dropdown select configurations
 
-const DropdownSelect = ({ title, options, onChange, selectedValues, isMulti = false }) => {
+const DropdownSelect = ({title, options, onChange, selectedValues, isMulti=false, filterOption=null}) => {
   // Handle changes in the select input
   const handleChange = (selectedOptions) => {
     onChange(selectedOptions)
@@ -113,6 +113,7 @@ const DropdownSelect = ({ title, options, onChange, selectedValues, isMulti = fa
       placeholder={title}
       isMulti={isMulti}
       closeMenuOnSelect={!isMulti}
+      filterOption={filterOption}
     />
   )
 }
@@ -123,6 +124,7 @@ DropdownSelect.propTypes = {
   selectedValues: PropTypes.any,
   onChange: PropTypes.func,
   isMulti: PropTypes.bool,
+  filterOption: PropTypes.func,
 }
 
 export default DropdownSelect
