@@ -54,7 +54,7 @@ function DownloadDialog({ show, onClose }) {
               onChange={handleCheckboxChange}
             />
             {}
-            <span>Substituições no formato: palavra&lt;substituição&gt;</span>
+            <span>Substituições com sintaxe XML.</span>
           </label>
         </div>
 
