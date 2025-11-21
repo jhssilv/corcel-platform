@@ -1,6 +1,10 @@
+/* Added padding-top to account for fixed navbar height */
+.main-page-section {
+  padding-top: 80px; /* 60px navbar height + 20px spacing */
+}
 
 .essayDisplay {
-    white-space: pre-wrap;
+  white-space: pre-wrap;
 }
 
 .correctedCount {
@@ -8,10 +12,10 @@
 }
 
 .checkbox-external-wrapper {
-    max-width: fit-content;
-    margin-left: auto;
-    margin-right: auto;
-    margin-top: 1em;
+  max-width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 1em;
 }
 
 /* Checkbox style. Credits: https://getcssscan.com/css-checkboxes-examples by Milan Raring*/
@@ -39,16 +43,16 @@
   display: block;
   width: 1.4em;
   height: 1.4em;
-  border: 2px solid #9098A9;
+  border: 2px solid #9098a9;
   border-radius: 6px;
   z-index: -1;
 }
 
-.checkbox-wrapper-47 input[type=checkbox]:checked + label {
+.checkbox-wrapper-47 input[type="checkbox"]:checked + label {
   padding-left: 1em;
   color: #0f5229;
 }
-.checkbox-wrapper-47 input[type=checkbox]:checked + label:before {
+.checkbox-wrapper-47 input[type="checkbox"]:checked + label:before {
   top: 0;
   width: 100%;
   height: 2em;
