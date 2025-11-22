@@ -11,6 +11,8 @@ import whitelistIcon from "../assets/whitelist.svg"
 import reportIcon from "../assets/report.svg"
 import JSZip from "jszip"
 
+import { requestReport } from "./api/api_functions.jsx"
+
 function TopBar({ onDownloadClick }) {
   const { logout, username } = useContext(AuthContext)
   const [isPanelOpen, setIsPanelOpen] = useState(false)
@@ -196,8 +198,8 @@ function TopBar({ onDownloadClick }) {
   const handleReportConfirm = async () => {
     try {
       const textIds = JSON.parse(localStorage.getItem("textIds") || "[]")
-      console.log("[TODO] Generate report for textIds:", textIds)
       setIsReportOpen(false)
+      await requestReport(JSON.parse(localStorage.getItem("userId")), textIds)
     } catch (error) {
       console.error("[TODO] Handle report generation error:", error)
     }
@@ -218,7 +220,7 @@ function TopBar({ onDownloadClick }) {
 
         <div className="app-title-container">
           <h1 className="app-title">CorCel</h1>
-          <p className="app-subtitle">Sistema de Gerenciamento</p>
+          <p className="app-subtitle">Ferramenta de Normalização Ortográfica</p>
         </div>
 
         <div className="top-bar-spacer"></div>
