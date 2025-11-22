@@ -163,3 +163,22 @@ export async function requestDownload(textIds, useTags, userId) {
     return handleApiError(error, 'Error requesting download.');
   }
 }
+
+export async function requestReport(userId, textIds) {
+  try {
+    const payload = {
+      text_ids: textIds
+    };
+
+    const response = await apiClientBlob.post(`/report/${userId}`, payload, {
+      responseType: 'blob'
+    });
+
+    saveAs(response.data, 'report.csv');
+
+
+  } catch (error) {
+    console.error("Report request failed:", error);
+    return handleApiError(error, 'Error requesting report.');
+  }
+}
