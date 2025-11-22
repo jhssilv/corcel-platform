@@ -2,7 +2,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import NoResultFound
 
-from database.models import User, Text, Normalization, TextsUsers
+from database.models import Token, User, Text, Normalization, TextsUsers
 from database.connection import get_db_session
 import os
 
@@ -90,6 +90,13 @@ def get_text_by_id(db_session, text_id, user_id):
     return response_dict
 
 
+def get_original_text_tokens_by_id(db_session, text_id:int):
+    """
+    Returns all tokens of a text without any normalization applied.
+    """
+    return db_session.query(Token).filter(Token.text_id == text_id).all()
+
+
 def get_normalizations_by_text(db_session, text_id, user_id):
     """
     Returns all normalizations made by a user on a specific text.
@@ -171,3 +178,9 @@ def get_usernames(db_session):
     """
     return db_session.query(User.username).all()
 
+def get_username_by_id(db_session, user_id:int) -> str:
+    """
+    Returns the username for a given user ID.
+    """
+    user = db_session.query(User).filter(User.id == user_id).first()
+    return user.username if user else None
