@@ -1,7 +1,7 @@
 from datetime import datetime
 import os
 import shutil
-from flask import Flask, after_this_request, jsonify, send_from_directory, request 
+from flask import Flask, after_this_request, jsonify, make_response, send_from_directory, request 
 from flask_pydantic import validate
 from pydantic import ValidationError
 
@@ -10,6 +10,7 @@ import logging
 import api_schemas as schemas
 import database.queries as queries
 from download_texts import save_modified_texts
+from generate_report import generate_report
 
 api = Flask(__name__)
 
@@ -213,6 +214,15 @@ def toggle_normalization_status(user_id: int, text_id: int):
         error_response = schemas.ErrorResponse(error=str(e))
         return jsonify(error_response.model_dump()), 500
     
+
+@api.route('/api/report/<int:user_id>', methods=['POST'])
+@validate()
+def request_report(user_id:int, body:schemas.ReportRequest):
+    report = generate_report(user_id, body.text_ids)
+    response = make_response(report)
+    response.headers["Content-Disposition"] = "attachment; filename=report.csv"
+    response.headers["Content-type"] = "text/csv"
+    return response
 
 @api.route('/api/download/<int:user_id>', methods=['POST'])
 def download_normalized_texts(user_id: int):
