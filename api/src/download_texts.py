@@ -60,7 +60,8 @@ def rebuild_text(tokens:list[models.Token]) -> str:
 
 def save_result(base_dir: str, source_file_name: str, text: str, grade: int):
     safe_filename = os.path.basename(source_file_name)
-    output_path = os.path.join(base_dir, f'NOTA {grade}', f'{safe_filename}.txt')
+    # Adds 'n' to the end of the filename before the extension ------------\/
+    output_path = os.path.join(base_dir, f'NOTA {grade}', f'{safe_filename}n.txt')
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, 'w', encoding='utf-8') as f: # Specify UTF-8 encoding
         f.write(text)
