@@ -7,7 +7,7 @@ import AuthContext from "./AuthContext.jsx"
 
 // Sub-components
 import SidePanel from "./SidePanel.jsx"
-import WhitelistModal from "./WhitelistModal.jsx"
+import WhitelistModal from "./WhiteListModal.jsx"
 import UploadModal from "./UploadModal.jsx"
 import ReportModal from "./ReportModal.jsx"
 
