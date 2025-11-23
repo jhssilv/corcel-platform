@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './functions/useAuth.jsx';
 
-import { authenticateUser, getTextsData } from './api/api_functions.jsx';
+import { authenticateUser, getTextsData } from './api/APIFunctions.jsx';
 
 import '../styles/login_page.css';
 

@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import DropdownSelect from './dropdown_select.jsx';
+import DropdownSelect from './DropdownSelect.jsx';
 import PropTypes from 'prop-types';
 
-import { getTextsData, getUsernames, toggleNormalizedStatus } from './api/api_functions.jsx';
+import { getTextsData, getUsernames, toggleNormalizedStatus } from './api/APIFunctions.jsx';
 
 // ESSAY SELECTOR COMPONENT \\
 

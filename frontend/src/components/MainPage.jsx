@@ -3,14 +3,14 @@
 import { useState, useEffect, useCallback, useContext } from "react"
 import "../styles/main_page.css"
 
-import EssaySelector from "./essay_selector.jsx"
-import EssayDisplay from "./essay_display.jsx"
-import AuthContext from "./auth_context.jsx"
-import DownloadDialog from "./download_dialog.jsx"
+import EssaySelector from "./EssaySelector.jsx"
+import EssayDisplay from "./EssayDisplay.jsx"
+import AuthContext from "./AuthContext.jsx"
+import DownloadDialog from "./DownloadDialog.jsx"
 import TopBar from "./TopBar.jsx"
 
-import downloadTexts from "./api/download_texts.jsx"
-import { getTextById, getNormalizationsByText } from "./api/api_functions.jsx"
+import downloadTexts from "./api/DownloadTexts.jsx"
+import { getTextById, getNormalizationsByText } from "./api/APIFunctions.jsx"
 
 // MAIN PAGE COMPONENT \\
 

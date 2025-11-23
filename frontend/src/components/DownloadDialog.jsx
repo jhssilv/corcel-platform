@@ -2,7 +2,7 @@ import { useState } from 'react';
 import PropTypes from 'prop-types';
 
 import '../styles/download_dialog.css'; 
-import downloadTexts from './api/download_texts';
+import downloadTexts from './api/DownloadTexts';
 
 /**
  *

@@ -2,7 +2,7 @@ import PropTypes from 'prop-types';
 import { useState, useEffect } from 'react';
 import '../styles/new_correction_popup.css'
 
-import { postNormalization, deleteNormalization } from './api/api_functions';
+import { postNormalization, deleteNormalization } from './api/APIFunctions';
 
 // Displays a popup to confirm the addition of a new candidate
 

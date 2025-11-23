@@ -1,4 +1,4 @@
-import { requestDownload } from "./api_functions";
+import { requestDownload } from "./APIFunctions";
 
 const downloadTexts = async (useBrackets) => {
     const storedIds = localStorage.getItem('textIds');
