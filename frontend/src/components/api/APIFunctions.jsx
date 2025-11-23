@@ -182,3 +182,38 @@ export async function requestReport(userId, textIds) {
     return handleApiError(error, 'Error requesting report.');
   }
 }
+
+/**
+ * Sends a zip file for processing,
+ * Returning a task id for monitoring.
+ */
+export async function uploadTextArchive(file) {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const data = await apiClient.post('/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    
+    return schemas.UploadResponseSchema.parse(data);
+  } catch (error) {
+    return handleApiError(error, 'Error while sending file to server.');
+  }
+}
+
+/**
+ * Verify the status of the task with polling.
+ */
+export async function getTaskStatus(taskId) {
+  try {
+    const data = await apiClient.get(`/status/${taskId}`);
+    return schemas.TaskStatusResponseSchema.parse(data);
+  } catch (error) {
+    // Polling errors are acceptable
+    console.error("Polling error: ", error);
+    throw error; 
+  }
+}
