@@ -13,12 +13,12 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 @upload_bp.route('/api/upload', methods=['POST'])
 def upload_file():
     if 'file' not in request.files:
-        return jsonify(schemas.ErrorResponse(msg='File not found.').model_dump()), 400
+        return jsonify(schemas.ErrorResponse(error='File not found.').model_dump()), 400
     
     file = request.files['file']
     
     if file.filename == '' or not file.filename.endswith('.zip'):
-        return jsonify(schemas.ErrorResponse(msg='Invalid file type.').model_dump()), 400
+        return jsonify(schemas.ErrorResponse(error='Invalid file type.').model_dump()), 400
                 
     filename = secure_filename(file.filename)
     unique_name = f"{uuid.uuid4()}_{filename}"
