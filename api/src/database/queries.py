@@ -2,7 +2,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import NoResultFound
 
-from database.models import Token, User, Text, Normalization, TextsUsers
+from database.models import Suggestion, TokensSuggestions, Token, User, Text, Normalization, TextsUsers
 from database.connection import get_db_session
 import os
 
@@ -63,7 +63,15 @@ def get_text_by_id(db_session, text_id, user_id):
     Fetch a specific text by its ID.
     """
 
-    text_info = db_session.query(Text).filter(Text.id == text_id).options(joinedload(Text.tokens)).first()
+    text_info = (
+        db_session.query(Text)
+        .filter(Text.id == text_id)
+        .options(
+            joinedload(Text.tokens).joinedload(Token.suggestions) 
+        )
+        .first()
+    )
+    
     if not text_info:
         return None
     
@@ -72,11 +80,12 @@ def get_text_by_id(db_session, text_id, user_id):
     
     tokens_data = [
         {
-                "text": token.token_text,
-                "isWord": token.is_word,
-                "candidates": token.candidates or []
+            "text": token.token_text,
+            "isWord": token.is_word,
+            "position": token.position,
+            "candidates": [s.token_text for s in token.suggestions] 
         }
-        for token in text_info.tokens 
+        for token in text_info.tokens
     ]
 
     response_dict = {

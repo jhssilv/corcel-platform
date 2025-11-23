@@ -61,14 +61,18 @@ class Token(Base):
     is_word = Column(Boolean, nullable=False)
     position = Column(Integer, nullable=False)
     
-    candidates = Column(ARRAY(String(64)), nullable=True)
-    
     __table_args__ = (
         UniqueConstraint('text_id', 'position', name='uq_text_position'), 
     )
 
     text = relationship('Text', back_populates='tokens')
-    
+
+    suggestions = relationship(
+        'Suggestion',
+        secondary='tokenssuggestions',
+        backref='tokens',
+        order_by='Suggestion.token_text'
+    )
     
 class Normalization(Base):
     """
@@ -102,3 +106,22 @@ class TextsUsers(Base):
 
     user = relationship('User', back_populates='texts_association')
     text = relationship('Text', back_populates='texts_association')
+
+class Suggestion(Base):
+    """
+    Model for the 'suggestions' table.
+    Stores suggestions for token normalizations.
+    """
+    __tablename__ = 'suggestions'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    token_text = Column(String(64), nullable=False, unique=True)
+    
+class TokensSuggestions(Base):
+    """
+    Model for the 'tokenssuggestions' table.
+    Association table to link tokens with their suggestions.
+    """
+    __tablename__ = 'tokenssuggestions'
+    token_id = Column(Integer, ForeignKey('tokens.id', ondelete="CASCADE"), primary_key=True)
+    suggestion_id = Column(Integer, ForeignKey('suggestions.id', ondelete="CASCADE"), primary_key=True)
