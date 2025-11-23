@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import { useState } from 'react';
-import buildText from './functions/build_text';
+import buildText from './functions/BuildText';
 import '../styles/generated_essay.css';
 
 // Generates the essay: every word must be clickable (wrapped in a span), whilst maintaining

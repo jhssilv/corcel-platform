@@ -7,7 +7,7 @@ import EssaySelector from "./essay_selector.jsx"
 import EssayDisplay from "./essay_display.jsx"
 import AuthContext from "./auth_context.jsx"
 import DownloadDialog from "./download_dialog.jsx"
-import TopBar from "./top_bar.jsx"
+import TopBar from "./TopBar.jsx"
 
 import downloadTexts from "./api/download_texts.jsx"
 import { getTextById, getNormalizationsByText } from "./api/api_functions.jsx"

@@ -3,7 +3,7 @@
 import { useContext, useState } from "react"
 import PropTypes from "prop-types"
 import "../styles/top_bar.css"
-import AuthContext from "./auth_context.jsx"
+import AuthContext from "./AuthContext.jsx"
 import downloadIcon from "../assets/download.svg"
 import uploadIcon from "../assets/upload.svg"
 import logoutIcon from "../assets/logout.svg"
@@ -81,6 +81,7 @@ function TopBar({ onDownloadClick }) {
     setIsUpdating(true)
     try {
       console.log("[TODO] Send whitelist update to API:", whitelistText)
+      alert("Essa funcionalidade de whitelist ainda não foi implementada.")
       await new Promise((resolve) => setTimeout(resolve, 500))
       setOriginalWhitelistText(whitelistText)
       setIsWhitelistOpen(false)
@@ -177,6 +178,7 @@ function TopBar({ onDownloadClick }) {
 
     try {
       console.log("[TODO] Upload file to API:", uploadFile.name)
+      alert("Essa funcionalidade de upload ainda não foi implementada.")
       setIsUploadOpen(false)
       setUploadFile(null)
       setUploadError("")

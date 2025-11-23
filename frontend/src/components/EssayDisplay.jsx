@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
-import GeneratedEssay from './generated_essay';
-import GeneratedCandidates from './generated_candidates';
-import NewCorrectionPopup from './new_correction_popup';
+import GeneratedEssay from './GeneratedEssay';
+import GeneratedCandidates from './GeneratedCandidates';
+import NewCorrectionPopup from './NewCorrectionPopup';
 
 function EssayDisplay({ essay, refreshEssay }) {
 
