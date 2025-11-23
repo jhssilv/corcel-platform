@@ -64,6 +64,7 @@ const TokenDetailSchema = z.object({
     text: z.string(),
     isWord: z.boolean(),
     candidates: z.array(z.string()),
+    toBeNormalized: z.boolean()
   })
 });
 

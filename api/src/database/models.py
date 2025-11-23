@@ -60,6 +60,7 @@ class Token(Base):
     token_text = Column(String(64), nullable=False)
     is_word = Column(Boolean, nullable=False)
     position = Column(Integer, nullable=False)
+    to_be_normalized = Column(Boolean, nullable=False, default=False)
     
     __table_args__ = (
         UniqueConstraint('text_id', 'position', name='uq_text_position'), 

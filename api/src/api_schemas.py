@@ -52,12 +52,22 @@ class TextsDataResponse(BaseModel):
         populate_by_name = True
         title = "textsData"
 
+class Token(BaseModel):
+    """Schema for a single token."""
+    text: str
+    is_word: bool = Field(alias="isWord")
+    position: int
+    to_be_normalized: bool = Field(alias="toBeNormalized")
+
+    class Config:
+        populate_by_name = True
+
 class TextDetailResponse(BaseModel):
     """Schema for the detailed response of a single text."""
     id: int
     grade: Optional[int] = None
     
-    tokens: List[Any] = Field(alias="tokens") # See database_queries.py for clarification 
+    tokens: List[Token] = Field(alias="tokens") # See database_queries.py for clarification 
     normalized_by_user: bool = Field(alias="normalizedByUser")
     source_file_name: Optional[str] = Field(alias="sourceFileName")
     assigned_to_user: bool = Field(alias="assignedToUser")
