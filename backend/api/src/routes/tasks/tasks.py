@@ -60,10 +60,10 @@ def process_zip_texts(self, zip_path:str):
     
         # TODO: send do database
     
-        response = UploadResponse(message="Done!", total=total_files)
+        response = UploadResponse(status="Done!", total=total_files)
         return jsonify(response.model_dump()), 200
     
     
     except Exception as e:
-        error_response = ErrorResponse(msg=e)
+        error_response = ErrorResponse(error=str(e))
         return jsonify(error_response.model_dump()), 500
