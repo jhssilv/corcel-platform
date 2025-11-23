@@ -1,22 +1,29 @@
 FROM python:3.12-slim
 
-RUN apt-get update && apt-get upgrade -y && apt-get clean
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libhunspell-dev \
+    python3-dev \
+    hunspell-pt-br \
+    redis-server \
+    && apt-get clean
 
-# Set the working directory in the container
-WORKDIR /api
+WORKDIR /backend
 
-# Copy the requirements file
 COPY requirements.txt .
 
-# Update pip and install Python dependencies
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the application code
+RUN python -c "import spacy_udpipe; spacy_udpipe.download('pt')"
+
 COPY . .
 
-# Expose port 5000
+# Copia o script de inicialização e dá permissão de execução
+COPY backend/start.sh .
+RUN chmod +x start.sh
+
 EXPOSE 5000
 
-# Start the Flask server
-CMD ["flask", "run", "--host=0.0.0.0"]
+# Executa o script que gerencia os dois processos
+CMD ["./backend/start.sh"]
