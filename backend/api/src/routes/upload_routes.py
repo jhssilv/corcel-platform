@@ -2,7 +2,7 @@ import os
 import uuid
 from flask import Blueprint, request, jsonify
 from werkzeug.utils import secure_filename
-from .tasks import tasks 
+from .tasks.tasks import process_zip_texts 
 import api_schemas as schemas
 
 upload_bp = Blueprint('upload', __name__)
@@ -26,13 +26,13 @@ def upload_file():
     
     file.save(save_path)
     
-    task = tasks.delay(save_path)
+    task = process_zip_texts.delay(save_path)
     
     return jsonify({'task_id': task.id}), 202
 
 @upload_bp.route('/api/status/<task_id>', methods=['GET'])
 def task_status(task_id):
-    task = tasks.AsyncResult(task_id)
+    task = process_zip_texts.AsyncResult(task_id)
     
     response = {
         'state': task.state,
