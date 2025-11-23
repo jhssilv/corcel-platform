@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import {apiClient, apiClientBlob} from './APIClient';
-import * as schemas from './api/Schemas.jsx';
+import * as schemas from './Schemas.jsx';
 import { saveAs } from 'file-saver';
 
 /**
