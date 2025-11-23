@@ -105,3 +105,8 @@ class DownloadRequest(BaseModel):
 class ReportRequest(BaseModel):
     """Schema for the report request body."""
     text_ids: List[int] = Field(..., example=[1, 2, 3], description="List of text IDs to generate the report for.")
+    
+class UploadResponse(BaseModel):
+    status: str
+    total: int
+    
