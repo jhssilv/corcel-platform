@@ -58,6 +58,7 @@ class Token(BaseModel):
     is_word: bool = Field(alias="isWord")
     position: int
     to_be_normalized: bool = Field(alias="toBeNormalized")
+    candidates: List[str] = Field(default=[])
 
     class Config:
         populate_by_name = True
