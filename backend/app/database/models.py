@@ -48,26 +48,21 @@ class Text(Base):
     tokens = relationship('Token', back_populates='text', cascade="all, delete-orphan", order_by='Token.position')
 
 class Token(Base):
-    """
-    Model for the 'tokens' table.
-    Stores individual tokens extracted from texts.
-    """
     __tablename__ = 'tokens'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     text_id = Column(Integer, ForeignKey('texts.id', ondelete="CASCADE"), nullable=False, index=True)
-    
     token_text = Column(String(64), nullable=False)
     is_word = Column(Boolean, nullable=False)
     position = Column(Integer, nullable=False)
-    to_be_normalized = Column(Boolean, nullable=False, default=False)
+    to_be_normalized = Column(Boolean, nullable=True, )
     
     __table_args__ = (
         UniqueConstraint('text_id', 'position', name='uq_text_position'), 
     )
 
     text = relationship('Text', back_populates='tokens')
-
+    
     suggestions = relationship(
         'Suggestion',
         secondary='tokenssuggestions',
