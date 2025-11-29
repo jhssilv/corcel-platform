@@ -1,0 +1,29 @@
+FROM python:3.12-slim
+
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libhunspell-dev \
+    python3-dev \
+    hunspell-pt-br \
+    redis-server \
+    && apt-get clean
+
+WORKDIR /backend
+
+COPY requirements.txt .
+
+RUN pip install --upgrade pip
+RUN pip install --no-cache-dir -r requirements.txt
+
+RUN python -c "import spacy_udpipe; spacy_udpipe.download('pt')"
+
+COPY . .
+
+# Copia o script de inicialização e dá permissão de execução
+COPY backend/start.sh .
+RUN chmod +x start.sh
+
+EXPOSE 5000
+
+# Executa o script que gerencia os dois processos
+CMD ["./backend/start.sh"]
