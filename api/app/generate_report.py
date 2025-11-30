@@ -20,18 +20,20 @@ def generate_report(user_id:int, text_ids:list[int]):
     
     for text_id in text_ids:
         tokens = get_original_text_tokens_by_id(session, text_id)        
+        tokens.sort(key=lambda token: token.position)
         normalizations = get_normalizations_by_text(session, text_id, user_id)
         text_sourcefilename = get_text_by_id(session, text_id, user_id)['source_file_name']
 
         for norm in normalizations:
             prev_tokens = tokens[max(0, norm.start_index - CONTEXT_WINDOW):norm.start_index]
             subseq_tokens = tokens[norm.end_index + 1:norm.end_index + 1 + CONTEXT_WINDOW]
+            current_token = tokens[norm.start_index]
 
             writer.writerow([
                 text_sourcefilename,
                 username,
                 " ".join(token.token_text for token in prev_tokens),
-                " ".join(token.token_text for token in tokens[norm.start_index:norm.end_index + 1]),    
+                current_token.token_text,
                 " ".join(token.token_text for token in subseq_tokens),
                 norm.new_token
             ])
