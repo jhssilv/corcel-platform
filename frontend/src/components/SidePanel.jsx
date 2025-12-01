@@ -21,7 +21,7 @@ function SidePanel({
 
       <div className={`side-panel ${isOpen ? "open" : ""}`}>
         <div className="panel-header">
-          <span className="username-display">Olá, {username}</span>
+          <span className="username-display">Olá, {username}.</span>
           <button className="close-button" onClick={onClose} aria-label="Close menu">
             ×
           </button>
@@ -34,12 +34,12 @@ function SidePanel({
               <span className="button-text">Download</span>
             </button>
 
-            <button className="panel-button upload-button" onClick={onUpload}>
+            <button className="panel-button upload-button" onClick={onUpload} disabled>
               <img src={uploadIcon || "/placeholder.svg"} alt="" className="button-icon-svg" />
               <span className="button-text">Upload</span>
             </button>
 
-            <button className="panel-button whitelist-button" onClick={onWhitelist}>
+            <button className="panel-button whitelist-button" onClick={onWhitelist} disabled>
               <img src={whitelistIcon || "/placeholder.svg"} alt="" className="button-icon-svg" />
               <span className="button-text">Whitelist</span>
             </button>
@@ -51,7 +51,7 @@ function SidePanel({
           </div>
 
           <div className="panel-logout-section">
-            <button className="panel-button logout-button" onClick={onLogout}>
+            <button className="panel-button logout-button" onClick={onLogout} disabled>
               <img src={logoutIcon || "/placeholder.svg"} alt="" className="button-icon-svg" />
               <span className="button-text">Sair</span>
             </button>
