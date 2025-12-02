@@ -19,14 +19,17 @@ RUN npm run build
 # Stage 2: Serve the built files with Nginx
 FROM nginx:alpine
 
-# Copy the built files from the previous stage
+FROM nginx:alpine
+
+# REMOVA a configuração padrão do Nginx para evitar conflitos
+RUN rm -rf /etc/nginx/conf.d/*
+
+# Copy the built files
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Copy Nginx configuration file
 COPY frontend/nginx.conf /etc/nginx/nginx.conf
 
-# Expose port 80
 EXPOSE 80
 
-# Start Nginx server
 CMD ["nginx", "-g", "daemon off;"]
