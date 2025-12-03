@@ -51,7 +51,7 @@ function SidePanel({
           </div>
 
           <div className="panel-logout-section">
-            <button className="panel-button logout-button" onClick={onLogout} disabled>
+            <button className="panel-button logout-button" onClick={onLogout}>
               <img src={logoutIcon || "/placeholder.svg"} alt="" className="button-icon-svg" />
               <span className="button-text">Sair</span>
             </button>

@@ -36,9 +36,8 @@ export const AuthProvider = ({ children }) => {
         setUserId(null);
         setUsername(null);
 
-        localStorage.removeItem('isAuthenticated');
-        localStorage.removeItem('userId');
-        localStorage.removeItem('username');
+        localStorage.clear();
+        navigate("/");
     };
 
     return (

@@ -10,6 +10,7 @@ import SidePanel from "./SidePanel.jsx"
 import WhitelistModal from "./WhiteListModal.jsx"
 import UploadModal from "./UploadModal.jsx"
 import ReportModal from "./ReportModal.jsx"
+import { useNavigate } from "react-router-dom";
 
 function TopBar({ onDownloadClick }) {
   const { logout, username } = useContext(AuthContext)
@@ -20,6 +21,8 @@ function TopBar({ onDownloadClick }) {
   const [isUploadOpen, setIsUploadOpen] = useState(false)
   const [isReportOpen, setIsReportOpen] = useState(false)
   const [reportTextCount, setReportTextCount] = useState(0)
+  const navigate = useNavigate();
+
 
   // Logic Handlers
   const togglePanel = () => setIsPanelOpen(!isPanelOpen)
@@ -44,7 +47,8 @@ function TopBar({ onDownloadClick }) {
 
   const handleLogout = () => {
     console.log("[TODO] Implement logout functionality here")
-    // logout()
+    localStorage.clear();
+    navigate("/");
   }
 
   return (
