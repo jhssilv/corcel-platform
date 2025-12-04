@@ -25,3 +25,4 @@ celery
 flask-cors
 redis
 flask-sqlalchemy
+dependency-injector
