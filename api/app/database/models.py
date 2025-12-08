@@ -1,6 +1,7 @@
 import sqlalchemy
 
 from sqlalchemy import (
+    CHAR,
     Column,
     Integer,
     String,
@@ -56,7 +57,8 @@ class Token(Base):
     is_word = Column(Boolean, nullable=False)
     position = Column(Integer, nullable=False)
     to_be_normalized = Column(Boolean, nullable=True, )
-    
+    whitespace_after = Column(CHAR(1), nullable=True, default='')
+
     __table_args__ = (
         UniqueConstraint('text_id', 'position', name='uq_text_position'), 
     )
