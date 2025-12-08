@@ -52,7 +52,7 @@ def process_zip_texts(self, zip_path):
                                   meta={
                                       'current': index + 1, 
                                       'total': total_files, 
-                                      'status': f'Processando: {filename}'
+                                      'status': f'Processando: {filename} ({index + 1}/{total_files})'
                                   })
 
                 with zip_ref.open(filename) as f:
@@ -60,6 +60,7 @@ def process_zip_texts(self, zip_path):
                 
                 processed_data = processor.process_text(text_content)
                 results[filename] = processed_data
+                print("Processed: ", filename)
 
         os.remove(zip_path)
         
