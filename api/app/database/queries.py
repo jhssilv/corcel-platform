@@ -5,6 +5,8 @@ from sqlalchemy.exc import NoResultFound
 from app.database.models import Token, User, Text, Normalization, TextsUsers, Suggestion, TokensSuggestions
 from app.database.connection import get_db_session
 
+from psycopg2.errors import UniqueViolation
+
 db_session = get_db_session()
 
 def authenticate_user(db_session, username, password):
@@ -203,11 +205,16 @@ def add_suggestion(text_id: int, token_id: int, text: str, db_session):
     ).first()
 
     if not link_exists:
-        new_link = TokensSuggestions(
-            token_id=token_id,
-            suggestion_id=suggestion.id
-        )
-        db_session.add(new_link)
+        try:
+            new_link = TokensSuggestions(
+                token_id=token_id,
+                suggestion_id=suggestion.id
+            )
+            db_session.add(new_link)
+            # Flush to ensure subsequent queries in the same transaction see this link
+            db_session.flush()
+        except UniqueViolation:
+            pass
 
 def add_text(text_obj: Text, tokens_with_candidates: list[tuple[Token, list[str]]], db_session=db_session):
     """
@@ -230,7 +237,10 @@ def add_text(text_obj: Text, tokens_with_candidates: list[tuple[Token, list[str]
             db_session.add(token)
             db_session.flush() # Flush to generate token.id
             
-            for candidate in candidates:
+            # Deduplicate candidates to avoid UniqueViolation in TokensSuggestions
+            unique_candidates = list(set(candidates))
+            
+            for candidate in unique_candidates:
                 add_suggestion(text_obj.id, token.id, candidate, db_session)
 
         db_session.commit()
