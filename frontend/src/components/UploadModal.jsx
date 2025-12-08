@@ -34,6 +34,17 @@ function UploadModal({ isOpen, onClose }) {
         onClose();
     };
 
+    // Effect to resume polling if there is an active task ID in localStorage
+    // This handles page refreshes or component remounts
+    useEffect(() => {
+        const savedTaskId = localStorage.getItem("currentTaskId");
+        if (savedTaskId && !isProcessing && !pollingInterval.current) {
+             // Check if task is still running
+             setIsProcessing(true);
+             pollStatus(savedTaskId);
+        }
+    }, []);
+
     const validateZipFile = async (file) => {
         setIsValidating(true);
         setUploadError("");
@@ -94,6 +105,8 @@ function UploadModal({ isOpen, onClose }) {
                 } 
                 else if (data.state === 'SUCCESS') {
                     clearInterval(pollingInterval.current);
+                    pollingInterval.current = null;
+                    localStorage.removeItem("currentTaskId");
                     setIsProcessing(false);
                     setProgress(100);
                     setStatusMessage("Concluído com sucesso!");
@@ -109,6 +122,8 @@ function UploadModal({ isOpen, onClose }) {
                 } 
                 else if (data.state === 'FAILURE') {
                     clearInterval(pollingInterval.current);
+                    pollingInterval.current = null;
+                    localStorage.removeItem("currentTaskId");
                     setIsProcessing(false);
                     setUploadError(`Server error:: ${data.error || 'Unexpected Error'}`);
                 }
