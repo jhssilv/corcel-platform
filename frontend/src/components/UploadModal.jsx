@@ -28,7 +28,9 @@ function UploadModal({ isOpen, onClose }) {
     };
 
     const handleClose = () => {
-        resetState();
+        if (!isProcessing) {
+            resetState();
+        }
         onClose();
     };
 
@@ -192,29 +194,25 @@ function UploadModal({ isOpen, onClose }) {
         };
     }, []);
 
-    if (!isOpen) return null;
+    if (!isOpen && !isProcessing) return null;
 
     return (
-        <>
-            {/* Can't close if it's processing */}
+        <div style={{ display: isOpen ? 'block' : 'none' }}>
             <div 
                 className="modal-overlay" 
-                onClick={isProcessing ? undefined : handleClose}
+                onClick={handleClose}
             ></div>
             
             <div className="upload-modal">
                 <div className="modal-header">
                     <h2 className="modal-title">Upload de Arquivo</h2>
-                    {/* No close button during processing */}
-                    {!isProcessing && (
-                        <button
-                            className="modal-close-button"
-                            onClick={handleClose}
-                            aria-label="Close"
-                        >
-                            ×
-                        </button>
-                    )}
+                    <button
+                        className="modal-close-button"
+                        onClick={handleClose}
+                        aria-label="Close"
+                    >
+                        ×
+                    </button>
                 </div>
 
                 <div className="modal-body">
@@ -292,7 +290,7 @@ function UploadModal({ isOpen, onClose }) {
                                 }}></div>
                             </div>
                             <p className="upload-text" style={{ fontWeight: 'bold' }}>{statusMessage}</p>
-                            <p className="upload-subtext">Não feche esta janela.</p>
+                            <p className="upload-subtext">Você pode fechar esta janela, o processo continuará em segundo plano.</p>
                         </div>
                     )}
 
@@ -306,10 +304,8 @@ function UploadModal({ isOpen, onClose }) {
                     <button
                         className="modal-button cancel-button"
                         onClick={handleClose}
-                        disabled={isProcessing} // No cancel button during processing
-                        style={isProcessing ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
                     >
-                        Cancelar
+                        {isProcessing ? "Fechar" : "Cancelar"}
                     </button>
                     
                     {/* Confirm button appears only if not processing */}
@@ -324,7 +320,7 @@ function UploadModal({ isOpen, onClose }) {
                     )}
                 </div>
             </div>
-        </>
+        </div>
     );
 }
 
