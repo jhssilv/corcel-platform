@@ -86,7 +86,8 @@ class TextProcessor():
                     'text': word,
                     'to_be_normalized': False,
                     'suggestions': [],
-                    'whitespace_after': token.whitespace_ == ' '
+                    'is_word': False,
+                    'whitespace_after': token.whitespace_
                 }
                 continue
 
@@ -119,7 +120,19 @@ class TextProcessor():
                 'text': word,
                 'to_be_normalized': not is_correct,
                 'suggestions': sorted_suggestions,
+                'is_word': True,
                 'whitespace_after': token.whitespace_
             }
 
         return results
+    
+
+if __name__ == '__main__':
+    processor = TextProcessor()
+    text = """
+    Ese e um teste para, ver, se funciona   
+    o procesador de testos, (teste?)!!"""
+
+    results = processor.process_text(text)
+    for idx, data in results.items():
+        print(f"Token {idx}: {data}")
