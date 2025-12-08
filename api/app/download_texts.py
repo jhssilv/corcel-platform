@@ -60,6 +60,7 @@ def rebuild_text(tokens:list[models.Token]) -> str:
 
 def save_result(base_dir: str, source_file_name: str, text: str, grade: int):
     safe_filename = os.path.basename(source_file_name)
+    safe_filename = safe_filename.replace('.docx', '')
     # Adds 'n' to the end of the filename before the extension ------------\/
     output_path = os.path.join(base_dir, f'NOTA {grade}', f'{safe_filename}n.txt')
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
