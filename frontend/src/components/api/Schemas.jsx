@@ -121,3 +121,16 @@ export const DownloadRequestSchema = z.object({
   text_ids: z.array(z.number()).min(1, "At least one text ID must be provided."),
   use_tags: z.boolean().optional(),
 });
+
+export const UploadResponseSchema = z.object({
+  task_id: z.string(),
+});
+
+export const TaskStatusResponseSchema = z.object({
+  state: z.string(),
+  status: z.string(),
+  current: z.number().optional(),
+  total: z.number().optional(),
+  result: z.any().optional(),
+  error: z.string().optional(),
+});

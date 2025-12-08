@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import PropTypes from "prop-types";
 import JSZip from "jszip";
 
-import {uploadTextArchive, getTaskStatus} from './api/APIFunctions.jsx'
+import {uploadTextArchive, getTaskStatus, getTextsData} from './api/APIFunctions.jsx'
 
 function UploadModal({ isOpen, onClose }) {
     const [uploadFile, setUploadFile] = useState(null);
@@ -88,7 +88,7 @@ function UploadModal({ isOpen, onClose }) {
                 if (data.state === 'PROGRESS') {
                     const percent = data.total > 0 ? Math.round((data.current / data.total) * 100) : 0;
                     setProgress(percent);
-                    setStatusMessage(data.status || `Processando ${percent}%...`);
+                    setStatusMessage(data.status || `Processando ${percent}%...(${data.current}/${data.total})`);
                 } 
                 else if (data.state === 'SUCCESS') {
                     clearInterval(pollingInterval.current);
@@ -96,9 +96,13 @@ function UploadModal({ isOpen, onClose }) {
                     setProgress(100);
                     setStatusMessage("Concluído com sucesso!");
                     
-                    setTimeout(() => {
+                    setTimeout(async () => {
                         alert("Textos processados e salvos!");
+                        const userId = localStorage.getItem("userId");
+                        const new_texts_data = await getTextsData(userId);
+                        localStorage.setItem("textsData", JSON.stringify(new_texts_data));
                         handleClose();
+
                     }, 500);
                 } 
                 else if (data.state === 'FAILURE') {
@@ -171,7 +175,8 @@ function UploadModal({ isOpen, onClose }) {
             }
 
             // Inicia o monitoramento
-            setStatusMessage("Aguardando worker...");
+            setStatusMessage("Aguardando servidor...");
+            localStorage.setItem("currentTaskId", response.task_id);
             pollStatus(response.task_id);
 
         } catch (error) {
