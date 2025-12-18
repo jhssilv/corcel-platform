@@ -75,7 +75,6 @@ function buildText(essay, selectedStartIndex, selectedEndIndex, handleSelectedWo
 
         if(correction){
            token_length =  correction.last_index - i;
-        console.log(token_length);
         }
 
         i += token_length; // Skip the tokens that were part of a correction
