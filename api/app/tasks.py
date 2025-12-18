@@ -1,18 +1,37 @@
 import os
 import zipfile
-from flask import jsonify
 
 from .extensions import celery 
 from .text_processor import TextProcessor
-from app.api_schemas import ErrorResponse
+from .database.queries import add_text
+from .database import models as models
+
+def add_to_database(results: dict):
+    for file_name, data in results.items():
+        text = models.Text(source_file_name=file_name)
+        tokens_with_suggestions = []
+
+        for t in data.values():
+            new_token = models.Token(
+                token_text = t["text"],
+                is_word = t["is_word"],
+                position = t["idx"],
+                to_be_normalized = t["to_be_normalized"],
+                whitespace_after = t["whitespace_after"]
+            )
+            tokens_with_suggestions.append((new_token, t.get("suggestions", [])))
+
+        add_text(text, tokens_with_suggestions)
+
+
 
 @celery.task(bind=True)
 def process_zip_texts(self, zip_path):
     if not os.path.exists(zip_path):
-        response = ErrorResponse(error='Temp file not found in server.')
-        return jsonify(response.model_dump()), 500
+        return {'error': 'Temp file not found in server.'}
 
     processor = TextProcessor()
+    db_session = get_db_session()
     results = {}
 
     try:
@@ -27,15 +46,14 @@ def process_zip_texts(self, zip_path):
             
             if total_files == 0:
                 os.remove(zip_path)
-                response = ErrorResponse(error='The zip file does not contain valid files.')
-                return jsonify(response.model_dump()), 500
+                return {'error': 'The zip file does not contain valid files.'}
 
             for index, filename in enumerate(file_list):
                 self.update_state(state='PROGRESS',
                                   meta={
                                       'current': index + 1, 
                                       'total': total_files, 
-                                      'status': f'Processando: {filename}'
+                                      'status': f'Processando: {filename} ({index + 1}/{total_files})'
                                   })
 
                 with zip_ref.open(filename) as f:
@@ -43,10 +61,11 @@ def process_zip_texts(self, zip_path):
                 
                 processed_data = processor.process_text(text_content)
                 results[filename] = processed_data
+                print("Processed: ", filename)
 
         os.remove(zip_path)
         
-        # TODO: Include db operations
+        add_to_database(results)
         
         return {
             'status': 'Concluido', 
@@ -58,5 +77,4 @@ def process_zip_texts(self, zip_path):
         if os.path.exists(zip_path):
             os.remove(zip_path)
 
-        response = ErrorResponse(error='Server Internal Error.')
-        return jsonify(response.model_dump()), 500
+        return {'error': f'Server Internal Error: {str(e)}'}

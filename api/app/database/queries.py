@@ -2,8 +2,10 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import NoResultFound
 
-from app.database.models import Token, User, Text, Normalization, TextsUsers
+from app.database.models import Token, User, Text, Normalization, TextsUsers, Suggestion, TokensSuggestions
 from app.database.connection import get_db_session
+
+from psycopg2.errors import UniqueViolation
 
 db_session = get_db_session()
 
@@ -98,7 +100,7 @@ def get_original_text_tokens_by_id(db_session, text_id:int):
     """
     Returns all tokens of a text without any normalization applied.
     """
-    return db_session.query(Token).filter(Token.text_id == text_id).all()
+    return sorted(db_session.query(Token).filter(Token.text_id == text_id).all(), key=lambda t: t.position)
 
 
 def get_normalizations_by_text(db_session, text_id, user_id):
@@ -188,3 +190,64 @@ def get_username_by_id(db_session, user_id:int) -> str:
     """
     user = db_session.query(User).filter(User.id == user_id).first()
     return user.username if user else None
+
+def add_suggestion(text_id: int, token_id: int, text: str, db_session):
+    suggestion = db_session.query(Suggestion).filter_by(token_text=text).first()
+
+    if not suggestion:
+        suggestion = Suggestion(token_text=text)
+        db_session.add(suggestion)
+        db_session.flush()
+
+    link_exists = db_session.query(TokensSuggestions).filter_by(
+        token_id=token_id,
+        suggestion_id=suggestion.id
+    ).first()
+
+    if not link_exists:
+        try:
+            new_link = TokensSuggestions(
+                token_id=token_id,
+                suggestion_id=suggestion.id
+            )
+            db_session.add(new_link)
+            # Flush to ensure subsequent queries in the same transaction see this link
+            db_session.flush()
+        except UniqueViolation:
+            pass
+
+def add_text(text_obj: Text, tokens_with_candidates: list[tuple[Token, list[str]]], db_session=db_session):
+    """
+    Adds a new text and its associated tokens to the database.
+    
+    Args:
+        db_session: The SQLAlchemy database session.
+        text_obj: An instance of the Text model (without ID).
+        tokens_with_candidates: A list of tuples, where each tuple contains a Token model instance 
+                                (without IDs or text_id) and a list of candidate strings.
+    Returns:
+        The ID of the newly created text.
+    """
+    try:
+        db_session.add(text_obj)        
+        db_session.flush()
+        
+        for token, candidates in tokens_with_candidates:
+            token.text_id = text_obj.id
+            db_session.add(token)
+            db_session.flush() # Flush to generate token.id
+            
+            # Deduplicate candidates to avoid UniqueViolation in TokensSuggestions
+            unique_candidates = list(set(candidates))
+            
+            for candidate in unique_candidates:
+                add_suggestion(text_obj.id, token.id, candidate, db_session)
+
+        db_session.commit()
+        
+        return text_obj.id
+
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error adding text: {e}")
+        raise e

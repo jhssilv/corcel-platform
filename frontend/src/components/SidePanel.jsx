@@ -34,7 +34,7 @@ function SidePanel({
               <span className="button-text">Download</span>
             </button>
 
-            <button className="panel-button upload-button" onClick={onUpload} disabled>
+            <button className="panel-button upload-button" onClick={onUpload}>
               <img src={uploadIcon || "/placeholder.svg"} alt="" className="button-icon-svg" />
               <span className="button-text">Upload</span>
             </button>

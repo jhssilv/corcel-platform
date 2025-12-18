@@ -39,8 +39,8 @@ function buildText(essay, selectedStartIndex, selectedEndIndex, handleSelectedWo
 
     for (let i = 0; i < essay.tokens.length; i++) {
         let token = essay.tokens[i];
+        let correction = essay.corrections[i];
 
-        i += token_length; // Skip the tokens that were part of a correction
         token_length = 0;
 
         if(i === 0){
@@ -72,6 +72,13 @@ function buildText(essay, selectedStartIndex, selectedEndIndex, handleSelectedWo
             spans.push(createSpan(essay, i, selectedStartIndex, selectedEndIndex, handleSelectedWordIndex));
             spans.push(' ');
         }
+
+        if(correction){
+           token_length =  correction.last_index - i;
+        }
+
+        i += token_length; // Skip the tokens that were part of a correction
+
     }
     return <pre>{spans}</pre>;
 }

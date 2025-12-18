@@ -27,13 +27,13 @@ def generate_report(user_id:int, text_ids:list[int]):
         for norm in normalizations:
             prev_tokens = tokens[max(0, norm.start_index - CONTEXT_WINDOW):norm.start_index]
             subseq_tokens = tokens[norm.end_index + 1:norm.end_index + 1 + CONTEXT_WINDOW]
-            current_token = tokens[norm.start_index]
+            length = norm.end_index - norm.start_index + 1
 
             writer.writerow([
                 text_sourcefilename,
                 username,
                 " ".join(token.token_text for token in prev_tokens),
-                current_token.token_text,
+                " ".join(token.token_text for token in tokens[norm.start_index:norm.start_index + length]),          
                 " ".join(token.token_text for token in subseq_tokens),
                 norm.new_token
             ])

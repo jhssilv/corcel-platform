@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import PropTypes from "prop-types";
 import JSZip from "jszip";
 
-import {uploadTextArchive, getTaskStatus} from './api/APIFunctions.jsx'
+import {uploadTextArchive, getTaskStatus, getTextsData} from './api/APIFunctions.jsx'
 
 function UploadModal({ isOpen, onClose }) {
     const [uploadFile, setUploadFile] = useState(null);
@@ -28,9 +28,22 @@ function UploadModal({ isOpen, onClose }) {
     };
 
     const handleClose = () => {
-        resetState();
+        if (!isProcessing) {
+            resetState();
+        }
         onClose();
     };
+
+    // Effect to resume polling if there is an active task ID in localStorage
+    // This handles page refreshes or component remounts
+    useEffect(() => {
+        const savedTaskId = localStorage.getItem("currentTaskId");
+        if (savedTaskId && !isProcessing && !pollingInterval.current) {
+             // Check if task is still running
+             setIsProcessing(true);
+             pollStatus(savedTaskId);
+        }
+    }, []);
 
     const validateZipFile = async (file) => {
         setIsValidating(true);
@@ -88,21 +101,29 @@ function UploadModal({ isOpen, onClose }) {
                 if (data.state === 'PROGRESS') {
                     const percent = data.total > 0 ? Math.round((data.current / data.total) * 100) : 0;
                     setProgress(percent);
-                    setStatusMessage(data.status || `Processando ${percent}%...`);
+                    setStatusMessage(data.status || `Processando ${percent}%...(${data.current}/${data.total})`);
                 } 
                 else if (data.state === 'SUCCESS') {
                     clearInterval(pollingInterval.current);
+                    pollingInterval.current = null;
+                    localStorage.removeItem("currentTaskId");
                     setIsProcessing(false);
                     setProgress(100);
                     setStatusMessage("Concluído com sucesso!");
                     
-                    setTimeout(() => {
+                    setTimeout(async () => {
                         alert("Textos processados e salvos!");
+                        const userId = localStorage.getItem("userId");
+                        const new_texts_data = await getTextsData(userId);
+                        localStorage.setItem("textsData", JSON.stringify(new_texts_data));
                         handleClose();
+
                     }, 500);
                 } 
                 else if (data.state === 'FAILURE') {
                     clearInterval(pollingInterval.current);
+                    pollingInterval.current = null;
+                    localStorage.removeItem("currentTaskId");
                     setIsProcessing(false);
                     setUploadError(`Server error:: ${data.error || 'Unexpected Error'}`);
                 }
@@ -171,7 +192,8 @@ function UploadModal({ isOpen, onClose }) {
             }
 
             // Inicia o monitoramento
-            setStatusMessage("Aguardando worker...");
+            setStatusMessage("Aguardando servidor...");
+            localStorage.setItem("currentTaskId", response.task_id);
             pollStatus(response.task_id);
 
         } catch (error) {
@@ -187,29 +209,25 @@ function UploadModal({ isOpen, onClose }) {
         };
     }, []);
 
-    if (!isOpen) return null;
+    if (!isOpen && !isProcessing) return null;
 
     return (
-        <>
-            {/* Can't close if it's processing */}
+        <div style={{ display: isOpen ? 'block' : 'none' }}>
             <div 
                 className="modal-overlay" 
-                onClick={isProcessing ? undefined : handleClose}
+                onClick={handleClose}
             ></div>
             
             <div className="upload-modal">
                 <div className="modal-header">
                     <h2 className="modal-title">Upload de Arquivo</h2>
-                    {/* No close button during processing */}
-                    {!isProcessing && (
-                        <button
-                            className="modal-close-button"
-                            onClick={handleClose}
-                            aria-label="Close"
-                        >
-                            ×
-                        </button>
-                    )}
+                    <button
+                        className="modal-close-button"
+                        onClick={handleClose}
+                        aria-label="Close"
+                    >
+                        ×
+                    </button>
                 </div>
 
                 <div className="modal-body">
@@ -287,7 +305,7 @@ function UploadModal({ isOpen, onClose }) {
                                 }}></div>
                             </div>
                             <p className="upload-text" style={{ fontWeight: 'bold' }}>{statusMessage}</p>
-                            <p className="upload-subtext">Não feche esta janela.</p>
+                            <p className="upload-subtext">Você pode fechar esta janela, o processo continuará em segundo plano.</p>
                         </div>
                     )}
 
@@ -301,10 +319,8 @@ function UploadModal({ isOpen, onClose }) {
                     <button
                         className="modal-button cancel-button"
                         onClick={handleClose}
-                        disabled={isProcessing} // No cancel button during processing
-                        style={isProcessing ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
                     >
-                        Cancelar
+                        {isProcessing ? "Fechar" : "Cancelar"}
                     </button>
                     
                     {/* Confirm button appears only if not processing */}
@@ -319,7 +335,7 @@ function UploadModal({ isOpen, onClose }) {
                     )}
                 </div>
             </div>
-        </>
+        </div>
     );
 }
 
