@@ -31,6 +31,7 @@ def process_zip_texts(self, zip_path):
         return {'error': 'Temp file not found in server.'}
 
     processor = TextProcessor()
+    db_session = get_db_session()
     results = {}
 
     try:
