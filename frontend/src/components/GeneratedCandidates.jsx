@@ -37,7 +37,7 @@ const GeneratedCandidates = ({ candidates , selectedStartIndex, selectedEndIndex
     spans.push(
         <span key={i} style={{display: 'inline'}}>        
             <input
-                placeholder="NOVA CORREÇÃO"
+                placeholder="Novo Token"
                 className="clickable"
                 onKeyDown={(event) => {
                     if (event.key === 'Enter') {
