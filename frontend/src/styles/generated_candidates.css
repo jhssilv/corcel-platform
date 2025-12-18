@@ -5,4 +5,12 @@
     padding-right: 0.6em;
     margin: 0.1em;
     border: 2px solid white;
+    background-color: #1a1a1a;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.addButton:hover {
+    border-color: #646cff;
 }

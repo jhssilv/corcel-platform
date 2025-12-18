@@ -4,6 +4,8 @@ import { useAuth } from './functions/useAuth.jsx';
 
 import { authenticateUser, getTextsData } from './api/APIFunctions.jsx';
 
+import TopBar from './TopBar.jsx';
+
 import '../styles/login_page.css';
 
 // LOGIN PAGE COMPONENT \\
@@ -45,6 +47,7 @@ function LoginPage() {
 
     return (
         <section>
+            <TopBar showSidePanel={false}/>
             <h1>Autenticação de usuário</h1>
             <form onSubmit={handleSubmit}>
                 <input 
@@ -63,7 +66,7 @@ function LoginPage() {
                     required
                     placeholder="Senha"
                 />
-                <button type="submit">Entrar</button>
+                <button type="submit" style={{ color: 'white' }}>Entrar</button>
             </form>
         </section>
     );

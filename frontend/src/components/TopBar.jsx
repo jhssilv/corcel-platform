@@ -12,7 +12,7 @@ import UploadModal from "./UploadModal.jsx"
 import ReportModal from "./ReportModal.jsx"
 import { useNavigate } from "react-router-dom";
 
-function TopBar({ onDownloadClick }) {
+function TopBar({ onDownloadClick , showSidePanel = true}) {
   const { logout, username } = useContext(AuthContext)
   
   // UI State
@@ -68,16 +68,17 @@ function TopBar({ onDownloadClick }) {
         <div className="top-bar-spacer"></div>
       </div>
 
-      <SidePanel 
-        isOpen={isPanelOpen}
-        onClose={closePanel}
-        username={username}
-        onDownload={onDownloadClick}
-        onUpload={openUpload}
-        onWhitelist={openWhitelist}
-        onReport={openReport}
-        onLogout={handleLogout}
-      />
+      {showSidePanel ?
+        <SidePanel 
+          isOpen={isPanelOpen}
+          onClose={closePanel}
+          username={username}
+          onDownload={onDownloadClick}
+          onUpload={openUpload}
+          onWhitelist={openWhitelist}
+          onReport={openReport}
+          onLogout={handleLogout}
+        /> : null}
 
       <WhitelistModal 
         isOpen={isWhitelistOpen} 
@@ -100,6 +101,7 @@ function TopBar({ onDownloadClick }) {
 
 TopBar.propTypes = {
   onDownloadClick: PropTypes.func.isRequired,
+  showSidePanel: PropTypes.bool
 }
 
 export default TopBar
