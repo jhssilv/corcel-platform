@@ -12,6 +12,9 @@ input {
   border-top: none;
   border-left: none;
   border-right: none;
+  background-color: #3a3a3a;
+  color: white;
+  border-radius: 4px;
 }
 
 .card {
