@@ -100,7 +100,7 @@ def get_original_text_tokens_by_id(db_session, text_id:int):
     """
     Returns all tokens of a text without any normalization applied.
     """
-    return db_session.query(Token).filter(Token.text_id == text_id).all()
+    return sorted(db_session.query(Token).filter(Token.text_id == text_id).all(), key=lambda t: t.position)
 
 
 def get_normalizations_by_text(db_session, text_id, user_id):
