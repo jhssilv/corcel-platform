@@ -1,4 +1,4 @@
-import sqlalchemy
+from extensions import bcrypt
 
 from sqlalchemy import (
     CHAR,
@@ -26,11 +26,18 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     username = Column(String(30), nullable=False, unique=True)
-    password = Column(String(30), nullable=False)
+    hashed_password = Column(String(120), nullable=False)
     last_login = Column(TIMESTAMP, nullable=True)
+    is_admin = Column(Boolean, nullable=False, default=False)
 
     normalizations = relationship('Normalization', back_populates='user', cascade="all, delete-orphan")
     texts_association = relationship('TextsUsers', back_populates='user', cascade="all, delete-orphan")
+
+    def set_password(self, password: str):
+        self.hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+
+    def check_password(self, password: str) -> bool:
+        return bcrypt.check_password_hash(self.hashed_password, password)
 
 
 class Text(Base):
