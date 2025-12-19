@@ -5,6 +5,7 @@ from .extensions import celery
 from .text_processor import TextProcessor
 from .database.queries import add_text
 from .database import models as models
+from .database.connection import get_db_session
 
 def add_to_database(results: dict):
     for file_name, data in results.items():
