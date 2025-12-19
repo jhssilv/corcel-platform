@@ -5,12 +5,13 @@ from dotenv import load_dotenv
 from pydantic import ValidationError
 from celery import Celery
 
-from .extensions import db, celery
+from .extensions import db, celery, jwt
 from .routes.auth_routes import auth_bp
 from .routes.text_routes import text_bp
 from .routes.download_routes import download_bp
 from .routes.upload_routes import upload_bp
 from .config import Config
+from .database.models import User
 
 load_dotenv()
 
@@ -29,7 +30,13 @@ def create_app():
     
     app.config.from_object(Config)
 
+    @jwt.user_lookup_loader
+    def user_lookup_callback(_jwt_header, jwt_data):
+        identity = jwt_data["sub"]
+        return db.get(User, identity)
+
     CORS(app) 
+    jwt.init_app(app)
     db.init_app(app)
     
     # Atualiza a configuração da instância global do Celery
