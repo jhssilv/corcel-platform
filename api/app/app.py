@@ -10,6 +10,7 @@ from .routes.auth_routes import auth_bp
 from .routes.text_routes import text_bp
 from .routes.download_routes import download_bp
 from .routes.upload_routes import upload_bp
+from .config import Config
 
 load_dotenv()
 
@@ -26,11 +27,7 @@ def make_celery(app_name=__name__):
 def create_app():
     app = Flask(__name__)
     
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['CELERY_BROKER_URL'] = os.getenv('CELERY_BROKER_URL')
-    app.config['CELERY_RESULT_BACKEND'] = os.getenv('CELERY_RESULT_BACKEND')
-    #app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev_key')
+    app.config.from_object(Config)
 
     CORS(app) 
     db.init_app(app)
