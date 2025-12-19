@@ -3,23 +3,23 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import NoResultFound
 
 from app.database.models import Token, User, Text, Normalization, TextsUsers, Suggestion, TokensSuggestions
-from app.database.connection import get_db_session
+from app.extensions import db
 
 from psycopg2.errors import UniqueViolation
 
-db_session = get_db_session()
 
-def authenticate_user(db_session, username, password):
+
+def authenticate_user(db, username, password):
     """
     Authenticate an user. Returns (True, user_id) in case of success,
     or (False, None) in case of failure.
     """
     try:
-        user = db_session.query(User).filter(User.username == username).one()
+        user = db.query(User).filter(User.username == username).one()
 
         if user.password == password:
             user.lastlogin = func.now()
-            db_session.commit()
+            db.commit()
             return True, user.id
         else:
             # Incorrect password
@@ -28,7 +28,7 @@ def authenticate_user(db_session, username, password):
         # User not found
         return False, None
 
-def get_texts_data(db_session, user_id):
+def get_texts_data(db, user_id):
     """
     Fetch a list of all texts with relevant metadata.
     """
@@ -46,7 +46,7 @@ def get_texts_data(db_session, user_id):
         .scalar_subquery()
     )
     
-    result = db_session.query(
+    result = db.query(
         func.coalesce(normalized_subquery).label("normalized_by_user"),
         users_agg_subquery.label("users_assigned"),
         Text.id.label("id"),
@@ -56,12 +56,12 @@ def get_texts_data(db_session, user_id):
 
     return result
     
-def get_text_by_id(db_session, text_id, user_id):
+def get_text_by_id(db, text_id, user_id):
     """
     Fetch a specific text by its ID.
     """
     text_info = (
-        db_session.query(Text)
+        db.query(Text)
         .filter(Text.id == text_id)
         .options(
             joinedload(Text.tokens).joinedload(Token.suggestions) 
@@ -72,7 +72,7 @@ def get_text_by_id(db_session, text_id, user_id):
     if not text_info:
         return None
     
-    assoc = db_session.query(TextsUsers).filter_by(text_id=text_id, user_id=user_id).first()
+    assoc = db.query(TextsUsers).filter_by(text_id=text_id, user_id=user_id).first()
 
     
     tokens_data = [
@@ -96,42 +96,42 @@ def get_text_by_id(db_session, text_id, user_id):
     return response_dict
 
 
-def get_original_text_tokens_by_id(db_session, text_id:int):
+def get_original_text_tokens_by_id(db, text_id:int):
     """
     Returns all tokens of a text without any normalization applied.
     """
-    return sorted(db_session.query(Token).filter(Token.text_id == text_id).all(), key=lambda t: t.position)
+    return sorted(db.query(Token).filter(Token.text_id == text_id).all(), key=lambda t: t.position)
 
 
-def get_normalizations_by_text(db_session, text_id, user_id):
+def get_normalizations_by_text(db, text_id, user_id):
     """
     Returns all normalizations made by a user on a specific text.
     """
-    return db_session.query(Normalization).filter(
+    return db.query(Normalization).filter(
         Normalization.text_id == text_id,
         Normalization.user_id == user_id
     ).all()
 
 
-def assign_text_to_user(db_session, text_id, user_id):
+def assign_text_to_user(db, text_id, user_id):
     """
     Assigns a text to a user.
     """
-    assoc = db_session.query(TextsUsers).filter_by(text_id=text_id, user_id=user_id).first()
+    assoc = db.query(TextsUsers).filter_by(text_id=text_id, user_id=user_id).first()
     if assoc:
         assoc.assigned = True
     else:
         new_assoc = TextsUsers(text_id=text_id, user_id=user_id, assigned=True, normalized=False)
-        db_session.add(new_assoc)
-    db_session.commit()
+        db.add(new_assoc)
+    db.commit()
 
 
-def save_normalization(db_session, text_id, user_id, start_index, end_index, new_token, autocommit=True):
+def save_normalization(db, text_id, user_id, start_index, end_index, new_token, autocommit=True):
     """
     Saves or updates a normalization.
     """
     # Verifies if the normalization already exists
-    existing_norm = db_session.query(Normalization).filter_by(text_id=text_id, user_id=user_id, start_index=start_index).first()
+    existing_norm = db.query(Normalization).filter_by(text_id=text_id, user_id=user_id, start_index=start_index).first()
 
     if existing_norm:
         # (ON CONFLICT ... DO UPDATE)
@@ -149,57 +149,57 @@ def save_normalization(db_session, text_id, user_id, start_index, end_index, new
             creation_time=func.now()
         )
         
-        db_session.add(new_norm)
+        db.add(new_norm)
 
     if autocommit:
-        db_session.commit()
+        db.commit()
 
 
-def delete_normalization(db_session, text_id, user_id, start_index):
+def delete_normalization(db, text_id, user_id, start_index):
     """
     Deletes a specific normalization.
     """
-    norm_to_delete = db_session.query(Normalization).filter_by(text_id=text_id, user_id=user_id, start_index=start_index).first()
+    norm_to_delete = db.query(Normalization).filter_by(text_id=text_id, user_id=user_id, start_index=start_index).first()
     if norm_to_delete:
-        db_session.delete(norm_to_delete)
-        db_session.commit()
+        db.delete(norm_to_delete)
+        db.commit()
 
 
-def toggle_normalized(db_session, text_id, user_id):
+def toggle_normalized(db, text_id, user_id):
     """
     Adds or removes an entry in the 'normalized_texts_users' table.
     """
-    assoc = db_session.query(TextsUsers).filter_by(text_id=text_id, user_id=user_id).first()
+    assoc = db.query(TextsUsers).filter_by(text_id=text_id, user_id=user_id).first()
     if assoc:
         assoc.normalized = not assoc.normalized
     else:
         new_assoc = TextsUsers(text_id=text_id, user_id=user_id, assigned=False, normalized=True)
-        db_session.add(new_assoc)
-    db_session.commit()
+        db.add(new_assoc)
+    db.commit()
 
 
-def get_usernames(db_session):
+def get_usernames(db):
     """
     Returns a list of all usernames.
     """
-    return db_session.query(User.username).all()
+    return db.query(User.username).all()
 
-def get_username_by_id(db_session, user_id:int) -> str:
+def get_username_by_id(db, user_id:int) -> str:
     """
     Returns the username for a given user ID.
     """
-    user = db_session.query(User).filter(User.id == user_id).first()
+    user = db.query(User).filter(User.id == user_id).first()
     return user.username if user else None
 
-def add_suggestion(text_id: int, token_id: int, text: str, db_session):
-    suggestion = db_session.query(Suggestion).filter_by(token_text=text).first()
+def add_suggestion(text_id: int, token_id: int, text: str, db):
+    suggestion = db.query(Suggestion).filter_by(token_text=text).first()
 
     if not suggestion:
         suggestion = Suggestion(token_text=text)
-        db_session.add(suggestion)
-        db_session.flush()
+        db.add(suggestion)
+        db.flush()
 
-    link_exists = db_session.query(TokensSuggestions).filter_by(
+    link_exists = db.query(TokensSuggestions).filter_by(
         token_id=token_id,
         suggestion_id=suggestion.id
     ).first()
@@ -210,18 +210,18 @@ def add_suggestion(text_id: int, token_id: int, text: str, db_session):
                 token_id=token_id,
                 suggestion_id=suggestion.id
             )
-            db_session.add(new_link)
+            db.add(new_link)
             # Flush to ensure subsequent queries in the same transaction see this link
-            db_session.flush()
+            db.flush()
         except UniqueViolation:
             pass
 
-def add_text(text_obj: Text, tokens_with_candidates: list[tuple[Token, list[str]]], db_session=db_session):
+def add_text(text_obj: Text, tokens_with_candidates: list[tuple[Token, list[str]]], db=db):
     """
     Adds a new text and its associated tokens to the database.
     
     Args:
-        db_session: The SQLAlchemy database session.
+        db: The SQLAlchemy database session.
         text_obj: An instance of the Text model (without ID).
         tokens_with_candidates: A list of tuples, where each tuple contains a Token model instance 
                                 (without IDs or text_id) and a list of candidate strings.
@@ -229,25 +229,31 @@ def add_text(text_obj: Text, tokens_with_candidates: list[tuple[Token, list[str]
         The ID of the newly created text.
     """
     try:
-        db_session.add(text_obj)        
-        db_session.flush()
+        db.add(text_obj)        
+        db.flush()
         
         for token, candidates in tokens_with_candidates:
             token.text_id = text_obj.id
-            db_session.add(token)
-            db_session.flush() # Flush to generate token.id
+            db.add(token)
+            db.flush() # Flush to generate token.id
             
             # Deduplicate candidates to avoid UniqueViolation in TokensSuggestions
             unique_candidates = list(set(candidates))
             
             for candidate in unique_candidates:
-                add_suggestion(text_obj.id, token.id, candidate, db_session)
+                add_suggestion(text_obj.id, token.id, candidate, db)
 
-        db_session.commit()
+        db.commit()
         
         return text_obj.id
 
     except Exception as e:
-        db_session.rollback()
+        db.rollback()
         print(f"Error adding text: {e}")
         raise e
+    
+def get_user_by_username(db, username: str):
+    """
+    Fetch a user by their username.
+    """
+    return db.query(User).filter(User.username == username).first()
