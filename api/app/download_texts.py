@@ -1,12 +1,11 @@
 import tempfile
-import app.database.models as models
-from app.database.queries import get_normalizations_by_text
-from app.database.connection import get_db_session
 import os
 import shutil
 import time
 
-db = get_db_session()
+import app.database.models as models
+from app.database.queries import get_normalizations_by_text
+from app.extensions import db
 
 def normalizations_to_dict(normalizations):
     return {n.start_index: n for n in normalizations}
