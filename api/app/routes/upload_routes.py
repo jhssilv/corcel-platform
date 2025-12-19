@@ -2,8 +2,10 @@ import os
 import uuid
 from flask import Blueprint, request, jsonify
 from werkzeug.utils import secure_filename
+
 from app.tasks import process_zip_texts 
 import app.api_schemas as schemas
+from utils.decorators import admin_required
 
 upload_bp = Blueprint('upload', __name__)
 
@@ -11,7 +13,8 @@ UPLOAD_FOLDER = os.path.join(os.getcwd(), 'temp_uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 @upload_bp.route('/api/upload', methods=['POST'])
-def upload_file():
+@admin_required()
+def upload_file(current_user):
     if 'file' not in request.files:
         return jsonify(schemas.ErrorResponse(error='File not found.').model_dump()), 400
     

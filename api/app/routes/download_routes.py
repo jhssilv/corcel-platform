@@ -2,6 +2,8 @@ import os
 import shutil
 from flask import Blueprint, jsonify, make_response, send_from_directory, request, after_this_request
 from flask_pydantic import validate
+
+from api.app.utils.decorators import login_required
 from app.logging_config import DownloadLogger
 import app.api_schemas as schemas
 from app.download_texts import save_modified_texts
@@ -12,19 +14,21 @@ download_bp = Blueprint('download', __name__)
 download_log_manager = DownloadLogger(log_file='logs/download_activity.log')
 logger = download_log_manager.get_logger()
 
-@download_bp.route('/api/report/<int:user_id>', methods=['POST'])
+@download_bp.route('/api/report/', methods=['POST'])
+@login_required()
 @validate()
-def request_report(user_id:int, body:schemas.ReportRequest):
-    report = generate_report(user_id, body.text_ids)
+def request_report(current_user, body:schemas.ReportRequest):
+    report = generate_report(current_user.id, body.text_ids)
     response = make_response(report)
     response.headers["Content-Disposition"] = "attachment; filename=report.csv"
     response.headers["Content-type"] = "text/csv"
     return response
 
-@download_bp.route('/api/download/<int:user_id>', methods=['POST'])
-def download_normalized_texts(user_id: int):
+@download_bp.route('/api/download/', methods=['POST'])
+@login_required()
+def download_normalized_texts(current_user):
     try:
-        logger.info(f"Download request received for user ID: {user_id}")
+        logger.info(f"Download request received for user ID: {current_user.id}")
         body = request.get_json()
         if not body:
             return jsonify(schemas.ErrorResponse(error="Request body missing").model_dump()), 400
@@ -35,7 +39,7 @@ def download_normalized_texts(user_id: int):
         if not isinstance(text_ids, list) or not text_ids:
             return jsonify({"error": "'text_ids' must be a non-empty list"}), 400
 
-        zip_abs_path = save_modified_texts(user_id, text_ids, use_tags)
+        zip_abs_path = save_modified_texts(current_user.id, text_ids, use_tags)
 
         if not os.path.exists(zip_abs_path):
             return jsonify(schemas.ErrorResponse(error="Failed to generate zip").model_dump()), 500
