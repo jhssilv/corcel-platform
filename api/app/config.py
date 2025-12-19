@@ -12,4 +12,6 @@ class Config:
     
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
+    JWT_TOKEN_LOCATION = ['cookies']
+    
     SECRET_KEY = os.getenv('SECRET_KEY', 'dev_key')
