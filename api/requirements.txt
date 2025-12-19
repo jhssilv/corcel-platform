@@ -26,3 +26,5 @@ flask-cors
 redis
 flask-sqlalchemy
 dependency-injector
+flask-jwt-extended
+flask-bcrypt
