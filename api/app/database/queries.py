@@ -1,6 +1,7 @@
 from sqlalchemy import func, select
 from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import NoResultFound
+from sqlalchemy.dialects.postgresql import insert
 
 from app.database.models import Token, User, Text, Normalization, TextsUsers, Suggestion, TokensSuggestions
 from app.extensions import db
@@ -183,10 +184,30 @@ def save_normalization(db, text_id, user_id, start_index, end_index, new_token, 
         # Get the original token to find its text
         token = db.query(Token).filter_by(text_id=text_id, position=start_index).first()
         if token:
-            # Find all tokens with the same text
-            matching_tokens = db.query(Token).filter(Token.token_text == token.token_text).all()
-            for t in matching_tokens:
-                add_suggestion(t.text_id, t.id, new_token, db)
+            # Get or Create Suggestion
+            suggestion = db.query(Suggestion).filter_by(token_text=new_token).first()
+            if not suggestion:
+                suggestion = Suggestion(token_text=new_token)
+                db.add(suggestion)
+                db.flush()
+            
+            # Find all matching tokens IDs
+            matching_token_ids = db.query(Token.id).filter(Token.token_text == token.token_text).all()
+            
+            if matching_token_ids:
+                # Bulk Insert with ON CONFLICT DO NOTHING
+                stmt = insert(TokensSuggestions).values(
+                    [
+                        {"token_id": t_id[0], "suggestion_id": suggestion.id}
+                        for t_id in matching_token_ids
+                    ]
+                )
+                
+                stmt = stmt.on_conflict_do_nothing(
+                    index_elements=['token_id', 'suggestion_id']
+                )
+                
+                db.execute(stmt)
 
     if autocommit:
         db.commit()
