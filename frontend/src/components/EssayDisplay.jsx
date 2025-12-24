@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import GeneratedEssay from './GeneratedEssay';
 import GeneratedCandidates from './GeneratedCandidates';
@@ -12,12 +12,17 @@ function EssayDisplay({ essay, refreshEssay }) {
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [popupIsActive, setPopupIsActive] = useState(false);
 
+  useEffect(() => {
+    setSelectedStartIndex(null);
+    setSelectedEndIndex(null);
+  }, [essay]);
+
   if (!essay) {
     return <h3>Nenhum texto selecionado.</h3>;
   }
 
   const singleWordSelected = selectedStartIndex !== null && selectedEndIndex === selectedStartIndex;
-  const selectedWordHasCandidates = selectedStartIndex && essay.tokens[selectedStartIndex] && essay.tokens[selectedStartIndex].candidates ? true : false;
+  const selectedWordHasCandidates = selectedStartIndex !== null && essay.tokens[selectedStartIndex] && essay.tokens[selectedStartIndex].candidates ? true : false;
   const candidates = essay.tokens[selectedStartIndex] ? essay.tokens[selectedStartIndex]["candidates"] : [];
 
   return (
