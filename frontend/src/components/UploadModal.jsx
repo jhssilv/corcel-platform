@@ -113,8 +113,6 @@ function UploadModal({ isOpen, onClose }) {
                     
                     setTimeout(async () => {
                         alert("Textos processados e salvos!");
-                        const new_texts_data = await getTextsData();
-                        localStorage.setItem("textsData", JSON.stringify(new_texts_data));
                         handleClose();
 
                     }, 500);
