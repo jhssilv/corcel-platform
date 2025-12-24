@@ -16,9 +16,13 @@ logger = download_log_manager.get_logger()
 
 @download_bp.route('/api/report/', methods=['POST'])
 @login_required()
-@validate()
-def request_report(current_user, body:schemas.ReportRequest):
+def request_report(current_user):  
+    data = request.get_json()
+    
+    body = schemas.ReportRequest(**data)
+
     report = generate_report(current_user.id, body.text_ids)
+    
     response = make_response(report)
     response.headers["Content-Disposition"] = "attachment; filename=report.csv"
     response.headers["Content-type"] = "text/csv"
