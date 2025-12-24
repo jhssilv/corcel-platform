@@ -42,9 +42,9 @@ test.describe('Text Interaction', () => {
           sourceFileName: 'essay1.txt',
           grade: 5,
           tokens: [
-            { text: 'Hello', position: 0, isWord: true, toBeNormalized: false, candidates: [] },
-            { text: 'wrld', position: 1, isWord: true, toBeNormalized: true, candidates: ['world', 'word'] },
-            { text: '.', position: 2, isWord: false, toBeNormalized: false, candidates: [] },
+            { id: 101, text: 'Hello', position: 0, isWord: true, toBeNormalized: false, candidates: [] },
+            { id: 102, text: 'wrld', position: 1, isWord: true, toBeNormalized: true, candidates: ['world', 'word'] },
+            { id: 103, text: '.', position: 2, isWord: false, toBeNormalized: false, candidates: [] },
           ],
         }),
       });
@@ -216,5 +216,76 @@ test.describe('Text Interaction', () => {
     // Confirm in popup
     await expect(page.getByText('você deseja remover a correção?')).toBeVisible();
     await page.getByRole('button', { name: 'Remover', exact: true }).click();
+  });
+
+  test('should toggle "to be normalized" status', async ({ page }) => {
+    // Mock the toggle API call
+    let toggleCalled = false;
+    await page.route('**/api/tokens/102/suggestions/toggle', async route => {
+      toggleCalled = true;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ message: "Token 'to_be_normalized' status toggled" }),
+      });
+    });
+
+    // Click on 'wrld' (which has toBeNormalized: true)
+    await page.locator('.clickable').filter({ hasText: 'wrld' }).click();
+
+    // Verify candidates panel is open
+    await expect(page.getByText('Alternativas para')).toBeVisible();
+
+    // Click the toggle button (green checkmark/trash icon depending on state)
+    // The button has class 'remove-suggestions-button'
+    await page.locator('.remove-suggestions-button').click();
+
+    // Verify the confirmation dialog appears
+    await expect(page.locator('.confirmation-dialog')).toBeVisible();
+    await expect(page.getByText('Marcar token como (in)correto?')).toBeVisible();
+
+    // Confirm
+    await page.getByRole('button', { name: 'Confirmar' }).click();
+
+    // Verify API was called
+    expect(toggleCalled).toBe(true);
+  });
+
+  test('should send global suggestion flag when adding a correction', async ({ page }) => {
+    // Mock the save normalization API call
+    let savePayload = null;
+    await page.route('**/api/texts/1/normalizations', async route => {
+      if (route.request().method() === 'POST') {
+        savePayload = route.request().postDataJSON();
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ message: "Correction added: world" }),
+        });
+      } else {
+        await route.continue();
+      }
+    });
+
+    // Click on 'wrld'
+    await page.locator('.clickable').filter({ hasText: 'wrld' }).click();
+
+    // Check the "Sugestão Global" checkbox
+    await page.getByLabel('Sugestão Global').check();
+
+    // Select a candidate 'world'
+    await page.getByRole('button', { name: 'world', exact: true }).click();
+
+    // Verify confirmation popup
+    await expect(page.locator('.confirmation-dialog')).toBeVisible();
+    await expect(page.getByText('você deseja adicionar world como correção?')).toBeVisible();
+
+    // Confirm
+    await page.getByRole('button', { name: 'Adicionar' }).click();
+
+    // Verify payload
+    expect(savePayload).toBeTruthy();
+    expect(savePayload.suggest_for_all).toBe(true);
+    expect(savePayload.new_token).toBe('world');
   });
 });
