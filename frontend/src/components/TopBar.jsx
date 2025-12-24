@@ -45,9 +45,8 @@ function TopBar({ onDownloadClick , showSidePanel = true}) {
     closePanel()
   }
 
-  const handleLogout = () => {
-    console.log("[TODO] Implement logout functionality here")
-    localStorage.clear();
+  const handleLogout = async () => {
+    await logout();
     navigate("/");
   }
 
@@ -100,7 +99,7 @@ function TopBar({ onDownloadClick , showSidePanel = true}) {
 }
 
 TopBar.propTypes = {
-  onDownloadClick: PropTypes.func.isRequired,
+  onDownloadClick: PropTypes.func,
   showSidePanel: PropTypes.bool
 }
 

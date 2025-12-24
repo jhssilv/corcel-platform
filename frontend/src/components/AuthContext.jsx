@@ -1,5 +1,7 @@
 import { createContext, useState, useEffect} from 'react';
 import PropTypes from 'prop-types';
+import { logoutUser } from './api/APIFunctions';
+
 
 //          AUTH CONTEXT         \\
 
@@ -25,12 +27,16 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('username', username);
     };
 
-    const logout = () => {
-        setIsAuthenticated(false);
-        setUsername(null);
-
-        localStorage.clear();
-        navigate("/");
+    const logout = async () => {
+        try {
+            await logoutUser();
+        } catch (error) {
+            console.error("Logout failed:", error);
+        } finally {
+            setIsAuthenticated(false);
+            setUsername(null);
+            localStorage.clear();
+        }
     };
 
     return (
