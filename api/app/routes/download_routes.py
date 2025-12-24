@@ -16,11 +16,8 @@ logger = download_log_manager.get_logger()
 
 @download_bp.route('/api/report/', methods=['POST'])
 @login_required()
-def request_report(current_user):  
-    data = request.get_json()
-    
-    body = schemas.ReportRequest(**data)
-
+@validate()
+def request_report(current_user, body: schemas.ReportRequest):  
     report = generate_report(current_user.id, body.text_ids)
     
     response = make_response(report)
@@ -30,17 +27,15 @@ def request_report(current_user):
 
 @download_bp.route('/api/download/', methods=['POST'])
 @login_required()
-def download_normalized_texts(current_user):
+@validate()
+def download_normalized_texts(current_user, body: schemas.DownloadRequest):
     try:
         logger.info(f"Download request received for user ID: {current_user.id}")
-        body = request.get_json()
-        if not body:
-            return jsonify(schemas.ErrorResponse(error="Request body missing").model_dump()), 400
 
-        text_ids = body.get('text_ids')
-        use_tags = body.get('use_tags', False)
+        text_ids = body.text_ids
+        use_tags = body.use_tags
 
-        if not isinstance(text_ids, list) or not text_ids:
+        if not text_ids:
             return jsonify({"error": "'text_ids' must be a non-empty list"}), 400
 
         zip_abs_path = save_modified_texts(current_user.id, text_ids, use_tags)

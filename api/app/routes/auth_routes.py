@@ -6,7 +6,7 @@ from datetime import datetime
 import app.api_schemas as schemas
 import app.database.queries as queries
 from app.database.models import User
-from app.utils.decorators import login_required
+from app.utils.decorators import login_required, admin_required
 from app.extensions import db
 
 session = db.session
@@ -29,10 +29,11 @@ def get_usernames(current_user):
 
 
 @auth_bp.route('/api/register', methods=['POST'])
-def register():
-    data = request.get_json()
-    username = data.get("username")
-    password = data.get("password")
+@validate()
+@admin_required()
+def register(body: schemas.UserCredentials):
+    username = body.username
+    password = body.password
     
     user = queries.get_user_by_username(session, username)
     
@@ -48,10 +49,10 @@ def register():
     return jsonify({"msg": "User created successfully"}), 201
 
 @auth_bp.route('/api/login', methods=['POST'])
-def login():
-    data = request.get_json()
-    username = data.get("username")
-    password = data.get("password")
+@validate()
+def login(body: schemas.UserCredentials):
+    username = body.username
+    password = body.password
     
     user = queries.get_user_by_username(session, username)
     
@@ -69,6 +70,6 @@ def login():
     
 @auth_bp.route('/api/logout', methods=['GET'])
 def logout():
-    response = jsonify({"msg": "Logout successful"})
+    response = jsonify({"message": "Logout successful"})
     unset_jwt_cookies(response)
     return response, 200

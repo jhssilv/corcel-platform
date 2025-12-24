@@ -14,19 +14,19 @@ class MessageResponse(BaseModel):
 
 class UsernamesResponse(BaseModel):
     """Schema for the list of usernames."""
-    usernames: List[str] = Field(..., example=["user1", "admin", "guest"])
+    usernames: List[str] = Field(..., json_schema_extra={"example": ["user1", "admin", "guest"]})
 
 
-# --- /api/login ---
+# --- /api/login & /api/register ---
 
-class LoginRequest(BaseModel):
-    """Schema for the login request."""
-    username: str = Field(..., example="admin", description="Username.")
-    password: str = Field(..., example="password123", description="Password.")
+class UserCredentials(BaseModel):
+    """Schema for login and registration requests."""
+    username: str = Field(..., json_schema_extra={"example": "admin"}, description="Username.")
+    password: str = Field(..., json_schema_extra={"example": "password123"}, description="Password.")
 
 class LoginResponse(BaseModel):
     """Schema for the login response."""
-    message: str = Field(..., example="Olá, admin!")
+    message: str = Field(..., json_schema_extra={"example": "Olá, admin!"})
 
 
 # --- /api/texts ---
