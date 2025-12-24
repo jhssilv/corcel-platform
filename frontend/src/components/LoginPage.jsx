@@ -39,7 +39,7 @@ const handleSubmit = async (event) => {
 
     } catch (error) {
         console.error(error);
-        alert(error.response?.data?.error || 'Login failed');
+        alert(error.error || error.response?.data?.error || 'Login failed');
     }
 };
 
