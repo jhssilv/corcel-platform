@@ -77,6 +77,7 @@ def get_text_by_id(db, text_id, user_id):
     
     tokens_data = [
         {
+            "id": token.id,
             "text": token.token_text,
             "isWord": token.is_word,
             "position": token.position,
@@ -127,7 +128,7 @@ def assign_text_to_user(db, text_id, user_id):
     db.commit()
 
 
-def save_normalization(db, text_id, user_id, start_index, end_index, new_token, suggest_for_all=False, autocommit=True):
+def save_normalization(db, text_id, user_id, start_index, end_index, new_token, autocommit=True):
     """
     Saves or updates a normalization.
     """
@@ -151,15 +152,6 @@ def save_normalization(db, text_id, user_id, start_index, end_index, new_token, 
         )
         
         db.add(new_norm)
-
-    if suggest_for_all:
-        # Find the original token text
-        original_token = db.query(Token).filter_by(text_id=text_id, position=start_index).first()
-        if original_token:
-            # Find all tokens with the same text
-            matching_tokens = db.query(Token).filter_by(token_text=original_token.token_text).all()
-            for token in matching_tokens:
-                add_suggestion(token.text_id, token.id, new_token, db)
 
     if autocommit:
         db.commit()

@@ -49,6 +49,7 @@ class TextsDataResponse(BaseModel):
 
 class Token(BaseModel):
     """Schema for a single token."""
+    id: int
     text: str
     is_word: bool = Field(alias="isWord")
     position: int
