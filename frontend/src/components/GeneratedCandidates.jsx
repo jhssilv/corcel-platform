@@ -18,7 +18,8 @@ const GeneratedCandidates = ({
     refreshEssay,
     suggestForAll,
     setSuggestForAll,
-    onClose
+    onClose,
+    tokenId
 }) => {
 
     const [showRemoveConfirmation, setShowRemoveConfirmation] = useState(false);
@@ -42,7 +43,7 @@ const GeneratedCandidates = ({
     const handleConfirmRemove = async () => {
 
         // I don't really know why the +1, but it works
-        await toggleToBeNormalized(selectedStartIndex + 1);
+        await toggleToBeNormalized(tokenId);
         refreshEssay();
         setShowRemoveConfirmation(false);
     };

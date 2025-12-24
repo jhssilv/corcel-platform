@@ -111,6 +111,7 @@ function EssayDisplay({ essay, refreshEssay }) {
           setSelectedStartIndex(null);
           setSelectedEndIndex(null);
         }}
+        tokenId={essay.tokens[selectedStartIndex]?.id}
       />
 
       <GeneratedEssay 
