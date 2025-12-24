@@ -7,20 +7,22 @@ from app.extensions import db
 
 CONTEXT_WINDOW = 5
 
+session = db.session
+
 def generate_report(user_id:int, text_ids:list[int]):
     output = io.StringIO()
     writer = csv.writer(output, delimiter=';')
-    username = get_username_by_id(db, user_id)
+    username = get_username_by_id(session, user_id)
     
     # Write CSV header
     output.write('\ufeff')  # BOM for UTF-8
     writer.writerow(['Text ID', 'User', 'Previous Tokens', 'Word', 'Subsequent Tokens', 'Normalization'])
     
     for text_id in text_ids:
-        tokens = get_original_text_tokens_by_id(db, text_id)        
+        tokens = get_original_text_tokens_by_id(session, text_id)        
         tokens.sort(key=lambda token: token.position)
-        normalizations = get_normalizations_by_text(db, text_id, user_id)
-        text_sourcefilename = get_text_by_id(db, text_id, user_id)['source_file_name']
+        normalizations = get_normalizations_by_text(session, text_id, user_id)
+        text_sourcefilename = get_text_by_id(session, text_id, user_id)['source_file_name']
 
         for norm in normalizations:
             prev_tokens = tokens[max(0, norm.start_index - CONTEXT_WINDOW):norm.start_index]
