@@ -34,6 +34,7 @@ const EssaySelector = ({
     const [selectedOtherFilters, setSelectedOtherFilters] = useState(null);
     const [filteredEssays, setFilteredEssays] = useState(null);
     const [teachers, setTeachers] = useState([]);
+    const [essayInputValue, setEssayInputValue] = useState('');
 
     // <> Event handlers <> \\
     useEffect(() => {
@@ -50,7 +51,7 @@ const EssaySelector = ({
             try {
                 const data = await getTextsData();
                 setTextsData(data);
-                changeFilteredEssays(data, null, null, null);
+                changeFilteredEssays(data, null, null, null, '');
             } catch (error) {
                 console.error("Failed to fetch texts data:", error);
             }
@@ -78,7 +79,7 @@ const EssaySelector = ({
 
     
 
-    function changeFilteredEssays(textsData, selectedGrades, selectedTeacher, selectedOtherFilters) {
+    function changeFilteredEssays(textsData, selectedGrades, selectedTeacher, selectedOtherFilters, searchText = '') {
 
         // Extract selected grade values (numbers)
         const selectedGradesList = selectedGrades?.map(item => item.value) || [];
@@ -91,15 +92,16 @@ const EssaySelector = ({
 
 
         const filteredEssays = textsData
-            .filter(({ grade, usersAssigned, normalizedByUser }) => {
+            .filter(({ grade, usersAssigned, normalizedByUser, sourceFileName }) => {
                 const matchesGrade =
                     selectedGradesList.length === 0 || selectedGradesList.includes(Number(grade));
                 const matchesTeacher =
                     selectedTeacherList.length === 0 || usersAssigned.some(teacher => selectedTeacherList.includes(teacher));
                 const matchesCorrected =
                     selectedOtherFiltersList.length === 0 || selectedOtherFiltersList.includes(normalizedByUser);
+                const matchesSearch = fuzzySearchLogic({ label: sourceFileName }, searchText);
 
-                return matchesGrade && matchesTeacher && matchesCorrected;
+                return matchesGrade && matchesTeacher && matchesCorrected && matchesSearch;
             })
             .map(({ id, sourceFileName }) => ({ value: id, label: sourceFileName }));
 
@@ -113,7 +115,7 @@ const EssaySelector = ({
         const updatedTexts = await getTextsData();
 
         setTextsData(updatedTexts);
-        changeFilteredEssays(updatedTexts, selectedGrades, selectedTeacher, selectedOtherFilters);
+        changeFilteredEssays(updatedTexts, selectedGrades, selectedTeacher, selectedOtherFilters, essayInputValue);
     };
 
     // Handlers for dropdown changes
@@ -122,7 +124,7 @@ const EssaySelector = ({
         setSelectedOtherFilters(selectedOptions);
 
         // Resets the filters
-        changeFilteredEssays(textsData, selectedGrades, selectedTeacher, selectedOptions);
+        changeFilteredEssays(textsData, selectedGrades, selectedTeacher, selectedOptions, essayInputValue);
     };
 
     const handleTeacherChange = (selectedOptions) => {
@@ -130,7 +132,7 @@ const EssaySelector = ({
         setSelectedTeacher(selectedOptions);
 
         // Resets the filters
-        changeFilteredEssays(textsData, selectedGrades, selectedOptions, selectedOtherFilters);
+        changeFilteredEssays(textsData, selectedGrades, selectedOptions, selectedOtherFilters, essayInputValue);
     };
 
     const handleGradeChange = (selectedOptions) => {
@@ -138,11 +140,18 @@ const EssaySelector = ({
         setSelectedGrades(selectedOptions);
 
         // Resets the filters
-        changeFilteredEssays(textsData, selectedOptions, selectedTeacher, selectedOtherFilters);
+        changeFilteredEssays(textsData, selectedOptions, selectedTeacher, selectedOtherFilters, essayInputValue);
     };
 
     const handleEssayChange = (selectedOption) => {
         setSelectedEssay(selectedOption);
+    };
+
+    const handleEssayInputChange = (newValue, actionMeta) => {
+        if (actionMeta.action === 'input-change') {
+            setEssayInputValue(newValue);
+            changeFilteredEssays(textsData, selectedGrades, selectedTeacher, selectedOtherFilters, newValue);
+        }
     };
 
     return (
@@ -154,7 +163,9 @@ const EssaySelector = ({
                 selectedValues={selectedEssay}
                 onChange={handleEssayChange}
                 isMulti={false}
-                filterOption={fuzzySearchLogic}
+                filterOption={null}
+                inputValue={essayInputValue}
+                onInputChange={handleEssayInputChange}
             />
             {/* Grade Dropdown */}
             <DropdownSelect

@@ -7,7 +7,7 @@ import PropTypes from "prop-types"
 
 // Dropdown select configurations
 
-const DropdownSelect = ({title, options, onChange, selectedValues, isMulti=false, filterOption=null}) => {
+const DropdownSelect = ({title, options, onChange, selectedValues, isMulti=false, filterOption=null, inputValue, onInputChange}) => {
   // Handle changes in the select input
   const handleChange = (selectedOptions) => {
     onChange(selectedOptions)
@@ -114,6 +114,8 @@ const DropdownSelect = ({title, options, onChange, selectedValues, isMulti=false
       isMulti={isMulti}
       closeMenuOnSelect={!isMulti}
       filterOption={filterOption}
+      inputValue={inputValue}
+      onInputChange={onInputChange}
     />
   )
 }
@@ -125,6 +127,8 @@ DropdownSelect.propTypes = {
   onChange: PropTypes.func,
   isMulti: PropTypes.bool,
   filterOption: PropTypes.func,
+  inputValue: PropTypes.string,
+  onInputChange: PropTypes.func,
 }
 
 export default DropdownSelect

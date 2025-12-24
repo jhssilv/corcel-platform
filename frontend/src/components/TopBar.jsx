@@ -60,7 +60,7 @@ function TopBar({ onDownloadClick , showSidePanel = true}) {
         </button>
 
         <div className="app-title-container">
-          <h1 className="app-title">CorCel</h1>
+          <h1 className="app-title">CorCel 🐎</h1>
           <p className="app-subtitle">Ferramenta de Normalização Ortográfica</p>
         </div>
 
