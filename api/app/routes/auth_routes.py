@@ -31,7 +31,7 @@ def get_usernames(current_user):
 @auth_bp.route('/api/register', methods=['POST'])
 @validate()
 @admin_required()
-def register(body: schemas.UserCredentials):
+def register(body: schemas.UserCredentials, current_user=None):
     username = body.username
     password = body.password
     

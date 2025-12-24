@@ -1,14 +1,14 @@
-from pydantic import BaseModel, Field, TypeAdapter
+from pydantic import BaseModel, Field, TypeAdapter, ConfigDict
 from typing import List, Dict, Optional, Any, Tuple
 from datetime import datetime
 
 class ErrorResponse(BaseModel):
     """Error Response Schema."""
-    error: str = Field(..., example="Error description.")
+    error: str = Field(..., json_schema_extra={"example": "Error description."})
 
 class MessageResponse(BaseModel):
     """Success Response Schema."""
-    message: str = Field(..., example="Operation completed successfully.")
+    message: str = Field(..., json_schema_extra={"example": "Operation completed successfully."})
 
 # --- /api/users ---
 
@@ -39,16 +39,13 @@ class TextMetadata(BaseModel):
     source_file_name: Optional[str] = Field(alias="sourceFileName", default=None)
     users_assigned: List[str] = Field(alias="usersAssigned", default=[])
     
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
     
 class TextsDataResponse(BaseModel):
     """Schema for the response of the list of texts for a user."""
     texts_data: List[TextMetadata] = Field(alias="textsData")
 
-    class Config:
-        populate_by_name = True
-        title = "textsData"
+    model_config = ConfigDict(populate_by_name=True, title="textsData")
 
 class Token(BaseModel):
     """Schema for a single token."""
@@ -58,8 +55,7 @@ class Token(BaseModel):
     to_be_normalized: bool = Field(alias="toBeNormalized")
     candidates: List[str] = Field(default=[])
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 class TextDetailResponse(BaseModel):
     """Schema for the detailed response of a single text."""
@@ -71,8 +67,7 @@ class TextDetailResponse(BaseModel):
     source_file_name: Optional[str] = Field(alias="sourceFileName")
     assigned_to_user: bool = Field(alias="assignedToUser")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 # --- /normalizations ---
 
@@ -84,27 +79,28 @@ NormalizationResponse = TypeAdapter(Dict[str, NormalizationValue])
 
 class NormalizationDeleteRequest(BaseModel):
     """Schema for the DELETE request body of a normalization."""
-    word_index: int = Field(..., example=15, description="Index of the token to be deleted.")
+    word_index: int = Field(..., json_schema_extra={"example": 15}, description="Index of the token to be deleted.")
 
 class NormalizationCreateRequest(BaseModel):
     """Schema for the POST request body to create/save a normalization."""
-    first_index: int = Field(..., example=15, description="Index from the first token.")
-    last_index: int = Field(..., example=16, description="Index of the last token of the normalization.")
-    new_token: str = Field(..., example="new corrected token", description="The new token that will replace the original.")
+    first_index: int = Field(..., json_schema_extra={"example": 15}, description="Index from the first token.")
+    last_index: int = Field(..., json_schema_extra={"example": 16}, description="Index of the last token of the normalization.")
+    new_token: str = Field(..., json_schema_extra={"example": "new corrected token"}, description="The new token that will replace the original.")
+
+class NormalizationCreateRequest(BaseModel):
+    """Schema for the POST request body to create/save a normalization."""
+    first_index: int = Field(..., json_schema_extra={"example": 15}, description="Index from the first token.")
+    last_index: int = Field(..., json_schema_extra={"example": 16}, description="Index of the last token of the normalization.")
+    new_token: str = Field(..., json_schema_extra={"example": "new corrected token"}, description="The new token that will replace the original.")
     
     
 # --- /downloads ---
     
 class DownloadRequest(BaseModel):
     """Schema for the download request body."""
-    text_ids: List[int] = Field(..., example=[1, 2, 3], description="List of text IDs to download.")
+    text_ids: List[int] = Field(..., json_schema_extra={"example": [1, 2, 3]}, description="List of text IDs to download.")
     use_tags: bool = Field(False, description="Whether to use tags in the normalized tokens.")
 
 class ReportRequest(BaseModel):
     """Schema for the report request body."""
-    text_ids: List[int] = Field(..., example=[1, 2, 3], description="List of text IDs to generate the report for.")
-    
-class UploadResponse(BaseModel):
-    status: str
-    total: int
-    
+    text_ids: List[int] = Field(..., json_schema_extra={"example": [1, 2, 3]}, description="List of text IDs to generate the report for.")
