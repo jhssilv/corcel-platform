@@ -3,7 +3,7 @@ import shutil
 from flask import Blueprint, jsonify, make_response, send_from_directory, request, after_this_request
 from flask_pydantic import validate
 
-from api.app.utils.decorators import login_required
+from app.utils.decorators import login_required
 from app.logging_config import DownloadLogger
 import app.api_schemas as schemas
 from app.download_texts import save_modified_texts
