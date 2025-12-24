@@ -114,4 +114,110 @@ test.describe('Dashboard', () => {
     await page.getByRole('button', { name: 'Cancelar' }).click();
     await expect(page.getByRole('heading', { name: 'Opções de Download' })).not.toBeVisible();
   });
+
+  test('should update corrected count when essay is marked as finished', async ({ page }) => {
+    // Initial count check
+    await expect(page.locator('.corrected-count')).toContainText('Finalizados: 1 de 2');
+
+    // Mock the text detail API call for essay 1
+    await page.route('**/api/texts/1', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          id: 1,
+          sourceFileName: 'essay1.txt',
+          grade: 5,
+          normalizedByUser: false,
+          tokens: [{ text: 'Hello', position: 0, toBeNormalized: false, candidates: [] }],
+        }),
+      });
+    });
+
+    // Mock normalizations (GET and PATCH)
+    await page.route('**/api/texts/1/normalizations', async route => {
+      if (route.request().method() === 'PATCH') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ message: 'Success' }),
+        });
+      } else {
+        // Default to GET
+        await route.fulfill({ status: 200, body: JSON.stringify({}) });
+      }
+    });
+
+    // Select essay 1
+    await page.getByRole('combobox').first().click();
+    await page.getByText('essay1.txt', { exact: true }).click();
+
+    // Update mock for text detail (so the button updates too)
+    await page.unroute('**/api/texts/1');
+    await page.route('**/api/texts/1', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          id: 1,
+          grade: 5,
+          usersAssigned: ['testuser'],
+          normalizedByUser: true, // Now TRUE
+          sourceFileName: 'essay1.txt',
+          content: 'Essay content...',
+          tokens: [{ text: 'Hello', position: 0, toBeNormalized: false, candidates: [] }],
+        }),
+      });
+    });
+
+    // Mock the REFRESH of the texts list
+    await page.unroute('**/api/texts/');
+    await page.route('**/api/texts/', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          textsData: [
+            {
+              id: 1,
+              grade: 5,
+              usersAssigned: ['testuser'],
+              normalizedByUser: true, // Now TRUE
+              sourceFileName: 'essay1.txt',
+            },
+            {
+              id: 2,
+              grade: 3,
+              usersAssigned: ['testuser'],
+              normalizedByUser: true,
+              sourceFileName: 'essay2.txt',
+            },
+          ],
+        }),
+      });
+    });
+
+    // Setup a promise to wait for the refresh call (LIST)
+    const refreshPromise = page.waitForResponse(async response => {
+      // We want the list response, not the detail response
+      // The list response has 'textsData' property
+      if (!response.url().includes('/api/texts/')) return false;
+      if (response.status() !== 200) return false;
+      try {
+        const json = await response.json();
+        return json.textsData !== undefined;
+      } catch (e) {
+        return false;
+      }
+    });
+
+    // Click the toggle
+    await page.locator('.finalized-toggle').click();
+
+    // Wait for the refresh call to complete
+    await refreshPromise;
+
+    // Verify the count updates
+    await expect(page.locator('.corrected-count')).toContainText('Finalizados: 2 de 2');
+  });
 });
