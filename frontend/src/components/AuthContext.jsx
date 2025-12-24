@@ -35,7 +35,8 @@ export const AuthProvider = ({ children }) => {
         } finally {
             setIsAuthenticated(false);
             setUsername(null);
-            localStorage.clear();
+            localStorage.removeItem('isAuthenticated');
+            localStorage.removeItem('username');
         }
     };
 
