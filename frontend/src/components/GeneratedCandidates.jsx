@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import '../styles/generated_candidates.css'
 
 // Generates the candidate list and the new candidate input.
@@ -15,6 +15,13 @@ const GeneratedCandidates = ({
 }) => {
 
     const [suggestForAll, setSuggestForAll] = useState(false);
+    const inputRef = useRef(null);
+
+    useEffect(() => {
+        if (inputRef.current) {
+            inputRef.current.focus();
+        }
+    }, [selectedStartIndex]);
 
     if(selectedStartIndex == null || !singleWordSelected)
         return null;
@@ -46,6 +53,7 @@ const GeneratedCandidates = ({
                 
                 <div className="new-candidate-container">
                     <input
+                        ref={inputRef}
                         placeholder="Novo Token"
                         className="new-candidate-input"
                         onKeyDown={(event) => {
