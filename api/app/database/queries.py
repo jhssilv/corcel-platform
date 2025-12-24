@@ -82,8 +82,7 @@ def get_text_by_id(db, text_id, user_id):
             "position": token.position,
             "candidates": [s.token_text for s in token.suggestions] ,
             "toBeNormalized": token.to_be_normalized,
-            "whitespaceAfter": token.whitespace_after,
-            "showSuggestions": token.show_suggestions
+            "whitespaceAfter": token.whitespace_after
         }
         for token in text_info.tokens]
 
@@ -259,3 +258,13 @@ def get_user_by_username(db, username: str):
     Fetch a user by their username.
     """
     return db.query(User).filter(User.username == username).first()
+
+
+def toggle_to_be_normalized(db, token_id: int):
+    """
+    Toggles the 'to_be_normalized' flag for a specific token.
+    """
+    token = db.query(Token).filter(Token.id == token_id).first()
+    if token:
+        token.to_be_normalized = not token.to_be_normalized
+        db.commit()

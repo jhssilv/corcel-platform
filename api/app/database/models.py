@@ -65,7 +65,6 @@ class Token(Base):
     position = Column(Integer, nullable=False)
     to_be_normalized = Column(Boolean, nullable=True, )
     whitespace_after = Column(CHAR(1), nullable=True, default='')
-    show_suggestions = Column(Boolean, nullable=False, default=False)
 
     __table_args__ = (
         UniqueConstraint('text_id', 'position', name='uq_text_position'), 

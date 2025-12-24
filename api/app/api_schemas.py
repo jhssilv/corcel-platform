@@ -55,7 +55,6 @@ class Token(BaseModel):
     to_be_normalized: bool = Field(alias="toBeNormalized")
     candidates: List[str] = Field(default=[])
     whitespace_after: Optional[str] = Field(alias="whitespaceAfter", default="")
-    show_suggestions: bool = Field(alias="showSuggestions", default=False)
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -106,3 +105,7 @@ class DownloadRequest(BaseModel):
 class ReportRequest(BaseModel):
     """Schema for the report request body."""
     text_ids: List[int] = Field(..., json_schema_extra={"example": [1, 2, 3]}, description="List of text IDs to generate the report for.")
+    
+class toggleToBeNormalizedRequest(BaseModel):
+    """Schema for toggling the to_be_normalized flag for a token."""
+    token_id: int = Field(..., json_schema_extra={"example": 42}, description="ID of the token to toggle.")

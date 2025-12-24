@@ -99,3 +99,15 @@ def toggle_normalization_status(current_user, text_id: int):
         return jsonify(response.model_dump()), 200
     except Exception as e:
         return jsonify(schemas.ErrorResponse(error=str(e)).model_dump()), 500
+    
+    
+@text_bp.route('/api/tokens/<int:token_id>/suggestions/toggle', methods=['PATCH'])
+@login_required()
+@validate()
+def toggle_token_suggestions(current_user, token_id: int, body: schemas.toggleToBeNormalizedRequest):
+    try:
+        queries.toggle_to_be_normalized(session, token_id=token_id)
+        response = schemas.MessageResponse(message="Token 'to_be_normalized' status toggled")
+        return jsonify(response.model_dump()), 200
+    except Exception as e:
+        return jsonify(schemas.ErrorResponse(error=str(e)).model_dump()), 500

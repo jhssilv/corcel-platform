@@ -102,6 +102,7 @@ function EssayDisplay({ essay, refreshEssay }) {
         selectedTokenText={selectedTokenText}
         singleWordSelected={singleWordSelected}
         toBeNormalized={essay.tokens[selectedStartIndex]?.toBeNormalized}
+        refreshEssay={refreshEssay}
       />
 
       <GeneratedEssay 

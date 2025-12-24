@@ -64,8 +64,6 @@ const TokenDetailSchema = z.object({
     candidates: z.array(z.string()),
     toBeNormalized: z.boolean(),
     whitespaceAfter: z.string(),
-    isWord: z.boolean(),
-    showSuggestions: z.boolean(),
   })
 });
 

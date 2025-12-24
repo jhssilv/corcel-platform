@@ -2,6 +2,8 @@ import PropTypes from 'prop-types';
 import { useState, useRef, useEffect } from 'react';
 import '../styles/generated_candidates.css'
 
+import { toggleToBeNormalized } from './api/APIFunctions';
+
 // Generates the candidate list and the new candidate input.
 
 const GeneratedCandidates = ({ 
@@ -12,7 +14,8 @@ const GeneratedCandidates = ({
     setPopupIsActive,
     selectedTokenText,
     singleWordSelected,
-    toBeNormalized
+    toBeNormalized,
+    refreshEssay,
 }) => {
 
     const [suggestForAll, setSuggestForAll] = useState(false);
@@ -33,9 +36,11 @@ const GeneratedCandidates = ({
         setPopupIsActive(true);
     };
 
-    const handleConfirmRemove = () => {
-        // TODO: Add API call to remove suggestions for the selected token
-        console.log('Remove suggestions confirmed');
+    const handleConfirmRemove = async () => {
+
+        // I don't really know why the +1, but it works
+        await toggleToBeNormalized(selectedStartIndex + 1);
+        refreshEssay();
         setShowRemoveConfirmation(false);
     };
 
@@ -110,7 +115,7 @@ const GeneratedCandidates = ({
             {showRemoveConfirmation && (
                 <div className="confirmation-overlay">
                     <div className="confirmation-dialog">
-                        <p>Marcar token como (in)correto? Isso removerá ou adicionará a marcação de "Não Normalizado"</p>
+                        <p>Marcar token como (in)correto? Isso apenas removerá ou adicionará a marcação de "Não Normalizado"</p>
                         <div className="confirmation-buttons">
                             <button onClick={handleConfirmRemove} className="confirm-btn">Confirmar</button>
                             <button onClick={() => setShowRemoveConfirmation(false)} className="cancel-btn">Cancelar</button>

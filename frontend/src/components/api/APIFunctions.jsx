@@ -172,3 +172,10 @@ export async function getTaskStatus(taskId) {
   const data = await apiPrivate.get(`/status/${taskId}`);
   return schemas.TaskStatusResponseSchema.parse(data);
 }
+
+export async function toggleToBeNormalized(tokenId) {
+  const payload = {
+    token_id: tokenId
+  };
+  await apiPrivate.patch(`/tokens/${tokenId}/suggestions/toggle`, payload);
+}
