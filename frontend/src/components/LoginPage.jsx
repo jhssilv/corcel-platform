@@ -31,9 +31,6 @@ const handleSubmit = async (event) => {
     try {
         const login_data = await authenticateUser(username, password); 
     
-        const textsData = await getTextsData(); 
-        localStorage.setItem('textsData', JSON.stringify(textsData));
-
         login(username);
         navigate('/main');           
 
