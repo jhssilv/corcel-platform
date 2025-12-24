@@ -25,6 +25,8 @@ const GeneratedCandidates = ({
 
     const [showRemoveConfirmation, setShowRemoveConfirmation] = useState(false);
     const inputRef = useRef(null);
+    const floatingListRef = useRef(null);
+    const sidePanelRef = useRef(null);
 
     useEffect(() => {
         if (inputRef.current) {
@@ -32,6 +34,29 @@ const GeneratedCandidates = ({
         }
         setSuggestForAll(false);
     }, [selectedStartIndex]);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            // Check if click is outside floating list AND outside side panel
+            const clickedOutsideFloating = floatingListRef.current && !floatingListRef.current.contains(event.target);
+            const clickedOutsidePanel = sidePanelRef.current && !sidePanelRef.current.contains(event.target);
+            
+            if (clickedOutsideFloating && clickedOutsidePanel) {
+                // Check if the click target is not a token (class 'clickable')
+                // AND not inside the confirmation popup (which might be rendered by a sibling component)
+                if (
+                    !event.target.classList.contains('clickable') &&
+                    !event.target.closest('.confirmation-dialog') &&
+                    !event.target.closest('.confirmation-overlay')
+                ) {
+                     onClose();
+                }
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [onClose]);
 
     if(selectedStartIndex == null)
         return null;
@@ -51,11 +76,22 @@ const GeneratedCandidates = ({
 
     const hasCandidates = candidates && candidates.length > 0;
 
+    // Helper to chunk candidates into rows of 7
+    const chunkedCandidates = hasCandidates ? candidates.reduce((resultArray, item, index) => { 
+        const chunkIndex = Math.floor(index / 7);
+        if(!resultArray[chunkIndex]) {
+            resultArray[chunkIndex] = []; // start a new chunk
+        }
+        resultArray[chunkIndex].push(item);
+        return resultArray;
+    }, []) : [];
+
     return (
         <>
         {/* Floating Candidates List */}
         {hasCandidates && singleWordSelected && tokenPosition && (
             <div 
+                ref={floatingListRef}
                 className="floating-candidates-list"
                 style={{
                     position: 'absolute',
@@ -64,25 +100,56 @@ const GeneratedCandidates = ({
                     transform: 'translateY(-100%)',
                     zIndex: 1000,
                     display: 'flex',
+                    flexDirection: 'column',
                     gap: '5px',
-                    flexWrap: 'wrap',
-                    maxWidth: '300px'
+                    backgroundColor: '#2b2b2b',
+                    padding: '10px',
+                    borderRadius: '8px',
+                    border: '1px solid #444',
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
+                    whiteSpace: 'nowrap'
                 }}
             >
-                {candidates.map((candidate, index) => (
-                    <button 
-                        key={index} 
-                        className="candidate-button" 
-                        onClick={() => handleCandidateSelection(candidate)}
-                        style={{ width: 'auto' }} // Override full width
-                    >
-                        {candidate}
-                    </button>
+                <button 
+                    className="close-floating-button"
+                    onClick={onClose}
+                    style={{
+                        position: 'absolute',
+                        top: '-10px',
+                        right: '-10px',
+                        background: '#2b2b2b',
+                        border: '1px solid #444',
+                        borderRadius: '50%',
+                        width: '24px',
+                        height: '24px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        color: '#ccc',
+                        fontSize: '12px'
+                    }}
+                >
+                    ✕
+                </button>
+                {chunkedCandidates.map((row, rowIndex) => (
+                    <div key={rowIndex} style={{ display: 'flex', gap: '5px' }}>
+                        {row.map((candidate, index) => (
+                            <button 
+                                key={`${rowIndex}-${index}`} 
+                                className="candidate-button" 
+                                onClick={() => handleCandidateSelection(candidate)}
+                                style={{ width: 'auto' }} // Override full width
+                            >
+                                {candidate}
+                            </button>
+                        ))}
+                    </div>
                 ))}
             </div>
         )}
 
-        <div className="candidates-panel">
+        <div className="candidates-panel" ref={sidePanelRef}>
             <button className="close-panel-button" onClick={onClose} title="Fechar painel">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                     <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>

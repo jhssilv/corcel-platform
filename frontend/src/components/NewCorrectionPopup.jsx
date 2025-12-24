@@ -16,7 +16,8 @@ const NewCorrectionPopup = ({
     setSelectedCandidate, 
     refreshEssay,
     clearSelection,
-    suggestForAll = false
+    suggestForAll = false,
+    tokenPosition
 }) => {
 
     const [username, setUsername] = useState(null);
@@ -47,11 +48,20 @@ const NewCorrectionPopup = ({
     if(!isActive)
         return ;
 
+    const dialogStyle = tokenPosition ? {
+        position: 'fixed',
+        top: (tokenPosition.top - window.scrollY) + 40, // Position below the token (viewport coordinates)
+        left: (tokenPosition.left - window.scrollX),
+        transform: 'none',
+        margin: 0,
+        zIndex: 1001
+    } : {}; // Fallback to CSS class style (which is fixed near side panel)
+
     if(!candidate)
         return (
             <>
             <div className="confirmation-overlay" onClick={handleCloseButton}> 
-                <div className="confirmation-dialog">
+                <div className="confirmation-dialog" style={dialogStyle}>
                     <p><strong>{username}</strong>, você deseja remover a correção?</p>
                     <div className="confirmation-buttons">
                         <button 
@@ -75,7 +85,7 @@ const NewCorrectionPopup = ({
     return (
         <>
         <div className="confirmation-overlay" onClick={handleCloseButton}> 
-            <div className="confirmation-dialog">
+            <div className="confirmation-dialog" style={dialogStyle}>
                 <p><strong>{username}</strong>, você deseja adicionar <i>{candidate}</i> como correção?</p>
                 <div className="confirmation-buttons">
                     <button 
@@ -105,7 +115,10 @@ NewCorrectionPopup.propTypes = {
     isActive: PropTypes.bool,
     setSelectedCandidate: PropTypes.func,
     setPopupIsActive: PropTypes.func,
-    refreshEssay: PropTypes.func
+    refreshEssay: PropTypes.func,
+    clearSelection: PropTypes.func,
+    suggestForAll: PropTypes.bool,
+    tokenPosition: PropTypes.object
 };
 
 export default NewCorrectionPopup;

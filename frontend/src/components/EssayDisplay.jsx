@@ -138,6 +138,7 @@ function EssayDisplay({ essay, refreshEssay }) {
           setSelectedStartIndex(null);
           setSelectedEndIndex(null);
         }}
+        tokenPosition={tokenPosition}
       />
     </div>
   );
