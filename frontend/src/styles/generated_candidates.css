@@ -1,16 +1,82 @@
-
-.addButton {
-    padding: 0.2em;
-    padding-left: 0.6em;
-    padding-right: 0.6em;
-    margin: 0.1em;
-    border: 2px solid white;
-    background-color: #1a1a1a;
-    color: white;
+.candidates-panel {
+    background-color: #2b2b2b;
+    border: 1px solid #444;
     border-radius: 8px;
-    cursor: pointer;
+    padding: 15px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
 }
 
-.addButton:hover {
+.candidates-header {
+    font-size: 0.95em;
+    margin-bottom: 8px;
+    color: #aaa;
+    font-weight: 500;
+}
+
+.selected-token {
+    color: #fff;
+    font-weight: bold;
+    font-style: italic;
+    margin-left: 4px;
+}
+
+.candidates-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+}
+
+.candidate-button {
+    background-color: #3a3a3a;
+    border: 1px solid #555;
+    color: #eee;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.candidate-button:hover {
+    background-color: #4a4a4a;
+    border-color: #646cff;
+}
+
+.new-candidate-container {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.new-candidate-input {
+    background-color: #1a1a1a;
+    border: 1px solid #555;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    outline: none;
+}
+
+.new-candidate-input:focus {
+    border-color: #646cff;
+}
+
+.action-button {
+    padding: 5px 10px;
+    border: 1px solid #555;
+    background-color: #3a3a3a;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.action-button:hover {
+    background-color: #4a4a4a;
     border-color: #646cff;
 }

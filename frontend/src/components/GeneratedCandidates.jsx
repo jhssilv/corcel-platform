@@ -4,88 +4,95 @@ import '../styles/generated_candidates.css'
 
 // Generates the candidate list and the new candidate input.
 
-const GeneratedCandidates = ({ candidates , selectedStartIndex, selectedEndIndex, setSelectedCandidate, setPopupIsActive }) => {
+const GeneratedCandidates = ({ 
+    candidates, 
+    selectedStartIndex, 
+    selectedEndIndex, 
+    setSelectedCandidate, 
+    setPopupIsActive,
+    selectedTokenText,
+    singleWordSelected
+}) => {
 
     const [suggestForAll, setSuggestForAll] = useState(false);
 
-    const spans = []; // Array to hold the span elements
-
-    if(selectedStartIndex == null)
-        return
+    if(selectedStartIndex == null || !singleWordSelected)
+        return null;
 
     const handleCandidateSelection = (candidate) => {     
         setSelectedCandidate(candidate);
         setPopupIsActive(true);
     };
 
-    // Adds the candidate selection buttons
-    let i = 0;
-    if(candidates && selectedEndIndex === selectedStartIndex)
-        for(;i<candidates.length;i++) {
-            const candidate = candidates[i];
-            spans.push(' ');
-            spans.push(<span 
-                key={i} 
-                className="clickable" 
-                onClick={() => handleCandidateSelection(candidate)}>
-                    {candidate}
-                </span>);
-            spans.push(' | ');
-        }
+    const hasCandidates = candidates && candidates.length > 0;
 
-    // Adds the new candidate button
-    spans.push(
-        <span key={i} style={{display: 'inline'}}>        
-            <input
-                placeholder="Novo Token"
-                className="clickable"
-                onKeyDown={(event) => {
-                    if (event.key === 'Enter') {
-                        // Call function when ENTER is pressed
-                        handleCandidateSelection(event.target.value); 
-                        event.target.blur(); // Defocus the input after pressing ENTER
-                        event.target.value = '';
-                        setSuggestForAll(false);
-
-                    }
-                }}
-            />
-            <button className='addButton' onClick={(event) => {
-                const inputElement = event.target.previousElementSibling;  // Get the previous input element
-                handleCandidateSelection(inputElement.value);  // Trigger the same function as Enter
-                inputElement.value = '';  // Clear the input value after adding
-                setSuggestForAll(false);
-
-            }}> &#128393; </button>
-            <button className='addButton' onClick={() => { 
-                handleCandidateSelection('');
-                setSuggestForAll(false);
-
-            }}> &#128465; </button>
-        </span>
+    return (
+        <div className="candidates-panel">
+            <div className="candidates-header">
+                {hasCandidates ? 'Alternativas para ' : 'Substituir '}
+                <span className="selected-token">"{selectedTokenText}"</span>
+            </div>
+            
+            <div className="candidates-list">
+                {hasCandidates && candidates.map((candidate, index) => (
+                    <button 
+                        key={index} 
+                        className="candidate-button" 
+                        onClick={() => handleCandidateSelection(candidate)}
+                    >
+                        {candidate}
+                    </button>
+                ))}
+                
+                <div className="new-candidate-container">
+                    <input
+                        placeholder="Novo Token"
+                        className="new-candidate-input"
+                        onKeyDown={(event) => {
+                            if (event.key === 'Enter') {
+                                handleCandidateSelection(event.target.value); 
+                                event.target.blur();
+                                event.target.value = '';
+                                setSuggestForAll(false);
+                            }
+                        }}
+                    />
+                    <button 
+                        className='action-button edit-button' 
+                        title="Adicionar correção"
+                        onClick={(event) => {
+                            const inputElement = event.target.previousElementSibling;
+                            handleCandidateSelection(inputElement.value);
+                            inputElement.value = '';
+                            setSuggestForAll(false);
+                        }}
+                    > 
+                        &#128393; 
+                    </button>
+                    <button 
+                        className='action-button delete-button' 
+                        title="Remover token"
+                        onClick={() => { 
+                            handleCandidateSelection('');
+                            setSuggestForAll(false);
+                        }}
+                    > 
+                        &#128465; 
+                    </button>
+                </div>
+            </div>
+        </div>
     );
-            //<span className="checkbox-wrapper-47" style={{display: 'inline-block', marginLeft: '10px' }}>
-            //    <input 
-            //        type="checkbox"
-            //        name="cb"
-            //        id="cb-48"
-            //        checked={suggestForAll}
-            //        onChange={(e) => setSuggestForAll(e.target.checked)}
-            //    />
-            //    <label htmlFor="cb-48" 
-            //    title='Adiciona o novo token como sugestão para todas as ocorrências da palavra substituída na plataforma.'>
-            //        Sugestão Global &#x1F6C8;
-            //    </label>  
-            //</span>
-
-    return <>{spans}</>;
 };
 
 GeneratedCandidates.propTypes = {
     candidates: PropTypes.array,
-    selectedWordIndex: PropTypes.number,
+    selectedStartIndex: PropTypes.number,
+    selectedEndIndex: PropTypes.number,
     setSelectedCandidate: PropTypes.func,
-    setPopupIsActive: PropTypes.func
+    setPopupIsActive: PropTypes.func,
+    selectedTokenText: PropTypes.string,
+    singleWordSelected: PropTypes.bool
 };
 
 export default GeneratedCandidates;

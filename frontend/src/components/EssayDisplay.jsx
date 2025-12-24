@@ -15,7 +15,7 @@ function EssayDisplay({ essay, refreshEssay }) {
   useEffect(() => {
     setSelectedStartIndex(null);
     setSelectedEndIndex(null);
-  }, [essay]);
+  }, [essay?.sourceFileName]);
 
   if (!essay) {
     return <h3>Nenhum texto selecionado.</h3>;
@@ -24,6 +24,7 @@ function EssayDisplay({ essay, refreshEssay }) {
   const singleWordSelected = selectedStartIndex !== null && selectedEndIndex === selectedStartIndex;
   const selectedWordHasCandidates = selectedStartIndex !== null && essay.tokens[selectedStartIndex] && essay.tokens[selectedStartIndex].candidates ? true : false;
   const candidates = essay.tokens[selectedStartIndex] ? essay.tokens[selectedStartIndex]["candidates"] : [];
+  const selectedTokenText = essay.tokens[selectedStartIndex] ? essay.tokens[selectedStartIndex].text : "";
 
   return (
     <div>
@@ -61,19 +62,16 @@ function EssayDisplay({ essay, refreshEssay }) {
         </div>
       </div>
 
-      <p>
-        {selectedWordHasCandidates  && singleWordSelected ? "Alternativas para " : null}
-        <i>{selectedWordHasCandidates && singleWordSelected? essay.tokens[selectedStartIndex].text + ": " : null}</i>
-        <strong>
-          <GeneratedCandidates 
-            candidates={candidates}
-            selectedStartIndex={selectedStartIndex}
-            selectedEndIndex={selectedEndIndex}
-            setSelectedCandidate={setSelectedCandidate}
-            setPopupIsActive={setPopupIsActive}
-          />
-        </strong>
-      </p>
+      <GeneratedCandidates 
+        candidates={candidates}
+        selectedStartIndex={selectedStartIndex}
+        selectedEndIndex={selectedEndIndex}
+        setSelectedCandidate={setSelectedCandidate}
+        setPopupIsActive={setPopupIsActive}
+        selectedTokenText={selectedTokenText}
+        singleWordSelected={singleWordSelected}
+      />
+
       <GeneratedEssay 
         essay={essay}
         selectedStartIndex={selectedStartIndex}
