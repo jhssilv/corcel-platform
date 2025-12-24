@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import GeneratedEssay from './GeneratedEssay';
 import GeneratedCandidates from './GeneratedCandidates';
 import NewCorrectionPopup from './NewCorrectionPopup';
+import { toggleNormalizedStatus } from './api/APIFunctions';
 
 function EssayDisplay({ essay, refreshEssay }) {
 
@@ -20,6 +21,11 @@ function EssayDisplay({ essay, refreshEssay }) {
   if (!essay) {
     return <h3>Nenhum texto selecionado.</h3>;
   }
+
+  const handleFinishedToggled = async () => {
+    await toggleNormalizedStatus(essay.id);
+    refreshEssay();
+  };
 
   const singleWordSelected = selectedStartIndex !== null && selectedEndIndex === selectedStartIndex;
   const selectedWordHasCandidates = selectedStartIndex !== null && essay.tokens[selectedStartIndex] && essay.tokens[selectedStartIndex].candidates ? true : false;
@@ -70,6 +76,18 @@ function EssayDisplay({ essay, refreshEssay }) {
         </div>
         <div style={{ textAlign: 'center', color: '#ccc' }}>
             <span>Segure <strong>Ctrl</strong> para selecionar múltiplos tokens.</span>
+        </div>
+
+        <div className="finalized-toggle-wrapper" style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #444', width: '100%', justifyContent: 'center' }}>
+            <label className="finalized-toggle">
+                <input
+                    type="checkbox"
+                    checked={essay.normalizedByUser || false}
+                    onChange={handleFinishedToggled}
+                />
+                <span className="toggle-slider"></span>
+                <span className="toggle-label">Marcar como Finalizado</span>
+            </label>
         </div>
       </div>
 

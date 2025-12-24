@@ -110,15 +110,6 @@ const EssaySelector = ({
         setFilteredEssays(filteredEssays);
     }
 
-    const handleFinishedToggled = async () => {
-
-        await toggleNormalizedStatus(selectedEssay.value);
-        const updatedTexts = await getTextsData();
-
-        setTextsData(updatedTexts);
-        changeFilteredEssays(updatedTexts, selectedGrades, selectedTeacher, selectedOtherFilters, essayInputValue);
-    };
-
     // Handlers for dropdown changes
     const handleOtherFiltersChange = (selectedOptions) => {
         // Goes to the dropdown
@@ -199,21 +190,6 @@ const EssaySelector = ({
             </div>
 
             <div className="selector-footer">
-                {/* Checkbox to mark the essay as corrected */}
-                <div className="finalized-toggle-wrapper">
-                    {selectedEssay && (
-                        <label className="finalized-toggle">
-                            <input
-                                type="checkbox"
-                                checked={textsData.find((e) => e.id === selectedEssay.value).normalizedByUser}
-                                onChange={() => handleFinishedToggled()}
-                            />
-                            <span className="toggle-slider"></span>
-                            <span className="toggle-label">Marcar como Finalizado</span>
-                        </label>
-                    )}
-                </div>
-
                 {/* Corrected texts count */}
                 <div className="corrected-count">
                     Corrigidos: <strong>{
