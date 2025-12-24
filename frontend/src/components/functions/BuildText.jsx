@@ -10,12 +10,12 @@ function createSpan(essay, i, selectedStartIndex, selectedEndIndex, handleSelect
 
     let token = essay.tokens[i];
     let correction = essay.corrections[i];
-    let toBeNormalized = token.toBeNormalized;
+    let toBeNormalized = token.toBeNormalized && token.showSuggestions;
     let className = "clickable";
 
     if (i >= selectedStartIndex && i <= selectedEndIndex) className += " selected";
     else if(correction) className+=" corrected";
-    else if(toBeNormalized) className+=" candidates";
+    else if(toBeNormalized ) className+=" candidates";
 
     let token_text = essay.corrections && essay.corrections[i] ? essay.corrections[i].new_token : token.text;
 
