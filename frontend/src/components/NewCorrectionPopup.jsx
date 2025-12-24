@@ -21,6 +21,7 @@ const NewCorrectionPopup = ({
 }) => {
 
     const [username, setUsername] = useState(null);
+    const tokenText = essay.tokens[selectedFirstIndex]?.text || '';
 
     useEffect(() => {
         const storedUsername = localStorage.getItem('username');
@@ -48,14 +49,28 @@ const NewCorrectionPopup = ({
     if(!isActive)
         return ;
 
-    const dialogStyle = tokenPosition ? {
-        position: 'fixed',
-        top: (tokenPosition.top - window.scrollY) + 40, // Position below the token (viewport coordinates)
-        left: (tokenPosition.left - window.scrollX),
-        transform: 'none',
-        margin: 0,
-        zIndex: 1001
-    } : {}; // Fallback to CSS class style (which is fixed near side panel)
+    let dialogStyle = {};
+    if (tokenPosition) {
+        const viewportTop = tokenPosition.top - window.scrollY;
+        const viewportLeft = tokenPosition.left - window.scrollX;
+        const isBottomHalf = viewportTop > window.innerHeight / 2;
+
+        dialogStyle = {
+            position: 'fixed',
+            left: viewportLeft,
+            transform: 'none',
+            margin: 0,
+            zIndex: 1001
+        };
+
+        if (isBottomHalf) {
+            dialogStyle.bottom = (window.innerHeight - viewportTop) + 10;
+            dialogStyle.top = 'auto';
+        } else {
+            dialogStyle.top = viewportTop + 40;
+            dialogStyle.bottom = 'auto';
+        }
+    }
 
     if(!candidate)
         return (
@@ -86,7 +101,10 @@ const NewCorrectionPopup = ({
         <>
         <div className="confirmation-overlay" onClick={handleCloseButton}> 
             <div className="confirmation-dialog" style={dialogStyle}>
-                <p><strong>{username}</strong>, você deseja adicionar <i>{candidate}</i> como correção?</p>
+                <p>
+                    <strong>{username}</strong>, você deseja adicionar <i>{candidate}</i> como correção
+                    {suggestForAll ? ` para todas as ocorrências de "${tokenText}"? Isso afetará todos os textos` : '?'}
+                </p>
                 <div className="confirmation-buttons">
                     <button 
                         className="confirm-btn"

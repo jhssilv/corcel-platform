@@ -23,25 +23,21 @@ const FloatingCandidatesList = ({ candidates, tokenPosition, onSelect, onClose, 
                 left: tokenPosition.left,
             }}
         >
-            <button 
-                className="close-floating-button"
-                onClick={onClose}
-            >
-                ✕
-            </button>
-            {chunkedCandidates.map((row, rowIndex) => (
-                <div key={rowIndex} className="candidate-row">
-                    {row.map((candidate, index) => (
-                        <button 
-                            key={`${rowIndex}-${index}`} 
-                            className="candidate-button" 
-                            onClick={() => onSelect(candidate)}
-                        >
-                            {candidate}
-                        </button>
-                    ))}
-                </div>
-            ))}
+            <div className="candidates-content">
+                {chunkedCandidates.map((row, rowIndex) => (
+                    <div key={rowIndex} className="candidate-row">
+                        {row.map((candidate, index) => (
+                            <button 
+                                key={`${rowIndex}-${index}`} 
+                                className="candidate-button" 
+                                onClick={() => onSelect(candidate)}
+                            >
+                                {candidate}
+                            </button>
+                        ))}
+                    </div>
+                ))}
+            </div>
         </div>
     );
 };

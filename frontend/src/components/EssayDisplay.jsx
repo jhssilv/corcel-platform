@@ -14,6 +14,7 @@ function EssayDisplay({ essay, refreshEssay }) {
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [popupIsActive, setPopupIsActive] = useState(false);
   const [suggestForAll, setSuggestForAll] = useState(false);
+  const [lastClickTime, setLastClickTime] = useState(0);
 
   useEffect(() => {
     setSelectedStartIndex(null);
@@ -114,6 +115,8 @@ function EssayDisplay({ essay, refreshEssay }) {
         }}
         tokenId={essay.tokens[selectedStartIndex]?.id}
         tokenPosition={tokenPosition}
+        lastClickTime={lastClickTime}
+        essayId={essay.id}
       />
 
       <GeneratedEssay 
@@ -123,6 +126,7 @@ function EssayDisplay({ essay, refreshEssay }) {
         selectedEndIndex={selectedEndIndex}
         setSelectedEndIndex={setSelectedEndIndex}
         setTokenPosition={setTokenPosition}
+        setLastClickTime={setLastClickTime}
       />
       <NewCorrectionPopup 
         essay={essay}

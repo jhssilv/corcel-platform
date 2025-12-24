@@ -1,7 +1,8 @@
 import PropTypes from 'prop-types';
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import FloatingCandidatesList from './FloatingCandidatesList';
 import CandidatesSidePanel from './CandidatesSidePanel';
+import { postNormalization, deleteNormalization } from './api/APIFunctions';
 
 const GeneratedCandidates = ({ 
     candidates, 
@@ -17,57 +18,84 @@ const GeneratedCandidates = ({
     setSuggestForAll,
     onClose,
     tokenId,
-    tokenPosition
+    tokenPosition,
+    lastClickTime,
+    essayId
 }) => {
 
     const floatingListRef = useRef(null);
     const sidePanelRef = useRef(null);
+    const [showFloatingList, setShowFloatingList] = useState(true);
 
     useEffect(() => {
         setSuggestForAll(false);
     }, [selectedStartIndex, setSuggestForAll]);
 
     useEffect(() => {
+        setShowFloatingList(true);
+    }, [selectedStartIndex, lastClickTime]);
+
+    useEffect(() => {
         const handleClickOutside = (event) => {
-            // Check if click is outside floating list AND outside side panel
-            const clickedOutsideFloating = floatingListRef.current && !floatingListRef.current.contains(event.target);
-            const clickedOutsidePanel = sidePanelRef.current && !sidePanelRef.current.contains(event.target);
-            
-            if (clickedOutsideFloating && clickedOutsidePanel) {
-                // Check if the click target is not a token (class 'clickable')
-                // AND not inside the confirmation popup (which might be rendered by a sibling component)
-                if (
-                    !event.target.classList.contains('clickable') &&
-                    !event.target.closest('.confirmation-dialog') &&
-                    !event.target.closest('.confirmation-overlay')
-                ) {
-                     onClose();
+            const isInsideFloating = floatingListRef.current && floatingListRef.current.contains(event.target);
+            const isInsidePanel = sidePanelRef.current && sidePanelRef.current.contains(event.target);
+
+            if (isInsideFloating) return;
+
+            if (isInsidePanel) {
+                if (!event.target.closest('.global-suggestion-label')) {
+                    setShowFloatingList(false);
                 }
+                return;
+            }
+            
+            // Clicked outside both
+            if (
+                event.target.classList.contains('clickable') ||
+                event.target.closest('.confirmation-dialog') ||
+                event.target.closest('.confirmation-overlay')
+            ) {
+                    return;
+            }
+
+            if (showFloatingList && candidates && candidates.length > 0) {
+                setShowFloatingList(false);
+            } else {
+                onClose();
             }
         };
 
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [onClose]);
+    }, [onClose, showFloatingList, candidates]);
 
     if(selectedStartIndex == null)
         return null;
 
-    const handleCandidateSelection = (candidate) => {     
+    const handleCandidateSelection = async (candidate) => {     
         setSelectedCandidate(candidate);
-        setPopupIsActive(true);
+        
+        if (suggestForAll) {
+            setPopupIsActive(true);
+        } else {
+            if(!candidate) await deleteNormalization(essayId, selectedStartIndex);
+            else           await postNormalization(essayId, selectedStartIndex, selectedEndIndex, candidate, suggestForAll);
+            
+            refreshEssay();
+            setSelectedCandidate(null);
+        }
     };
 
     const hasCandidates = candidates && candidates.length > 0;
 
     return (
         <>
-            {singleWordSelected && (
+            {singleWordSelected && showFloatingList && (
                 <FloatingCandidatesList 
                     candidates={candidates}
                     tokenPosition={tokenPosition}
                     onSelect={handleCandidateSelection}
-                    onClose={onClose}
+                    onClose={() => setShowFloatingList(false)}
                     forwardRef={floatingListRef}
                 />
             )}
@@ -103,7 +131,9 @@ GeneratedCandidates.propTypes = {
     setSuggestForAll: PropTypes.func,
     onClose: PropTypes.func,
     tokenId: PropTypes.number,
-    tokenPosition: PropTypes.object
+    tokenPosition: PropTypes.object,
+    lastClickTime: PropTypes.number,
+    essayId: PropTypes.number
 };
 
 export default GeneratedCandidates;

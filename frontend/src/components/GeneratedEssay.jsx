@@ -7,7 +7,7 @@ import '../styles/generated_essay.css';
 // blank spaces and punctuations.
 // Also adds classes for word highlights
 
-const GeneratedEssay = ({ essay, selectedStartIndex, setSelectedStartIndex, selectedEndIndex, setSelectedEndIndex, setTokenPosition }) => {
+const GeneratedEssay = ({ essay, selectedStartIndex, setSelectedStartIndex, selectedEndIndex, setSelectedEndIndex, setTokenPosition, setLastClickTime }) => {
     
     const [ctrlPressed, setCtrlPressed] = useState(false);
     
@@ -48,6 +48,7 @@ const GeneratedEssay = ({ essay, selectedStartIndex, setSelectedStartIndex, sele
         else{
             setSelectedStartIndex(selectedOption);
             setSelectedEndIndex(selectedOption);
+            if (setLastClickTime) setLastClickTime(Date.now());
         }
     };
 
@@ -74,7 +75,8 @@ GeneratedEssay.propTypes = {
     setSelectedStartIndex: PropTypes.func,
     selectedEndIndex: PropTypes.number,
     setSelectedEndIndex: PropTypes.func,
-    setTokenPosition: PropTypes.func
+    setTokenPosition: PropTypes.func,
+    setLastClickTime: PropTypes.func
 };
 
 export default GeneratedEssay;

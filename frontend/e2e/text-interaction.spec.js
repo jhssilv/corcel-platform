@@ -132,11 +132,7 @@ test.describe('Text Interaction', () => {
     // Click on candidate 'world'
     await page.getByText('world', { exact: true }).click();
 
-    // Confirm in popup
-    await expect(page.getByText('você deseja adicionar world como correção?')).toBeVisible();
-    await page.getByRole('button', { name: 'Adicionar' }).click();
-
-    // Verify API call was made
+    // Verify API call was made (no popup expected)
     expect(postCalled).toBe(true);
 
     // Verify the text is updated
@@ -175,15 +171,12 @@ test.describe('Text Interaction', () => {
     // Click the add button (pencil icon)
     await page.locator('.edit-button').click();
 
-    // Confirm in popup
-    await expect(page.getByText('você deseja adicionar custom como correção?')).toBeVisible();
-    await page.getByRole('button', { name: 'Adicionar' }).click();
-
-    // Verify update
+    // Verify update (no popup expected)
     await expect(page.getByText('custom')).toHaveClass(/corrected/);
   });
 
   test('should delete a correction', async ({ page }) => {
+    let deleteCalled = false;
     // Start with a corrected text
     await page.route('**/api/texts/1/normalizations', async route => {
         if (route.request().method() === 'GET') {
@@ -195,6 +188,7 @@ test.describe('Text Interaction', () => {
                 }),
             });
         } else if (route.request().method() === 'DELETE') {
+            deleteCalled = true;
             const postData = route.request().postDataJSON();
             expect(postData).toEqual({ word_index: 1 });
             await route.fulfill({ status: 200 });
@@ -213,9 +207,8 @@ test.describe('Text Interaction', () => {
     // Click the delete button (trash icon)
     await page.locator('.delete-button').click();
 
-    // Confirm in popup
-    await expect(page.getByText('você deseja remover a correção?')).toBeVisible();
-    await page.getByRole('button', { name: 'Remover', exact: true }).click();
+    // Verify DELETE was called
+    expect(deleteCalled).toBe(true);
   });
 
   test('should toggle "to be normalized" status', async ({ page }) => {
@@ -278,7 +271,7 @@ test.describe('Text Interaction', () => {
 
     // Verify confirmation popup
     await expect(page.locator('.confirmation-dialog')).toBeVisible();
-    await expect(page.getByText('você deseja adicionar world como correção?')).toBeVisible();
+    await expect(page.getByText('você deseja adicionar world como correção para todas as ocorrências?')).toBeVisible();
 
     // Confirm
     await page.getByRole('button', { name: 'Adicionar' }).click();
@@ -287,5 +280,23 @@ test.describe('Text Interaction', () => {
     expect(savePayload).toBeTruthy();
     expect(savePayload.suggest_for_all).toBe(true);
     expect(savePayload.new_token).toBe('world');
+  });
+
+  test('should show popup when global suggestion is checked and manual token is entered', async ({ page }) => {
+    // Click on 'wrld'
+    await page.locator('.clickable').filter({ hasText: 'wrld' }).click();
+
+    // Check the "Sugestão Global" checkbox
+    await page.getByLabel('Sugestão Global').check();
+
+    // Enter manual token
+    await page.getByPlaceholder('Novo Token').fill('custom_global');
+    
+    // Press Enter
+    await page.getByPlaceholder('Novo Token').press('Enter');
+
+    // Verify confirmation popup
+    await expect(page.locator('.confirmation-dialog')).toBeVisible();
+    await expect(page.getByText('você deseja adicionar custom_global como correção para todas as ocorrências?')).toBeVisible();
   });
 });

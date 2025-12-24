@@ -51,6 +51,7 @@ const CandidatesSidePanel = ({
                         className="new-candidate-input"
                         onKeyDown={(event) => {
                             if (event.key === 'Enter') {
+                                event.preventDefault();
                                 onSelectCandidate(event.target.value); 
                                 event.target.blur();
                                 event.target.value = '';
