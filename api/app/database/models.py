@@ -1,4 +1,4 @@
-from extensions import bcrypt
+from app.extensions import bcrypt
 
 from sqlalchemy import (
     CHAR,
