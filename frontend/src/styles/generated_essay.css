@@ -13,6 +13,35 @@
     border: 1px solid #333;
 }
 
+.document-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #333;
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+    color: #888;
+    font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+}
+
+.document-title {
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #666;
+}
+
+.document-grade {
+    background-color: #2b2b2b;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    color: #e4e4e7;
+    border: 1px solid #333;
+    font-weight: 500;
+}
+
 .clickable {
     border-radius: 4px;
     padding: 2px 0;

@@ -43,7 +43,19 @@ const GeneratedEssay = ({ essay, selectedStartIndex, setSelectedStartIndex, sele
 
     const spans = buildText(essay, selectedStartIndex, selectedEndIndex, handleSelectedWordIndex);
 
-    return <div className="essay-container">{spans}</div>;
+    return (
+        <div className="essay-container">
+            <div className="document-header">
+                <span className="document-title">{essay.sourceFileName}</span>
+                {essay.grade !== undefined && essay.grade !== null && (
+                    <span className="document-grade">Nota: {essay.grade}</span>
+                )}
+            </div>
+            <div className="document-body">
+                {spans}
+            </div>
+        </div>
+    );
 };
 
 GeneratedEssay.propTypes = {

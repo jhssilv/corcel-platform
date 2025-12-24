@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import DropdownSelect from './DropdownSelect.jsx';
 import PropTypes from 'prop-types';
+import '../styles/essay_selector.css';
 
 import { getTextsData, getUsernames, toggleNormalizedStatus } from './api/APIFunctions.jsx';
 
@@ -155,65 +156,73 @@ const EssaySelector = ({
     };
 
     return (
-        <form>
+        <form className="essay-selector-container">
             {/* Essay Dropdown */}
-            <DropdownSelect
-                title="ID do Texto"
-                options={filteredEssays}
-                selectedValues={selectedEssay}
-                onChange={handleEssayChange}
-                isMulti={false}
-                filterOption={null}
-                inputValue={essayInputValue}
-                onInputChange={handleEssayInputChange}
-            />
-            {/* Grade Dropdown */}
-            <DropdownSelect
-                title="Notas"
-                options={gradeOptions}
-                selectedValues={selectedGrades}
-                onChange={handleGradeChange}
-                isMulti={true}
-            />
-            {/* Teachers Dropdown */}
-            <DropdownSelect
-                title="Responsável"
-                options={teachers}
-                selectedValues={selectedTeacher}
-                onChange={handleTeacherChange}
-                isMulti={true}
-            />
-            {/* Corrected Dropdown */}
-            <DropdownSelect
-                title="Outros filtros"
-                options={otherFilters}
-                selectedValues={selectedOtherFilters}
-                onChange={handleOtherFiltersChange}
-                isMulti={true}
-            />
-            {/* Checkbox to mark the essay as corrected */}
-            {selectedEssay && (
-                <div className="checkbox-external-wrapper">
-                    <div className="checkbox-wrapper-47">
-                        <input
-                            type="checkbox"
-                            name="cb"
-                            id="cb-47"
-                            checked={textsData.find((e) => e.id === selectedEssay.value).normalizedByUser}
-                            onChange={() => handleFinishedToggled()}
-                        />
-                        <label htmlFor="cb-47">Finalizado?</label>
-                    </div>
+            <div className="selector-main-search">
+                <DropdownSelect
+                    title="ID do Texto"
+                    options={filteredEssays}
+                    selectedValues={selectedEssay}
+                    onChange={handleEssayChange}
+                    isMulti={false}
+                    filterOption={null}
+                    inputValue={essayInputValue}
+                    onInputChange={handleEssayInputChange}
+                />
+            </div>
+
+            <div className="selector-filters-grid">
+                {/* Grade Dropdown */}
+                <DropdownSelect
+                    title="Notas"
+                    options={gradeOptions}
+                    selectedValues={selectedGrades}
+                    onChange={handleGradeChange}
+                    isMulti={true}
+                />
+                {/* Teachers Dropdown */}
+                <DropdownSelect
+                    title="Responsável"
+                    options={teachers}
+                    selectedValues={selectedTeacher}
+                    onChange={handleTeacherChange}
+                    isMulti={true}
+                />
+                {/* Corrected Dropdown */}
+                <DropdownSelect
+                    title="Outros filtros"
+                    options={otherFilters}
+                    selectedValues={selectedOtherFilters}
+                    onChange={handleOtherFiltersChange}
+                    isMulti={true}
+                />
+            </div>
+
+            <div className="selector-footer">
+                {/* Checkbox to mark the essay as corrected */}
+                <div className="finalized-toggle-wrapper">
+                    {selectedEssay && (
+                        <label className="finalized-toggle">
+                            <input
+                                type="checkbox"
+                                checked={textsData.find((e) => e.id === selectedEssay.value).normalizedByUser}
+                                onChange={() => handleFinishedToggled()}
+                            />
+                            <span className="toggle-slider"></span>
+                            <span className="toggle-label">Marcar como Finalizado</span>
+                        </label>
+                    )}
                 </div>
-            )}
-            {/* Corrected texts count */}
-            <div id="correctedCount">
-                Corrigidos: {
-                    textsData.filter(({ id, normalizedByUser }) =>
-                            normalizedByUser === true &&
-                            filteredEssays.some((essay) => essay.value === id)
-                        ).length
-                } de {filteredEssays.length}.
+
+                {/* Corrected texts count */}
+                <div className="corrected-count">
+                    Corrigidos: <strong>{
+                        textsData.filter(({ id, normalizedByUser }) =>
+                                normalizedByUser === true &&
+                                filteredEssays.some((essay) => essay.value === id)
+                            ).length
+                    }</strong> de {filteredEssays.length}
+                </div>
             </div>
         </form>
     )

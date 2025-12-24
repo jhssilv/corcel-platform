@@ -35,7 +35,7 @@ function MainPage() {
     <section className="main-page-section">
       <TopBar onDownloadClick={() => setShowDownloadDialog(true)} />
 
-      <h2>Busca de Textos</h2>
+      <h2 className="main-page-header">Busca de Textos</h2>
 
       <div>
         <EssaySelector selectedEssay={selectedEssay} setSelectedEssay={setSelectedEssay} />

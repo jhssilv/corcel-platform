@@ -41,8 +41,6 @@ function EssayDisplay({ essay, refreshEssay }) {
 
   return (
     <div>
-      <h3>{essay.sourceFileName}</h3>
-      <p>Nota: <strong>{essay.grade}</strong></p>
       
       <div style={{ 
         marginBottom: '15px', 

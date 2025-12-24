@@ -16,10 +16,10 @@ const DropdownSelect = ({title, options, onChange, selectedValues, isMulti=false
   const customStyles = {
     control: (provided, state) => ({
       ...provided,
-      backgroundColor: "#1a1a1a",
-      borderColor: state.isFocused ? "#646cff" : "#3a3a3a",
+      backgroundColor: "#2b2b2b",
+      borderColor: state.isFocused ? "#646cff" : "#444",
       borderRadius: "8px",
-      padding: "2px",
+      padding: "4px",
       boxShadow: state.isFocused ? "0 0 0 1px #646cff" : "none",
       "&:hover": {
         borderColor: "#646cff",
@@ -29,21 +29,35 @@ const DropdownSelect = ({title, options, onChange, selectedValues, isMulti=false
     }),
     menu: (provided) => ({
       ...provided,
-      backgroundColor: "#1a1a1a",
+      backgroundColor: "#2b2b2b",
       borderRadius: "8px",
-      border: "1px solid #3a3a3a",
-      marginTop: "4px",
-      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.4)",
+      border: "1px solid #444",
+      marginTop: "6px",
+      boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.5)",
+      zIndex: 100,
     }),
     menuList: (provided) => ({
       ...provided,
       padding: "4px",
       maxHeight: "300px",
+      "::-webkit-scrollbar": {
+        width: "8px",
+      },
+      "::-webkit-scrollbar-track": {
+        background: "#1a1a1a",
+      },
+      "::-webkit-scrollbar-thumb": {
+        background: "#444",
+        borderRadius: "4px",
+      },
+      "::-webkit-scrollbar-thumb:hover": {
+        background: "#555",
+      },
     }),
     option: (provided, state) => ({
       ...provided,
-      backgroundColor: state.isSelected ? "#646cff" : state.isFocused ? "#2a2a2a" : "transparent",
-      color: state.isSelected ? "#ffffff" : "rgba(255, 255, 255, 0.87)",
+      backgroundColor: state.isSelected ? "#646cff" : state.isFocused ? "#3a3a3a" : "transparent",
+      color: state.isSelected ? "#ffffff" : "#e4e4e7",
       padding: "10px 12px",
       borderRadius: "4px",
       cursor: "pointer",
