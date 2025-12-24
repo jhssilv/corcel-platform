@@ -2,9 +2,9 @@ import pytest
 from app.database.models import User
 from app.extensions import db
 
-def test_register_user(client, app):
+def test_register_user(admin_client, app):
     """Test user registration."""
-    response = client.post('/api/register', json={
+    response = admin_client.post('/api/register', json={
         "username": "newuser",
         "password": "newpassword"
     })
@@ -16,10 +16,16 @@ def test_register_user(client, app):
         assert user is not None
         assert user.check_password("newpassword")
 
-def test_register_duplicate_user(client, auth_client):
+def test_register_duplicate_user(admin_client, app):
     """Test registering a user that already exists."""
-    # auth_client fixture already creates 'testuser'
-    response = client.post('/api/register', json={
+    # Create a user first
+    with app.app_context():
+        user = User(username="testuser")
+        user.set_password("password123")
+        db.session.add(user)
+        db.session.commit()
+
+    response = admin_client.post('/api/register', json={
         "username": "testuser",
         "password": "password123"
     })

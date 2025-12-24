@@ -52,3 +52,21 @@ def auth_client(client):
     
     # The client now has the cookies set
     return client
+
+@pytest.fixture
+def admin_client(client):
+    """A helper to create an admin user and log them in."""
+    # Create an admin user
+    with client.application.app_context():
+        user = User(username="adminuser", is_admin=True)
+        user.set_password("adminpass")
+        db.session.add(user)
+        db.session.commit()
+
+    # Login
+    client.post('/api/login', json={
+        "username": "adminuser",
+        "password": "adminpass"
+    })
+    
+    return client
