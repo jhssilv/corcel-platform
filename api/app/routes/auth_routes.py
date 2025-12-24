@@ -9,15 +9,16 @@ from app.database.models import User
 from app.utils.decorators import login_required
 from app.extensions import db
 
+session = db.session
 
 auth_bp = Blueprint('auth', __name__)
 
-@login_required()
 @auth_bp.route('/api/users', methods=['GET'])
+@login_required()
 def get_usernames(current_user):
     """Returns a list of all usernames."""
     try:
-        usernames_tuples = queries.get_usernames(db)
+        usernames_tuples = queries.get_usernames(session)
         username_list = [item[0] for item in usernames_tuples]
         
         response_data = schemas.UsernamesResponse(usernames=username_list)
@@ -33,7 +34,7 @@ def register():
     username = data.get("username")
     password = data.get("password")
     
-    user = queries.get_user_by_username(db, username)
+    user = queries.get_user_by_username(session, username)
     
     if user is not None:
         return jsonify({"error": "Username already exists."}), 400
@@ -41,8 +42,8 @@ def register():
     new_user = User(username=username)
     new_user.set_password(password)
     
-    db.add(new_user)
-    db.commit()
+    session.add(new_user)
+    session.commit()
     
     return jsonify({"msg": "User created successfully"}), 201
 
@@ -52,16 +53,16 @@ def login():
     username = data.get("username")
     password = data.get("password")
     
-    user = queries.get_user_by_username(db, username)
+    user = queries.get_user_by_username(session, username)
     
     if user is None:
         return jsonify({"error": "User does not exist."}), 401
     
     elif not user.check_password(password):
-        return jsonify({"error": "Invalid password."}), 401
+        return jsonify({"error": "Invalid password."}), 403
     
-    access_token = create_access_token(identity=user.id)
-    response = jsonify({"msg": "Login successful"})
+    access_token = create_access_token(identity=str(user.id))
+    response = jsonify({"message": "Login successful"})
     set_access_cookies(response, access_token)
     
     return response, 200

@@ -27,8 +27,6 @@ class LoginRequest(BaseModel):
 class LoginResponse(BaseModel):
     """Schema for the login response."""
     message: str = Field(..., example="Olá, admin!")
-    userId: Optional[int] = Field(..., example=1)
-    timestamp: datetime = Field(..., example=datetime.now())
 
 
 # --- /api/texts ---
