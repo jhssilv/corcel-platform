@@ -128,7 +128,33 @@ def assign_text_to_user(db, text_id, user_id):
     db.commit()
 
 
-def save_normalization(db, text_id, user_id, start_index, end_index, new_token, autocommit=True):
+def add_suggestion(text_id: int, token_id: int, text: str, db):
+    suggestion = db.query(Suggestion).filter_by(token_text=text).first()
+
+    if not suggestion:
+        suggestion = Suggestion(token_text=text)
+        db.add(suggestion)
+        db.flush()
+
+    link_exists = db.query(TokensSuggestions).filter_by(
+        token_id=token_id,
+        suggestion_id=suggestion.id
+    ).first()
+
+    if not link_exists:
+        try:
+            new_link = TokensSuggestions(
+                token_id=token_id,
+                suggestion_id=suggestion.id
+            )
+            db.add(new_link)
+            # Flush to ensure subsequent queries in the same transaction see this link
+            db.flush()
+        except UniqueViolation:
+            pass
+
+
+def save_normalization(db, text_id, user_id, start_index, end_index, new_token, suggest_for_all=False, autocommit=True):
     """
     Saves or updates a normalization.
     """
@@ -152,6 +178,15 @@ def save_normalization(db, text_id, user_id, start_index, end_index, new_token, 
         )
         
         db.add(new_norm)
+
+    if suggest_for_all:
+        # Get the original token to find its text
+        token = db.query(Token).filter_by(text_id=text_id, position=start_index).first()
+        if token:
+            # Find all tokens with the same text
+            matching_tokens = db.query(Token).filter(Token.token_text == token.token_text).all()
+            for t in matching_tokens:
+                add_suggestion(t.text_id, t.id, new_token, db)
 
     if autocommit:
         db.commit()
@@ -193,30 +228,7 @@ def get_username_by_id(db, user_id:int) -> str:
     user = db.query(User).filter(User.id == user_id).first()
     return user.username if user else None
 
-def add_suggestion(text_id: int, token_id: int, text: str, db):
-    suggestion = db.query(Suggestion).filter_by(token_text=text).first()
 
-    if not suggestion:
-        suggestion = Suggestion(token_text=text)
-        db.add(suggestion)
-        db.flush()
-
-    link_exists = db.query(TokensSuggestions).filter_by(
-        token_id=token_id,
-        suggestion_id=suggestion.id
-    ).first()
-
-    if not link_exists:
-        try:
-            new_link = TokensSuggestions(
-                token_id=token_id,
-                suggestion_id=suggestion.id
-            )
-            db.add(new_link)
-            # Flush to ensure subsequent queries in the same transaction see this link
-            db.flush()
-        except UniqueViolation:
-            pass
 
 def add_text(text_obj: Text, tokens_with_candidates: list[tuple[Token, list[str]]], db=db):
     """
