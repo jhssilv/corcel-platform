@@ -71,7 +71,13 @@ def get_normalizations(current_user, text_id: int):
 def save_normalization(current_user, text_id: int, body: schemas.NormalizationCreateRequest):
     try:
         queries.save_normalization(
-            session, text_id, current_user.id, body.first_index, body.last_index, body.new_token
+            session, 
+            text_id, 
+            current_user.id, 
+            body.first_index, 
+            body.last_index, 
+            body.new_token,
+            body.suggest_for_all
         )
         response = schemas.MessageResponse(message=f"Correction added: {body.new_token}")
         return jsonify(response.model_dump()), 200
