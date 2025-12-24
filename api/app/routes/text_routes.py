@@ -1,19 +1,20 @@
 from flask import Blueprint, jsonify
 from flask_pydantic import validate
 
-from api.app.utils.decorators import login_required
+from app.utils.decorators import login_required
 import app.api_schemas as schemas
 import app.database.queries as queries
 from app.extensions import db
+
+session = db.session
 
 text_bp = Blueprint('text', __name__)
 
 @text_bp.route('/api/texts/', methods=['GET'])
 @login_required()
-@validate()
 def get_texts_data(current_user):
     try:
-        texts_data_from_db = queries.get_texts_data(db, current_user.id)
+        texts_data_from_db = queries.get_texts_data(session, current_user.id)
         
         texts_list = [
             {
@@ -36,7 +37,7 @@ def get_texts_data(current_user):
 @validate()
 def get_text_detail(current_user, text_id: int):
     try:
-        text_data_dict = queries.get_text_by_id(db, text_id, current_user.id)
+        text_data_dict = queries.get_text_by_id(session, text_id, current_user.id)
         if not text_data_dict:
             return jsonify({"error": "Text not found"}), 404
     
@@ -50,7 +51,7 @@ def get_text_detail(current_user, text_id: int):
 @validate()
 def get_normalizations(current_user, text_id: int):
     try:
-        normalizations_from_db = queries.get_normalizations_by_text(db, text_id, current_user.id)
+        normalizations_from_db = queries.get_normalizations_by_text(session, text_id, current_user.id)
 
         corrections = {
             str(norm.start_index): schemas.NormalizationValue( 
@@ -70,7 +71,7 @@ def get_normalizations(current_user, text_id: int):
 def save_normalization(current_user, text_id: int, body: schemas.NormalizationCreateRequest):
     try:
         queries.save_normalization(
-            db, text_id, current_user.id, body.first_index, body.last_index, body.new_token
+            session, text_id, current_user.id, body.first_index, body.last_index, body.new_token
         )
         response = schemas.MessageResponse(message=f"Correction added: {body.new_token}")
         return jsonify(response.model_dump()), 200
@@ -82,7 +83,7 @@ def save_normalization(current_user, text_id: int, body: schemas.NormalizationCr
 @validate()
 def delete_normalization(current_user, text_id: int, body: schemas.NormalizationDeleteRequest):
     try:
-        queries.delete_normalization(db, text_id, current_user.id, body.word_index)
+        queries.delete_normalization(session, text_id, current_user.id, body.word_index)
         response = schemas.MessageResponse(message="Normalization deleted")
         return jsonify(response.model_dump()), 200
     except Exception as e:
@@ -93,7 +94,7 @@ def delete_normalization(current_user, text_id: int, body: schemas.Normalization
 @validate()
 def toggle_normalization_status(current_user, text_id: int):
     try:
-        queries.toggle_normalized(db, text_id=text_id, user_id=current_user.id)
+        queries.toggle_normalized(session, text_id=text_id, user_id=current_user.id)
         response = schemas.MessageResponse(message="Status changed")
         return jsonify(response.model_dump()), 200
     except Exception as e:
