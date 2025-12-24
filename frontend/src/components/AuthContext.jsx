@@ -12,22 +12,16 @@ export const AuthProvider = ({ children }) => {
         return localStorage.getItem('isAuthenticated') === 'true'    
     });
     
-    const [userId, setUserId] = useState(() => {
-        return localStorage.getItem('userId');
-    });
-
     const [username, setUsername] = useState(() => {
         return localStorage.getItem('username');
     })
 
 
-    const login = (id, username) => {
+    const login = (username) => {
         setIsAuthenticated(true);
-        setUserId(id);
         setUsername(username);
 
         localStorage.setItem('isAuthenticated', 'true');
-        localStorage.setItem('userId', id);
         localStorage.setItem('username', username);
     };
 
@@ -41,7 +35,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ isAuthenticated, userId, login, logout, username }}>
+        <AuthContext.Provider value={{ isAuthenticated, login, logout, username }}>
             {children}
         </AuthContext.Provider>
     );

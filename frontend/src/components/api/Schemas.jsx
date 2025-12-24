@@ -32,9 +32,7 @@ export const LoginRequestSchema = z.object({
  * Validates the successful response from the POST /api/login route.
  */
 export const LoginResponseSchema = z.object({
-  message: z.string(),
-  timestamp: z.string(), // Validates if the string is a date in ISO 8601 format
-  userId: z.number(),
+  message: z.string()
 });
 
 
