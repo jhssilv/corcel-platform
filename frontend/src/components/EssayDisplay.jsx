@@ -29,6 +29,38 @@ function EssayDisplay({ essay, refreshEssay }) {
     <div>
       <h3>{essay.sourceFileName}</h3>
       <p>Nota: <strong>{essay.grade}</strong></p>
+      
+      <div style={{ 
+        marginBottom: '15px', 
+        padding: '15px', 
+        backgroundColor: '#2b2b2b', 
+        borderRadius: '8px', 
+        fontSize: '0.9em',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '10px',
+        border: '1px solid #444'
+      }}>
+        <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+                <span style={{ width: '12px', height: '12px', backgroundColor: 'rgb(255, 0, 0)', marginRight: '8px', borderRadius: '2px' }}></span>
+                <span>Não Normalizado</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+                <span style={{ width: '12px', height: '12px', backgroundColor: 'rgb(100, 100, 255)', marginRight: '8px', borderRadius: '2px' }}></span>
+                <span>Substituído</span>
+            </div>
+             <div style={{ display: 'flex', alignItems: 'center' }}>
+                <span style={{ width: '12px', height: '12px', backgroundColor: 'gray', marginRight: '8px', borderRadius: '2px' }}></span>
+                <span>Selecionado</span>
+            </div>
+        </div>
+        <div style={{ textAlign: 'center', color: '#ccc' }}>
+            <span>Segure <strong>Ctrl</strong> para selecionar múltiplos tokens.</span>
+        </div>
+      </div>
+
       <p>
         {selectedWordHasCandidates  && singleWordSelected ? "Alternativas para " : null}
         <i>{selectedWordHasCandidates && singleWordSelected? essay.tokens[selectedStartIndex].text + ": " : null}</i>
