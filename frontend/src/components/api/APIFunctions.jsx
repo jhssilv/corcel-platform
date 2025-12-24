@@ -45,6 +45,11 @@ export async function authenticateUser(username, password) {
   return schemas.LoginResponseSchema.parse(response.data || response);
 }
 
+export async function logoutUser() {
+  const response = await apiPrivate.get('/logout');
+  return schemas.MessageResponseSchema.parse(response.data || response);
+}
+
 /**
  * Fetches the metadata of all texts for a user.
  */
@@ -116,6 +121,9 @@ export async function requestDownload(textIds, useTags) {
 
   const response = await apiBlob.post(`/download/`, payload, {
     responseType: 'blob',
+    headers: {
+        'Content-Type': 'application/json' 
+    }
   });
 
   let filename = 'normalized_texts.zip'; // Default filename
