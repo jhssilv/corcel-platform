@@ -130,9 +130,11 @@ export async function requestReport(textIds) {
   const payload = {
     text_ids: textIds
   };
-
   const response = await apiBlob.post(`/report/`, payload, {
-    responseType: 'blob'
+    responseType: 'blob',
+    headers: {
+        'Content-Type': 'application/json'
+    }
   });
 
   saveAs(response.data, 'report.csv');
