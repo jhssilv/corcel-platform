@@ -48,10 +48,36 @@ const NewCorrectionPopup = ({
     if(!candidate)
         return (
             <>
-            <div className="overlay" onClick={handleCloseButton}> 
-                <div className="popup">
+            <div className="confirmation-overlay" onClick={handleCloseButton}> 
+                <div className="confirmation-dialog">
                     <p><strong>{username}</strong>, você deseja remover a correção?</p>
+                    <div className="confirmation-buttons">
+                        <button 
+                            className="confirm-btn"
+                            onClick={handleAddButton}
+                            onKeyDown={(event) => {
+                                // Call function when ENTER is pressed
+                                if (event.key === 'Enter') 
+                                    handleAddButton(); 
+                            }}
+                            tabIndex={0}
+                            autoFocus
+                        >Remover</button>
+                        <button className="cancel-btn" onClick={handleCloseButton}>Cancelar</button>
+                    </div>
+                </div>
+            </div>
+            </>
+        )
+
+    return (
+        <>
+        <div className="confirmation-overlay" onClick={handleCloseButton}> 
+            <div className="confirmation-dialog">
+                <p><strong>{username}</strong>, você deseja adicionar <i>{candidate}</i> como correção?</p>
+                <div className="confirmation-buttons">
                     <button 
+                        className="confirm-btn"
                         onClick={handleAddButton}
                         onKeyDown={(event) => {
                             // Call function when ENTER is pressed
@@ -60,29 +86,9 @@ const NewCorrectionPopup = ({
                         }}
                         tabIndex={0}
                         autoFocus
-                    >Remover</button>
-                    <button onClick={handleCloseButton}>Cancelar</button>
+                    >Adicionar</button>
+                    <button className="cancel-btn" onClick={handleCloseButton}>Cancelar</button>
                 </div>
-            </div>
-            </>
-        )
-
-    return (
-        <>
-        <div className="overlay" onClick={handleCloseButton}> 
-            <div className="popup">
-                <p><strong>{username}</strong>, você deseja adicionar <i>{candidate}</i> como correção?</p>
-                <button 
-                    onClick={handleAddButton}
-                    onKeyDown={(event) => {
-                        // Call function when ENTER is pressed
-                        if (event.key === 'Enter') 
-                            handleAddButton(); 
-                    }}
-                    tabIndex={0}
-                    autoFocus
-                >Adicionar</button>
-                <button onClick={handleCloseButton}>Cancelar</button>
             </div>
         </div>
         </>

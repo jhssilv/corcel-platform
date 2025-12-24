@@ -347,20 +347,20 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.75);
+  background-color: rgba(0, 0, 0, 0.5);
   z-index: 2000;
+  backdrop-filter: blur(3px);
   animation: fadeIn 0.3s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .whitelist-modal {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background-color: #1a1a1a;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  background-color: #2b2b2b;
+  border: 1px solid #444;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
   z-index: 2001;
   /* Increased width to prevent horizontal scrollbar */
   width: 90%;
@@ -374,11 +374,11 @@
 @keyframes slideUp {
   from {
     opacity: 0;
-    transform: translate(-50%, -45%);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
-    transform: translate(-50%, -50%);
+    transform: translateY(0);
   }
 }
 
@@ -388,8 +388,8 @@
   align-items: center;
   padding: 1.5rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  background-color: #242424;
-  border-radius: 12px 12px 0 0;
+  background-color: #2b2b2b;
+  border-radius: 8px 8px 0 0;
 }
 
 .modal-title {
@@ -474,47 +474,46 @@
   gap: 1rem;
   padding: 1.5rem;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
-  background-color: #1a1a1a;
-  border-radius: 0 0 12px 12px;
+  background-color: #2b2b2b;
+  border-radius: 0 0 8px 8px;
 }
 
 .modal-button {
   padding: 0.75rem 1.5rem;
-  border-radius: 8px;
+  border-radius: 4px;
   font-size: 0.95rem;
-  font-weight: 500;
+  font-weight: bold;
   cursor: pointer;
   transition: all 0.2s ease;
   border: none;
 }
 
 .cancel-button {
-  background-color: transparent;
-  color: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background-color: #dc3545;
+  color: white;
+  border: none;
 }
 
 .cancel-button:hover:not(:disabled) {
-  background-color: rgba(255, 255, 255, 0.05);
-  color: rgba(255, 255, 255, 0.87);
+  background-color: #c82333;
+  color: white;
 }
 
 .update-button {
-  background-color: #646cff;
+  background-color: #28a745;
   color: white;
-  border: 1px solid #646cff;
+  border: none;
 }
 
 .update-button:hover:not(:disabled) {
-  background-color: #535bf2;
+  background-color: #218838;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(100, 108, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
 }
 
 .update-button:disabled {
   background-color: #3a3a3a;
   color: rgba(255, 255, 255, 0.3);
-  border-color: #3a3a3a;
   cursor: not-allowed;
   opacity: 0.6;
 }
@@ -522,18 +521,15 @@
 .cancel-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  background-color: #3a3a3a;
 }
 
 /* Added upload modal styles */
 .upload-modal {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background-color: #1a1a1a;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  background-color: #2b2b2b;
+  border: 1px solid #444;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
   z-index: 2001;
   width: 90%;
   max-width: 600px;
@@ -670,28 +666,26 @@
 .confirm-button {
   background-color: #3a3a3a;
   color: rgba(255, 255, 255, 0.3);
-  border: 1px solid #3a3a3a;
+  border: none;
   cursor: not-allowed;
   transition: all 0.3s ease;
 }
 
 .confirm-button.valid {
-  background-color: #4caf50;
+  background-color: #28a745;
   color: white;
-  border: 1px solid #4caf50;
   cursor: pointer;
 }
 
 .confirm-button.valid:hover {
-  background-color: #45a049;
+  background-color: #218838;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
 }
 
 .confirm-button:disabled {
   background-color: #3a3a3a;
   color: rgba(255, 255, 255, 0.3);
-  border-color: #3a3a3a;
   cursor: not-allowed;
   opacity: 0.6;
   transform: none;
@@ -700,14 +694,10 @@
 
 /* Added report modal styles */
 .report-modal {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background-color: #1a1a1a;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  background-color: #2b2b2b;
+  border: 1px solid #444;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
   z-index: 2001;
   width: 90%;
   max-width: 500px;
@@ -725,15 +715,15 @@
 }
 
 .report-confirm {
-  background-color: #646cff;
+  background-color: #28a745;
   color: white;
-  border: 1px solid #646cff;
+  border: none;
 }
 
 .report-confirm:hover {
-  background-color: #535bf2;
+  background-color: #218838;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(100, 108, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
 }
 
 /* Responsive adjustments */

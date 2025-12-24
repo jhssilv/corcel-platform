@@ -110,7 +110,7 @@ const GeneratedCandidates = ({
             {showRemoveConfirmation && (
                 <div className="confirmation-overlay">
                     <div className="confirmation-dialog">
-                        <p>Marcar token como correto?</p>
+                        <p>Marcar token como (in)correto? Isso removerá ou adicionará a marcação de "Não Normalizado"</p>
                         <div className="confirmation-buttons">
                             <button onClick={handleConfirmRemove} className="confirm-btn">Confirmar</button>
                             <button onClick={() => setShowRemoveConfirmation(false)} className="cancel-btn">Cancelar</button>
