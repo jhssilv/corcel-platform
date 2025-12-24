@@ -28,6 +28,7 @@ const otherFilters = [
 const EssaySelector = ({
     selectedEssay,
     setSelectedEssay,
+    refreshTrigger = 0
 }) => {
     const [textsData, setTextsData] = useState(null);
     const [selectedGrades, setSelectedGrades] = useState(null);
@@ -47,18 +48,20 @@ const EssaySelector = ({
             setTeachers(teacherOptions);
         };
         fetchUsernames();
+    }, []);
 
+    useEffect(() => {
         const fetchTexts = async () => {
             try {
                 const data = await getTextsData();
                 setTextsData(data);
-                changeFilteredEssays(data, null, null, null, '');
+                changeFilteredEssays(data, selectedGrades, selectedTeacher, selectedOtherFilters, essayInputValue);
             } catch (error) {
                 console.error("Failed to fetch texts data:", error);
             }
         };
         fetchTexts();
-    }, []);
+    }, [refreshTrigger]);
 
     const fuzzySearchLogic = (candidate, input) => {
         if (!input) return true;
@@ -204,7 +207,7 @@ const EssaySelector = ({
             <div className="selector-footer">
                 {/* Corrected texts count */}
                 <div className="corrected-count">
-                    Corrigidos: <strong>{
+                    Finalizados: <strong>{
                         textsData.filter(({ id, normalizedByUser }) =>
                                 normalizedByUser === true &&
                                 filteredEssays.some((essay) => essay.value === id)
@@ -219,6 +222,7 @@ const EssaySelector = ({
 EssaySelector.propTypes = {
     selectedEssay: PropTypes.object,
     setSelectedEssay: PropTypes.func,
+    refreshTrigger: PropTypes.number,
 };
 
 export default EssaySelector;
