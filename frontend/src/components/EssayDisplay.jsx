@@ -12,10 +12,12 @@ function EssayDisplay({ essay, refreshEssay }) {
 
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [popupIsActive, setPopupIsActive] = useState(false);
+  const [suggestForAll, setSuggestForAll] = useState(false);
 
   useEffect(() => {
     setSelectedStartIndex(null);
     setSelectedEndIndex(null);
+    setSuggestForAll(false);
   }, [essay?.sourceFileName]);
 
   if (!essay) {
@@ -103,6 +105,12 @@ function EssayDisplay({ essay, refreshEssay }) {
         singleWordSelected={singleWordSelected}
         toBeNormalized={essay.tokens[selectedStartIndex]?.toBeNormalized}
         refreshEssay={refreshEssay}
+        suggestForAll={suggestForAll}
+        setSuggestForAll={setSuggestForAll}
+        onClose={() => {
+          setSelectedStartIndex(null);
+          setSelectedEndIndex(null);
+        }}
       />
 
       <GeneratedEssay 
@@ -121,6 +129,7 @@ function EssayDisplay({ essay, refreshEssay }) {
         setSelectedCandidate={setSelectedCandidate}
         setPopupIsActive={setPopupIsActive}
         refreshEssay={refreshEssay}
+        suggestForAll={suggestForAll}
         clearSelection={() => {
           setSelectedStartIndex(null);
           setSelectedEndIndex(null);

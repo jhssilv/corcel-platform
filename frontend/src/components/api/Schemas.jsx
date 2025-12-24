@@ -107,6 +107,7 @@ export const NormalizationCreateRequestSchema = z.object({
   first_index: z.number(),
   last_index: z.number(),
   new_token: z.string(),
+  suggest_for_all: z.boolean().optional(),
 });
 
 /**

@@ -110,7 +110,8 @@ test.describe('Text Interaction', () => {
         expect(postData).toEqual({
           first_index: 1,
           last_index: 1,
-          new_token: 'world'
+          new_token: 'world',
+          suggest_for_all: false
         });
         await route.fulfill({ status: 200 });
       } else {
@@ -150,7 +151,8 @@ test.describe('Text Interaction', () => {
         expect(postData).toEqual({
           first_index: 1,
           last_index: 1,
-          new_token: 'custom'
+          new_token: 'custom',
+          suggest_for_all: false
         });
         await route.fulfill({ status: 200 });
       } else {
@@ -213,6 +215,6 @@ test.describe('Text Interaction', () => {
 
     // Confirm in popup
     await expect(page.getByText('você deseja remover a correção?')).toBeVisible();
-    await page.getByRole('button', { name: 'Remover' }).click();
+    await page.getByRole('button', { name: 'Remover', exact: true }).click();
   });
 });

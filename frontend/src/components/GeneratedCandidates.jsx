@@ -16,9 +16,11 @@ const GeneratedCandidates = ({
     singleWordSelected,
     toBeNormalized,
     refreshEssay,
+    suggestForAll,
+    setSuggestForAll,
+    onClose
 }) => {
 
-    const [suggestForAll, setSuggestForAll] = useState(false);
     const [showRemoveConfirmation, setShowRemoveConfirmation] = useState(false);
     const inputRef = useRef(null);
 
@@ -26,6 +28,7 @@ const GeneratedCandidates = ({
         if (inputRef.current) {
             inputRef.current.focus();
         }
+        setSuggestForAll(false);
     }, [selectedStartIndex]);
 
     if(selectedStartIndex == null)
@@ -48,6 +51,11 @@ const GeneratedCandidates = ({
 
     return (
         <div className="candidates-panel">
+            <button className="close-panel-button" onClick={onClose} title="Fechar painel">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
+                </svg>
+            </button>
             <div className="candidates-header">
                 {hasCandidates && singleWordSelected ? 'Alternativas para ' : 'Substituir '}
                 <span className="selected-token">"{selectedTokenText}"</span>
@@ -63,7 +71,9 @@ const GeneratedCandidates = ({
                         {candidate}
                     </button>
                 ))}
+            </div>
                 
+            <div className="panel-footer">
                 <div className="new-candidate-container">
                     <input
                         ref={inputRef}
@@ -74,7 +84,6 @@ const GeneratedCandidates = ({
                                 handleCandidateSelection(event.target.value); 
                                 event.target.blur();
                                 event.target.value = '';
-                                setSuggestForAll(false);
                             }
                         }}
                     />
@@ -85,7 +94,6 @@ const GeneratedCandidates = ({
                             const inputElement = event.target.previousElementSibling;
                             handleCandidateSelection(inputElement.value);
                             inputElement.value = '';
-                            setSuggestForAll(false);
                         }}
                     > 
                         &#128393; 
@@ -95,20 +103,38 @@ const GeneratedCandidates = ({
                         title="Remover token"
                         onClick={() => { 
                             handleCandidateSelection('');
-                            setSuggestForAll(false);
                         }}
                     > 
                         &#128465; 
                     </button>
                     <button 
                         className={`action-button remove-suggestions-button ${!toBeNormalized ? 'active-green' : ''}`}
-                        title="Remover sugestões"
+                        title="Remover Marcação de Não Normalizado"
                         onClick={() => setShowRemoveConfirmation(true)}
                     > 
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                             <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
                         </svg>
                     </button>
+                </div>
+                
+                <div className="global-suggestion-container">
+                    <label className="global-suggestion-label">
+                        <input 
+                            type="checkbox" 
+                            checked={suggestForAll} 
+                            onChange={(e) => setSuggestForAll(e.target.checked)} 
+                        />
+                        Sugestão Global
+                    </label>
+                    <div className="info-tooltip-container">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="info-icon">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                        </svg>
+                        <div className="tooltip-text">
+                            Ao marcar esta opção, o novo token será sugerida para todas as ocorrências deste token nos textos.
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -135,7 +161,8 @@ GeneratedCandidates.propTypes = {
     setPopupIsActive: PropTypes.func,
     selectedTokenText: PropTypes.string,
     singleWordSelected: PropTypes.bool,
-    toBeNormalized: PropTypes.bool
+    toBeNormalized: PropTypes.bool,
+    onClose: PropTypes.func
 };
 
 export default GeneratedCandidates;

@@ -15,7 +15,9 @@ const NewCorrectionPopup = ({
     selectedLastIndex,
     setSelectedCandidate, 
     refreshEssay,
-    clearSelection}) => {
+    clearSelection,
+    suggestForAll = false
+}) => {
 
     const [username, setUsername] = useState(null);
 
@@ -34,9 +36,9 @@ const NewCorrectionPopup = ({
         if (event) { event.preventDefault(); }
 
         if(!candidate) await deleteNormalization(essay.id, selectedFirstIndex);
-        else           await postNormalization(essay.id, selectedFirstIndex, selectedLastIndex, candidate);
+        else           await postNormalization(essay.id, selectedFirstIndex, selectedLastIndex, candidate, suggestForAll);
         refreshEssay();
-        if (clearSelection) clearSelection();
+        // if (clearSelection) clearSelection();
 
         setSelectedCandidate(null);
         setPopupIsActive(false);

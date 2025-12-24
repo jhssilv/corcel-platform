@@ -80,11 +80,12 @@ export async function getNormalizationsByText(textId) {
  * Saves a new normalization (correction).
  * Throws an error in case of failure so that the component can react (e.g., not closing a modal).
  */
-export async function postNormalization(textId, firstWordIndex, lastWordIndex, newToken) {
+export async function postNormalization(textId, firstWordIndex, lastWordIndex, newToken, suggestForAll = false) {
   const payload = {
     first_index: firstWordIndex,
     last_index: lastWordIndex,
     new_token: newToken,
+    suggest_for_all: suggestForAll,
   };
   schemas.NormalizationCreateRequestSchema.parse(payload);
   

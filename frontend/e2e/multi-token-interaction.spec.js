@@ -191,7 +191,8 @@ test.describe('Multi-Token Interaction', () => {
         expect(postData).toEqual({
           first_index: 1,
           last_index: 3,
-          new_token: 'fast animal'
+          new_token: 'fast animal',
+          suggest_for_all: false
         });
         await route.fulfill({ status: 200 });
       } else {
@@ -281,7 +282,7 @@ test.describe('Multi-Token Interaction', () => {
 
     // Confirm popup
     await expect(page.getByText('você deseja remover a correção?')).toBeVisible();
-    await page.getByRole('button', { name: 'Remover' }).click();
+    await page.getByRole('button', { name: 'Remover', exact: true }).click();
 
     // Verify that the original tokens return
     // 'quick', 'brown', 'fox' should be visible again
