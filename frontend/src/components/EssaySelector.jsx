@@ -46,13 +46,16 @@ const EssaySelector = ({
         };
         fetchUsernames();
 
-        // Carrega textsData do localStorage
-        const data = localStorage.getItem('textsData');
-        if (data) {
-            const parsedData = JSON.parse(data);
-            setTextsData(parsedData);
-            changeFilteredEssays(parsedData, null, null, null);
-        }
+        const fetchTexts = async () => {
+            try {
+                const data = await getTextsData();
+                setTextsData(data);
+                changeFilteredEssays(data, null, null, null);
+            } catch (error) {
+                console.error("Failed to fetch texts data:", error);
+            }
+        };
+        fetchTexts();
     }, []);
 
     const fuzzySearchLogic = (candidate, input) => {
