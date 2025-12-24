@@ -101,6 +101,7 @@ function EssayDisplay({ essay, refreshEssay }) {
         setPopupIsActive={setPopupIsActive}
         selectedTokenText={selectedTokenText}
         singleWordSelected={singleWordSelected}
+        toBeNormalized={essay.tokens[selectedStartIndex]?.toBeNormalized}
       />
 
       <GeneratedEssay 
