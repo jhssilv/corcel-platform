@@ -23,7 +23,7 @@ const GeneratedCandidates = ({
         }
     }, [selectedStartIndex]);
 
-    if(selectedStartIndex == null || !singleWordSelected)
+    if(selectedStartIndex == null)
         return null;
 
     const handleCandidateSelection = (candidate) => {     
@@ -36,12 +36,12 @@ const GeneratedCandidates = ({
     return (
         <div className="candidates-panel">
             <div className="candidates-header">
-                {hasCandidates ? 'Alternativas para ' : 'Substituir '}
+                {hasCandidates && singleWordSelected ? 'Alternativas para ' : 'Substituir '}
                 <span className="selected-token">"{selectedTokenText}"</span>
             </div>
             
             <div className="candidates-list">
-                {hasCandidates && candidates.map((candidate, index) => (
+                {hasCandidates && singleWordSelected && candidates.map((candidate, index) => (
                     <button 
                         key={index} 
                         className="candidate-button" 

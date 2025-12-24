@@ -24,7 +24,20 @@ function EssayDisplay({ essay, refreshEssay }) {
   const singleWordSelected = selectedStartIndex !== null && selectedEndIndex === selectedStartIndex;
   const selectedWordHasCandidates = selectedStartIndex !== null && essay.tokens[selectedStartIndex] && essay.tokens[selectedStartIndex].candidates ? true : false;
   const candidates = essay.tokens[selectedStartIndex] ? essay.tokens[selectedStartIndex]["candidates"] : [];
-  const selectedTokenText = essay.tokens[selectedStartIndex] ? essay.tokens[selectedStartIndex].text : "";
+  
+  const selectedTokenText = (() => {
+    if (selectedStartIndex === null) return "";
+    let text = "";
+    for (let i = selectedStartIndex; i <= selectedEndIndex; i++) {
+        if (essay.tokens[i]) {
+            text += essay.tokens[i].text;
+            if (i < selectedEndIndex && essay.tokens[i].whitespaceAfter) {
+                text += essay.tokens[i].whitespaceAfter;
+            }
+        }
+    }
+    return text;
+  })();
 
   return (
     <div>
