@@ -7,18 +7,20 @@ import app.database.models as models
 from app.database.queries import get_normalizations_by_text
 from app.extensions import db
 
+session = db.session
+
 def normalizations_to_dict(normalizations):
     return {n.start_index: n for n in normalizations}
 
 def get_normalized_tokens(text_ids:list[int], user_id:int, use_tags=False) -> dict[str, dict]:
-    texts = db.query(models.Text).filter(models.Text.id.in_(text_ids)).all()
+    texts = session.query(models.Text).filter(models.Text.id.in_(text_ids)).all()
     texts_tokens = {}
     
     for text in texts:
         texts_tokens[text.source_file_name] = {'grade': text.grade, 'tokens': []}
         
-        tokens = db.query(models.Token).filter(models.Token.text_id == text.id).all()
-        normalizations = normalizations_to_dict(get_normalizations_by_text(db, text.id, user_id))
+        tokens = session.query(models.Token).filter(models.Token.text_id == text.id).all()
+        normalizations = normalizations_to_dict(get_normalizations_by_text(session, text.id, user_id))
         
         for token in tokens:
             norm = normalizations.get(token.position)
