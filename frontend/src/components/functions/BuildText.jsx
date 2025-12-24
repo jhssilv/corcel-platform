@@ -30,10 +30,6 @@ function createSpan(essay, i, selectedStartIndex, selectedEndIndex, handleSelect
 } 
 
 function buildText(essay, selectedStartIndex, selectedEndIndex, handleSelectedWordIndex) {
-    const NO_SPACE_BEFORE = [':', ',', '.', ')', '}', '?', '!', ']', '\n', '\t', ';', ' ']; // Tokens that need a preceding space
-    const NO_SPACE_AFTER = ['{', '(', '[', '#', '\n', '\t', ' '];
-    let QUOTE_CHARS = ['"', '“', '”', '‘', '’', "'"];
-    let quote_opened = false;
     let token_length = 0;
     const spans = []; 
 
@@ -42,35 +38,16 @@ function buildText(essay, selectedStartIndex, selectedEndIndex, handleSelectedWo
         let correction = essay.corrections[i];
 
         token_length = 0;
-
-        if(i === 0){
+        
+        if(token.isWord){
             spans.push(createSpan(essay, i, selectedStartIndex, selectedEndIndex, handleSelectedWordIndex));
-            spans.push(' ');
-            continue;
         }
-
-        if(QUOTE_CHARS.includes(token.text)){
-            quote_opened = !quote_opened;
-            if(quote_opened){
-                spans.push(token.text);
-            }
-            else{
-                spans.pop();
-                spans.push(createSpan(essay, i, selectedStartIndex, selectedEndIndex, handleSelectedWordIndex));
-                spans.push(' ');
-            }
-        }
-        else if(NO_SPACE_BEFORE.includes(token.text)) {
-            spans.pop();
-            spans.push(token.text);
-            spans.push(' ');
-        }
-        else if(NO_SPACE_AFTER.includes(token.text)) {
+        else{
             spans.push(token.text);
         }
-        else {
-            spans.push(createSpan(essay, i, selectedStartIndex, selectedEndIndex, handleSelectedWordIndex));
-            spans.push(' ');
+        
+        if(token.whitespaceAfter == " "){
+            spans.push(" ");
         }
 
         if(correction){
