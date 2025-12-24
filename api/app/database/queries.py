@@ -81,7 +81,8 @@ def get_text_by_id(db, text_id, user_id):
             "isWord": token.is_word,
             "position": token.position,
             "candidates": [s.token_text for s in token.suggestions] ,
-            "toBeNormalized": token.to_be_normalized
+            "toBeNormalized": token.to_be_normalized,
+            "whitespaceAfter": token.whitespace_after
         }
         for token in text_info.tokens]
 
