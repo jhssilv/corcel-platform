@@ -25,25 +25,23 @@ function LoginPage() {
         setPassword(event.target.value);
     };
 
-    const handleSubmit = async (event) => {
-        event.preventDefault();
-            
-        const login_data = await authenticateUser(username, password);
-        
-        
-        if (login_data.userId === undefined) {
-            alert(login_data.message);
-            return;
-        }
-        
-        const textsData = await getTextsData(login_data.userId);
+const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    try {
+        const login_data = await authenticateUser(username, password); 
+    
+        const textsData = await getTextsData(); 
         localStorage.setItem('textsData', JSON.stringify(textsData));
 
-        console.log('Olá ', username);
-        login(login_data.userId, username);
+        login(username);
         navigate('/main');           
-        alert(login_data.message);
-    };
+
+    } catch (error) {
+        console.error(error);
+        alert(error.response?.data?.error || 'Login failed');
+    }
+};
 
     return (
         <section>
