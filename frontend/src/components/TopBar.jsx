@@ -45,6 +45,11 @@ function TopBar({ onDownloadClick , showSidePanel = true}) {
     closePanel()
   }
 
+  const handleDownload = () => {
+    onDownloadClick()
+    closePanel()
+  }
+
   const handleLogout = async () => {
     await logout();
     navigate("/");
@@ -72,7 +77,7 @@ function TopBar({ onDownloadClick , showSidePanel = true}) {
           isOpen={isPanelOpen}
           onClose={closePanel}
           username={username}
-          onDownload={onDownloadClick}
+          onDownload={handleDownload}
           onUpload={openUpload}
           onWhitelist={openWhitelist}
           onReport={openReport}

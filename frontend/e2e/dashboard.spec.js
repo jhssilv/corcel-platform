@@ -59,7 +59,7 @@ test.describe('Dashboard', () => {
 
   test('should display the dashboard with essay selector', async ({ page }) => {
     await expect(page.getByRole('heading', { name: 'Busca de Textos' })).toBeVisible();
-    await expect(page.getByText('ID do Texto')).toBeVisible();
+    await expect(page.getByText('ID do Texto', { exact: true })).toBeVisible();
   });
 
   test('should select an essay and display its content', async ({ page }) => {
@@ -97,7 +97,7 @@ test.describe('Dashboard', () => {
     await page.getByText('essay1.txt', { exact: true }).click();
 
     // Verify the essay content is displayed
-    await expect(page.getByRole('heading', { name: 'essay1.txt' })).toBeVisible();
+    await expect(page.locator('.document-title').filter({ hasText: 'essay1.txt' })).toBeVisible();
     await expect(page.getByText('Hello')).toBeVisible();
     await expect(page.getByText('world')).toBeVisible();
   });

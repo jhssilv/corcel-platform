@@ -216,7 +216,7 @@ test.describe('Multi-Token Interaction', () => {
     await page.getByPlaceholder('Novo Token').fill('fast animal');
     
     // Click add
-    await page.locator('.addButton').first().click();
+    await page.locator('.edit-button').click();
 
     // Confirm popup
     await expect(page.getByText('você deseja adicionar fast animal como correção?')).toBeVisible();
@@ -277,7 +277,7 @@ test.describe('Multi-Token Interaction', () => {
     await page.getByText('fast animal').click();
 
     // Click delete
-    await page.locator('.addButton').nth(1).click();
+    await page.locator('.delete-button').click();
 
     // Confirm popup
     await expect(page.getByText('você deseja remover a correção?')).toBeVisible();

@@ -171,7 +171,7 @@ test.describe('Text Interaction', () => {
     await page.getByPlaceholder('Novo Token').fill('custom');
     
     // Click the add button (pencil icon)
-    await page.locator('.addButton').first().click();
+    await page.locator('.edit-button').click();
 
     // Confirm in popup
     await expect(page.getByText('você deseja adicionar custom como correção?')).toBeVisible();
@@ -209,7 +209,7 @@ test.describe('Text Interaction', () => {
     await page.locator('.clickable').filter({ hasText: 'world' }).click();
 
     // Click the delete button (trash icon)
-    await page.locator('.addButton').nth(1).click();
+    await page.locator('.delete-button').click();
 
     // Confirm in popup
     await expect(page.getByText('você deseja remover a correção?')).toBeVisible();

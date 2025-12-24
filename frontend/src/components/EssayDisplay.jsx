@@ -117,6 +117,10 @@ function EssayDisplay({ essay, refreshEssay }) {
         setSelectedCandidate={setSelectedCandidate}
         setPopupIsActive={setPopupIsActive}
         refreshEssay={refreshEssay}
+        clearSelection={() => {
+          setSelectedStartIndex(null);
+          setSelectedEndIndex(null);
+        }}
       />
     </div>
   );
