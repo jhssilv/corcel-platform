@@ -137,6 +137,13 @@ const EssaySelector = ({
 
     const handleEssayChange = (selectedOption) => {
         setSelectedEssay(selectedOption);
+        if (selectedOption) {
+            setEssayInputValue(selectedOption.label);
+            changeFilteredEssays(textsData, selectedGrades, selectedTeacher, selectedOtherFilters, selectedOption.label);
+        } else {
+            setEssayInputValue('');
+            changeFilteredEssays(textsData, selectedGrades, selectedTeacher, selectedOtherFilters, '');
+        }
     };
 
     const handleEssayInputChange = (newValue, actionMeta) => {
