@@ -45,15 +45,15 @@ function EssayDisplay({ essay, refreshEssay }) {
       }}>
         <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', justifyContent: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center' }}>
-                <span style={{ width: '12px', height: '12px', backgroundColor: 'rgb(255, 0, 0)', marginRight: '8px', borderRadius: '2px' }}></span>
+                <span style={{ width: '12px', height: '12px', backgroundColor: '#ef4444', marginRight: '8px', borderRadius: '2px' }}></span>
                 <span>Não Normalizado</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center' }}>
-                <span style={{ width: '12px', height: '12px', backgroundColor: 'rgb(100, 100, 255)', marginRight: '8px', borderRadius: '2px' }}></span>
+                <span style={{ width: '12px', height: '12px', backgroundColor: '#3b82f6', marginRight: '8px', borderRadius: '2px' }}></span>
                 <span>Substituído</span>
             </div>
              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <span style={{ width: '12px', height: '12px', backgroundColor: 'gray', marginRight: '8px', borderRadius: '2px' }}></span>
+                <span style={{ width: '12px', height: '12px', backgroundColor: '#e4e4e7', marginRight: '8px', borderRadius: '2px' }}></span>
                 <span>Selecionado</span>
             </div>
         </div>

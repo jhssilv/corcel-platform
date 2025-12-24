@@ -43,7 +43,7 @@ const GeneratedEssay = ({ essay, selectedStartIndex, setSelectedStartIndex, sele
 
     const spans = buildText(essay, selectedStartIndex, selectedEndIndex, handleSelectedWordIndex);
 
-    return <pre>{spans}</pre>;
+    return <div className="essay-container">{spans}</div>;
 };
 
 GeneratedEssay.propTypes = {

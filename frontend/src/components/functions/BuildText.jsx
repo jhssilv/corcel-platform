@@ -57,7 +57,7 @@ function buildText(essay, selectedStartIndex, selectedEndIndex, handleSelectedWo
         i += token_length; // Skip the tokens that were part of a correction
 
     }
-    return <pre>{spans}</pre>;
+    return spans;
 }
 
 export default buildText;

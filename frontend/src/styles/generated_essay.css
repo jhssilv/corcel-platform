@@ -1,28 +1,59 @@
+.essay-container {
+    background-color: #1e1e1e;
+    padding: 3rem;
+    border-radius: 12px;
+    line-height: 1.8;
+    font-size: 1.15rem;
+    white-space: pre-wrap;
+    font-family: 'Georgia', 'Cambria', 'Times New Roman', serif;
+    color: #e4e4e7;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+    max-width: 900px;
+    margin: 0 auto;
+    border: 1px solid #333;
+}
+
 .clickable {
     border-radius: 4px;
-    padding: 0.1em;
+    padding: 2px 0;
+    margin: 0 1px;
+    transition: all 0.15s ease;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
 }
 
 .clickable:hover {
-    background-color: gray;
-    cursor: pointer;
+    background-color: rgba(255, 255, 255, 0.1);
 }
+
+/* Candidates (Red) - Softer */
 .candidates {
-    background-color: rgb(255, 0, 0);
+    background-color: rgba(185, 28, 28, 0.25);
+    border-bottom-color: #ef4444;
+    color: #fca5a5;
 }
 
+.candidates:hover {
+    background-color: rgba(185, 28, 28, 0.4);
+}
+
+/* Corrected (Blue) - Softer */
 .corrected {
-    background-color: rgb(100, 100, 255);
+    background-color: rgba(29, 78, 216, 0.25);
+    border-bottom-color: #3b82f6;
+    color: #93c5fd;
 }
 
+.corrected:hover {
+    background-color: rgba(29, 78, 216, 0.4);
+}
+
+/* Selected (Gray/White) */
 .selected {
-    background-color: gray;
-}
-
-pre {
-    border-radius: 7px;
-    padding: 2em;
-    background-color: rgb(28, 28, 28);
-    white-space: pre-wrap;
-    font-size: large;
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    font-weight: 500;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    border-bottom-color: transparent;
 }
