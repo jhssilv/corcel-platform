@@ -5,7 +5,7 @@ from werkzeug.utils import secure_filename
 
 from app.tasks import process_zip_texts 
 import app.api_schemas as schemas
-from utils.decorators import admin_required
+from app.utils.decorators import admin_required
 
 upload_bp = Blueprint('upload', __name__)
 
