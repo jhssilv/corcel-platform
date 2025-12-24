@@ -8,7 +8,7 @@ function ReportModal({ isOpen, onClose, textCount }) {
       onClose()
       await requestReport(JSON.parse(localStorage.getItem("userId")), textIds)
     } catch (error) {
-      console.error("[TODO] Handle report generation error:", error)
+      alert(error.error || "Houve um erro ao gerar o relatório.")
     }
   }
 
