@@ -7,7 +7,7 @@ import '../styles/generated_essay.css';
 // blank spaces and punctuations.
 // Also adds classes for word highlights
 
-const GeneratedEssay = ({ essay, selectedStartIndex, setSelectedStartIndex, selectedEndIndex, setSelectedEndIndex }) => {
+const GeneratedEssay = ({ essay, selectedStartIndex, setSelectedStartIndex, selectedEndIndex, setSelectedEndIndex, setTokenPosition }) => {
     
     const [ctrlPressed, setCtrlPressed] = useState(false);
     
@@ -21,7 +21,17 @@ const GeneratedEssay = ({ essay, selectedStartIndex, setSelectedStartIndex, sele
             setCtrlPressed(false);
     });
 
-    const handleSelectedWordIndex = (selectedOption) => {
+    const handleSelectedWordIndex = (selectedOption, event) => {
+        if (event && event.target) {
+            const rect = event.target.getBoundingClientRect();
+            setTokenPosition({
+                top: rect.top + window.scrollY,
+                left: rect.left + window.scrollX,
+                height: rect.height,
+                width: rect.width
+            });
+        }
+
         // ctrl is pressed but there is no first index selected
         if(ctrlPressed) {
             if(selectedStartIndex == null){
@@ -63,7 +73,8 @@ GeneratedEssay.propTypes = {
     selectedStartIndex: PropTypes.number,
     setSelectedStartIndex: PropTypes.func,
     selectedEndIndex: PropTypes.number,
-    setSelectedEndIndex: PropTypes.func
+    setSelectedEndIndex: PropTypes.func,
+    setTokenPosition: PropTypes.func
 };
 
 export default GeneratedEssay;

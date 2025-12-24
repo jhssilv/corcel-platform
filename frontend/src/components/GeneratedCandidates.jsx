@@ -19,7 +19,8 @@ const GeneratedCandidates = ({
     suggestForAll,
     setSuggestForAll,
     onClose,
-    tokenId
+    tokenId,
+    tokenPosition
 }) => {
 
     const [showRemoveConfirmation, setShowRemoveConfirmation] = useState(false);
@@ -51,6 +52,36 @@ const GeneratedCandidates = ({
     const hasCandidates = candidates && candidates.length > 0;
 
     return (
+        <>
+        {/* Floating Candidates List */}
+        {hasCandidates && singleWordSelected && tokenPosition && (
+            <div 
+                className="floating-candidates-list"
+                style={{
+                    position: 'absolute',
+                    top: tokenPosition.top - 10, // 10px padding
+                    left: tokenPosition.left,
+                    transform: 'translateY(-100%)',
+                    zIndex: 1000,
+                    display: 'flex',
+                    gap: '5px',
+                    flexWrap: 'wrap',
+                    maxWidth: '300px'
+                }}
+            >
+                {candidates.map((candidate, index) => (
+                    <button 
+                        key={index} 
+                        className="candidate-button" 
+                        onClick={() => handleCandidateSelection(candidate)}
+                        style={{ width: 'auto' }} // Override full width
+                    >
+                        {candidate}
+                    </button>
+                ))}
+            </div>
+        )}
+
         <div className="candidates-panel">
             <button className="close-panel-button" onClick={onClose} title="Fechar painel">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
@@ -62,17 +93,7 @@ const GeneratedCandidates = ({
                 <span className="selected-token">"{selectedTokenText}"</span>
             </div>
             
-            <div className="candidates-list">
-                {hasCandidates && singleWordSelected && candidates.map((candidate, index) => (
-                    <button 
-                        key={index} 
-                        className="candidate-button" 
-                        onClick={() => handleCandidateSelection(candidate)}
-                    >
-                        {candidate}
-                    </button>
-                ))}
-            </div>
+            {/* Candidates list removed from here */}
                 
             <div className="panel-footer">
                 <div className="new-candidate-container">
@@ -90,7 +111,7 @@ const GeneratedCandidates = ({
                     />
                     <button 
                         className='action-button edit-button' 
-                        title="Adicionar correção"
+                        title="Substituir Token"
                         onClick={(event) => {
                             const inputElement = event.target.previousElementSibling;
                             handleCandidateSelection(inputElement.value);
@@ -101,7 +122,7 @@ const GeneratedCandidates = ({
                     </button>
                     <button 
                         className='action-button delete-button' 
-                        title="Remover token"
+                        title="Remover Substituição"
                         onClick={() => { 
                             handleCandidateSelection('');
                         }}
@@ -151,6 +172,7 @@ const GeneratedCandidates = ({
                 </div>
             )}
         </div>
+        </>
     );
 };
 
@@ -163,7 +185,9 @@ GeneratedCandidates.propTypes = {
     selectedTokenText: PropTypes.string,
     singleWordSelected: PropTypes.bool,
     toBeNormalized: PropTypes.bool,
-    onClose: PropTypes.func
+    onClose: PropTypes.func,
+    tokenId: PropTypes.number,
+    tokenPosition: PropTypes.object
 };
 
 export default GeneratedCandidates;

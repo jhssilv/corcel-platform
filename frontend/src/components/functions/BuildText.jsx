@@ -24,7 +24,7 @@ function createSpan(essay, i, selectedStartIndex, selectedEndIndex, handleSelect
         <span 
             key={i} 
             className={className}
-            onClick={() => { handleSelectedWordIndex(i) ;}} >
+            onClick={(event) => { handleSelectedWordIndex(i, event) ;}} >
             {token_text}
         </span>
     )
