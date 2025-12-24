@@ -3,23 +3,49 @@
 # Exit immediately if a command exits with a non-zero status
 set -e
 
+# Trap errors to provide feedback
+trap 'echo "An error occurred. Exiting..."' ERR
+
+# Get the project root directory (where this script resides)
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VENV_DIR="$PROJECT_ROOT/.venv"
+
+echo "========================================"
+echo "Setting up Environment"
+echo "========================================"
+
+# 1. Python Environment Setup
+if [ ! -d "$VENV_DIR" ]; then
+    echo "Creating Python virtual environment in $VENV_DIR..."
+    python3 -m venv "$VENV_DIR"
+fi
+
+# Activate the virtual environment
+source "$VENV_DIR/bin/activate"
+
+echo "Installing/Updating Python dependencies..."
+pip install -r "$PROJECT_ROOT/api/requirements.txt" --quiet
+
+# 2. Node Environment Setup
+echo "Installing/Updating Node dependencies..."
+cd "$PROJECT_ROOT/frontend"
+npm install --silent
+
+# Ensure Playwright browsers are installed
+echo "Ensuring Playwright browsers are installed..."
+npx playwright install --with-deps
+
+echo "Environment setup complete."
+echo ""
+
 echo "========================================"
 echo "Running Backend Tests (Pytest)"
 echo "========================================"
 
-# Navigate to api directory
-cd api
-
+cd "$PROJECT_ROOT/api"
+export PYTHONPATH="$PROJECT_ROOT/api"
 # Run pytest
-# Assuming the virtual environment is already activated or pytest is available in the path
-# If not, you might need to activate it explicitly, e.g., source ../.venv/bin/activate
 pytest tests/
-
-# Check if pytest failed
-if [ $? -ne 0 ]; then
-    echo "Backend tests failed!"
-    exit 1
-fi
 
 echo "Backend tests passed!"
 echo ""
@@ -28,17 +54,9 @@ echo "========================================"
 echo "Running Frontend Tests (Playwright)"
 echo "========================================"
 
-# Navigate to frontend directory
-cd ../frontend
-
+cd "$PROJECT_ROOT/frontend"
 # Run playwright tests
 npx playwright test
-
-# Check if playwright failed
-if [ $? -ne 0 ]; then
-    echo "Frontend tests failed!"
-    exit 1
-fi
 
 echo "Frontend tests passed!"
 echo ""
