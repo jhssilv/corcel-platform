@@ -86,7 +86,9 @@ function EssayDisplay({ essay, refreshEssay }) {
                     onChange={handleFinishedToggled}
                 />
                 <span className="toggle-slider"></span>
-                <span className="toggle-label">Marcar como Finalizado</span>
+                <span className="toggle-label">{
+                  essay.normalizedByUser ? "Finalizado! 🐎" : "Marcar Como Finalizado"
+                }</span>
             </label>
         </div>
       </div>
