@@ -6,7 +6,7 @@ function ReportModal({ isOpen, onClose, textCount }) {
     try {
       const textIds = JSON.parse(localStorage.getItem("textIds") || "[]")
       onClose()
-      await requestReport(JSON.parse(localStorage.getItem("userId")), textIds)
+      await requestReport(JSON.parse(textIds))
     } catch (error) {
       alert(error.error || "Houve um erro ao gerar o relatório.")
     }

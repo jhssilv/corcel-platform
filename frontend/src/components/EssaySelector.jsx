@@ -106,9 +106,8 @@ const EssaySelector = ({
 
     const handleFinishedToggled = async () => {
 
-        const userId = localStorage.getItem('userId');
-        await toggleNormalizedStatus(selectedEssay.value, userId);
-        const updatedTexts = await getTextsData(userId);
+        await toggleNormalizedStatus(selectedEssay.value);
+        const updatedTexts = await getTextsData();
 
         setTextsData(updatedTexts);
         changeFilteredEssays(updatedTexts, selectedGrades, selectedTeacher, selectedOtherFilters);

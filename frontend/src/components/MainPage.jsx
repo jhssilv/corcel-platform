@@ -19,15 +19,13 @@ function MainPage() {
   const [currentText, setCurrentText] = useState(null)
   const [showDownloadDialog, setShowDownloadDialog] = useState(false)
 
-  const { userId } = useContext(AuthContext)
-
   const fetchEssay = useCallback(async () => {
-    const text = await getTextById(selectedEssay.value, userId)
-    const normalizations = await getNormalizationsByText(selectedEssay.value, userId)
+    const text = await getTextById(selectedEssay.value)
+    const normalizations = await getNormalizationsByText(selectedEssay.value)
 
     text.corrections = normalizations
     setCurrentText(text)
-  }, [selectedEssay, userId])
+  }, [selectedEssay])
 
   useEffect(() => {
     if (selectedEssay) fetchEssay()

@@ -17,13 +17,10 @@ const NewCorrectionPopup = ({
     refreshEssay}) => {
 
     const [username, setUsername] = useState(null);
-    const [userId, setUserId] = useState(null);
 
     useEffect(() => {
         const storedUsername = localStorage.getItem('username');
-        const storedUserId = localStorage.getItem('userId');
         setUsername(storedUsername);
-        setUserId(storedUserId);
     }, []);
 
     // <> Event handlers <> \\
@@ -35,8 +32,8 @@ const NewCorrectionPopup = ({
     const handleAddButton = async (event) => {
         if (event) { event.preventDefault(); }
 
-        if(!candidate) await deleteNormalization(essay.id, selectedFirstIndex, userId);
-        else           await postNormalization(essay.id, selectedFirstIndex, selectedLastIndex, candidate, userId);
+        if(!candidate) await deleteNormalization(essay.id, selectedFirstIndex);
+        else           await postNormalization(essay.id, selectedFirstIndex, selectedLastIndex, candidate);
         refreshEssay();
 
         setSelectedCandidate(null);
