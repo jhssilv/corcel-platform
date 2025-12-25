@@ -10,16 +10,18 @@ import SidePanel from "./SidePanel.jsx"
 import WhitelistModal from "./WhiteListModal.jsx"
 import UploadModal from "./UploadModal.jsx"
 import ReportModal from "./ReportModal.jsx"
+import RegisterUserModal from "./RegisterUserModal.jsx"
 import { useNavigate } from "react-router-dom";
 
 function TopBar({ onDownloadClick , showSidePanel = true}) {
-  const { logout, username } = useContext(AuthContext)
+  const { logout, username, isAdmin } = useContext(AuthContext)
   
   // UI State
   const [isPanelOpen, setIsPanelOpen] = useState(false)
   const [isWhitelistOpen, setIsWhitelistOpen] = useState(false)
   const [isUploadOpen, setIsUploadOpen] = useState(false)
   const [isReportOpen, setIsReportOpen] = useState(false)
+  const [isRegisterUserOpen, setIsRegisterUserOpen] = useState(false)
   const [reportTextCount, setReportTextCount] = useState(0)
   const navigate = useNavigate();
 
@@ -42,6 +44,11 @@ function TopBar({ onDownloadClick , showSidePanel = true}) {
     const textIds = JSON.parse(localStorage.getItem("textIds") || "[]")
     setReportTextCount(textIds.length)
     setIsReportOpen(true)
+    closePanel()
+  }
+
+  const openRegisterUser = () => {
+    setIsRegisterUserOpen(true)
     closePanel()
   }
 
@@ -77,10 +84,12 @@ function TopBar({ onDownloadClick , showSidePanel = true}) {
           isOpen={isPanelOpen}
           onClose={closePanel}
           username={username}
+          isAdmin={isAdmin}
           onDownload={handleDownload}
           onUpload={openUpload}
           onWhitelist={openWhitelist}
           onReport={openReport}
+          onRegisterUser={openRegisterUser}
           onLogout={handleLogout}
         /> : null}
 
@@ -98,6 +107,11 @@ function TopBar({ onDownloadClick , showSidePanel = true}) {
         isOpen={isReportOpen} 
         onClose={() => setIsReportOpen(false)}
         textCount={reportTextCount}
+      />
+
+      <RegisterUserModal
+        isOpen={isRegisterUserOpen}
+        onClose={() => setIsRegisterUserOpen(false)}
       />
     </>
   )
