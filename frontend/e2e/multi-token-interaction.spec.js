@@ -70,6 +70,7 @@ test.describe('Multi-Token Interaction', () => {
     await page.addInitScript(() => {
       localStorage.setItem('isAuthenticated', 'true');
       localStorage.setItem('username', 'testuser');
+      localStorage.setItem('isAdmin', 'false');
       localStorage.setItem('textsData', JSON.stringify([
             {
               id: 2,

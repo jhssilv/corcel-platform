@@ -40,6 +40,7 @@ test.describe('Global Suggestion Persistence', () => {
     await page.addInitScript(() => {
       localStorage.setItem('isAuthenticated', 'true');
       localStorage.setItem('username', 'testuser');
+      localStorage.setItem('isAdmin', 'false');
     });
 
     await page.goto('/main');
