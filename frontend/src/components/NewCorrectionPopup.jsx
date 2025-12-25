@@ -77,10 +77,10 @@ const NewCorrectionPopup = ({
             <>
             <div className="confirmation-overlay" onClick={handleCloseButton}> 
                 <div className="confirmation-dialog" style={dialogStyle}>
-                    <p><strong>{username}</strong>, você deseja remover a correção?</p>
-                    <div className="confirmation-buttons">
-                        <button 
-                            className="confirm-btn"
+                <p>{username ? <><strong>{username}</strong>, </> : ''}você deseja remover a correção?</p>
+                <div className="confirmation-buttons">
+                    <button 
+                        className="confirm-btn"
                             onClick={handleAddButton}
                             onKeyDown={(event) => {
                                 // Call function when ENTER is pressed
@@ -102,7 +102,7 @@ const NewCorrectionPopup = ({
         <div className="confirmation-overlay" onClick={handleCloseButton}> 
             <div className="confirmation-dialog" style={dialogStyle}>
                 <p>
-                    <strong>{username}</strong>, você deseja adicionar <i>{candidate}</i> como correção
+                    {username ? <><strong>{username}</strong>, </> : ''}você deseja adicionar <i>{candidate}</i> como correção
                     {suggestForAll ? ` para todas as ocorrências de "${tokenText}"? Isso afetará todos os textos` : '?'}
                 </p>
                 <div className="confirmation-buttons">
