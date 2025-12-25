@@ -458,6 +458,36 @@
   box-sizing: border-box;
 }
 
+.textarea-container {
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.textarea-container.dragging .whitelist-textarea {
+  border-color: #646cff;
+  background-color: rgba(100, 108, 255, 0.1);
+}
+
+.drag-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(100, 108, 255, 0.2);
+  border: 2px dashed #646cff;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #fff;
+  font-weight: bold;
+  font-size: 1.2rem;
+  pointer-events: none;
+}
+
 .whitelist-textarea:focus {
   outline: none;
   border-color: #646cff;

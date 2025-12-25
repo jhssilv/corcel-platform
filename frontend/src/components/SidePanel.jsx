@@ -39,7 +39,7 @@ function SidePanel({
               <span className="button-text">Upload</span>
             </button>
 
-            <button className="panel-button whitelist-button" onClick={onWhitelist} disabled>
+            <button className="panel-button whitelist-button" onClick={onWhitelist}>
               <img src={whitelistIcon || "/placeholder.svg"} alt="" className="button-icon-svg" />
               <span className="button-text">Whitelist</span>
             </button>
