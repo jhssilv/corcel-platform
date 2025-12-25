@@ -29,6 +29,7 @@ class User(Base):
     hashed_password = Column(String(120), nullable=False)
     last_login = Column(TIMESTAMP, nullable=True)
     is_admin = Column(Boolean, nullable=False, default=False)
+    is_active = Column(Boolean, nullable=False, default=True)
 
     normalizations = relationship('Normalization', back_populates='user', cascade="all, delete-orphan")
     texts_association = relationship('TextsUsers', back_populates='user', cascade="all, delete-orphan")
