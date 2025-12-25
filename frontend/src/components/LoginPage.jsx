@@ -31,7 +31,7 @@ const handleSubmit = async (event) => {
     try {
         const login_data = await authenticateUser(username, password); 
     
-        login(username);
+        login(username, login_data.isAdmin);
         navigate('/main');           
 
     } catch (error) {
