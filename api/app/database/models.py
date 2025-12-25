@@ -131,3 +131,15 @@ class TokensSuggestions(Base):
     __tablename__ = 'tokenssuggestions'
     token_id = Column(Integer, ForeignKey('tokens.id', ondelete="CASCADE"), primary_key=True)
     suggestion_id = Column(Integer, ForeignKey('suggestions.id', ondelete="CASCADE"), primary_key=True)
+    
+    
+class WhitelistTokens(Base):
+    """
+    Model for the 'whitelist_tokens' table.
+    Stores tokens that are whitelisted.
+    """
+    __tablename__ = 'whitelist_tokens'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    token_text = Column(String(64), nullable=False, unique=True)
+    

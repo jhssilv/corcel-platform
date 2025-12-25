@@ -136,3 +136,15 @@ export const TaskStatusResponseSchema = z.object({
   result: z.any().optional(),
   error: z.string().optional(),
 });
+
+export const WhitelistTokensResponseSchema = z.object({
+  tokens: z.array(z.string()),
+});
+
+export const WhitelistTokenAddRequestSchema = z.object({
+  token_text: z.string().min(1, "Token text cannot be empty."),
+});
+
+export const WhitelistTokenRemoveRequestSchema = z.object({
+  token_text: z.string().min(1, "Token text cannot be empty."),
+});

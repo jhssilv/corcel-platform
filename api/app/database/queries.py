@@ -3,7 +3,7 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.dialects.postgresql import insert
 
-from app.database.models import Token, User, Text, Normalization, TextsUsers, Suggestion, TokensSuggestions
+from app.database.models import Token, User, Text, Normalization, TextsUsers, Suggestion, TokensSuggestions, WhitelistTokens
 from app.extensions import db
 
 from psycopg2.errors import UniqueViolation
@@ -303,3 +303,43 @@ def toggle_to_be_normalized(db, token_id: int):
     if token:
         token.to_be_normalized = not token.to_be_normalized
         db.commit()
+        
+def get_whitelist_tokens(db):
+    """
+    Returns a list of all whitelisted tokens.
+    """
+    whitelist_entries = db.query(WhitelistTokens).all()
+    return [entry.token_text for entry in whitelist_entries]
+    
+    
+def add_whitelist_token(db, token_text: str):
+    """
+    Adds a token to the whitelist.
+    """
+    existing_entry = db.query(WhitelistTokens).filter_by(token_text=token_text).first()
+    if not existing_entry:
+        new_whitelist_entry = WhitelistTokens(token_text=token_text)
+        db.add(new_whitelist_entry)
+        
+        matching_tokens = db.query(Token).filter_by(token_text=token_text).all()
+        for token in matching_tokens:
+            token.whitelisted = True
+            db.add(token)
+        
+        db.commit()
+        
+def remove_whitelist_token(db, token_text: str):
+    """
+    Removes a token from the whitelist.
+    """
+    whitelist_entry = db.query(WhitelistTokens).filter_by(token_text=token_text).first()
+    if whitelist_entry:
+        db.delete(whitelist_entry)
+        
+        matching_tokens = db.query(Token).filter_by(token_text=token_text).all()
+        for token in matching_tokens:
+            token.whitelisted = False
+            db.add(token)
+        
+        db.commit()
+    

@@ -117,3 +117,33 @@ def toggle_token_suggestions(current_user, token_id: int, body: schemas.toggleTo
         return jsonify(response.model_dump()), 200
     except Exception as e:
         return jsonify(schemas.ErrorResponse(error=str(e)).model_dump()), 500
+    
+@text_bp.route('/api/whitelist/', methods=['GET'])
+@login_required()
+def get_whitelist_tokens(current_user):
+    try:
+        whitelist_tokens = queries.get_whitelist_tokens(session)
+        response = schemas.WhitelistTokensResponse(tokens=whitelist_tokens)
+        return jsonify(response.model_dump()), 200
+    except Exception as e:
+        return jsonify(schemas.ErrorResponse(error=str(e)).model_dump()), 500
+
+@text_bp.route('/api/whitelist/', methods=['POST', 'DELETE'])
+@login_required()
+@validate()
+def manage_whitelist_token(current_user, body: schemas.WhitelistManageRequest):
+    try:
+        if body.action == 'add':
+            queries.add_whitelist_token(session, body.token_text)
+            message = f"Token '{body.token_text}' added to whitelist."
+        elif body.action == 'remove':
+            queries.remove_whitelist_token(session, body.token_text)
+            message = f"Token '{body.token_text}' removed from whitelist."
+        else:
+            return jsonify(schemas.ErrorResponse(error="Invalid action").model_dump()), 400
+
+        response = schemas.MessageResponse(message=message)
+        return jsonify(response.model_dump()), 200
+    except Exception as e:
+        return jsonify(schemas.ErrorResponse(error=str(e)).model_dump()), 500
+
