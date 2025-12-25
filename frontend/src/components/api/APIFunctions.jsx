@@ -202,3 +202,22 @@ export async function getWhitelist() {
   const data = await apiPrivate.get(`/whitelist/`);
   return schemas.WhitelistTokensResponseSchema.parse(data);
 }
+/**
+ * Registers a new user (Admin only).
+ */
+export async function registerUser(username) {
+  const response = await apiPrivate.post('/register', { username });
+  // Returns { message }
+  return response.data || response;
+}
+
+/**
+ * Activates a user account.
+ */
+export async function activateUser(username, password) {
+  const response = await apiPublic.post('/activate', { 
+    username, 
+    password
+  });
+  return schemas.MessageResponseSchema.parse(response.data || response);
+}
