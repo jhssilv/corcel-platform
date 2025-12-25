@@ -2,6 +2,8 @@ import { useState, useEffect } from "react"
 import PropTypes from "prop-types"
 import { parseTextFile } from "./functions/FileParsers"
 
+import { getWhitelist, addToWhitelist, removeFromWhitelist } from "./api/APIFunctions"
+
 function WhitelistModal({ isOpen, onClose }) {
   const [whitelistText, setWhitelistText] = useState("")
   const [originalWhitelistText, setOriginalWhitelistText] = useState("")
@@ -16,9 +18,10 @@ function WhitelistModal({ isOpen, onClose }) {
 
   const fetchWhitelist = async () => {
     try {
-      const placeholderWords = "word1, word2, word3, example, test"
-      setWhitelistText(placeholderWords)
-      setOriginalWhitelistText(placeholderWords)
+      const whitelistedWords = await getWhitelist();
+      console.log(whitelistedWords);
+      setWhitelistText(whitelistedWords.tokens.join(", "))
+      setOriginalWhitelistText(whitelistedWords.tokens.join(", "))
     } catch (error) {
       console.error("[TODO] Handle API fetch error:", error)
     }
@@ -27,13 +30,27 @@ function WhitelistModal({ isOpen, onClose }) {
   const handleUpdate = async () => {
     setIsUpdating(true)
     try {
-      console.log("[TODO] Send whitelist update to API:", whitelistText)
-      alert("Essa funcionalidade de whitelist ainda não foi implementada.")
+
+      const originalWords = originalWhitelistText.split(",").map(word => word.trim()).filter(word => word.length > 0)
+      const updatedWords = whitelistText.split(",").map(word => word.trim()).filter(word => word.length > 0)
+
+      const wordsToAdd = updatedWords.filter(word => !originalWords.includes(word))
+      const wordsToRemove = originalWords.filter(word => !updatedWords.includes(word))
+      
+      for (const word of wordsToAdd) {
+        await addToWhitelist(word)
+      }
+
+      for (const word of wordsToRemove) {
+        await removeFromWhitelist(word)
+      }
+
       await new Promise((resolve) => setTimeout(resolve, 500))
       setOriginalWhitelistText(whitelistText)
       onClose()
     } catch (error) {
-      console.error("[TODO] Handle API update error:", error)
+      console.error("Error updating whitelist:", error)
+      alert("Houve um erro ao atualizar a whitelist.")
     } finally {
       setIsUpdating(false)
     }

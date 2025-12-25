@@ -180,3 +180,25 @@ export async function toggleToBeNormalized(tokenId) {
   };
   await apiPrivate.patch(`/tokens/${tokenId}/suggestions/toggle`, payload);
 }
+
+
+export async function addToWhitelist(tokenText) {
+  const payload = {
+    token_text: tokenText,
+    action: 'add'
+  };
+  await apiPrivate.post(`/whitelist/`, payload);
+}
+
+export async function removeFromWhitelist(tokenText) {
+  const payload = {
+    token_text: tokenText,
+    action: 'remove'
+  };
+  await apiPrivate.delete(`/whitelist/`, { data: payload });
+}
+
+export async function getWhitelist() {
+  const data = await apiPrivate.get(`/whitelist/`);
+  return schemas.WhitelistTokensResponseSchema.parse(data);
+}
