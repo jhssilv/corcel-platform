@@ -219,10 +219,6 @@ test.describe('Multi-Token Interaction', () => {
     // Click add
     await page.locator('.edit-button').click();
 
-    // Confirm popup
-    await expect(page.getByText('você deseja adicionar fast animal como correção?')).toBeVisible();
-    await page.getByRole('button', { name: 'Adicionar' }).click();
-
     // Verify API call
     expect(postCalled).toBe(true);
 
@@ -279,10 +275,6 @@ test.describe('Multi-Token Interaction', () => {
 
     // Click delete
     await page.locator('.delete-button').click();
-
-    // Confirm popup
-    await expect(page.getByText('você deseja remover a correção?')).toBeVisible();
-    await page.getByRole('button', { name: 'Remover', exact: true }).click();
 
     // Verify that the original tokens return
     // 'quick', 'brown', 'fox' should be visible again

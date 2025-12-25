@@ -57,6 +57,6 @@ test.describe('Global Suggestion Persistence', () => {
     
     await page.getByText('world', { exact: true }).click();
     await expect(page.locator('.confirmation-dialog')).toBeVisible();
-    await expect(page.getByText('você deseja adicionar world como correção para todas as ocorrências?')).toBeVisible();
+    await expect(page.getByText('você deseja adicionar world como correção para todas as ocorrências de "wrld"? Isso afetará todos os textos')).toBeVisible();
   });
 });

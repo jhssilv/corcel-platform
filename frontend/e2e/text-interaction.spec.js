@@ -271,9 +271,7 @@ test.describe('Text Interaction', () => {
 
     // Verify confirmation popup
     await expect(page.locator('.confirmation-dialog')).toBeVisible();
-    await expect(page.getByText('você deseja adicionar world como correção para todas as ocorrências?')).toBeVisible();
-
-    // Confirm
+    await expect(page.getByText('você deseja adicionar world como correção para todas as ocorrências de "wrld"? Isso afetará todos os textos')).toBeVisible();
     await page.getByRole('button', { name: 'Adicionar' }).click();
 
     // Verify payload
@@ -297,6 +295,6 @@ test.describe('Text Interaction', () => {
 
     // Verify confirmation popup
     await expect(page.locator('.confirmation-dialog')).toBeVisible();
-    await expect(page.getByText('você deseja adicionar custom_global como correção para todas as ocorrências?')).toBeVisible();
+    await expect(page.getByText('você deseja adicionar custom_global como correção para todas as ocorrências de "wrld"? Isso afetará todos os textos')).toBeVisible();
   });
 });
