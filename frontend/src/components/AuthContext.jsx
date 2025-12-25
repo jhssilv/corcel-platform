@@ -18,13 +18,18 @@ export const AuthProvider = ({ children }) => {
         return localStorage.getItem('username');
     })
 
+    const [isAdmin, setIsAdmin] = useState(() => {
+        return localStorage.getItem('isAdmin') === 'true'
+    });
 
-    const login = (username) => {
+    const login = (username, isAdmin) => {
         setIsAuthenticated(true);
         setUsername(username);
+        setIsAdmin(isAdmin);
 
         localStorage.setItem('isAuthenticated', 'true');
         localStorage.setItem('username', username);
+        localStorage.setItem('isAdmin', isAdmin.toString());
     };
 
     const logout = async () => {
