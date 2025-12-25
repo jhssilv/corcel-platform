@@ -65,6 +65,7 @@ const TokenDetailSchema = z.object({
     toBeNormalized: z.boolean(),
     whitespaceAfter: z.string(),
     id: z.number(),
+    whitelisted: z.boolean(),
   })
 });
 
