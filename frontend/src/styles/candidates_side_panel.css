@@ -192,13 +192,10 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
+    z-index: 2000;
 }
 
 .confirmation-dialog {
-    position: fixed;
-    top: 150px;
-    right: 340px;
     background-color: #2b2b2b;
     padding: 20px;
     border-radius: 8px;
