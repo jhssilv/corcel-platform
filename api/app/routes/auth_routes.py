@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import create_access_token, jwt_required, set_access_cookies, unset_jwt_cookies
 from flask_pydantic import validate
 from datetime import datetime
+import secrets
 
 import app.api_schemas as schemas
 import app.database.queries as queries
@@ -31,22 +32,43 @@ def get_usernames(current_user):
 @auth_bp.route('/api/register', methods=['POST'])
 @validate()
 @admin_required()
-def register(body: schemas.UserCredentials, current_user=None):
+def register(body: schemas.UserRegisterRequest, current_user=None):
+    username = body.username
+    
+    user = queries.get_user_by_username(session, username)
+    
+    if user is not None:
+        return jsonify({"error": "Usuário já existe."}), 400
+    
+    # Create inactive user with random password
+    new_user = User(username=username, is_active=False)
+    new_user.set_password(secrets.token_urlsafe(32))
+    
+    session.add(new_user)
+    session.commit()
+    
+    return jsonify({"message": "Usuário Criado com Sucesso"}), 201
+
+@auth_bp.route('/api/activate', methods=['POST'])
+@validate()
+def activate_account(body: schemas.UserActivationRequest):
     username = body.username
     password = body.password
     
     user = queries.get_user_by_username(session, username)
     
-    if user is not None:
-        return jsonify({"error": "Username already exists."}), 400
+    if user is None:
+        return jsonify({"error": "User does not exist."}), 404
+        
+    if user.is_active:
+        return jsonify({"error": "User is already active."}), 400
+        
+    user.set_password(password)
+    user.is_active = True
     
-    new_user = User(username=username)
-    new_user.set_password(password)
-    
-    session.add(new_user)
     session.commit()
     
-    return jsonify({"msg": "User created successfully"}), 201
+    return jsonify({"message": "Account activated successfully."}), 200
 
 @auth_bp.route('/api/login', methods=['POST'])
 @validate()
@@ -61,6 +83,9 @@ def login(body: schemas.UserCredentials):
     
     elif not user.check_password(password):
         return jsonify({"error": "Invalid password."}), 403
+        
+    if not user.is_active:
+        return jsonify({"error": "Account is not active."}), 403
     
     user_is_admin = user.is_admin
     
