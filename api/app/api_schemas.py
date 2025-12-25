@@ -56,6 +56,7 @@ class Token(BaseModel):
     to_be_normalized: bool = Field(alias="toBeNormalized")
     candidates: List[str] = Field(default=[])
     whitespace_after: Optional[str] = Field(alias="whitespaceAfter", default="")
+    whitelisted: bool = Field(alias="whitelisted", default=False)
 
     model_config = ConfigDict(populate_by_name=True)
 
