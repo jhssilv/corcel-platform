@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { is } from 'zod/v4/locales';
 
 /**
  * Schema for successful responses with a message.
@@ -32,7 +33,8 @@ export const LoginRequestSchema = z.object({
  * Validates the successful response from the POST /api/login route.
  */
 export const LoginResponseSchema = z.object({
-  message: z.string()
+  message: z.string(),
+  isAdmin: z.boolean(),
 });
 
 

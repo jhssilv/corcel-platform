@@ -62,8 +62,10 @@ def login(body: schemas.UserCredentials):
     elif not user.check_password(password):
         return jsonify({"error": "Invalid password."}), 403
     
+    user_is_admin = user.is_admin
+    
     access_token = create_access_token(identity=str(user.id))
-    response = jsonify({"message": "Login successful"})
+    response = jsonify({"message": "Login successful", "isAdmin": user_is_admin})
     set_access_cookies(response, access_token)
     
     return response, 200

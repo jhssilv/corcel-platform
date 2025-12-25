@@ -27,6 +27,7 @@ class UserCredentials(BaseModel):
 class LoginResponse(BaseModel):
     """Schema for the login response."""
     message: str = Field(..., json_schema_extra={"example": "Olá, admin!"})
+    is_admin: bool = Field(..., alias="isAdmin", json_schema_extra={"example": True})
 
 
 # --- /api/texts ---
