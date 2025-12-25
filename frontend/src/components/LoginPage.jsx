@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from './functions/useAuth.jsx';
 
 import { authenticateUser, getTextsData } from './api/APIFunctions.jsx';
@@ -62,6 +62,11 @@ const handleSubmit = async (event) => {
                     placeholder="Senha"
                 />
                 <button type="submit" style={{ color: 'white' }}>Entrar</button>
+                <div style={{ marginTop: '15px', textAlign: 'center' }}>
+                    <Link to="/first-access" style={{ color: '#666', textDecoration: 'none', fontSize: '0.9rem' }}>
+                        Primeiro Acesso? Ative sua conta
+                    </Link>
+                </div>
             </form>
         </section>
     );
