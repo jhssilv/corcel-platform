@@ -342,4 +342,10 @@ def remove_whitelist_token(db, token_text: str):
             db.add(token)
         
         db.commit()
+
+def get_all_users(db):
+    """
+    Returns a list of all users.
+    """
+    return db.query(User).order_by(User.id).all()
     

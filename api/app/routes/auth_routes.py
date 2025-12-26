@@ -100,3 +100,63 @@ def logout():
     response = jsonify({"message": "Logout successful"})
     unset_jwt_cookies(response)
     return response, 200
+
+@auth_bp.route('/api/users/toggleActive', methods=['PATCH'])
+@validate()
+@admin_required()
+def deactivate_user(body: schemas.UserRegisterRequest, current_user=None):
+    username = body.username
+    
+    user = queries.get_user_by_username(session, username)
+    
+    if user is None:
+        return jsonify({"error": "User does not exist."}), 404
+        
+    user.is_active = not user.is_active
+    session.commit()
+    
+    if not user.is_active:
+        return jsonify({"message": "User deactivated successfully."}), 200
+    else:
+        return jsonify({"message": "User activated successfully."}), 200
+    
+@auth_bp.route('/api/users/changePassword', methods=['PATCH'])
+@validate()
+@admin_required()
+def toggle_user_is_admin(body: schemas.UserRegisterRequest, current_user=None):
+    username = body.username
+    
+    user = queries.get_user_by_username(session, username)
+    
+    if user is None:
+        return jsonify({"error": "User does not exist."}), 404
+        
+    user.is_admin = not user.is_admin
+    session.commit()
+    
+    if user.is_admin:
+        return jsonify({"message": "User granted admin privileges."}), 200
+    else:
+        return jsonify({"message": "User admin privileges revoked."}), 200
+    
+@auth_bp.route('/api/users/data', methods=['GET'])
+@admin_required()
+def get_users_data(current_user=None):
+    try:
+        users = queries.get_all_users(session)
+        users_data = []
+        
+        for user in users:
+            data = schemas.UserData(
+                username=user.username,
+                isAdmin=user.is_admin,
+                isActive=user.is_active,
+                lastLogin=user.last_login
+            )
+            users_data.append(data)
+        
+        return jsonify(schemas.UsersDataResponse(usersData=users_data).model_dump(by_alias=True)), 200
+    except Exception as e:
+        error_response = schemas.ErrorResponse(error=str(e))
+        return jsonify(error_response.model_dump()), 500
+    
