@@ -150,3 +150,13 @@ export const WhitelistTokenAddRequestSchema = z.object({
 export const WhitelistTokenRemoveRequestSchema = z.object({
   token_text: z.string().min(1, "Token text cannot be empty."),
 });
+
+const UsersData = z.object({
+  username: z.string(),
+  isAdmin: z.boolean(),
+  isActive: z.boolean(),
+  lastLogin: z.string().nullable(),
+});
+
+export const UsersDataResponseSchema = z.array(UsersData);
+

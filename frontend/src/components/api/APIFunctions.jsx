@@ -221,3 +221,18 @@ export async function activateUser(username, password) {
   });
   return schemas.MessageResponseSchema.parse(response.data || response);
 }
+
+export async function getUsersData(){
+  const data = await apiPrivate.get('/users/data');
+  return data.usersData;
+}
+
+export async function toggleUserActive(username) {
+  const response = await apiPrivate.patch('/users/toggleActive', { username });
+  return response.data || response;
+}
+
+export async function toggleUserAdmin(username) {
+  const response = await apiPrivate.patch('/users/changePassword', { username });
+  return response.data || response;
+}
