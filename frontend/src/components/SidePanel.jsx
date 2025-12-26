@@ -16,6 +16,7 @@ function SidePanel({
   onWhitelist, 
   onReport, 
   onRegisterUser,
+  onManageUsers,
   onLogout 
 }) {
   return (
@@ -52,10 +53,16 @@ function SidePanel({
               <span className="button-text">Gerar Relatório</span>
             </button>
             {isAdmin && (
-              <button className="panel-button register-button" onClick={onRegisterUser}>
-                <img src={registerIcon || "/placeholder.svg"} alt="" className="button-icon-svg" />
-                <span className="button-text">Registrar Usuário</span>
-              </button>
+              <>
+                <button className="panel-button register-button" onClick={onRegisterUser}>
+                  <img src={registerIcon || "/placeholder.svg"} alt="" className="button-icon-svg" />
+                  <span className="button-text">Registrar Usuário</span>
+                </button>
+                <button className="panel-button manage-users-button" onClick={onManageUsers}>
+                  <img src={registerIcon || "/placeholder.svg"} alt="" className="button-icon-svg" />
+                  <span className="button-text">Gerenciar Usuários</span>
+                </button>
+              </>
             )}          </div>
 
           <div className="panel-logout-section">
@@ -78,6 +85,8 @@ SidePanel.propTypes = {
   onUpload: PropTypes.func.isRequired,
   onWhitelist: PropTypes.func.isRequired,
   onReport: PropTypes.func.isRequired,
+  onRegisterUser: PropTypes.func,
+  onManageUsers: PropTypes.func,
   onLogout: PropTypes.func.isRequired,
 }
 

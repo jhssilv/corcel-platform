@@ -6,6 +6,7 @@ import LoginPage from './components/LoginPage.jsx'
 import FirstAccessPage from './components/FirstAccessPage.jsx'
 import Footer from './components/Footer.jsx'
 import MainPage from './components/MainPage.jsx'
+import UserManagementDashboard from './components/UserManagementDashboard.jsx'
 import { AuthProvider } from './components/AuthContext.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 
@@ -21,6 +22,14 @@ createRoot(document.getElementById('root')).render(
                         element={
                             <ProtectedRoute>
                                 <MainPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/users"
+                        element={
+                            <ProtectedRoute>
+                                <UserManagementDashboard />
                             </ProtectedRoute>
                         }
                     />

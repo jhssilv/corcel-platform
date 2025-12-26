@@ -52,8 +52,15 @@ function TopBar({ onDownloadClick , showSidePanel = true}) {
     closePanel()
   }
 
+  const handleManageUsers = () => {
+    navigate("/users")
+    closePanel()
+  }
+
   const handleDownload = () => {
-    onDownloadClick()
+    if (onDownloadClick) {
+      onDownloadClick()
+    }
     closePanel()
   }
 
@@ -90,6 +97,7 @@ function TopBar({ onDownloadClick , showSidePanel = true}) {
           onWhitelist={openWhitelist}
           onReport={openReport}
           onRegisterUser={openRegisterUser}
+          onManageUsers={handleManageUsers}
           onLogout={handleLogout}
         /> : null}
 
