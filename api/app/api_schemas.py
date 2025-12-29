@@ -1,34 +1,57 @@
-from pydantic import BaseModel, Field, TypeAdapter
+from pydantic import BaseModel, Field, TypeAdapter, ConfigDict
 from typing import List, Dict, Optional, Any, Tuple
 from datetime import datetime
 
 class ErrorResponse(BaseModel):
     """Error Response Schema."""
-    error: str = Field(..., example="Error description.")
+    error: str = Field(..., json_schema_extra={"example": "Error description."})
 
 class MessageResponse(BaseModel):
     """Success Response Schema."""
-    message: str = Field(..., example="Operation completed successfully.")
+    message: str = Field(..., json_schema_extra={"example": "Operation completed successfully."})
 
 # --- /api/users ---
 
 class UsernamesResponse(BaseModel):
     """Schema for the list of usernames."""
-    usernames: List[str] = Field(..., example=["user1", "admin", "guest"])
+    usernames: List[str] = Field(..., json_schema_extra={"example": ["user1", "admin", "guest"]})
+
+class UserData(BaseModel):
+    """Schema for user data."""
+    username: str
+    is_admin: bool = Field(alias="isAdmin")
+    is_active: bool = Field(alias="isActive")
+    last_login: Optional[datetime] = Field(alias="lastLogin", default=None)
+
+    model_config = ConfigDict(populate_by_name=True)
+
+class UsersDataResponse(BaseModel):
+    """Schema for the response of the list of users."""
+    users_data: List[UserData] = Field(alias="usersData")
+
+    model_config = ConfigDict(populate_by_name=True, title="usersData")
 
 
-# --- /api/login ---
+# --- /api/login & /api/register ---
 
-class LoginRequest(BaseModel):
-    """Schema for the login request."""
-    username: str = Field(..., example="admin", description="Username.")
-    password: str = Field(..., example="password123", description="Password.")
+class UserCredentials(BaseModel):
+    """Schema for login and registration requests."""
+    username: str = Field(..., json_schema_extra={"example": "admin"}, description="Username.")
+    password: str = Field(..., json_schema_extra={"example": "password123"}, description="Password.")
+
+class UserRegisterRequest(BaseModel):
+    """Schema for user registration (admin only)."""
+    username: str = Field(..., json_schema_extra={"example": "newuser"}, description="Username.")
+
+class UserActivationRequest(BaseModel):
+    """Schema for user activation."""
+    username: str = Field(..., json_schema_extra={"example": "newuser"})
+    password: str = Field(..., json_schema_extra={"example": "newpassword123"})
 
 class LoginResponse(BaseModel):
     """Schema for the login response."""
-    message: str = Field(..., example="Olá, admin!")
-    userId: Optional[int] = Field(..., example=1)
-    timestamp: datetime = Field(..., example=datetime.now())
+    message: str = Field(..., json_schema_extra={"example": "Olá, admin!"})
+    is_admin: bool = Field(..., alias="isAdmin", json_schema_extra={"example": True})
 
 
 # --- /api/texts ---
@@ -41,27 +64,26 @@ class TextMetadata(BaseModel):
     source_file_name: Optional[str] = Field(alias="sourceFileName", default=None)
     users_assigned: List[str] = Field(alias="usersAssigned", default=[])
     
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
     
 class TextsDataResponse(BaseModel):
     """Schema for the response of the list of texts for a user."""
     texts_data: List[TextMetadata] = Field(alias="textsData")
 
-    class Config:
-        populate_by_name = True
-        title = "textsData"
+    model_config = ConfigDict(populate_by_name=True, title="textsData")
 
 class Token(BaseModel):
     """Schema for a single token."""
+    id: int
     text: str
     is_word: bool = Field(alias="isWord")
     position: int
     to_be_normalized: bool = Field(alias="toBeNormalized")
     candidates: List[str] = Field(default=[])
+    whitespace_after: Optional[str] = Field(alias="whitespaceAfter", default="")
+    whitelisted: bool = Field(alias="whitelisted", default=False)
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 class TextDetailResponse(BaseModel):
     """Schema for the detailed response of a single text."""
@@ -73,8 +95,7 @@ class TextDetailResponse(BaseModel):
     source_file_name: Optional[str] = Field(alias="sourceFileName")
     assigned_to_user: bool = Field(alias="assignedToUser")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 # --- /normalizations ---
 
@@ -86,27 +107,37 @@ NormalizationResponse = TypeAdapter(Dict[str, NormalizationValue])
 
 class NormalizationDeleteRequest(BaseModel):
     """Schema for the DELETE request body of a normalization."""
-    word_index: int = Field(..., example=15, description="Index of the token to be deleted.")
+    word_index: int = Field(..., json_schema_extra={"example": 15}, description="Index of the token to be deleted.")
 
 class NormalizationCreateRequest(BaseModel):
     """Schema for the POST request body to create/save a normalization."""
-    first_index: int = Field(..., example=15, description="Index from the first token.")
-    last_index: int = Field(..., example=16, description="Index of the last token of the normalization.")
-    new_token: str = Field(..., example="new corrected token", description="The new token that will replace the original.")
+    first_index: int = Field(..., json_schema_extra={"example": 15}, description="Index from the first token.")
+    last_index: int = Field(..., json_schema_extra={"example": 16}, description="Index of the last token of the normalization.")
+    new_token: str = Field(..., json_schema_extra={"example": "new corrected token"}, description="The new token that will replace the original.")
+    suggest_for_all: Optional[bool] = Field(False, description="If true, suggests this correction for all occurrences of the text.")
     
     
 # --- /downloads ---
     
 class DownloadRequest(BaseModel):
     """Schema for the download request body."""
-    text_ids: List[int] = Field(..., example=[1, 2, 3], description="List of text IDs to download.")
+    text_ids: List[int] = Field(..., json_schema_extra={"example": [1, 2, 3]}, description="List of text IDs to download.")
     use_tags: bool = Field(False, description="Whether to use tags in the normalized tokens.")
 
 class ReportRequest(BaseModel):
     """Schema for the report request body."""
-    text_ids: List[int] = Field(..., example=[1, 2, 3], description="List of text IDs to generate the report for.")
+    text_ids: List[int] = Field(..., json_schema_extra={"example": [1, 2, 3]}, description="List of text IDs to generate the report for.")
     
-class UploadResponse(BaseModel):
-    status: str
-    total: int
+class toggleToBeNormalizedRequest(BaseModel):
+    """Schema for toggling the to_be_normalized flag for a token."""
+    token_id: int = Field(..., json_schema_extra={"example": 42}, description="ID of the token to toggle.")
+    
+class WhitelistManageRequest(BaseModel):
+    """Schema for adding a token to the whitelist."""
+    token_text: str = Field(..., json_schema_extra={"example": "caza"}, description="The text of the token to whitelist.")
+    action: str = Field(..., json_schema_extra={"example": "add"}, description="Action to perform: 'add' or 'remove'.")
+    
+class WhitelistTokensResponse(BaseModel):
+    """Schema for retrieving whitelisted tokens."""
+    tokens: List[str] = Field(..., json_schema_extra={"example": ["caza", "exemplo"]}, description="List of whitelisted token texts.")
     

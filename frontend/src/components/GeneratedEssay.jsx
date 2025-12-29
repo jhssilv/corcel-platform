@@ -7,7 +7,7 @@ import '../styles/generated_essay.css';
 // blank spaces and punctuations.
 // Also adds classes for word highlights
 
-const GeneratedEssay = ({ essay, selectedStartIndex, setSelectedStartIndex, selectedEndIndex, setSelectedEndIndex }) => {
+const GeneratedEssay = ({ essay, selectedStartIndex, setSelectedStartIndex, selectedEndIndex, setSelectedEndIndex, setTokenPosition, setLastClickTime }) => {
     
     const [ctrlPressed, setCtrlPressed] = useState(false);
     
@@ -21,7 +21,17 @@ const GeneratedEssay = ({ essay, selectedStartIndex, setSelectedStartIndex, sele
             setCtrlPressed(false);
     });
 
-    const handleSelectedWordIndex = (selectedOption) => {
+    const handleSelectedWordIndex = (selectedOption, event) => {
+        if (event && event.target) {
+            const rect = event.target.getBoundingClientRect();
+            setTokenPosition({
+                top: rect.top + window.scrollY,
+                left: rect.left + window.scrollX,
+                height: rect.height,
+                width: rect.width
+            });
+        }
+
         // ctrl is pressed but there is no first index selected
         if(ctrlPressed) {
             if(selectedStartIndex == null){
@@ -38,12 +48,25 @@ const GeneratedEssay = ({ essay, selectedStartIndex, setSelectedStartIndex, sele
         else{
             setSelectedStartIndex(selectedOption);
             setSelectedEndIndex(selectedOption);
+            if (setLastClickTime) setLastClickTime(Date.now());
         }
     };
 
     const spans = buildText(essay, selectedStartIndex, selectedEndIndex, handleSelectedWordIndex);
 
-    return <pre>{spans}</pre>;
+    return (
+        <div className="essay-container">
+            <div className="document-header">
+                <span className="document-title">{essay.sourceFileName}</span>
+                {essay.grade !== undefined && essay.grade !== null && (
+                    <span className="document-grade">Nota: {essay.grade}</span>
+                )}
+            </div>
+            <div className="document-body">
+                {spans}
+            </div>
+        </div>
+    );
 };
 
 GeneratedEssay.propTypes = {
@@ -51,7 +74,9 @@ GeneratedEssay.propTypes = {
     selectedStartIndex: PropTypes.number,
     setSelectedStartIndex: PropTypes.func,
     selectedEndIndex: PropTypes.number,
-    setSelectedEndIndex: PropTypes.func
+    setSelectedEndIndex: PropTypes.func,
+    setTokenPosition: PropTypes.func,
+    setLastClickTime: PropTypes.func
 };
 
 export default GeneratedEssay;

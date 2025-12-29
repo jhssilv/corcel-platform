@@ -1,0 +1,344 @@
+.candidates-panel {
+    position: fixed;
+    top: 150px;
+    right: 20px;
+    bottom: auto;
+    left: auto;
+    transform: none;
+    z-index: 999;
+    width: 300px;
+    min-width: unset;
+    max-width: 300px;
+    background-color: #2b2b2b;
+    border: 1px solid #444;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: stretch;
+    animation: slideLeft 0.3s ease-out;
+    max-height: 80vh; /* Limit height to 80% of viewport height */
+}
+
+@keyframes slideLeft {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+.close-panel-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: #888;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.close-panel-button:hover {
+    background-color: #3a3a3a;
+    color: #fff;
+}
+
+.candidates-header {
+    font-size: 1em;
+    margin-bottom: 5px;
+    color: #aaa;
+    font-weight: 500;
+    text-align: center;
+    margin-top: 10px; /* Add space for close button */
+}
+
+.selected-token {
+    color: #fff;
+    font-weight: bold;
+    font-style: italic;
+    margin-left: 4px;
+    display: block;
+    margin-top: 4px;
+    font-size: 1.1em;
+    word-break: break-word;
+}
+
+.candidates-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px; /* Reduced gap */
+    width: 100%;
+    overflow-y: auto; /* Enable vertical scrolling */
+    padding-right: 5px; /* Space for scrollbar */
+    flex: 1;
+    min-height: 0;
+}
+
+.panel-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    margin-top: 10px;
+    flex-shrink: 0;
+}
+
+/* Custom scrollbar for candidates list */
+.candidates-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.candidates-list::-webkit-scrollbar-track {
+    background: #2b2b2b;
+}
+
+.candidates-list::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 3px;
+}
+
+.candidates-list::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+.candidate-button {
+    background-color: #3a3a3a;
+    border: 1px solid #555;
+    color: #eee;
+    padding: 6px 10px; /* Reduced padding */
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+    text-align: left;
+    font-size: 0.9em; /* Slightly smaller font */
+}
+
+.candidate-button:hover {
+    background-color: #4a4a4a;
+    border-color: #646cff;
+}
+
+.new-candidate-container {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    z-index: 1;
+    width: 100%;
+}
+
+.new-candidate-input {
+    background-color: #1a1a1a;
+    border: 1px solid #555;
+    color: white;
+    padding: 8px;
+    border-radius: 4px;
+    outline: none;
+    flex: 1;
+    min-width: 0; /* Allow shrinking */
+}
+
+.new-candidate-input:focus {
+    border-color: #646cff;
+}
+
+.action-button {
+    padding: 8px;
+    border: 1px solid #555;
+    background-color: #3a3a3a;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+}
+
+.action-button:hover {
+    background-color: #4a4a4a;
+    border-color: #646cff;
+}
+
+.remove-suggestions-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.remove-suggestions-button.active-green {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+.remove-suggestions-button.active-green:hover {
+    background-color: #218838;
+    border-color: #1e7e34;
+}
+
+.confirmation-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.confirmation-dialog {
+    background-color: #2b2b2b;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #444;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    max-width: 400px;
+    margin: 0;
+}
+
+.confirmation-dialog p {
+    color: #eee;
+    margin-bottom: 20px;
+}
+
+.confirmation-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.confirm-btn, .cancel-btn {
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: none;
+    font-weight: bold;
+}
+
+.confirm-btn {
+    background-color: #28a745;
+    color: white;
+}
+
+.confirm-btn:hover {
+    background-color: #218838;
+}
+
+.cancel-btn {
+    background-color: #dc3545;
+    color: white;
+}
+
+.cancel-btn:hover {
+    background-color: #c82333;
+}
+
+/* Global Suggestion Styles */
+.global-suggestion-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #444;
+    width: 100%;
+    justify-content: space-between; /* Changed from center to space-between */
+}
+
+.global-suggestion-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #eee;
+    font-size: 1em; /* Slightly smaller font */
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+    background-color: #3a3a3a;
+    padding: 8px 10px; /* Adjusted padding */
+    border-radius: 6px;
+    border: 1px solid #555;
+    transition: background-color 0.2s;
+    flex: 1; /* Take available space */
+    justify-content: center;
+}
+
+.global-suggestion-label:hover {
+    background-color: #4a4a4a;
+}
+
+.global-suggestion-label input[type="checkbox"] {
+    cursor: pointer;
+    accent-color: #646cff;
+    width: 18px; /* Slightly smaller checkbox */
+    height: 18px;
+}
+
+.info-tooltip-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 5px;
+}
+
+.info-icon {
+    width: 20px;
+    height: 20px;
+    color: #888;
+    cursor: help;
+    transition: color 0.2s;
+}
+
+.info-icon:hover {
+    color: #fff;
+}
+
+.tooltip-text {
+    visibility: hidden;
+    width: 200px; /* Slightly narrower tooltip */
+    background-color: #1a1a1a;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 8px;
+    position: absolute;
+    z-index: 100;
+    bottom: auto;
+    top: 50%;
+    right: 130%; /* Position to the left of the icon */
+    left: auto;
+    transform: translateY(-50%);
+    margin-left: 0;
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 0.85em;
+    border: 1px solid #444;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    pointer-events: none;
+}
+
+.tooltip-text::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 100%; /* Arrow on the right side */
+    margin-top: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent transparent transparent #1a1a1a;
+}
+
+.info-tooltip-container:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}

@@ -14,16 +14,18 @@
     "axios": "^1.12.2",
     "file-saver": "^2.0.5",
     "idb": "^8.0.1",
+    "js-cookie": "^3.0.5",
+    "jszip": "3.10.1",
     "prop-types": "^15.8.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.1.1",
     "react-select": "^5.9.0",
-    "zod": "^4.1.12",
-    "jszip": "3.10.1"
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
+    "@playwright/test": "^1.57.0",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "@vitejs/plugin-react": "^4.3.4",

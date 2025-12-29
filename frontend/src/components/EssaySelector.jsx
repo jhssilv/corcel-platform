@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import DropdownSelect from './DropdownSelect.jsx';
 import PropTypes from 'prop-types';
+import '../styles/essay_selector.css';
 
 import { getTextsData, getUsernames, toggleNormalizedStatus } from './api/APIFunctions.jsx';
 
@@ -27,6 +28,7 @@ const otherFilters = [
 const EssaySelector = ({
     selectedEssay,
     setSelectedEssay,
+    refreshTrigger = 0
 }) => {
     const [textsData, setTextsData] = useState(null);
     const [selectedGrades, setSelectedGrades] = useState(null);
@@ -34,6 +36,7 @@ const EssaySelector = ({
     const [selectedOtherFilters, setSelectedOtherFilters] = useState(null);
     const [filteredEssays, setFilteredEssays] = useState(null);
     const [teachers, setTeachers] = useState([]);
+    const [essayInputValue, setEssayInputValue] = useState('');
 
     // <> Event handlers <> \\
     useEffect(() => {
@@ -45,15 +48,20 @@ const EssaySelector = ({
             setTeachers(teacherOptions);
         };
         fetchUsernames();
-
-        // Carrega textsData do localStorage
-        const data = localStorage.getItem('textsData');
-        if (data) {
-            const parsedData = JSON.parse(data);
-            setTextsData(parsedData);
-            changeFilteredEssays(parsedData, null, null, null);
-        }
     }, []);
+
+    useEffect(() => {
+        const fetchTexts = async () => {
+            try {
+                const data = await getTextsData();
+                setTextsData(data);
+                changeFilteredEssays(data, selectedGrades, selectedTeacher, selectedOtherFilters, essayInputValue);
+            } catch (error) {
+                console.error("Failed to fetch texts data:", error);
+            }
+        };
+        fetchTexts();
+    }, [refreshTrigger]);
 
     const fuzzySearchLogic = (candidate, input) => {
         if (!input) return true;
@@ -75,7 +83,7 @@ const EssaySelector = ({
 
     
 
-    function changeFilteredEssays(textsData, selectedGrades, selectedTeacher, selectedOtherFilters) {
+    function changeFilteredEssays(textsData, selectedGrades, selectedTeacher, selectedOtherFilters, searchText = '') {
 
         // Extract selected grade values (numbers)
         const selectedGradesList = selectedGrades?.map(item => item.value) || [];
@@ -88,15 +96,16 @@ const EssaySelector = ({
 
 
         const filteredEssays = textsData
-            .filter(({ grade, usersAssigned, normalizedByUser }) => {
+            .filter(({ grade, usersAssigned, normalizedByUser, sourceFileName }) => {
                 const matchesGrade =
                     selectedGradesList.length === 0 || selectedGradesList.includes(Number(grade));
                 const matchesTeacher =
                     selectedTeacherList.length === 0 || usersAssigned.some(teacher => selectedTeacherList.includes(teacher));
                 const matchesCorrected =
                     selectedOtherFiltersList.length === 0 || selectedOtherFiltersList.includes(normalizedByUser);
+                const matchesSearch = fuzzySearchLogic({ label: sourceFileName }, searchText);
 
-                return matchesGrade && matchesTeacher && matchesCorrected;
+                return matchesGrade && matchesTeacher && matchesCorrected && matchesSearch;
             })
             .map(({ id, sourceFileName }) => ({ value: id, label: sourceFileName }));
 
@@ -104,23 +113,13 @@ const EssaySelector = ({
         setFilteredEssays(filteredEssays);
     }
 
-    const handleFinishedToggled = async () => {
-
-        const userId = localStorage.getItem('userId');
-        await toggleNormalizedStatus(selectedEssay.value, userId);
-        const updatedTexts = await getTextsData(userId);
-
-        setTextsData(updatedTexts);
-        changeFilteredEssays(updatedTexts, selectedGrades, selectedTeacher, selectedOtherFilters);
-    };
-
     // Handlers for dropdown changes
     const handleOtherFiltersChange = (selectedOptions) => {
         // Goes to the dropdown
         setSelectedOtherFilters(selectedOptions);
 
         // Resets the filters
-        changeFilteredEssays(textsData, selectedGrades, selectedTeacher, selectedOptions);
+        changeFilteredEssays(textsData, selectedGrades, selectedTeacher, selectedOptions, essayInputValue);
     };
 
     const handleTeacherChange = (selectedOptions) => {
@@ -128,7 +127,7 @@ const EssaySelector = ({
         setSelectedTeacher(selectedOptions);
 
         // Resets the filters
-        changeFilteredEssays(textsData, selectedGrades, selectedOptions, selectedOtherFilters);
+        changeFilteredEssays(textsData, selectedGrades, selectedOptions, selectedOtherFilters, essayInputValue);
     };
 
     const handleGradeChange = (selectedOptions) => {
@@ -136,71 +135,85 @@ const EssaySelector = ({
         setSelectedGrades(selectedOptions);
 
         // Resets the filters
-        changeFilteredEssays(textsData, selectedOptions, selectedTeacher, selectedOtherFilters);
+        changeFilteredEssays(textsData, selectedOptions, selectedTeacher, selectedOtherFilters, essayInputValue);
     };
 
     const handleEssayChange = (selectedOption) => {
         setSelectedEssay(selectedOption);
     };
 
+    const handleEssayInputChange = (newValue, actionMeta) => {
+        if (actionMeta.action === 'input-change') {
+            setEssayInputValue(newValue);
+            changeFilteredEssays(textsData, selectedGrades, selectedTeacher, selectedOtherFilters, newValue);
+        }
+    };
+
     return (
-        <form>
+        <form className="essay-selector-container">
             {/* Essay Dropdown */}
-            <DropdownSelect
-                title="ID do Texto"
-                options={filteredEssays}
-                selectedValues={selectedEssay}
-                onChange={handleEssayChange}
-                isMulti={false}
-                filterOption={fuzzySearchLogic}
-            />
-            {/* Grade Dropdown */}
-            <DropdownSelect
-                title="Notas"
-                options={gradeOptions}
-                selectedValues={selectedGrades}
-                onChange={handleGradeChange}
-                isMulti={true}
-            />
-            {/* Teachers Dropdown */}
-            <DropdownSelect
-                title="Responsável"
-                options={teachers}
-                selectedValues={selectedTeacher}
-                onChange={handleTeacherChange}
-                isMulti={true}
-            />
-            {/* Corrected Dropdown */}
-            <DropdownSelect
-                title="Outros filtros"
-                options={otherFilters}
-                selectedValues={selectedOtherFilters}
-                onChange={handleOtherFiltersChange}
-                isMulti={true}
-            />
-            {/* Checkbox to mark the essay as corrected */}
-            {selectedEssay && (
-                <div className="checkbox-external-wrapper">
-                    <div className="checkbox-wrapper-47">
-                        <input
-                            type="checkbox"
-                            name="cb"
-                            id="cb-47"
-                            checked={textsData.find((e) => e.id === selectedEssay.value).normalizedByUser}
-                            onChange={() => handleFinishedToggled()}
-                        />
-                        <label htmlFor="cb-47">Finalizado?</label>
+            <div className="selector-main-search">
+                <div className="search-with-info">
+                    <DropdownSelect
+                        title="ID do Texto"
+                        options={filteredEssays}
+                        selectedValues={selectedEssay}
+                        onChange={handleEssayChange}
+                        isMulti={false}
+                        filterOption={null}
+                        inputValue={essayInputValue}
+                        onInputChange={handleEssayInputChange}
+                        controlShouldRenderValue={false}
+                        blurInputOnSelect={false}
+                    />
+                    <div className="info-tooltip-container">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="info-icon">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                        </svg>
+                        <div className="tooltip-text">
+                            Digite o id do texto para buscar. Exemplo: "2015 n4" encontrará "2015_n4_12345.txt".
+                        </div>
                     </div>
                 </div>
-            )}
-            {/* Corrected texts count */}
-            <div id="correctedCount">
-                Corrigidos: {
-                    textsData.filter(({ id, normalizedByUser }) =>
-                            normalizedByUser === true &&
-                            filteredEssays.some((essay) => essay.value === id)
-                        ).length
-                } de {filteredEssays.length}.
+            </div>
+
+            <div className="selector-filters-grid">
+                {/* Grade Dropdown */}
+                <DropdownSelect
+                    title="Notas"
+                    options={gradeOptions}
+                    selectedValues={selectedGrades}
+                    onChange={handleGradeChange}
+                    isMulti={true}
+                />
+                {/* Teachers Dropdown */}
+                <DropdownSelect
+                    title="Responsável"
+                    options={teachers}
+                    selectedValues={selectedTeacher}
+                    onChange={handleTeacherChange}
+                    isMulti={true}
+                />
+                {/* Corrected Dropdown */}
+                <DropdownSelect
+                    title="Outros filtros"
+                    options={otherFilters}
+                    selectedValues={selectedOtherFilters}
+                    onChange={handleOtherFiltersChange}
+                    isMulti={true}
+                />
+            </div>
+
+            <div className="selector-footer">
+                {/* Corrected texts count */}
+                <div className="corrected-count">
+                    Finalizados: <strong>{
+                        textsData.filter(({ id, normalizedByUser }) =>
+                                normalizedByUser === true &&
+                                filteredEssays.some((essay) => essay.value === id)
+                            ).length
+                    }</strong> de {filteredEssays.length}
+                </div>
             </div>
         </form>
     )
@@ -209,6 +222,7 @@ const EssaySelector = ({
 EssaySelector.propTypes = {
     selectedEssay: PropTypes.object,
     setSelectedEssay: PropTypes.func,
+    refreshTrigger: PropTypes.number,
 };
 
 export default EssaySelector;

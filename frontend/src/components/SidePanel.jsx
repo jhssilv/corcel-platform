@@ -4,15 +4,19 @@ import uploadIcon from "../assets/upload.svg"
 import logoutIcon from "../assets/logout.svg"
 import whitelistIcon from "../assets/whitelist.svg"
 import reportIcon from "../assets/report.svg"
+import registerIcon from "../assets/register.svg" // Assuming you might have an icon, or reuse one
 
 function SidePanel({ 
   isOpen, 
   onClose, 
   username, 
+  isAdmin,
   onDownload, 
   onUpload, 
   onWhitelist, 
   onReport, 
+  onRegisterUser,
+  onManageUsers,
   onLogout 
 }) {
   return (
@@ -39,7 +43,7 @@ function SidePanel({
               <span className="button-text">Upload</span>
             </button>
 
-            <button className="panel-button whitelist-button" onClick={onWhitelist} disabled>
+            <button className="panel-button whitelist-button" onClick={onWhitelist}>
               <img src={whitelistIcon || "/placeholder.svg"} alt="" className="button-icon-svg" />
               <span className="button-text">Whitelist</span>
             </button>
@@ -48,7 +52,18 @@ function SidePanel({
               <img src={reportIcon || "/placeholder.svg"} alt="" className="button-icon-svg" />
               <span className="button-text">Gerar Relatório</span>
             </button>
-          </div>
+            {isAdmin && (
+              <>
+                <button className="panel-button register-button" onClick={onRegisterUser}>
+                  <img src={registerIcon || "/placeholder.svg"} alt="" className="button-icon-svg" />
+                  <span className="button-text">Registrar Usuário</span>
+                </button>
+                <button className="panel-button manage-users-button" onClick={onManageUsers}>
+                  <img src={registerIcon || "/placeholder.svg"} alt="" className="button-icon-svg" />
+                  <span className="button-text">Gerenciar Usuários</span>
+                </button>
+              </>
+            )}          </div>
 
           <div className="panel-logout-section">
             <button className="panel-button logout-button" onClick={onLogout}>
@@ -70,6 +85,8 @@ SidePanel.propTypes = {
   onUpload: PropTypes.func.isRequired,
   onWhitelist: PropTypes.func.isRequired,
   onReport: PropTypes.func.isRequired,
+  onRegisterUser: PropTypes.func,
+  onManageUsers: PropTypes.func,
   onLogout: PropTypes.func.isRequired,
 }
 

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { is } from 'zod/v4/locales';
 
 /**
  * Schema for successful responses with a message.
@@ -33,8 +34,7 @@ export const LoginRequestSchema = z.object({
  */
 export const LoginResponseSchema = z.object({
   message: z.string(),
-  timestamp: z.string(), // Validates if the string is a date in ISO 8601 format
-  userId: z.number(),
+  isAdmin: z.boolean(),
 });
 
 
@@ -64,7 +64,10 @@ const TokenDetailSchema = z.object({
     text: z.string(),
     isWord: z.boolean(),
     candidates: z.array(z.string()),
-    toBeNormalized: z.boolean()
+    toBeNormalized: z.boolean(),
+    whitespaceAfter: z.string(),
+    id: z.number(),
+    whitelisted: z.boolean(),
   })
 });
 
@@ -108,6 +111,7 @@ export const NormalizationCreateRequestSchema = z.object({
   first_index: z.number(),
   last_index: z.number(),
   new_token: z.string(),
+  suggest_for_all: z.boolean().optional(),
 });
 
 /**
@@ -134,3 +138,25 @@ export const TaskStatusResponseSchema = z.object({
   result: z.any().optional(),
   error: z.string().optional(),
 });
+
+export const WhitelistTokensResponseSchema = z.object({
+  tokens: z.array(z.string()),
+});
+
+export const WhitelistTokenAddRequestSchema = z.object({
+  token_text: z.string().min(1, "Token text cannot be empty."),
+});
+
+export const WhitelistTokenRemoveRequestSchema = z.object({
+  token_text: z.string().min(1, "Token text cannot be empty."),
+});
+
+const UsersData = z.object({
+  username: z.string(),
+  isAdmin: z.boolean(),
+  isActive: z.boolean(),
+  lastLogin: z.string().nullable(),
+});
+
+export const UsersDataResponseSchema = z.array(UsersData);
+

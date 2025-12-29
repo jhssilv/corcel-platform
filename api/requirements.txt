@@ -26,3 +26,9 @@ flask-cors
 redis
 flask-sqlalchemy
 dependency-injector
+flask-jwt-extended
+flask-bcrypt
+pytest
+pytest-flask
+pytest-mock
+factory_boy

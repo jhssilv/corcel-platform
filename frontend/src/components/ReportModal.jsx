@@ -6,9 +6,9 @@ function ReportModal({ isOpen, onClose, textCount }) {
     try {
       const textIds = JSON.parse(localStorage.getItem("textIds") || "[]")
       onClose()
-      await requestReport(JSON.parse(localStorage.getItem("userId")), textIds)
+      await requestReport(textIds)
     } catch (error) {
-      console.error("[TODO] Handle report generation error:", error)
+      alert(error.error || "Houve um erro ao gerar o relatório.")
     }
   }
 
@@ -16,26 +16,27 @@ function ReportModal({ isOpen, onClose, textCount }) {
 
   return (
     <>
-      <div className="modal-overlay" onClick={onClose}></div>
-      <div className="report-modal">
-        <div className="modal-header">
-          <h2 className="modal-title">Gerar Relatório</h2>
-          <button className="modal-close-button" onClick={onClose} aria-label="Close">
-            ×
-          </button>
-        </div>
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="report-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-header">
+            <h2 className="modal-title">Gerar Relatório</h2>
+            <button className="modal-close-button" onClick={onClose} aria-label="Close">
+              ×
+            </button>
+          </div>
 
-        <div className="modal-body">
-          <p className="report-text">Gerar relatório para os {textCount} textos filtrados?</p>
-        </div>
+          <div className="modal-body">
+            <p className="report-text">Gerar relatório para os {textCount} textos filtrados?</p>
+          </div>
 
-        <div className="modal-footer">
-          <button className="modal-button cancel-button" onClick={onClose}>
-            Cancelar
-          </button>
-          <button className="modal-button confirm-button report-confirm" onClick={handleConfirm}>
-            Confirmar
-          </button>
+          <div className="modal-footer">
+            <button className="modal-button cancel-button" onClick={onClose}>
+              Cancelar
+            </button>
+            <button className="modal-button confirm-button report-confirm" onClick={handleConfirm}>
+              Confirmar
+            </button>
+          </div>
         </div>
       </div>
     </>

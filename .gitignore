@@ -5,6 +5,8 @@ package-lock.json
 recovered_texts/
 dump.rdb
 temp_uploads/
+playwright-report/
+test-results/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

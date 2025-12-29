@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from './functions/useAuth.jsx';
 
 import { authenticateUser, getTextsData } from './api/APIFunctions.jsx';
@@ -25,25 +25,20 @@ function LoginPage() {
         setPassword(event.target.value);
     };
 
-    const handleSubmit = async (event) => {
-        event.preventDefault();
-            
-        const login_data = await authenticateUser(username, password);
-        
-        
-        if (login_data.userId === undefined) {
-            alert(login_data.message);
-            return;
-        }
-        
-        const textsData = await getTextsData(login_data.userId);
-        localStorage.setItem('textsData', JSON.stringify(textsData));
+const handleSubmit = async (event) => {
+    event.preventDefault();
 
-        console.log('Olá ', username);
-        login(login_data.userId, username);
+    try {
+        const login_data = await authenticateUser(username, password); 
+    
+        login(username, login_data.isAdmin);
         navigate('/main');           
-        alert(login_data.message);
-    };
+
+    } catch (error) {
+        console.error(error);
+        alert(error.error || error.response?.data?.error || 'Login failed');
+    }
+};
 
     return (
         <section>
@@ -67,6 +62,11 @@ function LoginPage() {
                     placeholder="Senha"
                 />
                 <button type="submit" style={{ color: 'white' }}>Entrar</button>
+                <div style={{ marginTop: '15px', textAlign: 'center' }}>
+                    <Link to="/first-access" style={{ color: '#666', textDecoration: 'none', fontSize: '0.9rem' }}>
+                        Primeiro Acesso? Ative sua conta
+                    </Link>
+                </div>
             </form>
         </section>
     );
