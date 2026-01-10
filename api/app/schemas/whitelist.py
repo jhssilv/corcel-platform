@@ -1,9 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import List
 
-class toggleToBeNormalizedRequest(BaseModel):
-    """Schema for toggling the to_be_normalized flag for a token."""
-    token_id: int = Field(..., json_schema_extra={"example": 42}, description="ID of the token to toggle.")
 
 class WhitelistManageRequest(BaseModel):
     """Schema for adding a token to the whitelist."""
