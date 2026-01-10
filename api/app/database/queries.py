@@ -349,3 +349,32 @@ def get_all_users(db):
     """
     return db.query(User).order_by(User.id).all()
     
+def get_filtered_texts(db, grades:list[int]=None, assigned_users:list[str]=None, user_id:int=None, file_name:str=None):
+    texts = db.query(TextsUsers).join(Text).join(User)
+    # filter by grades
+    if grades:
+        texts = texts.filter(Text.grade.in_(grades))
+        
+    # filter by file name
+    if assigned_users:
+        texts = texts.filter(User.username.in_(assigned_users), TextsUsers.assigned == True)
+        
+    # filter by normalized by user
+    if user_id is not None:
+        texts = texts.filter(TextsUsers.normalized and TextsUsers.user_id == user_id)
+        
+    # filter by file name
+    if file_name:
+        # fuzzy search logic
+        pattern = '%' + '%'.join(file_name) + '%'
+        texts = texts.filter(Text.source_file_name.ilike(pattern))
+        
+    texts = texts.with_entities(
+        Text.id.label("id"),
+        Text.grade.label("grade"),
+        Text.source_file_name.label("source_file_name"),
+        func.array_agg(User.username).label("users_assigned"),
+        func.bool_or(TextsUsers.normalized).label("normalized_by_user")
+    ).group_by(Text.id)
+    
+    return texts.all()
