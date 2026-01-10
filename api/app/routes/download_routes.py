@@ -5,7 +5,8 @@ from flask_pydantic import validate
 
 from app.utils.decorators import login_required
 from app.logging_config import DownloadLogger
-import app.api_schemas as schemas
+import app.schemas.download as download_schemas
+import app.schemas.generic as generic_schemas
 from app.download_texts import save_modified_texts
 from app.generate_report import generate_report
 
@@ -17,7 +18,7 @@ logger = download_log_manager.get_logger()
 @download_bp.route('/api/report/', methods=['POST'])
 @login_required()
 @validate()
-def request_report(current_user, body: schemas.ReportRequest):  
+def request_report(current_user, body: download_schemas.ReportRequest):  
     report = generate_report(current_user.id, body.text_ids)
     
     response = make_response(report)
@@ -28,7 +29,7 @@ def request_report(current_user, body: schemas.ReportRequest):
 @download_bp.route('/api/download/', methods=['POST'])
 @login_required()
 @validate()
-def download_normalized_texts(current_user, body: schemas.DownloadRequest):
+def download_normalized_texts(current_user, body: download_schemas.DownloadRequest):
     try:
         logger.info(f"Download request received for user ID: {current_user.id}")
 
@@ -41,7 +42,7 @@ def download_normalized_texts(current_user, body: schemas.DownloadRequest):
         zip_abs_path = save_modified_texts(current_user.id, text_ids, use_tags)
 
         if not os.path.exists(zip_abs_path):
-            return jsonify(schemas.ErrorResponse(error="Failed to generate zip").model_dump()), 500
+            return jsonify(generic_schemas.ErrorResponse(error="Failed to generate zip").model_dump()), 500
 
         directory = os.path.dirname(zip_abs_path)
         filename = os.path.basename(zip_abs_path)
@@ -59,4 +60,4 @@ def download_normalized_texts(current_user, body: schemas.DownloadRequest):
 
     except Exception as e:
         logger.exception("Error during download")
-        return jsonify(schemas.ErrorResponse(error="Internal server error").model_dump()), 500
+        return jsonify(generic_schemas.ErrorResponse(error="Internal server error").model_dump()), 500

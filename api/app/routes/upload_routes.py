@@ -4,8 +4,10 @@ from flask import Blueprint, request, jsonify
 from werkzeug.utils import secure_filename
 
 from app.tasks import process_zip_texts 
-import app.api_schemas as schemas
 from app.utils.decorators import admin_required
+
+from app.schemas import generic as generic_schemas
+
 
 upload_bp = Blueprint('upload', __name__)
 
@@ -16,12 +18,12 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 @admin_required()
 def upload_file(current_user):
     if 'file' not in request.files:
-        return jsonify(schemas.ErrorResponse(error='File not found.').model_dump()), 400
+        return jsonify(generic_schemas.ErrorResponse(error='File not found.').model_dump()), 400
     
     file = request.files['file']
     
     if file.filename == '' or not file.filename.endswith('.zip'):
-        return jsonify(schemas.ErrorResponse(error='Invalid file type.').model_dump()), 400
+        return jsonify(generic_schemas.ErrorResponse(error='Invalid file type.').model_dump()), 400
                 
     filename = secure_filename(file.filename)
     unique_name = f"{uuid.uuid4()}_{filename}"
