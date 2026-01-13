@@ -58,13 +58,14 @@ def get_normalizations(current_user, text_id: int):
         normalizations_from_db = queries.get_normalizations_by_text(session, text_id, current_user.id)
 
         corrections = {
-            str(norm.start_index): text_schemas.NormalizationValue( 
+            str(norm.start_index): normalization_schemas.NormalizationValue( 
                 last_index=norm.end_index,
                 new_token=norm.new_token
             )
             for norm in normalizations_from_db
         }
-        response_data = normalization_schemas.NormalizationResponse.dump_python(corrections)
+        validated = normalization_schemas.NormalizationResponse.validate_python(corrections)
+        response_data = {key: value.model_dump() for key, value in validated.items()}
         return jsonify(response_data), 200
     except Exception as e:
         return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
