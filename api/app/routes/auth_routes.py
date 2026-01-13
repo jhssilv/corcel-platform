@@ -41,17 +41,17 @@ def register(body: auth_schemas.UserRegisterRequest, current_user=None):
     user = queries.get_user_by_username(session, username)
     
     if user is not None:
-        error_response = generic_schemas.ErrorResponse(error="Usuário já existe.")
+        error_response = generic_schemas.ErrorResponse(error="Username already exists.")
         return jsonify(error_response.model_dump()), 400
     
-    # Create inactive user with random password
+    # Create inactive user with provided password so admin-created accounts are usable
     new_user = User(username=username, is_active=False)
-    new_user.set_password(secrets.token_urlsafe(32))
+    new_user.set_password(body.password)
     
     session.add(new_user)
     session.commit()
     
-    return jsonify({"message": "Usuário Criado com Sucesso"}), 201
+    return jsonify({"msg": "User created successfully"}), 201
 
 @auth_bp.route('/api/activate', methods=['POST'])
 @validate()
