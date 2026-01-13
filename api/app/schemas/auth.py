@@ -9,7 +9,6 @@ class UserCredentials(BaseModel):
 class UserRegisterRequest(BaseModel):
     """Schema for user registration (admin only)."""
     username: str = Field(..., json_schema_extra={"example": "newuser"}, description="Username.")
-    password: str = Field(..., json_schema_extra={"example": "newpassword123"}, description="Temporary password for the new user.")
 
 class UserActivationRequest(BaseModel):
     """Schema for user activation."""

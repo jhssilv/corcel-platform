@@ -44,9 +44,10 @@ def register(body: auth_schemas.UserRegisterRequest, current_user=None):
         error_response = generic_schemas.ErrorResponse(error="Username already exists.")
         return jsonify(error_response.model_dump()), 400
     
-    # Create inactive user with provided password so admin-created accounts are usable
+    # Create inactive user with a random placeholder password; user sets a real one on activation
+    temp_password = secrets.token_urlsafe(12)
     new_user = User(username=username, is_active=False)
-    new_user.set_password(body.password)
+    new_user.set_password(temp_password)
     
     session.add(new_user)
     session.commit()
