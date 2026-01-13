@@ -378,3 +378,10 @@ def get_filtered_texts(db, grades:list[int]=None, assigned_users:list[str]=None,
     ).group_by(Text.id)
     
     return texts.all()
+
+
+def count_admin_users(db):
+    """
+    Returns the count of users with admin privileges.
+    """
+    return db.query(func.count(User.id)).filter(User.is_admin == True).scalar()

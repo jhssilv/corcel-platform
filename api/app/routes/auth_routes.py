@@ -141,6 +141,11 @@ def toggle_user_is_admin(body: auth_schemas.UserRegisterRequest, current_user=No
         response = generic_schemas.ErrorResponse(error="Usuário não existe.")
         return jsonify(response.model_dump()), 404
         
+    number_of_admins = queries.count_admin_users(session)
+    if number_of_admins <= 1 and user.is_admin:
+        response = generic_schemas.ErrorResponse(error="Cannot revoke admin privileges from the last admin user.")
+        return jsonify(response.model_dump()), 400
+        
     user.is_admin = not user.is_admin
     session.commit()
     
