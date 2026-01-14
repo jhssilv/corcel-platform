@@ -1,8 +1,18 @@
+import { useState } from 'react';
 import PropTypes from 'prop-types';
 import '../styles/floating_candidates_list.css';
 
 const FloatingCandidatesList = ({ candidates, tokenPosition, onSelect, onClose, forwardRef }) => {
+    const [selectedCandidate, setSelectedCandidate] = useState(null);
+
     if (!candidates || candidates.length === 0 || !tokenPosition) return null;
+
+    const handleCandidateClick = (candidate) => {
+        setSelectedCandidate(candidate);
+        setTimeout(() => {
+            onSelect(candidate);
+        }, 300);
+    };
 
     // Helper to chunk candidates into rows of 7
     const chunkedCandidates = candidates.reduce((resultArray, item, index) => { 
@@ -29,8 +39,8 @@ const FloatingCandidatesList = ({ candidates, tokenPosition, onSelect, onClose, 
                         {row.map((candidate, index) => (
                             <button 
                                 key={`${rowIndex}-${index}`} 
-                                className="candidate-button" 
-                                onClick={() => onSelect(candidate)}
+                                className={`candidate-button ${selectedCandidate === candidate ? 'selected' : ''}`} 
+                                onClick={() => handleCandidateClick(candidate)}
                             >
                                 {candidate}
                             </button>
