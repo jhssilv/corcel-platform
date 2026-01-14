@@ -5,8 +5,7 @@ from app.extensions import db
 def test_register_user(admin_client, app):
     """Test user registration."""
     response = admin_client.post('/api/register', json={
-        "username": "newuser",
-        "password": "newpassword"
+        "username": "newuser"
     })
     assert response.status_code == 201
     assert response.json["msg"] == "User created successfully"
@@ -14,7 +13,28 @@ def test_register_user(admin_client, app):
     with app.app_context():
         user = db.session.query(User).filter_by(username="newuser").first()
         assert user is not None
-        assert user.check_password("newpassword")
+        assert user.is_active is False
+
+def test_activate_user(client, app):
+    """Test user activation."""
+    # Create inactive user
+    with app.app_context():
+        user = User(username="inactiveuser", is_active=False)
+        user.set_password("temp")
+        db.session.add(user)
+        db.session.commit()
+
+    response = client.post('/api/activate', json={
+        "username": "inactiveuser",
+        "password": "finalpassword"
+    })
+    assert response.status_code == 200
+    assert response.json["message"] == "Account activated successfully."
+    
+    with app.app_context():
+        user = db.session.query(User).filter_by(username="inactiveuser").first()
+        assert user.is_active is True
+        assert user.check_password("finalpassword")
 
 def test_register_duplicate_user(admin_client, app):
     """Test registering a user that already exists."""
@@ -26,8 +46,7 @@ def test_register_duplicate_user(admin_client, app):
         db.session.commit()
 
     response = admin_client.post('/api/register', json={
-        "username": "testuser",
-        "password": "password123"
+        "username": "testuser"
     })
     assert response.status_code == 400
     assert response.json["error"] == "Username already exists."
