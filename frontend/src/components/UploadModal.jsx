@@ -113,9 +113,6 @@ function UploadModal({ isOpen, onClose }) {
                     
                     setTimeout(async () => {
                         alert("Textos processados e salvos!");
-                        const userId = localStorage.getItem("userId");
-                        const new_texts_data = await getTextsData(userId);
-                        localStorage.setItem("textsData", JSON.stringify(new_texts_data));
                         handleClose();
 
                     }, 500);
@@ -213,126 +210,123 @@ function UploadModal({ isOpen, onClose }) {
 
     return (
         <div style={{ display: isOpen ? 'block' : 'none' }}>
-            <div 
-                className="modal-overlay" 
-                onClick={handleClose}
-            ></div>
-            
-            <div className="upload-modal">
-                <div className="modal-header">
-                    <h2 className="modal-title">Upload de Arquivo</h2>
-                    <button
-                        className="modal-close-button"
-                        onClick={handleClose}
-                        aria-label="Close"
-                    >
-                        ×
-                    </button>
-                </div>
-
-                <div className="modal-body">
-                    {/* Exhibition during upload (not processing yet) */}
-                    {!isProcessing ? (
-                        <div
-                            className={`upload-dropzone ${
-                                isDragging ? "dragging" : ""
-                            } ${uploadFile ? "has-file" : ""}`}
-                            onDragEnter={handleDragEnter} // important to avoid stuttering
-                            onDragOver={handleDragOver}
-                            onDragLeave={handleDragLeave}
-                            onDrop={handleDrop}
-                            onClick={() => document.getElementById("file-input").click()}
-                        >
-                            <input
-                                id="file-input"
-                                type="file"
-                                accept=".zip"
-                                onChange={handleFileSelect}
-                                style={{ display: "none" }}
-                            />
-
-                            {isValidating ? (
-                                <div className="upload-status">
-                                    <div className="upload-spinner"></div>
-                                    <p className="upload-text">Validando arquivo...</p>
-                                </div>
-                            ) : uploadFile ? (
-                                <div className="upload-status">
-                                    <div className={`upload-icon ${isValidZip ? "valid" : "invalid"}`}>
-                                        {isValidZip ? "✓" : "✗"}
-                                    </div>
-                                    <p className="upload-filename">{uploadFile.name}</p>
-                                    {isValidZip && (
-                                        <p className="upload-success">Arquivo válido!</p>
-                                    )}
-                                </div>
-                            ) : (
-                                <div className="upload-prompt">
-                                    <svg
-                                        className="upload-icon-svg"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                                        />
-                                    </svg>
-                                    <p className="upload-text">Arraste um arquivo ZIP aqui</p>
-                                    <p className="upload-subtext">ou clique para selecionar</p>
-                                </div>
-                            )}
-                        </div>
-                    ) : (
-                        /* Progress bar */
-                        <div className="progress-container" style={{ padding: '20px', textAlign: 'center' }}>
-                            <div className="progress-bar-wrapper" style={{ 
-                                width: '100%', 
-                                backgroundColor: '#eee', 
-                                borderRadius: '4px', 
-                                height: '20px', 
-                                overflow: 'hidden',
-                                marginBottom: '15px'
-                            }}>
-                                <div className="progress-bar-fill" style={{ 
-                                    width: `${progress}%`, 
-                                    backgroundColor: '#4caf50', 
-                                    height: '100%', 
-                                    transition: 'width 0.3s ease' 
-                                }}></div>
-                            </div>
-                            <p className="upload-text" style={{ fontWeight: 'bold' }}>{statusMessage}</p>
-                            <p className="upload-subtext">Você pode fechar esta janela, o processo continuará em segundo plano.</p>
-                        </div>
-                    )}
-
-                    {/* Error exhibition */}
-                    {uploadError && (
-                        <div className="upload-error">{uploadError}</div>
-                    )}
-                </div>
-
-                <div className="modal-footer">
-                    <button
-                        className="modal-button cancel-button"
-                        onClick={handleClose}
-                    >
-                        {isProcessing ? "Fechar" : "Cancelar"}
-                    </button>
-                    
-                    {/* Confirm button appears only if not processing */}
-                    {!isProcessing && (
+            <div className="modal-overlay" onClick={handleClose}>
+                <div className="upload-modal" onClick={(e) => e.stopPropagation()}>
+                    <div className="modal-header">
+                        <h2 className="modal-title">Upload de Arquivo</h2>
                         <button
-                            className={`modal-button confirm-button ${isValidZip ? "valid" : ""}`}
-                            onClick={handleConfirm}
-                            disabled={!isValidZip}
+                            className="modal-close-button"
+                            onClick={handleClose}
+                            aria-label="Close"
                         >
-                            Confirmar
+                            ×
                         </button>
-                    )}
+                    </div>
+
+                    <div className="modal-body">
+                        {/* Exhibition during upload (not processing yet) */}
+                        {!isProcessing ? (
+                            <div
+                                className={`upload-dropzone ${
+                                    isDragging ? "dragging" : ""
+                                } ${uploadFile ? "has-file" : ""}`}
+                                onDragEnter={handleDragEnter} // important to avoid stuttering
+                                onDragOver={handleDragOver}
+                                onDragLeave={handleDragLeave}
+                                onDrop={handleDrop}
+                                onClick={() => document.getElementById("file-input").click()}
+                            >
+                                <input
+                                    id="file-input"
+                                    type="file"
+                                    accept=".zip"
+                                    onChange={handleFileSelect}
+                                    style={{ display: "none" }}
+                                />
+
+                                {isValidating ? (
+                                    <div className="upload-status">
+                                        <div className="upload-spinner"></div>
+                                        <p className="upload-text">Validando arquivo...</p>
+                                    </div>
+                                ) : uploadFile ? (
+                                    <div className="upload-status">
+                                        <div className={`upload-icon ${isValidZip ? "valid" : "invalid"}`}>
+                                            {isValidZip ? "✓" : "✗"}
+                                        </div>
+                                        <p className="upload-filename">{uploadFile.name}</p>
+                                        {isValidZip && (
+                                            <p className="upload-success">Arquivo válido!</p>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="upload-prompt">
+                                        <svg
+                                            className="upload-icon-svg"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                                            />
+                                        </svg>
+                                        <p className="upload-text">Arraste um arquivo ZIP aqui</p>
+                                        <p className="upload-subtext">ou clique para selecionar</p>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            /* Progress bar */
+                            <div className="progress-container" style={{ padding: '20px', textAlign: 'center' }}>
+                                <div className="progress-bar-wrapper" style={{ 
+                                    width: '100%', 
+                                    backgroundColor: '#eee', 
+                                    borderRadius: '4px', 
+                                    height: '20px', 
+                                    overflow: 'hidden',
+                                    marginBottom: '15px'
+                                }}>
+                                    <div className="progress-bar-fill" style={{ 
+                                        width: `${progress}%`, 
+                                        backgroundColor: '#4caf50', 
+                                        height: '100%', 
+                                        transition: 'width 0.3s ease' 
+                                    }}></div>
+                                </div>
+                                <p className="upload-text" style={{ fontWeight: 'bold' }}>{statusMessage}</p>
+                                <p className="upload-subtext">Você pode fechar esta janela, o processo continuará em segundo plano.</p>
+                            </div>
+                        )}
+
+                        {/* Error exhibition */}
+                        {uploadError && (
+                            <div className="upload-error">{uploadError}</div>
+                        )}
+                    </div>
+
+                    <div className="modal-footer">
+                        <button
+                            className="modal-button cancel-button"
+                            onClick={handleClose}
+                        >
+                            {isProcessing ? "Fechar" : "Cancelar"}
+                        </button>
+                        
+                        {/* Confirm button appears only if not processing */}
+                        {!isProcessing && (
+                            <button
+                                className={`modal-button confirm-button ${isValidZip ? "valid" : ""}`}
+                                onClick={handleConfirm}
+                                disabled={!isValidZip}
+                            >
+                                Confirmar
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

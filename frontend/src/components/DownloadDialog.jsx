@@ -35,9 +35,9 @@ function DownloadDialog({ show, onClose }) {
   };
 
   return (
-    <div className="dialog-overlay" onClick={handleOverlayClick}>
+    <div className="confirmation-overlay" onClick={handleOverlayClick}>
       
-      <div className="dialog-popup">
+      <div className="confirmation-dialog">
         
         <h2 className="dialog-title">
           Opções de Download
@@ -58,15 +58,15 @@ function DownloadDialog({ show, onClose }) {
           </label>
         </div>
 
-        <div className="dialog-buttons">
+        <div className="confirmation-buttons">
           <button 
-            className="dialog-button secondary" 
+            className="cancel-btn" 
             onClick={onClose}
           >
             Cancelar
           </button>
           <button 
-            className="dialog-button primary" 
+            className="confirm-btn" 
             onClick={handleSubmitClick}
           >
             Baixar

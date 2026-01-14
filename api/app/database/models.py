@@ -1,4 +1,4 @@
-import sqlalchemy
+from app.extensions import bcrypt
 
 from sqlalchemy import (
     CHAR,
@@ -26,11 +26,19 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     username = Column(String(30), nullable=False, unique=True)
-    password = Column(String(30), nullable=False)
+    hashed_password = Column(String(120), nullable=False)
     last_login = Column(TIMESTAMP, nullable=True)
+    is_admin = Column(Boolean, nullable=False, default=False)
+    is_active = Column(Boolean, nullable=False, default=True)
 
     normalizations = relationship('Normalization', back_populates='user', cascade="all, delete-orphan")
     texts_association = relationship('TextsUsers', back_populates='user', cascade="all, delete-orphan")
+
+    def set_password(self, password: str):
+        self.hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+
+    def check_password(self, password: str) -> bool:
+        return bcrypt.check_password_hash(self.hashed_password, password)
 
 
 class Text(Base):
@@ -58,6 +66,7 @@ class Token(Base):
     position = Column(Integer, nullable=False)
     to_be_normalized = Column(Boolean, nullable=True, )
     whitespace_after = Column(CHAR(1), nullable=True, default='')
+    whitelisted = Column(Boolean, nullable=False, default=False)
 
     __table_args__ = (
         UniqueConstraint('text_id', 'position', name='uq_text_position'), 
@@ -123,3 +132,15 @@ class TokensSuggestions(Base):
     __tablename__ = 'tokenssuggestions'
     token_id = Column(Integer, ForeignKey('tokens.id', ondelete="CASCADE"), primary_key=True)
     suggestion_id = Column(Integer, ForeignKey('suggestions.id', ondelete="CASCADE"), primary_key=True)
+    
+    
+class WhitelistTokens(Base):
+    """
+    Model for the 'whitelist_tokens' table.
+    Stores tokens that are whitelisted.
+    """
+    __tablename__ = 'whitelist_tokens'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    token_text = Column(String(64), nullable=False, unique=True)
+    

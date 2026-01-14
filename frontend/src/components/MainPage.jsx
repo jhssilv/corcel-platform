@@ -18,16 +18,20 @@ function MainPage() {
   const [selectedEssay, setSelectedEssay] = useState(null)
   const [currentText, setCurrentText] = useState(null)
   const [showDownloadDialog, setShowDownloadDialog] = useState(false)
-
-  const { userId } = useContext(AuthContext)
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   const fetchEssay = useCallback(async () => {
-    const text = await getTextById(selectedEssay.value, userId)
-    const normalizations = await getNormalizationsByText(selectedEssay.value, userId)
+    const text = await getTextById(selectedEssay.value)
+    const normalizations = await getNormalizationsByText(selectedEssay.value)
 
     text.corrections = normalizations
     setCurrentText(text)
-  }, [selectedEssay, userId])
+  }, [selectedEssay])
+
+  const handleEssayUpdate = async () => {
+    await fetchEssay()
+    setRefreshTrigger(prev => prev + 1)
+  }
 
   useEffect(() => {
     if (selectedEssay) fetchEssay()
@@ -37,13 +41,17 @@ function MainPage() {
     <section className="main-page-section">
       <TopBar onDownloadClick={() => setShowDownloadDialog(true)} />
 
-      <h2>Busca de Textos</h2>
+      <h2 className="main-page-header">Busca de Textos</h2>
 
       <div>
-        <EssaySelector selectedEssay={selectedEssay} setSelectedEssay={setSelectedEssay} />
+        <EssaySelector 
+          selectedEssay={selectedEssay} 
+          setSelectedEssay={setSelectedEssay} 
+          refreshTrigger={refreshTrigger}
+        />
       </div>
 
-      <EssayDisplay essay={currentText} refreshEssay={fetchEssay} />
+      <EssayDisplay essay={currentText} refreshEssay={handleEssayUpdate} />
 
       <DownloadDialog
         show={showDownloadDialog}

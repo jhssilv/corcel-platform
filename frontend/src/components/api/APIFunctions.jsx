@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import {apiClient, apiClientBlob} from './APIClient';
+import {apiBlob, apiPublic, apiPrivate} from './APIClient';
 import * as schemas from './Schemas.jsx';
 import { saveAs } from 'file-saver';
 
@@ -33,154 +33,120 @@ const handleApiError = (error, defaultMessage) => {
  * Fetches the list of available usernames.
  */
 export async function getUsernames() {
-  try {
-    const data = await apiClient.get('/users');
-    // Validates the response structure
-    return schemas.UsernamesResponseSchema.parse(data); 
-  } catch (error) {
-    return handleApiError(error, 'Error fetching usernames.');
-  }
+  const data = await apiPublic.get('/users');
+  return schemas.UsernamesResponseSchema.parse(data); 
 }
 
 /**
  * Authenticates the user with username and password.
  */
 export async function authenticateUser(username, password) {
-  try {
-    const data = await apiClient.post('/login', { username, password });
-    // Validates the login response object
-    return schemas.LoginResponseSchema.parse(data);
-  } catch (error) {
-    return handleApiError(error, 'Invalid username or password.');
-  }
+  const response = await apiPrivate.post('/login', { username, password });
+  return schemas.LoginResponseSchema.parse(response.data || response);
+}
+
+export async function logoutUser() {
+  const response = await apiPrivate.get('/logout');
+  return schemas.MessageResponseSchema.parse(response.data || response);
 }
 
 /**
  * Fetches the metadata of all texts for a user.
  */
-export async function getTextsData(userId) {
-  try {
-    const data = await apiClient.get(`/texts/${userId}`);
-    // Validates the response structure with the list of texts
-    return schemas.TextsDataResponseSchema.parse(data.textsData);
-  } catch (error) {
-    return handleApiError(error, 'Error fetching texts data.');
-  }
+export async function getTextsData() {
+  const data = await apiPrivate.get(`/texts/`);
+  return schemas.TextsDataResponseSchema.parse(data.textsData);
 }
 
 /**
  * Fetches the detailed data of a specific text.
  */
-export async function getTextById(textId, userId) {
-  try {
-    const data = await apiClient.get(`/texts/${userId}/${textId}`);
-    // Validates the complete structure of the text details
-    
-    // BROKEN: find a fix later
-    // return schemas.TextDetailResponseSchema.parse(data);
-    return data;
-    
-  } catch (error) {
-    return handleApiError(error, 'Error fetching text details.');
-  }
+export async function getTextById(textId) {
+  const data = await apiPrivate.get(`/texts/${textId}`);
+  // BROKEN: find a fix later
+  // return schemas.TextDetailResponseSchema.parse(data);
+  return data;
 }
 
 /**
  * Fetches the normalizations (corrections) for a text.
  */
-export async function getNormalizationsByText(textId, userId) {
-  try {
-    const data = await apiClient.get(`/texts/${userId}/${textId}/normalizations`);
-    // Validates the normalizations object
-    return schemas.NormalizationsGetResponseSchema.parse(data);
-  } catch (error) {
-    return handleApiError(error, 'Error fetching normalizations.');
-  }
+export async function getNormalizationsByText(textId) {
+  const data = await apiPrivate.get(`/texts/${textId}/normalizations`);
+  return schemas.NormalizationsGetResponseSchema.parse(data);
 }
 
 /**
  * Saves a new normalization (correction).
  * Throws an error in case of failure so that the component can react (e.g., not closing a modal).
  */
-export async function postNormalization(textId, firstWordIndex, lastWordIndex, newToken, userId) {
+export async function postNormalization(textId, firstWordIndex, lastWordIndex, newToken, suggestForAll = false) {
   const payload = {
     first_index: firstWordIndex,
     last_index: lastWordIndex,
     new_token: newToken,
+    suggest_for_all: suggestForAll,
   };
-  // Validates the payload BEFORE sending to the API
   schemas.NormalizationCreateRequestSchema.parse(payload);
   
-  return apiClient.post(`/texts/${userId}/${textId}/normalizations`, payload);
+  return apiPrivate.post(`/texts/${textId}/normalizations`, payload);
 }
 
 /**
  * Deletes a Normalization.
  * Throws an error in case of failure.
  */
-export async function deleteNormalization(textId, wordIndex, userId) {
+export async function deleteNormalization(textId, wordIndex) {
   const payload = { word_index: wordIndex };
-  // Validates the payload BEFORE sending to the API
   schemas.NormalizationDeleteRequestSchema.parse(payload);
   
-  return apiClient.delete(`/texts/${userId}/${textId}/normalizations`, { data: payload });
+  return apiPrivate.delete(`/texts/${textId}/normalizations`, { data: payload });
 }
   
 /**
  * Toggles the "normalized" status of a text.
  */
-export async function toggleNormalizedStatus(textId, userId) {
-  try {
-    const data = await apiClient.patch(`/texts/${userId}/${textId}/normalizations`);
-    return schemas.MessageResponseSchema.parse(data);
-  } catch (error) {
-    return handleApiError(error, 'Erro ao alterar o status da normalização.');
-  }
+export async function toggleNormalizedStatus(textId) {
+  const data = await apiPrivate.patch(`/texts/${textId}/normalizations`);
+  return schemas.MessageResponseSchema.parse(data);
 }
 
 /**
  * Lets the user download the normalized texts.
  */
-export async function requestDownload(textIds, useTags, userId) {
-  try {
-    const payload = {
-      text_ids: textIds,
-      use_tags: useTags
-    };
+export async function requestDownload(textIds, useTags) {
+  const payload = {
+    text_ids: textIds,
+    use_tags: useTags
+  };
 
-    const response = await apiClientBlob.post(`/download/${userId}`, payload, {
-      responseType: 'blob',
-    });
+  const response = await apiBlob.post(`/download/`, payload, {
+    responseType: 'blob',
+    headers: {
+        'Content-Type': 'application/json' 
+    }
+  });
 
-    let filename = 'normalized_texts.zip'; // Default filename
-    
-    saveAs(response.data, filename);
+  let filename = 'normalized_texts.zip'; // Default filename
+  
+  saveAs(response.data, filename);
 
-    return { success: true, filename: filename };
+  return { success: true, filename: filename };
 
-  } catch (error) {
-    console.error("Download request failed:", error);
-    return handleApiError(error, 'Error requesting download.');
-  }
 }
 
-export async function requestReport(userId, textIds) {
-  try {
-    const payload = {
-      text_ids: textIds
-    };
+export async function requestReport(textIds) {
+  const payload = {
+    text_ids: textIds
+  };
+  const response = await apiBlob.post(`/report/`, payload, {
+    responseType: 'blob',
+    headers: {
+        'Content-Type': 'application/json'
+    }
+  });
 
-    const response = await apiClientBlob.post(`/report/${userId}`, payload, {
-      responseType: 'blob'
-    });
-
-    saveAs(response.data, 'report.csv');
-
-
-  } catch (error) {
-    console.error("Report request failed:", error);
-    return handleApiError(error, 'Error requesting report.');
-  }
+  saveAs(response.data, 'report.csv');
 }
 
 /**
@@ -188,32 +154,85 @@ export async function requestReport(userId, textIds) {
  * Returning a task id for monitoring.
  */
 export async function uploadTextArchive(file) {
-  try {
-    const formData = new FormData();
-    formData.append('file', file);
+  const formData = new FormData();
+  formData.append('file', file);
 
-    const data = await apiClient.post('/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    
-    return schemas.UploadResponseSchema.parse(data);
-  } catch (error) {
-    return handleApiError(error, 'Error while sending file to server.');
-  }
+  const data = await apiPrivate.post('/upload', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  
+  return schemas.UploadResponseSchema.parse(data);
 }
 
 /**
  * Verify the status of the task with polling.
  */
 export async function getTaskStatus(taskId) {
-  try {
-    const data = await apiClient.get(`/status/${taskId}`);
-    return schemas.TaskStatusResponseSchema.parse(data);
-  } catch (error) {
-    // Polling errors are acceptable
-    console.error("Polling error: ", error);
-    throw error; 
-  }
+  const data = await apiPrivate.get(`/status/${taskId}`);
+  return schemas.TaskStatusResponseSchema.parse(data);
+}
+
+export async function toggleToBeNormalized(tokenId) {
+  const payload = {
+    token_id: tokenId
+  };
+  await apiPrivate.patch(`/tokens/${tokenId}/suggestions/toggle`, payload);
+}
+
+
+export async function addToWhitelist(tokenText) {
+  const payload = {
+    token_text: tokenText,
+    action: 'add'
+  };
+  await apiPrivate.post(`/whitelist/`, payload);
+}
+
+export async function removeFromWhitelist(tokenText) {
+  const payload = {
+    token_text: tokenText,
+    action: 'remove'
+  };
+  await apiPrivate.delete(`/whitelist/`, { data: payload });
+}
+
+export async function getWhitelist() {
+  const data = await apiPrivate.get(`/whitelist/`);
+  return schemas.WhitelistTokensResponseSchema.parse(data);
+}
+/**
+ * Registers a new user (Admin only).
+ */
+export async function registerUser(username) {
+  const response = await apiPrivate.post('/register', { username });
+  // Returns { message }
+  return response.data || response;
+}
+
+/**
+ * Activates a user account.
+ */
+export async function activateUser(username, password) {
+  const response = await apiPublic.post('/activate', { 
+    username, 
+    password
+  });
+  return schemas.MessageResponseSchema.parse(response.data || response);
+}
+
+export async function getUsersData(){
+  const data = await apiPrivate.get('/users/data');
+  return data.usersData;
+}
+
+export async function toggleUserActive(username) {
+  const response = await apiPrivate.patch('/users/toggleActive', { username });
+  return response.data || response;
+}
+
+export async function toggleUserAdmin(username) {
+  const response = await apiPrivate.patch('/users/changePassword', { username });
+  return response.data || response;
 }

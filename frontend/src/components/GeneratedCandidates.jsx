@@ -1,91 +1,139 @@
 import PropTypes from 'prop-types';
-import { useState } from 'react';
-import '../styles/generated_candidates.css'
+import { useRef, useEffect, useState } from 'react';
+import FloatingCandidatesList from './FloatingCandidatesList';
+import CandidatesSidePanel from './CandidatesSidePanel';
+import { postNormalization, deleteNormalization } from './api/APIFunctions';
 
-// Generates the candidate list and the new candidate input.
+const GeneratedCandidates = ({ 
+    candidates, 
+    selectedStartIndex, 
+    selectedEndIndex, 
+    setSelectedCandidate, 
+    setPopupIsActive,
+    selectedTokenText,
+    singleWordSelected,
+    toBeNormalized,
+    refreshEssay,
+    suggestForAll,
+    setSuggestForAll,
+    onClose,
+    tokenId,
+    tokenPosition,
+    lastClickTime,
+    essayId
+}) => {
 
-const GeneratedCandidates = ({ candidates , selectedStartIndex, selectedEndIndex, setSelectedCandidate, setPopupIsActive }) => {
+    const floatingListRef = useRef(null);
+    const sidePanelRef = useRef(null);
+    const [showFloatingList, setShowFloatingList] = useState(true);
 
-    const [suggestForAll, setSuggestForAll] = useState(false);
+    useEffect(() => {
+        setSuggestForAll(false);
+    }, [selectedStartIndex, setSuggestForAll]);
 
-    const spans = []; // Array to hold the span elements
+    useEffect(() => {
+        setShowFloatingList(true);
+    }, [selectedStartIndex, lastClickTime]);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            const isInsideFloating = floatingListRef.current && floatingListRef.current.contains(event.target);
+            const isInsidePanel = sidePanelRef.current && sidePanelRef.current.contains(event.target);
+
+            if (isInsideFloating) return;
+
+            if (isInsidePanel) {
+                if (!event.target.closest('.global-suggestion-label')) {
+                    setShowFloatingList(false);
+                }
+                return;
+            }
+            
+            // Clicked outside both
+            if (
+                event.target.classList.contains('clickable') ||
+                event.target.closest('.confirmation-dialog') ||
+                event.target.closest('.confirmation-overlay')
+            ) {
+                    return;
+            }
+
+            if (showFloatingList && candidates && candidates.length > 0) {
+                setShowFloatingList(false);
+            } else {
+                onClose();
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [onClose, showFloatingList, candidates]);
 
     if(selectedStartIndex == null)
-        return
+        return null;
 
-    const handleCandidateSelection = (candidate) => {     
+    const handleCandidateSelection = async (candidate) => {     
         setSelectedCandidate(candidate);
-        setPopupIsActive(true);
+        
+        if (suggestForAll) {
+            setPopupIsActive(true);
+        } else {
+            if(!candidate) await deleteNormalization(essayId, selectedStartIndex);
+            else           await postNormalization(essayId, selectedStartIndex, selectedEndIndex, candidate, suggestForAll);
+            
+            refreshEssay();
+            setSelectedCandidate(null);
+        }
     };
 
-    // Adds the candidate selection buttons
-    let i = 0;
-    if(candidates && selectedEndIndex === selectedStartIndex)
-        for(;i<candidates.length;i++) {
-            const candidate = candidates[i];
-            spans.push(' ');
-            spans.push(<span 
-                key={i} 
-                className="clickable" 
-                onClick={() => handleCandidateSelection(candidate)}>
-                    {candidate}
-                </span>);
-            spans.push(' | ');
-        }
+    const hasCandidates = candidates && candidates.length > 0;
 
-    // Adds the new candidate button
-    spans.push(
-        <span key={i} style={{display: 'inline'}}>        
-            <input
-                placeholder="Novo Token"
-                className="clickable"
-                onKeyDown={(event) => {
-                    if (event.key === 'Enter') {
-                        // Call function when ENTER is pressed
-                        handleCandidateSelection(event.target.value); 
-                        event.target.blur(); // Defocus the input after pressing ENTER
-                        event.target.value = '';
-                        setSuggestForAll(false);
+    return (
+        <>
+            {singleWordSelected && showFloatingList && (
+                <FloatingCandidatesList 
+                    candidates={candidates}
+                    tokenPosition={tokenPosition}
+                    onSelect={handleCandidateSelection}
+                    onClose={() => setShowFloatingList(false)}
+                    forwardRef={floatingListRef}
+                />
+            )}
 
-                    }
-                }}
+            <CandidatesSidePanel 
+                selectedTokenText={selectedTokenText}
+                singleWordSelected={singleWordSelected}
+                toBeNormalized={toBeNormalized}
+                refreshEssay={refreshEssay}
+                suggestForAll={suggestForAll}
+                setSuggestForAll={setSuggestForAll}
+                onClose={onClose}
+                tokenId={tokenId}
+                onSelectCandidate={handleCandidateSelection}
+                forwardRef={sidePanelRef}
+                hasCandidates={hasCandidates}
             />
-            <button className='addButton' onClick={(event) => {
-                const inputElement = event.target.previousElementSibling;  // Get the previous input element
-                handleCandidateSelection(inputElement.value);  // Trigger the same function as Enter
-                inputElement.value = '';  // Clear the input value after adding
-                setSuggestForAll(false);
-
-            }}> &#128393; </button>
-            <button className='addButton' onClick={() => { 
-                handleCandidateSelection('');
-                setSuggestForAll(false);
-
-            }}> &#128465; </button>
-        </span>
+        </>
     );
-            //<span className="checkbox-wrapper-47" style={{display: 'inline-block', marginLeft: '10px' }}>
-            //    <input 
-            //        type="checkbox"
-            //        name="cb"
-            //        id="cb-48"
-            //        checked={suggestForAll}
-            //        onChange={(e) => setSuggestForAll(e.target.checked)}
-            //    />
-            //    <label htmlFor="cb-48" 
-            //    title='Adiciona o novo token como sugestão para todas as ocorrências da palavra substituída na plataforma.'>
-            //        Sugestão Global &#x1F6C8;
-            //    </label>  
-            //</span>
-
-    return <>{spans}</>;
 };
 
 GeneratedCandidates.propTypes = {
     candidates: PropTypes.array,
-    selectedWordIndex: PropTypes.number,
+    selectedStartIndex: PropTypes.number,
+    selectedEndIndex: PropTypes.number,
     setSelectedCandidate: PropTypes.func,
-    setPopupIsActive: PropTypes.func
+    setPopupIsActive: PropTypes.func,
+    selectedTokenText: PropTypes.string,
+    singleWordSelected: PropTypes.bool,
+    toBeNormalized: PropTypes.bool,
+    refreshEssay: PropTypes.func,
+    suggestForAll: PropTypes.bool,
+    setSuggestForAll: PropTypes.func,
+    onClose: PropTypes.func,
+    tokenId: PropTypes.number,
+    tokenPosition: PropTypes.object,
+    lastClickTime: PropTypes.number,
+    essayId: PropTypes.number
 };
 
 export default GeneratedCandidates;

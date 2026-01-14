@@ -10,16 +10,18 @@ import SidePanel from "./SidePanel.jsx"
 import WhitelistModal from "./WhiteListModal.jsx"
 import UploadModal from "./UploadModal.jsx"
 import ReportModal from "./ReportModal.jsx"
+import RegisterUserModal from "./RegisterUserModal.jsx"
 import { useNavigate } from "react-router-dom";
 
 function TopBar({ onDownloadClick , showSidePanel = true}) {
-  const { logout, username } = useContext(AuthContext)
+  const { logout, username, isAdmin } = useContext(AuthContext)
   
   // UI State
   const [isPanelOpen, setIsPanelOpen] = useState(false)
   const [isWhitelistOpen, setIsWhitelistOpen] = useState(false)
   const [isUploadOpen, setIsUploadOpen] = useState(false)
   const [isReportOpen, setIsReportOpen] = useState(false)
+  const [isRegisterUserOpen, setIsRegisterUserOpen] = useState(false)
   const [reportTextCount, setReportTextCount] = useState(0)
   const navigate = useNavigate();
 
@@ -45,9 +47,25 @@ function TopBar({ onDownloadClick , showSidePanel = true}) {
     closePanel()
   }
 
-  const handleLogout = () => {
-    console.log("[TODO] Implement logout functionality here")
-    localStorage.clear();
+  const openRegisterUser = () => {
+    setIsRegisterUserOpen(true)
+    closePanel()
+  }
+
+  const handleManageUsers = () => {
+    navigate("/users")
+    closePanel()
+  }
+
+  const handleDownload = () => {
+    if (onDownloadClick) {
+      onDownloadClick()
+    }
+    closePanel()
+  }
+
+  const handleLogout = async () => {
+    await logout();
     navigate("/");
   }
 
@@ -61,7 +79,7 @@ function TopBar({ onDownloadClick , showSidePanel = true}) {
         </button>
 
         <div className="app-title-container">
-          <h1 className="app-title">CorCel</h1>
+          <h1 className="app-title">CorCel 🐎</h1>
           <p className="app-subtitle">Ferramenta de Normalização Ortográfica</p>
         </div>
 
@@ -73,10 +91,13 @@ function TopBar({ onDownloadClick , showSidePanel = true}) {
           isOpen={isPanelOpen}
           onClose={closePanel}
           username={username}
-          onDownload={onDownloadClick}
+          isAdmin={isAdmin}
+          onDownload={handleDownload}
           onUpload={openUpload}
           onWhitelist={openWhitelist}
           onReport={openReport}
+          onRegisterUser={openRegisterUser}
+          onManageUsers={handleManageUsers}
           onLogout={handleLogout}
         /> : null}
 
@@ -95,12 +116,17 @@ function TopBar({ onDownloadClick , showSidePanel = true}) {
         onClose={() => setIsReportOpen(false)}
         textCount={reportTextCount}
       />
+
+      <RegisterUserModal
+        isOpen={isRegisterUserOpen}
+        onClose={() => setIsRegisterUserOpen(false)}
+      />
     </>
   )
 }
 
 TopBar.propTypes = {
-  onDownloadClick: PropTypes.func.isRequired,
+  onDownloadClick: PropTypes.func,
   showSidePanel: PropTypes.bool
 }
 

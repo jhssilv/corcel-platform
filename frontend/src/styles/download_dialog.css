@@ -1,60 +1,40 @@
-
-@keyframes dialog-fade-in {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+.confirmation-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    backdrop-filter: blur(3px);
 }
 
-.dialog-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  
-  background-color: rgba(10, 10, 10, 0.6);
-  
-  backdrop-filter: blur(3px);
-  
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  
-  z-index: 1000;
-}
-
-.dialog-popup {
-  background-color: #2f2f2f;
-  
-  color: rgba(255, 255, 255, 0.87); 
-  padding: 1.5em 2em;
-  
-  border: 1px solid #555;
-  
-  border-radius: 12px; 
-  
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-  max-width: 400px;
-  width: 90%;
-  
-  animation: dialog-fade-in 0.2s ease-out;
+.confirmation-dialog {
+    background-color: #2b2b2b;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #444;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
 }
 
 .dialog-title {
-  font-size: 1.8em;
-  line-height: 1.1;
-  font-weight: 500;
+  font-size: 1.5em;
+  line-height: 1.2;
+  font-weight: 600;
   margin-top: 0;
   margin-bottom: 1em;
+  color: #fff;
 }
 
 .dialog-content {
   margin-bottom: 2em;
+  color: #e4e4e7;
 }
 
 .dialog-checkbox-wrapper {
@@ -64,6 +44,7 @@
   padding: 0.5em;
   border-radius: 6px;
   transition: background-color 0.2s;
+  margin-top: 10px;
 }
 
 .dialog-checkbox-wrapper:hover {
@@ -75,47 +56,37 @@
   height: 1.2em;
   margin-right: 0.75em;
   cursor: pointer;
-  
   accent-color: #646cff; 
 }
 
-.dialog-buttons {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75em;
+.confirmation-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
 }
 
-.dialog-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit; 
-  cursor: pointer;
-  transition: all 0.25s;
-}
-.dialog-button:focus,
-.dialog-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+.confirm-btn, .cancel-btn {
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: none;
+    font-weight: bold;
 }
 
-.dialog-button.primary {
-  background-color: #646cff;
-  color: #ffffff;
-  border-color: #646cff;
-}
-.dialog-button.primary:hover {
-  background-color: #535bf2; 
-  border-color: #535bf2;
+.confirm-btn {
+    background-color: #28a745;
+    color: white;
 }
 
-.dialog-button.secondary {
-  background-color: #4a4a4a;
-  color: rgba(255, 255, 255, 0.87);
-  border-color: #4a4a4a;
+.confirm-btn:hover {
+    background-color: #218838;
 }
-.dialog-button.secondary:hover {
-  background-color: #5a5a5a;
-  border-color: #666;
+
+.cancel-btn {
+    background-color: #dc3545;
+    color: white;
+}
+
+.cancel-btn:hover {
+    background-color: #c82333;
 }

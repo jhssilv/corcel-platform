@@ -1,12 +1,13 @@
-from app.database.queries import get_original_text_tokens_by_id, get_normalizations_by_text, get_text_by_id, get_username_by_id
-from app.database.connection import get_db_session
 
 import csv
 import io
 
+from app.database.queries import get_original_text_tokens_by_id, get_normalizations_by_text, get_text_by_id, get_username_by_id
+from app.extensions import db
+
 CONTEXT_WINDOW = 5
 
-session = get_db_session()
+session = db.session
 
 def generate_report(user_id:int, text_ids:list[int]):
     output = io.StringIO()
@@ -16,7 +17,6 @@ def generate_report(user_id:int, text_ids:list[int]):
     # Write CSV header
     output.write('\ufeff')  # BOM for UTF-8
     writer.writerow(['Text ID', 'User', 'Previous Tokens', 'Word', 'Subsequent Tokens', 'Normalization'])
-    
     
     for text_id in text_ids:
         tokens = get_original_text_tokens_by_id(session, text_id)        
