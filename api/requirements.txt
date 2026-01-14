@@ -32,3 +32,4 @@ pytest
 pytest-flask
 pytest-mock
 factory_boy
+torch
