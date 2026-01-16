@@ -7,7 +7,17 @@ import '../styles/generated_essay.css';
 // blank spaces and punctuations.
 // Also adds classes for word highlights
 
-const GeneratedEssay = ({ essay, selectedStartIndex, setSelectedStartIndex, selectedEndIndex, setSelectedEndIndex, setTokenPosition, setLastClickTime }) => {
+const GeneratedEssay = ({ 
+    essay, 
+    selectedStartIndex, 
+    setSelectedStartIndex, 
+    selectedEndIndex, 
+    setSelectedEndIndex, 
+    setTokenPosition, 
+    setLastClickTime,
+    setHoveredIndex,
+    highlightRange
+}) => {
     
     const [animatedIndices, setAnimatedIndices] = useState(new Set());
     const [animationNonceByIndex, setAnimationNonceByIndex] = useState({});
@@ -116,7 +126,16 @@ const GeneratedEssay = ({ essay, selectedStartIndex, setSelectedStartIndex, sele
         }
     };
 
-    const spans = buildText(essay, selectedStartIndex, selectedEndIndex, handleSelectedWordIndex, animatedIndices, animationNonceByIndex);
+    const spans = buildText(
+        essay, 
+        selectedStartIndex, 
+        selectedEndIndex, 
+        handleSelectedWordIndex, 
+        animatedIndices, 
+        animationNonceByIndex,
+        setHoveredIndex,
+        highlightRange
+    );
 
     return (
         <div className="essay-container">
@@ -140,7 +159,9 @@ GeneratedEssay.propTypes = {
     selectedEndIndex: PropTypes.number,
     setSelectedEndIndex: PropTypes.func,
     setTokenPosition: PropTypes.func,
-    setLastClickTime: PropTypes.func
+    setLastClickTime: PropTypes.func,
+    setHoveredIndex: PropTypes.func,
+    highlightRange: PropTypes.object
 };
 
 export default GeneratedEssay;
