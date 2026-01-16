@@ -73,6 +73,7 @@ const GeneratedCandidates = ({
         return null;
 
     const handleCandidateSelection = async (candidate) => {     
+        setShowFloatingList(false);
         setSelectedCandidate(candidate);
         
         if (suggestForAll) {
