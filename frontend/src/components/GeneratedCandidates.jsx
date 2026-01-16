@@ -79,8 +79,9 @@ const GeneratedCandidates = ({
         if (suggestForAll) {
             setPopupIsActive(true);
         } else {
+            const effectiveEndIndex = selectedEndIndex ?? selectedStartIndex;
             if(!candidate) await deleteNormalization(essayId, selectedStartIndex);
-            else           await postNormalization(essayId, selectedStartIndex, selectedEndIndex, candidate, suggestForAll);
+            else           await postNormalization(essayId, selectedStartIndex, effectiveEndIndex, candidate, suggestForAll);
             
             refreshEssay();
             setSelectedCandidate(null);

@@ -9,21 +9,10 @@ import '../styles/generated_essay.css';
 
 const GeneratedEssay = ({ essay, selectedStartIndex, setSelectedStartIndex, selectedEndIndex, setSelectedEndIndex, setTokenPosition, setLastClickTime }) => {
     
-    const [ctrlPressed, setCtrlPressed] = useState(false);
     const [animatedIndices, setAnimatedIndices] = useState(new Set());
     const [animationNonceByIndex, setAnimationNonceByIndex] = useState({});
     const previousCorrectionsRef = useRef({});
     const animationTimeoutsRef = useRef({});
-    
-    addEventListener('keydown', (event) => {
-        if(event.key === "Control")
-            setCtrlPressed(true);
-    });
-    
-    addEventListener('keyup', (event) => {
-        if(event.key === "Control")
-            setCtrlPressed(false);
-    });
 
     useEffect(() => {
         const previousCorrections = previousCorrectionsRef.current || {};
@@ -108,20 +97,19 @@ const GeneratedEssay = ({ essay, selectedStartIndex, setSelectedStartIndex, sele
             });
         }
 
-        // ctrl is pressed but there is no first index selected
-        if(ctrlPressed) {
-            if(selectedStartIndex == null){
+        const isMultiSelect = Boolean(event?.ctrlKey || event?.metaKey);
+
+        // Multi-select with Ctrl/Command
+        if (isMultiSelect) {
+            if (selectedStartIndex == null) {
                 setSelectedStartIndex(selectedOption);
-            }
-        // ctrl is pressed and there is already a first index selected
-            else{
+                setSelectedEndIndex(selectedOption);
+            } else {
                 selectedOption < selectedStartIndex ?
                 setSelectedStartIndex(selectedOption) : 
                 setSelectedEndIndex(selectedOption);
             }
-        }
-        // ctrl is not pressed, just select the word
-        else{
+        } else {
             setSelectedStartIndex(selectedOption);
             setSelectedEndIndex(selectedOption);
             if (setLastClickTime) setLastClickTime(Date.now());

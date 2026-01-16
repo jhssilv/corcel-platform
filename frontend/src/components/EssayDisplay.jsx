@@ -37,11 +37,12 @@ function EssayDisplay({ essay, refreshEssay }) {
   
   const selectedTokenText = (() => {
     if (selectedStartIndex === null) return "";
+    const effectiveEndIndex = selectedEndIndex ?? selectedStartIndex;
     let text = "";
-    for (let i = selectedStartIndex; i <= selectedEndIndex; i++) {
+    for (let i = selectedStartIndex; i <= effectiveEndIndex; i++) {
         if (essay.tokens[i]) {
             text += essay.tokens[i].text;
-            if (i < selectedEndIndex && essay.tokens[i].whitespaceAfter) {
+            if (i < effectiveEndIndex && essay.tokens[i].whitespaceAfter) {
                 text += essay.tokens[i].whitespaceAfter;
             }
         }
