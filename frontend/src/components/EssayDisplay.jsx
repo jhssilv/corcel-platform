@@ -144,7 +144,7 @@ function EssayDisplay({ essay, refreshEssay }) {
                     fontSize: '0.85em'
                 }}
             >
-                {showOriginal ? "Ocultar Original" : "Mostrar Original Lado a Lado"}
+                {showOriginal ? "Ocultar Original" : "Comparar Com Original"}
             </button>
         </div>
       </div>

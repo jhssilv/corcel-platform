@@ -21,8 +21,8 @@ const gradeOptions = [
 ];
 
 const otherFilters = [
-    { value: true, label: 'Corrigido' },
-    { value: false, label: 'Não corrigido' }
+    { value: true, label: 'Normalizado' },
+    { value: false, label: 'Não Normalizado' }
 ];
 
 const EssaySelector = ({
