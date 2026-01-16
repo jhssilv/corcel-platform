@@ -76,6 +76,36 @@ test.describe('Authentication', () => {
   });
 
   test('should logout successfully', async ({ page }) => {
+    // Mock the texts API call
+    await page.route('**/api/texts/', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          textsData: [
+            {
+              id: 1,
+              grade: 5,
+              usersAssigned: ['testuser'],
+              normalizedByUser: false,
+              sourceFileName: 'essay1.txt',
+            },
+          ],
+        }),
+      });
+    });
+
+    // Mock the usernames API call
+    await page.route('**/api/users', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          usernames: ['testuser'],
+        }),
+      });
+    });
+
     // Mock logout API
     await page.route('**/api/logout', async route => {
       await route.fulfill({
@@ -89,15 +119,24 @@ test.describe('Authentication', () => {
     await page.addInitScript(() => {
       localStorage.setItem('isAuthenticated', 'true');
       localStorage.setItem('username', 'testuser');
+      localStorage.setItem('isAdmin', 'false');
     });
 
     await page.goto('/main');
+
+    await expect(page).toHaveURL('/main');
 
     // Open side panel
     await page.locator('button[aria-label="Menu"]').click();
 
     // Click logout button
-    await page.getByRole('button', { name: 'Sair' }).click();
+    const logoutButton = page.locator('.side-panel.open .panel-button.logout-button');
+    await expect(page.locator('.side-panel.open')).toBeVisible();
+    await page.locator('.side-panel.open .panel-content').evaluate((el) => {
+      el.scrollTop = el.scrollHeight;
+    });
+    await expect(logoutButton).toBeVisible();
+    await logoutButton.click();
 
     // Expect to be redirected to login
     await expect(page).toHaveURL(/\/login/);

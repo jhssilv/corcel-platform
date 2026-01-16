@@ -17,6 +17,18 @@ text_bp = Blueprint('text', __name__)
 @text_bp.route('/api/texts/', methods=['GET'])
 @login_required()
 def get_texts_data(current_user):
+    """Retrieves the list of texts metadata for the current user.
+
+    Args:
+        current_user (User): The currently logged-in user.
+
+    Returns:
+        TextsDataResponse: The response containing the list of texts metadata.
+        
+    Pre-Conditions:
+        User must be logged in.
+        
+    """
     try:
         texts_data_from_db = queries.get_texts_data(session, current_user.id)
         
@@ -40,6 +52,19 @@ def get_texts_data(current_user):
 @login_required()
 @validate()
 def get_text_detail(current_user, text_id: int):
+    """Retrieves the detailed information, tokens, suggestions and normalizations of a specific text.
+
+    Args:
+        current_user (User): The currently logged-in user.
+        text_id (int): The ID of the text to retrieve.
+
+    Returns:
+        TextDetailResponse: The response containing the detailed information of the text.
+        
+    Pre-Conditions:
+        User must be logged in.
+        
+    """
     try:
         text_data_dict = queries.get_text_by_id(session, text_id, current_user.id)
         if not text_data_dict:
@@ -54,6 +79,19 @@ def get_text_detail(current_user, text_id: int):
 @login_required()
 @validate()
 def get_normalizations(current_user, text_id: int):
+    """Retrieves the normalizations for a specific text.
+
+    Args:
+        current_user (User): The currently logged-in user.
+        text_id (int): The ID of the text to retrieve normalizations for.
+
+    Returns:
+        NormalizationResponse: The response containing the normalizations for the text.
+        
+    Pre-Conditions:
+        User must be logged in.
+        
+    """
     try:
         normalizations_from_db = queries.get_normalizations_by_text(session, text_id, current_user.id)
 
@@ -74,6 +112,20 @@ def get_normalizations(current_user, text_id: int):
 @login_required()
 @validate()
 def save_normalization(current_user, text_id: int, body: normalization_schemas.NormalizationCreateRequest):
+    """_summary_
+
+    Args:
+        current_user (User): The currently logged-in user.
+        text_id (int): The ID of the text to retrieve.
+        body (NormalizationCreateRequest): The request body containing normalization details.
+
+    Returns:
+        MessageResponse: The response containing a confirmation message.
+    
+    Pre-Conditions:
+        User must be logged in.
+    
+    """
     try:
         queries.save_normalization(
             session, 
@@ -93,6 +145,20 @@ def save_normalization(current_user, text_id: int, body: normalization_schemas.N
 @login_required()
 @validate()
 def delete_normalization(current_user, text_id: int, body: normalization_schemas.NormalizationDeleteRequest):
+    """Deletes a normalization for a specific user and token.
+
+    Args:
+        current_user (User): The currently logged-in user.
+        text_id (int): The ID of the text to retrieve normalizations for.
+        body (NormalizationDeleteRequest): The request body containing normalization details.
+
+    Returns:
+        MessageResponse: The response containing a confirmation message.
+        
+    Pre-Conditions:
+        User must be logged in.
+        
+    """
     try:
         queries.delete_normalization(session, text_id, current_user.id, body.word_index)
         response = generic_schemas.MessageResponse(message="Normalization deleted")
@@ -104,6 +170,19 @@ def delete_normalization(current_user, text_id: int, body: normalization_schemas
 @login_required()
 @validate()
 def toggle_normalization_status(current_user, text_id: int):
+    """Toggles the normalized status of a text for the current user.
+
+    Args:
+        current_user (User): The currently logged-in user.
+        text_id (int): The ID of the text to toggle normalization status for.
+
+    Returns:
+        MessageResponse: The response containing a confirmation message.
+        
+    Pre-Conditions:
+        User must be logged in.
+        
+    """
     try:
         queries.toggle_normalized(session, text_id=text_id, user_id=current_user.id)
         response = generic_schemas.MessageResponse(message="Status changed")
@@ -116,6 +195,20 @@ def toggle_normalization_status(current_user, text_id: int):
 @login_required()
 @validate()
 def toggle_token_suggestions(current_user, token_id: int, body: normalization_schemas.toggleToBeNormalizedRequest):
+    """Toggles the to_be_normalized flag for a specific token for ALL users.
+
+    Args:
+        current_user (User): The currently logged-in user.
+        token_id (int): The ID of the token to toggle the to_be_normalized flag for.
+        body (toggleToBeNormalizedRequest): The request body containing toggle details.
+
+    Returns:
+        MessageResponse: The response containing a confirmation message.
+        
+    Pre-Conditions:
+        User must be logged in.
+        
+    """
     try:
         queries.toggle_to_be_normalized(session, token_id=token_id)
         response = generic_schemas.MessageResponse(message="Token 'to_be_normalized' status toggled")
@@ -126,6 +219,14 @@ def toggle_token_suggestions(current_user, token_id: int, body: normalization_sc
 @text_bp.route('/api/whitelist/', methods=['GET'])
 @login_required()
 def get_whitelist_tokens(current_user):
+    """Retrieves the list of whitelist tokens.
+    Args:
+        current_user (User): The currently logged-in user.
+    Returns:
+        WhitelistTokensResponse: The response containing the list of whitelist tokens.
+    Pre-Conditions:
+        User must be logged in
+    """
     try:
         whitelist_tokens = queries.get_whitelist_tokens(session)
         response = whitelist_schemas.WhitelistTokensResponse(tokens=whitelist_tokens)
@@ -137,6 +238,19 @@ def get_whitelist_tokens(current_user):
 @login_required()
 @validate()
 def manage_whitelist_token(current_user, body: whitelist_schemas.WhitelistManageRequest):
+    """Manages whitelist tokens by adding or removing them.
+
+    Args:
+        current_user (User): The currently logged-in user.
+        body (whitelist_schemas.WhitelistManageRequest): The request body containing token management details.
+
+    Returns:
+        MessageResponse: The response containing a confirmation message.
+        
+    Pre-Conditions:
+        User must be logged in.
+        
+    """
     try:
         if body.action == 'add':
             queries.add_whitelist_token(session, body.token_text)

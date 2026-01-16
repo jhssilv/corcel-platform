@@ -45,6 +45,19 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    useEffect(() => {
+        const handleUnauthorized = () => {
+            alert("Sua sessão expirou. Por favor, faça login novamente.");
+            logout();
+        };
+
+        window.addEventListener('auth:unauthorized', handleUnauthorized);
+
+        return () => {
+            window.removeEventListener('auth:unauthorized', handleUnauthorized);
+        };
+    }, []);
+
     return (
         <AuthContext.Provider value={{ isAuthenticated, login, logout, username, isAdmin }}>
             {children}

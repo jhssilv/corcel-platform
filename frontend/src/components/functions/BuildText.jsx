@@ -1,5 +1,5 @@
 
-function createSpan(essay, i, selectedStartIndex, selectedEndIndex, handleSelectedWordIndex){
+function createSpan(essay, i, selectedStartIndex, selectedEndIndex, handleSelectedWordIndex, animatedIndices, animationNonceByIndex){
 
     // classname = "clickable" - default token
     // classname = "clickable selected" - token is selected (grey background)
@@ -18,12 +18,13 @@ function createSpan(essay, i, selectedStartIndex, selectedEndIndex, handleSelect
     else if(toBeNormalized && !whitelisted) className+=" candidates";
 
     if (i >= selectedStartIndex && i <= selectedEndIndex) className += " selected";
+    if (animatedIndices && animatedIndices.has(i)) className += " token-updated";
 
     let token_text = essay.corrections && essay.corrections[i] ? essay.corrections[i].new_token : token.text;
 
     return( 
         <span 
-            key={i} 
+            key={`${i}-${animationNonceByIndex?.[i] || 0}`} 
             className={className}
             onClick={(event) => { handleSelectedWordIndex(i, event) ;}} >
             {token_text}
@@ -31,7 +32,7 @@ function createSpan(essay, i, selectedStartIndex, selectedEndIndex, handleSelect
     )
 } 
 
-function buildText(essay, selectedStartIndex, selectedEndIndex, handleSelectedWordIndex) {
+function buildText(essay, selectedStartIndex, selectedEndIndex, handleSelectedWordIndex, animatedIndices, animationNonceByIndex) {
     let token_length = 0;
     const spans = []; 
 
@@ -42,7 +43,7 @@ function buildText(essay, selectedStartIndex, selectedEndIndex, handleSelectedWo
         token_length = 0;
         
         if(token.isWord){
-            spans.push(createSpan(essay, i, selectedStartIndex, selectedEndIndex, handleSelectedWordIndex));
+            spans.push(createSpan(essay, i, selectedStartIndex, selectedEndIndex, handleSelectedWordIndex, animatedIndices, animationNonceByIndex));
         }
         else{
             spans.push(token.text);

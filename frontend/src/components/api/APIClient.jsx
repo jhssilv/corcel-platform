@@ -11,6 +11,9 @@ const handleJsonSuccess = (response) => response.data;
 // Error handler for JSON requests
 const handleJsonError = (error) => {
   console.error('API error:', error);
+
+
+
   if (error.response && error.response.data) {
     return Promise.reject(error.response.data);
   }
@@ -26,6 +29,8 @@ const handleBlobSuccess = (response) => response;
 
 const handleBlobError = async (error) => {
   console.error('API blob error:', error);
+
+
 
   if (error.response && error.response.data instanceof Blob && error.response.data.type.includes('json')) {
     try {
@@ -60,7 +65,12 @@ const createClient = ({ auth = false, isBlob = false } = {}) => {
   if (isBlob) {
     instance.interceptors.response.use(handleBlobSuccess, handleBlobError);
   } else {
-    instance.interceptors.response.use(handleJsonSuccess, handleJsonError);
+    instance.interceptors.response.use(handleJsonSuccess, (error) => {
+      if (auth && error.response && error.response.status === 401) {
+        window.dispatchEvent(new Event('auth:unauthorized'));
+      }
+      return handleJsonError(error);
+    });
   }
 
   if(auth) {
