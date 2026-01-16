@@ -26,10 +26,11 @@
 
 .document-title {
     font-weight: 600;
-    font-size: 0.85rem;
-    text-transform: uppercase;
+    font-size: 1.0rem;
+    text-transform: lowercase;
     letter-spacing: 1px;
     color: #666;
+    font-variant-numeric: lining-nums;
 }
 
 .document-grade {
