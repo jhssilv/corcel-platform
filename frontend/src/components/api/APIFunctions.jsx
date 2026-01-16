@@ -41,7 +41,7 @@ export async function getUsernames() {
  * Authenticates the user with username and password.
  */
 export async function authenticateUser(username, password) {
-  const response = await apiPrivate.post('/login', { username, password });
+  const response = await apiPublic.post('/login', { username, password });
   return schemas.LoginResponseSchema.parse(response.data || response);
 }
 
