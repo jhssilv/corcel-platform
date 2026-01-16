@@ -17,6 +17,18 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 @upload_bp.route('/api/upload', methods=['POST'])
 @admin_required()
 def upload_file(current_user):
+    """Uploads a ZIP file for processing.
+
+    Args:
+        current_user (User): The currently logged-in user.
+
+    Returns:
+        JSON response with the task ID.
+        
+    Pre-Conditions:
+        Admin privileges.
+        
+    """
     if 'file' not in request.files:
         return jsonify(generic_schemas.ErrorResponse(error='File not found.').model_dump()), 400
     
@@ -37,6 +49,17 @@ def upload_file(current_user):
 
 @upload_bp.route('/api/status/<task_id>', methods=['GET'])
 def task_status(task_id):
+    """Gets the status of a background text processing task.
+
+    Args:
+        task_id (str): The ID of the task.
+
+    Returns: JSON response with the task status and any relevant information:
+        state: Current state of the task (e.g., PENDING, PROGRESS, SUCCESS, FAILURE).
+        status: A human-readable status message.
+        result: (if SUCCESS) Result data from the task.
+        error: (if FAILURE) Error message from the task.
+    """
     task = process_zip_texts.AsyncResult(task_id)
     
     response = {

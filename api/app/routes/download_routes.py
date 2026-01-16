@@ -19,6 +19,18 @@ logger = download_log_manager.get_logger()
 @login_required()
 @validate()
 def request_report(current_user, body: download_schemas.ReportRequest):  
+    """ Handles report generation and download requests given a list of text IDs.
+
+    Args:
+        current_user: The currently logged-in user.
+        body (ReportRequest): List of text IDs for the report.
+
+    Returns: A response object containing the generated csv report.
+        
+    Pre-Conditions:
+        User must be logged in.
+        
+    """
     report = generate_report(current_user.id, body.text_ids)
     
     response = make_response(report)
@@ -30,6 +42,20 @@ def request_report(current_user, body: download_schemas.ReportRequest):
 @login_required()
 @validate()
 def download_normalized_texts(current_user, body: download_schemas.DownloadRequest):
+    """Handles downloading of normalized texts.
+
+    Args:
+        current_user: The currently logged-in user.
+        body (DownloadRequest): Contains text IDs and use_tags flag.
+            - text_ids: List of text IDs to download.
+            - use_tags: Boolean indicating whether to use XML syntax in normalized tokens.
+
+    Returns: A response object containing the generated zip file.
+        
+    Pre-Conditions:
+        User must be logged in.
+        
+    """
     try:
         logger.info(f"Download request received for user ID: {current_user.id}")
 

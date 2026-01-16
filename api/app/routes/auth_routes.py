@@ -20,7 +20,17 @@ auth_bp = Blueprint('auth', __name__)
 @auth_bp.route('/api/users', methods=['GET'])
 @login_required()
 def get_usernames(current_user):
-    """Returns a list of all usernames."""
+    """Returns a list of all usernames.
+
+    Args:
+        current_user (User): The currently logged-in user.
+
+    Returns: JSON response with a list of usernames.
+        
+    Pre-Conditions:
+        User must be logged in.
+        
+    """
     try:
         usernames_tuples = queries.get_usernames(session)
         username_list = [item[0] for item in usernames_tuples]
@@ -36,6 +46,18 @@ def get_usernames(current_user):
 @validate()
 @admin_required()
 def register(body: auth_schemas.UserRegisterRequest, current_user=None):
+    """Creates a new user with the given username.
+    
+    Args:
+        body (UserRegisterRequest): username for the new user
+        current_user (User): The currently logged-in user.
+    
+    Returns: JSON response indicating success or failure.
+    
+    Pre-Conditions:
+        Admin privileges.
+    
+    """
     username = body.username
     
     user = queries.get_user_by_username(session, username)
@@ -57,6 +79,14 @@ def register(body: auth_schemas.UserRegisterRequest, current_user=None):
 @auth_bp.route('/api/activate', methods=['POST'])
 @validate()
 def activate_account(body: auth_schemas.UserActivationRequest):
+    """Activates a user account by setting the password and marking the account as active.
+
+    Args:
+        body (UserActivationRequest): Username and new password.
+        
+    Returns: JSON response indicating success or failure.
+
+    """
     username = body.username
     password = body.password
     
@@ -80,6 +110,15 @@ def activate_account(body: auth_schemas.UserActivationRequest):
 @auth_bp.route('/api/login', methods=['POST'])
 @validate()
 def login(body: auth_schemas.UserCredentials):
+    """Logs in a user by verifying credentials and issuing a JWT token.
+
+    Args:
+        body (UserCredentials): Username and password.
+
+    Returns: JSON response with a success message and admin status, or an error message. 
+    If successful, sets a JWT token in the response cookies.
+
+    """
     username = body.username
     password = body.password
     
@@ -104,6 +143,10 @@ def login(body: auth_schemas.UserCredentials):
     
 @auth_bp.route('/api/logout', methods=['GET'])
 def logout():
+    """Logs out a user by clearing the JWT cookies.
+
+    Returns: JSON response indicating successful logout.
+    """
     response = jsonify({"message": "Logout successful"})
     unset_jwt_cookies(response)
     return response, 200
@@ -111,7 +154,19 @@ def logout():
 @auth_bp.route('/api/users/toggleActive', methods=['PATCH'])
 @validate()
 @admin_required()
-def deactivate_user(body: auth_schemas.UserRegisterRequest, current_user=None):
+def deactivate_user(body: auth_schemas.UserRegisterRequest, current_user):
+    """Toggles the active status of a user.
+
+    Args:
+        body (UserRegisterRequest): Username of the user to toggle.
+        current_user (User): The currently logged-in user.
+
+    Returns: JSON response indicating success or failure.
+        
+    Pre-Conditions:
+        Admin privileges.
+        
+    """
     username = body.username
     
     user = queries.get_user_by_username(session, username)
@@ -132,7 +187,23 @@ def deactivate_user(body: auth_schemas.UserRegisterRequest, current_user=None):
 @auth_bp.route('/api/users/changePassword', methods=['PATCH'])
 @validate()
 @admin_required()
-def toggle_user_is_admin(body: auth_schemas.UserRegisterRequest, current_user=None):
+def toggle_user_is_admin(body: auth_schemas.UserRegisterRequest, current_user):
+    """Toggles the admin status of a user.
+
+    Args:
+        body (UserRegisterRequest): Username of the user to toggle.
+        current_user (User): The currently logged-in user.
+
+    Returns:
+        JSON response indicating success or failure.
+        
+    Pre-Conditions:
+        Admin privileges.
+
+    Post-Conditions:
+        User's admin status is toggled unless they are the last admin.
+        
+    """
     username = body.username
     
     user = queries.get_user_by_username(session, username)
@@ -150,15 +221,30 @@ def toggle_user_is_admin(body: auth_schemas.UserRegisterRequest, current_user=No
     session.commit()
     
     if user.is_admin:
-        response = generic_schemas.ErrorResponse(error="User granted admin privileges.")
+        response = generic_schemas.MessageResponse(message="User granted admin privileges.")
         return jsonify(response.model_dump()), 200
     else:
-        response = generic_schemas.ErrorResponse(error="User admin privileges revoked.")
+        response = generic_schemas.MessageResponse(message="User admin privileges revoked.")
         return jsonify(response.model_dump()), 200
     
 @auth_bp.route('/api/users/data', methods=['GET'])
 @admin_required()
-def get_users_data(current_user=None):
+def get_users_data(current_user):
+    """Returns detailed data for all users.
+
+    Args:
+        current_user: The currently logged-in user.
+
+    Returns: JSON response containing detailed data for all users:
+            - username
+            - isAdmin
+            - isActive
+            - lastLogin
+        
+    Pre-Conditions:
+        Admin privileges.
+        
+    """
     try:
         users = queries.get_all_users(session)
         users_data = []
