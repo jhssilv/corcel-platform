@@ -134,7 +134,7 @@ test.describe('Text Interaction', () => {
     await page.getByText('world', { exact: true }).click();
 
     // Verify API call was made (no popup expected)
-    expect(postCalled).toBe(true);
+    await expect.poll(() => postCalled).toBe(true);
 
     // Verify the text is updated
     await expect(page.locator('.clickable').filter({ hasText: 'world' })).toHaveClass(/corrected/); 
