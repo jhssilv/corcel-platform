@@ -20,6 +20,8 @@ def get_normalized_tokens(text_ids:list[int], user_id:int, use_tags=False) -> di
         texts_tokens[text.source_file_name] = {'grade': text.grade, 'tokens': []}
         
         tokens = session.query(models.Token).filter(models.Token.text_id == text.id).all()
+        tokens = sorted(tokens, key=lambda t: t.position)
+        
         normalizations = normalizations_to_dict(get_normalizations_by_text(session, text.id, user_id))
         
         for token in tokens:
