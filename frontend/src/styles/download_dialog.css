@@ -82,6 +82,16 @@
     background-color: #218838;
 }
 
+.confirm-btn:disabled {
+  background-color: #3a3a3a;
+  color: rgba(255, 255, 255, 0.3);
+  cursor: not-allowed;
+}
+
+.confirm-btn:disabled:hover {
+  background-color: #3a3a3a;
+}
+
 .cancel-btn {
     background-color: #dc3545;
     color: white;

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 
 import '../styles/download_dialog.css'; 
@@ -14,6 +14,18 @@ import downloadTexts from './api/DownloadTexts';
 function DownloadDialog({ show, onClose }) {
   
   const [useBrackets, setUseBrackets] = useState(false);
+  const [confirmEnabled, setConfirmEnabled] = useState(false);
+
+  useEffect(() => {
+    if (!show) {
+      setConfirmEnabled(false);
+      return;
+    }
+
+    setConfirmEnabled(false);
+    const timer = setTimeout(() => setConfirmEnabled(true), 2000);
+    return () => clearTimeout(timer);
+  }, [show]);
 
   if (!show) {
     return null;
@@ -68,6 +80,7 @@ function DownloadDialog({ show, onClose }) {
           <button 
             className="confirm-btn" 
             onClick={handleSubmitClick}
+            disabled={!confirmEnabled}
           >
             Baixar
           </button>
