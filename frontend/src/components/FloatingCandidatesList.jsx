@@ -9,9 +9,7 @@ const FloatingCandidatesList = ({ candidates, tokenPosition, onSelect, onClose, 
 
     const handleCandidateClick = (candidate) => {
         setSelectedCandidate(candidate);
-        setTimeout(() => {
-            onSelect(candidate);
-        }, 300);
+        onSelect(candidate);
     };
 
     // Helper to chunk candidates into rows of 7

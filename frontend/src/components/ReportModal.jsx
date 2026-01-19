@@ -1,7 +1,21 @@
 import PropTypes from "prop-types"
+import { useEffect, useState } from "react"
 import { requestReport } from "./api/APIFunctions.jsx"
 
 function ReportModal({ isOpen, onClose, textCount }) {
+  const [confirmEnabled, setConfirmEnabled] = useState(false)
+
+  useEffect(() => {
+    if (!isOpen) {
+      setConfirmEnabled(false)
+      return
+    }
+
+    setConfirmEnabled(false)
+    const timer = setTimeout(() => setConfirmEnabled(true), 2000)
+    return () => clearTimeout(timer)
+  }, [isOpen])
+
   const handleConfirm = async () => {
     try {
       const textIds = JSON.parse(localStorage.getItem("textIds") || "[]")
@@ -26,14 +40,18 @@ function ReportModal({ isOpen, onClose, textCount }) {
           </div>
 
           <div className="modal-body">
-            <p className="report-text">Gerar relatório para os {textCount} textos filtrados?</p>
+            <p className="report-text">Gerar relatório para os <b>{textCount}</b> textos <b>filtrados</b>?</p>
           </div>
 
           <div className="modal-footer">
             <button className="modal-button cancel-button" onClick={onClose}>
               Cancelar
             </button>
-            <button className="modal-button confirm-button report-confirm" onClick={handleConfirm}>
+            <button
+              className="modal-button confirm-button report-confirm"
+              onClick={handleConfirm}
+              disabled={!confirmEnabled}
+            >
               Confirmar
             </button>
           </div>

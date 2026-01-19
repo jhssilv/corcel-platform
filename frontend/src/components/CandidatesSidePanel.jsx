@@ -18,12 +18,71 @@ const CandidatesSidePanel = ({
 }) => {
     const [showRemoveConfirmation, setShowRemoveConfirmation] = useState(false);
     const inputRef = useRef(null);
+    const panelRef = useRef(null);
+    const dragStateRef = useRef({ dragging: false, offsetX: 0, offsetY: 0 });
+    const [panelPosition, setPanelPosition] = useState(() => {
+        try {
+            const raw = localStorage.getItem('candidatesPanelPosition');
+            return raw ? JSON.parse(raw) : null;
+        } catch {
+            return null;
+        }
+    });
 
     useEffect(() => {
         if (inputRef.current) {
             inputRef.current.focus();
         }
     }, []);
+
+    useEffect(() => {
+        const handleMouseMove = (event) => {
+            if (!dragStateRef.current.dragging || !panelRef.current) return;
+
+            const panelRect = panelRef.current.getBoundingClientRect();
+            const panelWidth = panelRect.width;
+            const panelHeight = panelRect.height;
+
+            const nextLeft = event.clientX - dragStateRef.current.offsetX;
+            const nextTop = event.clientY - dragStateRef.current.offsetY;
+
+            const minLeft = 8;
+            const minTop = 68;
+            const maxLeft = Math.max(minLeft, window.innerWidth - panelWidth - 8);
+            const maxTop = Math.max(minTop, window.innerHeight - panelHeight - 8);
+
+            const clampedLeft = Math.min(Math.max(nextLeft, minLeft), maxLeft);
+            const clampedTop = Math.min(Math.max(nextTop, minTop), maxTop);
+
+            setPanelPosition({ left: clampedLeft, top: clampedTop });
+        };
+
+        const handleMouseUp = () => {
+            if (dragStateRef.current.dragging) {
+                dragStateRef.current.dragging = false;
+                if (panelPosition) {
+                    localStorage.setItem('candidatesPanelPosition', JSON.stringify(panelPosition));
+                }
+            }
+        };
+
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseup', handleMouseUp);
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [panelPosition]);
+
+    const handleDragStart = (event) => {
+        if (!panelRef.current) return;
+        const panelRect = panelRef.current.getBoundingClientRect();
+        dragStateRef.current = {
+            dragging: true,
+            offsetX: event.clientX - panelRect.left,
+            offsetY: event.clientY - panelRect.top,
+        };
+    };
 
     const handleConfirmRemove = async () => {
         await toggleToBeNormalized(tokenId);
@@ -32,13 +91,28 @@ const CandidatesSidePanel = ({
     };
 
     return (
-        <div className="candidates-panel" ref={forwardRef}>
+        <div
+            className="candidates-panel"
+            ref={(node) => {
+                panelRef.current = node;
+                if (typeof forwardRef === 'function') {
+                    forwardRef(node);
+                } else if (forwardRef) {
+                    forwardRef.current = node;
+                }
+            }}
+            style={{
+                top: panelPosition?.top ?? 150,
+                left: panelPosition?.left ?? 'auto',
+                right: panelPosition?.left == null ? 20 : 'auto'
+            }}
+        >
             <button className="close-panel-button" onClick={onClose} title="Fechar painel">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                     <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
                 </svg>
             </button>
-            <div className="candidates-header">
+            <div className="candidates-header" onMouseDown={handleDragStart}>
                 {hasCandidates && singleWordSelected ? 'Alternativas para ' : 'Substituir '}
                 <span className="selected-token">"{selectedTokenText}"</span>
             </div>

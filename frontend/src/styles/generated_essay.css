@@ -26,10 +26,11 @@
 
 .document-title {
     font-weight: 600;
-    font-size: 0.85rem;
-    text-transform: uppercase;
+    font-size: 1.0rem;
+    text-transform: lowercase;
     letter-spacing: 1px;
     color: #666;
+    font-variant-numeric: lining-nums;
 }
 
 .document-grade {
@@ -182,3 +183,26 @@
 .finalized-toggle:hover .toggle-slider {
     border-color: #646cff;
 }
+
+.highlight-hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-bottom: 2px solid #555;
+}
+
+.essay-comparison-container {
+    display: flex;
+    gap: 20px;
+    width: 100%;
+}
+
+.essay-comparison-container > .essay-container {
+    flex: 1;
+    max-width: none; /* Override max-width when side-by-side */
+}
+
+/* Original Essay Specifics */
+.original-essay-container {
+    opacity: 0.8;
+    background-color: #1a1a1a;
+}
+

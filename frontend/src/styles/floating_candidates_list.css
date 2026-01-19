@@ -70,12 +70,8 @@
     border-color: #646cff;
 }
 
-@keyframes candidate-pop {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); background-color: #646cff; border-color: #646cff; color: white; }
-    100% { transform: scale(1); }
-}
-
 .candidate-button.selected {
-    animation: candidate-pop 0.3s ease-in-out forwards;
+    background-color: #646cff; 
+    border-color: #646cff; 
+    color: white; 
 }

@@ -379,6 +379,13 @@ def get_filtered_texts(db, grades:list[int]=None, assigned_users:list[str]=None,
     
     return texts.all()
 
+def delete_all_normalizations(db, user_id:int, text_id:int):
+    """
+    Deletes all normalizations made by a specific user in a specific text.
+    """
+    db.query(Normalization).filter(Normalization.user_id == user_id, Normalization.text_id == text_id).delete()
+    db.commit()
+
 
 def count_admin_users(db):
     """

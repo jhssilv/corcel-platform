@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import GeneratedEssay from './GeneratedEssay';
+import OriginalEssay from './OriginalEssay'; // Import the new component
 import GeneratedCandidates from './GeneratedCandidates';
 import NewCorrectionPopup from './NewCorrectionPopup';
-import { toggleNormalizedStatus } from './api/APIFunctions';
+import { toggleNormalizedStatus, deleteAllNormalizations } from './api/APIFunctions';
 
 function EssayDisplay({ essay, refreshEssay }) {
 
@@ -16,11 +17,44 @@ function EssayDisplay({ essay, refreshEssay }) {
   const [suggestForAll, setSuggestForAll] = useState(false);
   const [lastClickTime, setLastClickTime] = useState(0);
 
+  // New state for Original Essay view
+  const [showOriginal, setShowOriginal] = useState(false);
+  const [hoveredIndex, setHoveredIndex] = useState(null);
+
   useEffect(() => {
     setSelectedStartIndex(null);
     setSelectedEndIndex(null);
     setSuggestForAll(false);
+    // setHoveredIndex(null); // Optional: reset hover on essay change
   }, [essay?.sourceFileName]);
+
+  const highlightRange = useMemo(() => {
+    if (hoveredIndex === null || !essay?.tokens) return null;
+
+    // Default range is just the hovered token
+    let start = hoveredIndex;
+    let end = hoveredIndex;
+
+    const corrections = essay.corrections || {};
+    
+    // Check if hoveredIndex is a start of a correction
+    if (corrections[hoveredIndex]) {
+        end = corrections[hoveredIndex].last_index;
+    } else {
+        // Check if hoveredIndex is inside a correction range
+        // This scan could be optimized, but essay length is usually small enough
+        for (const [key, correction] of Object.entries(corrections)) {
+            const correctionStart = Number(key);
+            if (hoveredIndex >= correctionStart && hoveredIndex <= correction.last_index) {
+                start = correctionStart;
+                end = correction.last_index;
+                break;
+            }
+        }
+    }
+
+    return { start, end };
+  }, [hoveredIndex, essay?.corrections, essay?.tokens]);
 
   if (!essay) {
     return <h3>Nenhum texto selecionado.</h3>;
@@ -31,17 +65,31 @@ function EssayDisplay({ essay, refreshEssay }) {
     refreshEssay();
   };
 
+  const handleResetCorrections = async () => {
+    if (window.confirm("Tem certeza de que deseja excluir todas as normalizações para este texto?")) {
+      try {
+        await deleteAllNormalizations(essay.id);
+        refreshEssay();
+      } catch (e) {
+        console.error("Failed to delete all normalizations:", e);
+        alert("Falha ao excluir normalizações.");
+      }
+    }
+  };
+
+
   const singleWordSelected = selectedStartIndex !== null && selectedEndIndex === selectedStartIndex;
   const selectedWordHasCandidates = selectedStartIndex !== null && essay.tokens[selectedStartIndex] && essay.tokens[selectedStartIndex].candidates ? true : false;
   const candidates = essay.tokens[selectedStartIndex] ? essay.tokens[selectedStartIndex]["candidates"] : [];
   
   const selectedTokenText = (() => {
     if (selectedStartIndex === null) return "";
+    const effectiveEndIndex = selectedEndIndex ?? selectedStartIndex;
     let text = "";
-    for (let i = selectedStartIndex; i <= selectedEndIndex; i++) {
+    for (let i = selectedStartIndex; i <= effectiveEndIndex; i++) {
         if (essay.tokens[i]) {
             text += essay.tokens[i].text;
-            if (i < selectedEndIndex && essay.tokens[i].whitespaceAfter) {
+            if (i < effectiveEndIndex && essay.tokens[i].whitespaceAfter) {
                 text += essay.tokens[i].whitespaceAfter;
             }
         }
@@ -95,6 +143,38 @@ function EssayDisplay({ essay, refreshEssay }) {
                 }</span>
             </label>
         </div>
+        
+        <div style={{ marginTop: '10px', borderTop: '1px solid #444', width: '100%', display: 'flex', justifyContent: 'center', paddingTop: '10px', gap: '10px' }}>
+            <button 
+                className="reset-corrections-btn"
+                onClick={handleResetCorrections}
+                style={{
+                  background: 'none',
+                  border: '1px solid #ef4444',
+                  color: '#ef4444',
+                  padding: '5px 10px',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '0.85em'
+                }}
+            >
+              Excluir Normalizações
+            </button>
+            <button 
+                onClick={() => setShowOriginal(!showOriginal)}
+                style={{
+                    background: 'none',
+                    border: '1px solid #555',
+                    color: showOriginal ? '#646cff' : '#aaa',
+                    padding: '5px 10px',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '0.85em'
+                }}
+            >
+                {showOriginal ? "Ocultar Original" : "Comparar Com Original"}
+            </button>
+        </div>
       </div>
 
       <GeneratedCandidates 
@@ -119,15 +199,30 @@ function EssayDisplay({ essay, refreshEssay }) {
         essayId={essay.id}
       />
 
-      <GeneratedEssay 
-        essay={essay}
-        selectedStartIndex={selectedStartIndex}
-        setSelectedStartIndex={setSelectedStartIndex}
-        selectedEndIndex={selectedEndIndex}
-        setSelectedEndIndex={setSelectedEndIndex}
-        setTokenPosition={setTokenPosition}
-        setLastClickTime={setLastClickTime}
-      />
+        <div className={showOriginal ? "essay-comparison-container" : ""}>
+          {showOriginal && (
+              <OriginalEssay
+                  essay={essay}
+                  highlightRange={highlightRange}
+                  setHoveredIndex={setHoveredIndex}
+                  // We can support selection here too if we wire it up, but for now just viewing
+                  // handleSelection={(index) => { setSelectedStartIndex(index); setSelectedEndIndex(index); }}
+              />
+          )}
+
+          <GeneratedEssay 
+            essay={essay}
+            selectedStartIndex={selectedStartIndex}
+            setSelectedStartIndex={setSelectedStartIndex}
+            selectedEndIndex={selectedEndIndex}
+            setSelectedEndIndex={setSelectedEndIndex}
+            setTokenPosition={setTokenPosition}
+            setLastClickTime={setLastClickTime}
+            setHoveredIndex={setHoveredIndex}
+            highlightRange={highlightRange}
+          />
+      </div>
+      
       <NewCorrectionPopup 
         essay={essay}
         candidate={selectedCandidate}

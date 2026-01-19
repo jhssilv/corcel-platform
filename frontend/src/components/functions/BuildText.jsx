@@ -1,5 +1,5 @@
 
-function createSpan(essay, i, selectedStartIndex, selectedEndIndex, handleSelectedWordIndex, animatedIndices, animationNonceByIndex){
+function createSpan(essay, i, selectedStartIndex, selectedEndIndex, handleSelectedWordIndex, animatedIndices, animationNonceByIndex, setHoveredIndex, highlightRange){
 
     // classname = "clickable" - default token
     // classname = "clickable selected" - token is selected (grey background)
@@ -19,6 +19,15 @@ function createSpan(essay, i, selectedStartIndex, selectedEndIndex, handleSelect
 
     if (i >= selectedStartIndex && i <= selectedEndIndex) className += " selected";
     if (animatedIndices && animatedIndices.has(i)) className += " token-updated";
+    
+    // Check if within highlight range
+    if(highlightRange) {
+        if(highlightRange.start === i) { 
+             // Logic: any rendered token corresponds to a start index in the original tokens array (because we skip the rest if corrected)
+             // So checking if we are at the start of the highlight range is usually sufficient if the highlight range corresponds to the semantic unit (word/phrase) being rendered here.
+             className += " highlight-hover";
+        }
+    }
 
     let token_text = essay.corrections && essay.corrections[i] ? essay.corrections[i].new_token : token.text;
 
@@ -26,13 +35,16 @@ function createSpan(essay, i, selectedStartIndex, selectedEndIndex, handleSelect
         <span 
             key={`${i}-${animationNonceByIndex?.[i] || 0}`} 
             className={className}
-            onClick={(event) => { handleSelectedWordIndex(i, event) ;}} >
+            onClick={(event) => { handleSelectedWordIndex(i, event) ;}} 
+            onMouseEnter={() => setHoveredIndex && setHoveredIndex(i)}
+            onMouseLeave={() => setHoveredIndex && setHoveredIndex(null)}
+        >
             {token_text}
         </span>
     )
 } 
 
-function buildText(essay, selectedStartIndex, selectedEndIndex, handleSelectedWordIndex, animatedIndices, animationNonceByIndex) {
+function buildText(essay, selectedStartIndex, selectedEndIndex, handleSelectedWordIndex, animatedIndices, animationNonceByIndex, setHoveredIndex, highlightRange) {
     let token_length = 0;
     const spans = []; 
 
@@ -43,7 +55,7 @@ function buildText(essay, selectedStartIndex, selectedEndIndex, handleSelectedWo
         token_length = 0;
         
         if(token.isWord){
-            spans.push(createSpan(essay, i, selectedStartIndex, selectedEndIndex, handleSelectedWordIndex, animatedIndices, animationNonceByIndex));
+            spans.push(createSpan(essay, i, selectedStartIndex, selectedEndIndex, handleSelectedWordIndex, animatedIndices, animationNonceByIndex, setHoveredIndex, highlightRange));
         }
         else{
             spans.push(token.text);
