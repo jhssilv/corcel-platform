@@ -236,3 +236,9 @@ export async function toggleUserAdmin(username) {
   const response = await apiPrivate.patch('/users/changePassword', { username });
   return response.data || response;
 }
+
+export async function deleteAllNormalizations(textId) {
+  const response = await apiPrivate.delete(`/texts/${textId}/normalizations/all`);
+  return response.data || response;
+
+}

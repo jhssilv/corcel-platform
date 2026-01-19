@@ -166,6 +166,27 @@ def delete_normalization(current_user, text_id: int, body: normalization_schemas
     except Exception as e:
         return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
 
+@text_bp.route('/api/texts/<int:text_id>/normalizations/all', methods=['DELETE'])
+@login_required()
+@validate()
+def delete_all_normalizations(current_user, text_id: int):
+    """Deletes all normalizations for a specific user and text.
+
+    Args:
+        current_user (User): The currently logged-in user.
+        text_id (int): The ID of the text to retrieve normalizations for.
+    Returns:
+        MessageResponse: The response containing a confirmation message.
+    Pre-Conditions:
+        User must be logged in.
+    """
+    try:
+        queries.delete_all_normalizations(session, current_user.id, text_id)
+        response = generic_schemas.MessageResponse(message="All normalizations deleted")
+        return jsonify(response.model_dump()), 200
+    except Exception as e:
+        return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
+
 @text_bp.route('/api/texts/<int:text_id>/normalizations', methods=['PATCH'])
 @login_required()
 @validate()
