@@ -4,7 +4,7 @@ import GeneratedEssay from './GeneratedEssay';
 import OriginalEssay from './OriginalEssay'; // Import the new component
 import GeneratedCandidates from './GeneratedCandidates';
 import NewCorrectionPopup from './NewCorrectionPopup';
-import { toggleNormalizedStatus } from './api/APIFunctions';
+import { toggleNormalizedStatus, deleteAllNormalizations } from './api/APIFunctions';
 
 function EssayDisplay({ essay, refreshEssay }) {
 
@@ -64,6 +64,19 @@ function EssayDisplay({ essay, refreshEssay }) {
     await toggleNormalizedStatus(essay.id);
     refreshEssay();
   };
+
+  const handleResetCorrections = async () => {
+    if (window.confirm("Tem certeza de que deseja excluir todas as normalizações para este texto?")) {
+      try {
+        await deleteAllNormalizations(essay.id);
+        refreshEssay();
+      } catch (e) {
+        console.error("Failed to delete all normalizations:", e);
+        alert("Falha ao excluir normalizações.");
+      }
+    }
+  };
+
 
   const singleWordSelected = selectedStartIndex !== null && selectedEndIndex === selectedStartIndex;
   const selectedWordHasCandidates = selectedStartIndex !== null && essay.tokens[selectedStartIndex] && essay.tokens[selectedStartIndex].candidates ? true : false;
@@ -131,7 +144,22 @@ function EssayDisplay({ essay, refreshEssay }) {
             </label>
         </div>
         
-        <div style={{ marginTop: '10px', borderTop: '1px solid #444', width: '100%', display: 'flex', justifyContent: 'center', paddingTop: '10px' }}>
+        <div style={{ marginTop: '10px', borderTop: '1px solid #444', width: '100%', display: 'flex', justifyContent: 'center', paddingTop: '10px', gap: '10px' }}>
+            <button 
+                className="reset-corrections-btn"
+                onClick={handleResetCorrections}
+                style={{
+                  background: 'none',
+                  border: '1px solid #ef4444',
+                  color: '#ef4444',
+                  padding: '5px 10px',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '0.85em'
+                }}
+            >
+              Excluir Normalizações
+            </button>
             <button 
                 onClick={() => setShowOriginal(!showOriginal)}
                 style={{
