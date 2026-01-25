@@ -1,12 +1,10 @@
 from sqlalchemy import func, select
 from sqlalchemy.orm import joinedload
-from sqlalchemy.exc import NoResultFound
+from sqlalchemy.exc import NoResultFound, IntegrityError
 from sqlalchemy.dialects.postgresql import insert
 
-from app.database.models import Token, User, Text, Normalization, TextsUsers, Suggestion, TokensSuggestions, WhitelistTokens
+from app.database.models import Token, User, Text, Normalization, TextsUsers, Suggestion, TokensSuggestions, WhitelistTokens, RawText
 from app.extensions import db
-
-from psycopg2.errors import UniqueViolation
 
 
 
@@ -56,6 +54,17 @@ def get_texts_data(db, user_id):
     ).all()
 
     return result
+
+def get_raw_texts(db):
+    """
+    Fetch a list of all raw texts (no user association).
+    """
+    result = db.query(
+        RawText.id.label("id"),
+        RawText.source_file_name.label("source_file_name")
+    ).all()
+    
+    return result
     
 def get_text_by_id(db, text_id, user_id):
     """
@@ -99,6 +108,36 @@ def get_text_by_id(db, text_id, user_id):
     }
     return response_dict
 
+def get_raw_text_by_id(db, text_id):
+    """
+    Fetch a specific raw text by its ID.
+    """
+    raw_text = db.query(RawText).filter(RawText.id == text_id).first()
+    
+    if not raw_text:
+        return None
+    
+    return {
+        'id': raw_text.id,
+        'source_file_name': raw_text.source_file_name,
+        'text_content': raw_text.text_content,
+        'image_path': raw_text.image_path
+    }
+
+def update_raw_text_content(db, text_id, new_content):
+    """
+    Update the text content of a raw text by its ID.
+    Returns True if successful, False if text not found.
+    """
+    raw_text = db.query(RawText).filter(RawText.id == text_id).first()
+    
+    if not raw_text:
+        return False
+    
+    raw_text.text_content = new_content
+    db.commit()
+    return True
+
 
 def get_original_text_tokens_by_id(db, text_id:int):
     """
@@ -131,28 +170,46 @@ def assign_text_to_user(db, text_id, user_id):
 
 
 def add_suggestion(text_id: int, token_id: int, text: str, db):
-    suggestion = db.query(Suggestion).filter_by(token_text=text).first()
+    # print(f"DEBUG: add_suggestion '{text}' for token {token_id}")
+    suggestion = db.session.query(Suggestion).filter_by(token_text=text).first()
 
     if not suggestion:
-        suggestion = Suggestion(token_text=text)
-        db.add(suggestion)
-        db.flush()
+        try:
+            with db.session.begin_nested():
+                suggestion = Suggestion(token_text=text)
+                db.session.add(suggestion)
+                db.session.flush()
+        except IntegrityError as e:
+            # print(f"DEBUG: IntegrityError creating user suggestion: {e}")
+            # Could have been added by a concurrent transaction
+            suggestion = db.session.query(Suggestion).filter_by(token_text=text).first()
+        except Exception as e:
+            print(f"DEBUG: Unexpected error creating suggestion '{text}': {e}")
+            raise e
+    
+    if not suggestion:
+        print(f"DEBUG: Failed to get/create suggestion for '{text}'")
+        return
 
-    link_exists = db.query(TokensSuggestions).filter_by(
+    link_exists = db.session.query(TokensSuggestions).filter_by(
         token_id=token_id,
         suggestion_id=suggestion.id
     ).first()
 
     if not link_exists:
         try:
-            new_link = TokensSuggestions(
-                token_id=token_id,
-                suggestion_id=suggestion.id
-            )
-            db.add(new_link)
-            # Flush to ensure subsequent queries in the same transaction see this link
-            db.flush()
-        except UniqueViolation:
+            with db.session.begin_nested():
+                new_link = TokensSuggestions(
+                    token_id=token_id,
+                    suggestion_id=suggestion.id
+                )
+                db.session.add(new_link)
+                db.session.flush()
+        except IntegrityError:
+            pass
+        except Exception as e:
+            print(f"DEBUG: Error linking suggestion: {e}")
+            # Don't raise, just skip link
             pass
 
 
@@ -249,6 +306,35 @@ def get_username_by_id(db, user_id:int) -> str:
     """
     user = db.query(User).filter(User.id == user_id).first()
     return user.username if user else None
+
+def add_raw_text(db, tokens: list[Token], source_file_name: str ):
+    """
+    Adds a new raw text and its associated tokens to the database.
+    
+    Args:
+        db: The SQLAlchemy database session.
+        tokens: A list of Token model instances (without IDs or text_id).
+        source_file_name: The source file name of the text.
+    Returns:
+        The ID of the newly created text.
+    """
+    try:
+        text_obj = Text(is_raw=True, source_file_name=source_file_name)
+        db.add(text_obj)        
+        db.flush()
+        
+        for token in tokens:
+            token.text_id = text_obj.id
+            db.add(token)
+
+        db.commit()
+        
+        return text_obj.id
+
+    except Exception as e:
+        db.rollback()
+        print(f"Error adding raw text: {e}")
+        raise e
 
 
 
