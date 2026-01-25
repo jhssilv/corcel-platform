@@ -1,7 +1,10 @@
 import os
+from dotenv import load_dotenv
+
+load_dotenv() # Load env vars before importing config
+
 from flask import Flask, jsonify
 from flask_cors import CORS
-from dotenv import load_dotenv
 from pydantic import ValidationError
 from celery import Celery
 
@@ -10,10 +13,9 @@ from .routes.auth_routes import auth_bp
 from .routes.text_routes import text_bp
 from .routes.download_routes import download_bp
 from .routes.upload_routes import upload_bp
+from .routes.ocr_routes import ocr_bp
 from .config import Config
 from .database.models import User
-
-load_dotenv()
 
 def make_celery(app_name=__name__):
     redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
@@ -61,7 +63,7 @@ def create_app():
     app.register_blueprint(text_bp)
     app.register_blueprint(download_bp)
     app.register_blueprint(upload_bp)
-
+    app.register_blueprint(ocr_bp)
     return app
 
 if __name__ == '__main__':

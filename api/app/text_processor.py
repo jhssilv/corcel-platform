@@ -1,73 +1,40 @@
 import os
-import spacy
-import spacy_udpipe
-from hunspell import HunSpell
-from spellchecker import SpellChecker
-import requests
-import json
 import torch
 from transformers import BertTokenizer, BertForMaskedLM
 import numpy as np
 
-def _get_resource_path(relative_path):
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    return os.path.join(base_dir, relative_path)
+# Import Tokenizer
+from .tokenizer import Tokenizer
 
-def _download_dict():
-    dict_url = "https://www.ime.usp.br/~pf/dicios/br-utf8.txt"
-    txt_file_path = _get_resource_path('dicts/br-utf8.txt')
-    json_file_path = _get_resource_path('dicts/br-utf8.json')
-    data = {}
-
-    if not os.path.exists(txt_file_path):
-        print("Downloading dictionary...")
-        r = requests.get(dict_url)
-    
-        with open(txt_file_path, "wb") as f:
-            f.write(r.content)
-            print("Download finished.")
-
-    with open(txt_file_path, 'r', encoding='utf-8') as file:
-        for index, line in enumerate(file, start=1):
-            data[line.strip()] = 1 # removes blank spaces
-
-    # conversion to json
-    with open(json_file_path, 'w', encoding='utf-8') as json_file:
-        json.dump(data, json_file, ensure_ascii=False, indent=4)
-
-class TextProcessor():
-    
-    nlp = None
-    hobj = None
-    spell = None
+class TextProcessor(Tokenizer):
     
     def __init__(self):
-        
-        dic_path = os.getenv('HUNSPELL_DIC', '/usr/share/hunspell/pt_BR.dic')
-        aff_path = os.getenv('HUNSPELL_AFF', '/usr/share/hunspell/pt_BR.aff')
-        
-        hobj = HunSpell(dic_path, aff_path)
-
-        _download_dict()
-        os.makedirs(_get_resource_path('dicts/'), exist_ok=True)            
-
-        sc_path = os.getenv('SPELLCHECKER_DICT', _get_resource_path('dicts/br-utf8.json'))
-        spell = SpellChecker(local_dictionary=sc_path)
-
-        spacy_udpipe.download("pt")
-        
-        nlp = spacy_udpipe.load('pt')
-        nlp.tokenizer = spacy.blank("pt").tokenizer
-        
-        self.nlp = nlp
-        self.hobj = hobj
-        self.spell = spell
-        
+        super().__init__()
         self.bert_tokenizer = None
         self.bert_model = None
-        self._load_bert()
+
+    # Removed _load_resources, using Parent's one by inheritance 
+    # except that we need to ensure inheritance works for properties.
+    # Tokenizer has the properties nlp, hobj, spell.
+    
+    # We remove the duplicate helper functions _get_resource_path and _download_dict
+    # as they are handled in tokenizer.py now (although not exported there? 
+    # Actually wait, I need to check if I can rely on Tokenizer's internal helpers being available.
+    # I copied them to tokenizer.py but did not export them. 
+    # But `TextProcessor` in this new structure shouldn't need them directly if it uses `self.hobj` etc.
+    
+    def _load_bert(self):
+        if self.bert_tokenizer and self.bert_model:
+            return
+
+        print("Loading Bertimbau model...")
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 
     def _load_bert(self):
+        if self.bert_tokenizer and self.bert_model:
+            return
+
         print("Loading Bertimbau model...")
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print(f"Using device: {self.device}")
@@ -83,6 +50,9 @@ class TextProcessor():
         return self.hobj.spell(word) or bool(self.spell.known([word]))
 
     def _get_bert_predictions(self, sentence_tokens, target_index, top_k=20):
+        if not self.bert_model:
+            self._load_bert()
+
         # Prepare input for BERT
         masked_tokens = sentence_tokens.copy()
         masked_tokens[target_index] = self.bert_tokenizer.mask_token
@@ -152,6 +122,28 @@ class TextProcessor():
             
         candidate_scores.sort(key=lambda x: x[1], reverse=True)
         return [c[0] for c in candidate_scores[:top_k]]
+
+    def tokenize_only(self, text: str):
+        """
+        Tokenizes the text without performing spell checking or normalization suggestions.
+        """
+        doc = self.nlp(text)
+        results = {}
+
+        for i, token in enumerate(doc):
+            word = token.text
+            is_word = word.isalpha()
+            
+            results[i] = {
+                'idx': i,
+                'text': word,
+                'to_be_normalized': False,
+                'suggestions': [],
+                'is_word': is_word,
+                'whitespace_after': token.whitespace_
+            }
+        
+        return results
 
     def process_text(self, text: str):
         doc = self.nlp(text)
