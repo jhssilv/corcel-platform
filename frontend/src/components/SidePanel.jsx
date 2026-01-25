@@ -17,6 +17,7 @@ function SidePanel({
   onReport, 
   onRegisterUser,
   onManageUsers,
+  onOCR,
   onLogout 
 }) {
   return (
@@ -52,6 +53,7 @@ function SidePanel({
               <img src={reportIcon || "/placeholder.svg"} alt="" className="button-icon-svg" />
               <span className="button-text">Gerar Relatório</span>
             </button>
+            
             {isAdmin && (
               <>
                 <button className="panel-button register-button" onClick={onRegisterUser}>
@@ -64,6 +66,13 @@ function SidePanel({
                 </button>
               </>
             )}          </div>
+
+          <div className="panel-ocr-section">
+            <button className="panel-button ocr-button" onClick={onOCR}>
+              <span style={{fontSize: '1.2rem', marginRight: '0.5rem'}}>📷</span>
+              <span className="button-text">Módulo OCR</span>
+            </button>
+          </div>
 
           <div className="panel-logout-section">
             <button className="panel-button logout-button" onClick={onLogout}>
@@ -81,6 +90,7 @@ SidePanel.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   username: PropTypes.string,
+  onOCR: PropTypes.func,
   onDownload: PropTypes.func.isRequired,
   onUpload: PropTypes.func.isRequired,
   onWhitelist: PropTypes.func.isRequired,

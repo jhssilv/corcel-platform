@@ -186,6 +186,23 @@
   border-top: 1px solid #333;
 }
 
+.panel-ocr-section {
+  margin-top: auto;
+  padding-top: 1.5rem;
+  border-top: 1px solid #333;
+}
+
+.ocr-button {
+  background-color: rgba(255, 204, 0, 0.1);
+  border-color: rgba(255, 204, 0, 0.3);
+  color: #ffcc00;
+}
+
+.ocr-button:hover {
+  background-color: rgba(255, 204, 0, 0.2);
+  border-color: #ffcc00;
+}
+
 .logout-button {
   background-color: rgba(220, 38, 38, 0.1);
   border-color: rgba(220, 38, 38, 0.2);

@@ -1,0 +1,42 @@
+.ocr-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #1e1e1e;
+    padding: 10px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid #333;
+}
+
+.ocr-toolbar-btn {
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.toggle-btn {
+    background-color: #333;
+    color: #fff;
+    border: 1px solid #555;
+}
+
+.toggle-btn:hover {
+    background-color: #444;
+}
+
+.finish-btn {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    font-weight: bold;
+}
+
+.finish-btn:hover {
+    background-color: #45a049;
+    transform: translateY(-1px);
+}

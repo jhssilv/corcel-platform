@@ -1,0 +1,218 @@
+import React, { useState, useEffect, useRef } from 'react';
+import PropTypes from 'prop-types';
+import '../styles/ocr_modal.css';
+import { getRawTextImage } from './api/APIFunctions';
+
+const OCREditModal = ({ rawText, onClose, onToggleImage, onFinish }) => {
+  const [textContent, setTextContent] = useState('');
+  const [imageHidden, setImageHidden] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(100);
+  const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [imageUrl, setImageUrl] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const imageRef = useRef(null);
+
+  useEffect(() => {
+    if (rawText) {
+      setTextContent(rawText.text_content || '');
+      // Reset zoom and position when text changes
+      setZoomLevel(100);
+      setImagePosition({ x: 0, y: 0 });
+      
+      // Load image
+      loadImage();
+    }
+  }, [rawText]);
+
+  const loadImage = async () => {
+    if (rawText?.id) {
+      try {
+        const url = await getRawTextImage(rawText.id);
+        setImageUrl(url);
+      } catch (error) {
+        console.error('Failed to load image:', error);
+      }
+    }
+  };
+
+  const handleZoomIn = () => {
+    setZoomLevel(prev => Math.min(prev + 10, 200));
+  };
+
+  const handleZoomOut = () => {
+    setZoomLevel(prev => Math.max(prev - 10, 50));
+  };
+
+  const handleResetZoom = () => {
+    setZoomLevel(100);
+    setImagePosition({ x: 0, y: 0 });
+  };
+
+  const handleMouseDown = (e) => {
+    if (e.button === 0) { // Left click only
+      setIsDragging(true);
+      setDragStart({
+        x: e.clientX - imagePosition.x,
+        y: e.clientY - imagePosition.y,
+      });
+    }
+  };
+
+  const handleMouseMove = (e) => {
+    if (isDragging) {
+      setImagePosition({
+        x: e.clientX - dragStart.x,
+        y: e.clientY - dragStart.y,
+      });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleWheel = (e) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -5 : 5;
+    setZoomLevel(prev => Math.max(50, Math.min(200, prev + delta)));
+  };
+
+  const handleToggleImage = () => {
+    setImageHidden(!imageHidden);
+    if (onToggleImage) {
+      onToggleImage();
+    }
+  };
+
+  const handleFinish = async () => {
+    if (onFinish) {
+      setIsSaving(true);
+      try {
+        await onFinish(textContent);
+      } catch (error) {
+        console.error('Error saving:', error);
+      } finally {
+        setIsSaving(false);
+      }
+    }
+  };
+
+  const handleTextChange = (e) => {
+    setTextContent(e.target.value);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const start = e.target.selectionStart;
+      const end = e.target.selectionEnd;
+      const newValue = textContent.substring(0, start) + '\t' + textContent.substring(end);
+      setTextContent(newValue);
+      // Set cursor position after the tab
+      setTimeout(() => {
+        e.target.selectionStart = e.target.selectionEnd = start + 1;
+      }, 0);
+    }
+  };
+
+  if (!rawText) return null;
+
+  return (
+    <div className="ocr-modal-overlay" onClick={onClose}>
+      <div className="ocr-modal-content" onClick={(e) => e.stopPropagation()}>
+        {/* Header */}
+        <div className="ocr-modal-header">
+          <h2 className="ocr-modal-title">{rawText.source_file_name}</h2>
+          <button className="ocr-modal-close" onClick={onClose} aria-label="Close">
+            ×
+          </button>
+        </div>
+
+        {/* Body: Grid layout with image and text */}
+        <div className="ocr-modal-body">
+          {/* Image Panel */}
+          {!imageHidden && (
+            <div className="ocr-modal-image-panel">
+              <div className="ocr-image-controls">
+                <button className="ocr-control-btn" onClick={handleZoomOut}>-</button>
+                <span className="ocr-control-hint">{zoomLevel}%</span>
+                <button className="ocr-control-btn" onClick={handleZoomIn}>+</button>
+                <button className="ocr-control-btn" onClick={handleResetZoom}>Reset</button>
+              </div>
+              
+              <div
+                className="ocr-image-container"
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+                onWheel={handleWheel}
+              >
+                {imageUrl ? (
+                  <img
+                    ref={imageRef}
+                    src={imageUrl}
+                    alt="OCR Source"
+                    className="ocr-modal-image"
+                    draggable={false}
+                    style={{
+                      transform: `translate(${imagePosition.x}px, ${imagePosition.y}px) scale(${zoomLevel / 100})`,
+                    }}
+                  />
+                ) : (
+                  <div className="ocr-image-placeholder">Loading image...</div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Text Panel */}
+          <div 
+            className="ocr-modal-text-panel"
+            style={imageHidden ? { gridColumn: '1 / -1' } : {}}
+          >
+            <div className="ocr-text-toolbar">
+              <h3 className="ocr-toolbar-title">Texto Transcrito</h3>
+              <div className="ocr-toolbar-actions">
+                <button className="ocr-action-btn ocr-btn-secondary" onClick={handleToggleImage}>
+                  {imageHidden ? 'Mostrar Imagem' : 'Ocultar Imagem'}
+                </button>
+                <button 
+                  className="ocr-action-btn ocr-btn-primary" 
+                  onClick={handleFinish}
+                  disabled={isSaving}
+                >
+                  {isSaving ? 'Salvando...' : 'Salvar e Fechar'}
+                </button>
+              </div>
+            </div>
+            
+            <textarea
+              className="ocr-modal-textarea"
+              value={textContent}
+              onChange={handleTextChange}
+              onKeyDown={handleKeyDown}
+              placeholder="Digite o texto transcrito aqui..."
+              spellCheck={false}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+OCREditModal.propTypes = {
+  rawText: PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    source_file_name: PropTypes.string.isRequired,
+    text_content: PropTypes.string,
+  }),
+  onClose: PropTypes.func.isRequired,
+  onToggleImage: PropTypes.func,
+  onFinish: PropTypes.func,
+};
+
+export default OCREditModal;

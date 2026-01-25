@@ -1,0 +1,314 @@
+/* OCR Upload Modal Styles */
+
+.drop-zone {
+    border: 2px dashed rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 3rem 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background-color: #1a1a1a;
+    min-height: 280px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.drop-zone:hover {
+    border-color: #646cff;
+    background-color: rgba(100, 108, 255, 0.05);
+}
+
+.drop-zone.dragging {
+    border-color: #646cff;
+    background-color: rgba(100, 108, 255, 0.15);
+    border-style: solid;
+    border-width: 3px;
+    transform: scale(1.02);
+}
+
+.drop-zone.dragging .upload-main-text {
+    color: #646cff;
+    font-weight: 600;
+}
+
+.drop-zone.has-file {
+    border-style: solid;
+    border-color: #4CAF50;
+    background-color: rgba(76, 175, 80, 0.05);
+}
+
+.upload-icon-svg {
+    width: 72px;
+    height: 72px;
+    color: rgba(255, 255, 255, 0.4);
+    transition: all 0.3s ease;
+}
+
+.drop-zone:hover .upload-icon-svg {
+    color: #646cff;
+    transform: translateY(-5px);
+}
+
+.drop-zone.dragging .upload-icon-svg {
+    color: #646cff;
+    transform: scale(1.1);
+}
+
+.upload-text-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.upload-main-text {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.87);
+    margin: 0;
+}
+
+.upload-or-text {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.4);
+    margin: 0.5rem 0;
+}
+
+.upload-hint-text {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin: 0.5rem 0 0 0;
+}
+
+.file-input {
+    display: none;
+}
+
+.file-input-label {
+    cursor: pointer;
+    margin: 0;
+}
+
+.file-input-button {
+    display: inline-block;
+    padding: 0.75rem 2rem;
+    background-color: #333;
+    color: #fff;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    border: 1px solid #555;
+    transition: all 0.2s ease;
+}
+
+.file-input-button:hover {
+    background-color: #444;
+    border-color: #646cff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(100, 108, 255, 0.2);
+}
+
+/* File Info Display */
+.file-info-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+}
+
+.file-icon-svg {
+    width: 64px;
+    height: 64px;
+    color: #646cff;
+}
+
+.file-details {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.file-name {
+    font-size: 1rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.87);
+    word-break: break-word;
+    max-width: 90%;
+    text-align: center;
+}
+
+.file-size {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.file-status {
+    margin-top: 0.5rem;
+}
+
+.validating {
+    color: #FFA726;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.valid-mark {
+    color: #4CAF50;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.invalid-mark {
+    color: #f44336;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.remove-file-btn {
+    margin-top: 0.5rem;
+    padding: 0.5rem 1.5rem;
+    background-color: #333;
+    color: rgba(255, 255, 255, 0.7);
+    border: 1px solid #555;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+}
+
+.remove-file-btn:hover {
+    background-color: #444;
+    color: #f44336;
+    border-color: #f44336;
+}
+
+/* Error Message */
+.error-message {
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    background-color: rgba(244, 67, 54, 0.1);
+    border: 1px solid rgba(244, 67, 54, 0.3);
+    border-radius: 6px;
+    color: #f44336;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+/* Processing State */
+.processing-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 2rem;
+}
+
+.progress-bar-container {
+    width: 100%;
+    height: 8px;
+    background-color: #333;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #646cff, #4CAF50);
+    transition: width 0.3s ease;
+    border-radius: 4px;
+}
+
+.progress-text {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #646cff;
+    margin: 0;
+}
+
+.status-message {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.7);
+    margin: 0;
+}
+
+.processing-spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid rgba(255, 255, 255, 0.1);
+    border-top-color: #646cff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Modal Footer Buttons */
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    padding: 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: #2b2b2b;
+    border-radius: 0 0 8px 8px;
+}
+
+.cancel-button {
+    padding: 0.75rem 1.5rem;
+    background-color: #333;
+    color: rgba(255, 255, 255, 0.87);
+    border: 1px solid #555;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.cancel-button:hover:not(:disabled) {
+    background-color: #444;
+    border-color: #666;
+}
+
+.cancel-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.confirm-button {
+    padding: 0.75rem 1.5rem;
+    background-color: #555;
+    color: rgba(255, 255, 255, 0.4);
+    border: 1px solid #555;
+    border-radius: 6px;
+    cursor: not-allowed;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.confirm-button.enabled {
+    background-color: #646cff;
+    color: white;
+    border-color: #646cff;
+    cursor: pointer;
+}
+
+.confirm-button.enabled:hover {
+    background-color: #535bd9;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(100, 108, 255, 0.3);
+}
+
+.confirm-button:disabled {
+    opacity: 0.6;
+}

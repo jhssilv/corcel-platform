@@ -3,7 +3,7 @@ import DropdownSelect from './DropdownSelect.jsx';
 import PropTypes from 'prop-types';
 import '../styles/essay_selector.css';
 
-import { getTextsData, getUsernames, toggleNormalizedStatus } from './api/APIFunctions.jsx';
+import { getTextsData, getUsernames, toggleNormalizedStatus, getRawTextsData } from './api/APIFunctions.jsx';
 
 // ESSAY SELECTOR COMPONENT \\
 
@@ -28,7 +28,8 @@ const otherFilters = [
 const EssaySelector = ({
     selectedEssay,
     setSelectedEssay,
-    refreshTrigger = 0
+    refreshTrigger = 0,
+    onlyRaw = false
 }) => {
     const [textsData, setTextsData] = useState(null);
     const [selectedGrades, setSelectedGrades] = useState(null);
@@ -53,7 +54,7 @@ const EssaySelector = ({
     useEffect(() => {
         const fetchTexts = async () => {
             try {
-                const data = await getTextsData();
+                const data = onlyRaw ? await getRawTextsData() : await getTextsData();
                 setTextsData(data);
                 changeFilteredEssays(data, selectedGrades, selectedTeacher, selectedOtherFilters, essayInputValue);
             } catch (error) {
@@ -61,7 +62,7 @@ const EssaySelector = ({
             }
         };
         fetchTexts();
-    }, [refreshTrigger]);
+    }, [refreshTrigger, onlyRaw]);
 
     const fuzzySearchLogic = (candidate, input) => {
         if (!input) return true;
@@ -85,6 +86,9 @@ const EssaySelector = ({
 
     function changeFilteredEssays(textsData, selectedGrades, selectedTeacher, selectedOtherFilters, searchText = '') {
 
+        // For raw texts, we have a simpler structure {id, sourceFileName}
+        // For normal texts, we have {grade, usersAssigned, normalizedByUser, sourceFileName, isRaw}
+        
         // Extract selected grade values (numbers)
         const selectedGradesList = selectedGrades?.map(item => item.value) || [];
 
@@ -96,7 +100,17 @@ const EssaySelector = ({
 
 
         const filteredEssays = textsData
-            .filter(({ grade, usersAssigned, normalizedByUser, sourceFileName }) => {
+            .filter((item) => {
+                // Raw texts have different structure
+                if (onlyRaw) {
+                    // Raw texts only have id and sourceFileName
+                    const matchesSearch = fuzzySearchLogic({ label: item.sourceFileName }, searchText);
+                    return matchesSearch;
+                }
+                
+                // Normal texts filtering
+                const { grade, usersAssigned, normalizedByUser, sourceFileName } = item;
+
                 const matchesGrade =
                     selectedGradesList.length === 0 || selectedGradesList.includes(Number(grade));
                 const matchesTeacher =
@@ -107,7 +121,7 @@ const EssaySelector = ({
 
                 return matchesGrade && matchesTeacher && matchesCorrected && matchesSearch;
             })
-            .map(({ id, sourceFileName }) => ({ value: id, label: sourceFileName }));
+            .map((item) => ({ value: item.id, label: item.sourceFileName }));
 
         localStorage.setItem('textIds', JSON.stringify(filteredEssays.map(essay => essay.value)));
         setFilteredEssays(filteredEssays);

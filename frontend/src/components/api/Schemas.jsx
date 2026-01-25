@@ -49,6 +49,7 @@ const TextMetadataSchema = z.object({
     usersAssigned: z.array(z.string()),
     normalizedByUser: z.boolean(),
     sourceFileName: z.string().nullable(),
+    isRaw: z.boolean().optional().default(false),
 });
 
 /**
@@ -83,6 +84,7 @@ export const TextDetailResponseSchema = z.object({
   sourceFileName: z.string().nullable(),
   assignedToUser: z.boolean(),
   usersWhoNormalized: z.array(z.string()),
+  isRaw: z.boolean().optional().default(false),
 });
 
 

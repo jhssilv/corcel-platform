@@ -59,6 +59,14 @@ export async function getTextsData() {
 }
 
 /**
+ * Fetches the metadata of all raw texts (OCR module).
+ */
+export async function getRawTextsData() {
+  const data = await apiPrivate.get(`/raw-texts/`);
+  return data.textsData; // Simple array of {id, sourceFileName}
+}
+
+/**
  * Fetches the detailed data of a specific text.
  */
 export async function getTextById(textId) {
@@ -66,6 +74,22 @@ export async function getTextById(textId) {
   // BROKEN: find a fix later
   // return schemas.TextDetailResponseSchema.parse(data);
   return data;
+}
+
+/**
+ * Fetches the detailed data of a specific raw text.
+ */
+export async function getRawTextById(textId) {
+  const data = await apiPrivate.get(`/raw-texts/${textId}`);
+  return data;
+}
+
+/**
+ * Updates the text content of a raw text.
+ */
+export async function updateRawText(textId, textContent) {
+  const response = await apiPrivate.put(`/raw-texts/${textId}`, { text_content: textContent });
+  return response.data || response;
 }
 
 /**
@@ -241,4 +265,68 @@ export async function deleteAllNormalizations(textId) {
   const response = await apiPrivate.delete(`/texts/${textId}/normalizations/all`);
   return response.data || response;
 
+}
+
+// --- OCR Functions ---
+
+/**
+ * Uploads a ZIP file containing images for OCR.
+ */
+export async function uploadOCRArchive(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  
+  const response = await apiPrivate.post('/ocr/upload', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+    timeout: 300000, // 5 minutes
+  });
+  return response;
+}
+
+/**
+ * Fetches the image associated with a text.
+ */
+export async function getTextImage(textId) {
+    try {
+        const response = await apiPrivate.get(`/ocr/texts/${textId}/image`, { responseType: 'blob' });
+        // Handle case where interceptor returns data directly or full response
+        const blob = response.data || response;
+        if (!(blob instanceof Blob)) {
+            console.warn("Response is not a blob", blob);
+            return null;
+        }
+        return URL.createObjectURL(blob);
+    } catch (e) {
+        console.warn("Could not fetch image for text", textId, e);
+        return null;
+    }
+}
+/**
+ * Fetches the image associated with a raw text.
+ */
+export async function getRawTextImage(textId) {
+    try {
+        const response = await apiPrivate.get(`/ocr/raw-texts/${textId}/image`, { responseType: 'blob' });
+        const blob = response.data || response;
+        if (!(blob instanceof Blob)) {
+            console.warn("Response is not a blob", blob);
+            return null;
+        }
+        return URL.createObjectURL(blob);
+    } catch (e) {
+        console.error("Error fetching raw text image:", e);
+        return null;
+    }
+}
+/**
+ * Updates a token's text value (OCR correction).
+ */
+export async function updateToken(textId, tokenId, newValue) {
+    const payload = {
+        token_id: tokenId,
+        new_value: newValue
+    };
+    return apiPrivate.post(`/ocr/texts/${textId}/tokens`, payload);
 }

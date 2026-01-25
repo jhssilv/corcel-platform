@@ -1,21 +1,66 @@
-/* Added padding-top to account for fixed navbar height */
-.main-page-section {
-  padding-top: 80px; /* 60px navbar height + 20px spacing */
-  max-width: 1200px;
-  margin: 0 auto;
-  padding-left: 20px;
-  padding-right: 20px;
+/* main_page.css */
+
+/* Reset for the OCR page to take full viewport */
+.ocr-page-section {
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  padding-top: 60px; /* Account for fixed top bar */
+  box-sizing: border-box;
+  background-color: #121212; /* Darker background for focus */
 }
 
-.main-page-header {
-  margin-bottom: 20px;
-  color: #e4e4e7;
-  font-size: 1.8rem;
-  font-weight: 600;
+/* Container for the collapsible selection controls */
+.ocr-controls-header {
+  flex: 0 0 auto; /* Don't grow */
+  background-color: #1e1e1e;
   border-bottom: 1px solid #333;
-  padding-bottom: 10px;
+  padding: 10px 20px;
+  z-index: 10;
+  transition: all 0.3s ease;
 }
 
-.essayDisplay {
-  white-space: pre-wrap;
+/* Inline upload section */
+.ocr-upload-section {
+  background-color: #1e1e1e;
+  padding: 20px;
+  border-bottom: 1px solid #333;
+}
+
+.ocr-upload-title {
+  margin: 0 0 15px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #e0e0e0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #333;
+}
+
+/* Improved Voltar button */
+.ocr-back-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background-color: #333;
+  color: #e0e0e0;
+  border: 1px solid #555;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ocr-back-button:hover {
+  background-color: #444;
+  border-color: #646cff;
+  transform: translateX(-2px);
+}
+
+.ocr-back-button svg {
+  flex-shrink: 0;
 }
