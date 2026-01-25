@@ -1,4 +1,9 @@
 # api/run_worker.py
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from app.app import create_app
 from app.extensions import celery
 
