@@ -38,7 +38,7 @@ def get_texts_data(current_user):
                 "grade": row.grade,
                 "normalized_by_user": row.normalized_by_user or False,
                 "source_file_name": row.source_file_name,
-                "users_assigned": row.users_assigned or [],
+                "users_assigned": row.users_assigned or []
             }
             for row in texts_data_from_db
         ]
@@ -72,6 +72,97 @@ def get_text_detail(current_user, text_id: int):
     
         response_schema = text_schemas.TextDetailResponse(**text_data_dict)
         return jsonify(response_schema.model_dump(by_alias=True)), 200
+    except Exception as e:
+        return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
+
+@text_bp.route('/api/raw-texts/', methods=['GET'])
+@login_required()
+def get_raw_texts_data(current_user):
+    """Retrieves the list of raw texts metadata.
+
+    Args:
+        current_user (User): The currently logged-in user.
+
+    Returns:
+        JSON response with list of raw texts.
+        
+    Pre-Conditions:
+        User must be logged in.
+        
+    """
+    try:
+        raw_texts_data = queries.get_raw_texts(session)
+        
+        texts_list = [
+            {
+                "id": row.id,
+                "sourceFileName": row.source_file_name,
+            }
+            for row in raw_texts_data
+        ]
+
+        return jsonify({"textsData": texts_list}), 200
+    except Exception as e:
+        return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
+
+@text_bp.route('/api/raw-texts/<int:text_id>', methods=['GET'])
+@login_required()
+@validate()
+def get_raw_text_detail(current_user, text_id: int):
+    """Retrieves the detailed information of a specific raw text.
+
+    Args:
+        current_user (User): The currently logged-in user.
+        text_id (int): The ID of the raw text to retrieve.
+
+    Returns:
+        JSON response with raw text details.
+        
+    Pre-Conditions:
+        User must be logged in.
+        
+    """
+    try:
+        raw_text_data = queries.get_raw_text_by_id(session, text_id)
+        if not raw_text_data:
+            return jsonify({"error": "Raw text not found"}), 404
+    
+        return jsonify(raw_text_data), 200
+    except Exception as e:
+        return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
+
+@text_bp.route('/api/raw-texts/<int:text_id>', methods=['PUT'])
+@login_required()
+@validate()
+def update_raw_text(current_user, text_id: int):
+    """Updates the text content of a specific raw text.
+
+    Args:
+        current_user (User): The currently logged-in user.
+        text_id (int): The ID of the raw text to update.
+
+    Returns:
+        JSON response with success message.
+        
+    Pre-Conditions:
+        User must be logged in.
+        Request body must contain 'text_content' field.
+        
+    """
+    from flask import request
+    
+    try:
+        data = request.get_json()
+        if not data or 'text_content' not in data:
+            return jsonify({"error": "Missing text_content in request body"}), 400
+        
+        new_content = data['text_content']
+        
+        success = queries.update_raw_text_content(session, text_id, new_content)
+        if not success:
+            return jsonify({"error": "Raw text not found"}), 404
+    
+        return jsonify({"message": "Text updated successfully"}), 200
     except Exception as e:
         return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
 
