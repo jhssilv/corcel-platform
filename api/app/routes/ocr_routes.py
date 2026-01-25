@@ -64,14 +64,14 @@ def get_raw_text_image(current_user, text_id):
 def get_text_image(current_user, text_id):
     """
     Retrieves the image file associated with a text.
+    LEGACY: This route is for old OCR implementation.
+    Use /api/ocr/raw-texts/<id>/image instead.
     """
     try:
         text = db.session.query(Text).filter(Text.id == text_id).one()
         
-        if not text.is_raw or not text.image_path:
-            return jsonify({'error': 'This text does not have an associated image.'}), 404
-        
-        return send_from_directory(IMAGES_FOLDER, text.image_path)
+        # This route is legacy - raw texts are now in the raw_texts table
+        return jsonify({'error': 'This endpoint is deprecated. Use /api/ocr/raw-texts/<id>/image instead.'}), 410
         
     except NoResultFound:
         return jsonify({'error': 'Text not found.'}), 404

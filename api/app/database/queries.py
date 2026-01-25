@@ -319,7 +319,7 @@ def add_raw_text(db, tokens: list[Token], source_file_name: str ):
         The ID of the newly created text.
     """
     try:
-        text_obj = Text(is_raw=True, source_file_name=source_file_name)
+        text_obj = Text(source_file_name=source_file_name)
         db.add(text_obj)        
         db.flush()
         
