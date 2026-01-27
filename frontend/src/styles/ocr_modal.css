@@ -351,3 +351,53 @@
     gap: 1rem;
     justify-content: flex-end;
 }
+
+/* Loading Animation */
+.ocr-loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem 0;
+}
+
+.ocr-loading-spinner {
+    width: 60px;
+    height: 60px;
+    border: 6px solid #333;
+    border-top-color: #646cff;
+    border-radius: 50%;
+    animation: ocr-spin 1s linear infinite;
+}
+
+@keyframes ocr-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.ocr-processing-text {
+    text-align: center;
+    color: #aaa;
+    font-size: 1rem;
+    margin: 1rem 0 0 0;
+}
+
+.ocr-success-text {
+    text-align: center;
+    color: #28a745;
+    font-size: 1rem;
+    margin: 1rem 0;
+    line-height: 1.6;
+}
+
+.ocr-error-text {
+    text-align: center;
+    color: #ff6b6b;
+    font-size: 1rem;
+    margin: 1rem 0;
+    line-height: 1.6;
+}
+
+.ocr-confirm-modal h3 {
+    text-align: center;
+}
