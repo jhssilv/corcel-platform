@@ -126,6 +126,10 @@ def process_ocr_zip(self, zip_path):
     """
     Process a ZIP file containing images with OCR.
     """
+    MAX_UNCOMPRESSED_SIZE = 500 * 1024 * 1024  # 500 MB limit for uncompressed content
+    MAX_IMAGE_PIXELS = 89478485  # ~300 megapixels (PIL default is 89478485)
+    MAX_IMAGE_DIMENSION = 20000  # Maximum width or height in pixels
+    
     print(f"Starting OCR processing for zip: {zip_path}")
     if not os.path.exists(zip_path):
         print(f"Error: Zip file not found at {zip_path}")
@@ -138,8 +142,22 @@ def process_ocr_zip(self, zip_path):
     results = {}
     
     valid_extensions = ('.png', '.jpg', '.jpeg', '.tif', '.tiff')
+    # Magic bytes for image validation
+    image_magic_bytes = {
+        b'\xff\xd8\xff': 'jpg',
+        b'\x89PNG\r\n\x1a\n': 'png',
+        b'II*\x00': 'tiff',  # Little-endian TIFF
+        b'MM\x00*': 'tiff',  # Big-endian TIFF
+    }
 
     try:
+        # Check uncompressed size to prevent zip bombs
+        with zipfile.ZipFile(zip_path, 'r') as zip_check:
+            total_size = sum(info.file_size for info in zip_check.infolist())
+            if total_size > MAX_UNCOMPRESSED_SIZE:
+                os.remove(zip_path)
+                return {'error': f'Uncompressed size too large ({total_size // (1024*1024)}MB). Maximum is {MAX_UNCOMPRESSED_SIZE // (1024*1024)}MB.'}
+        
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
             file_list = [
                 f for f in zip_ref.namelist() 
@@ -154,28 +172,57 @@ def process_ocr_zip(self, zip_path):
                 return {'error': 'The zip file does not contain valid images.'}
 
             for index, filename in enumerate(file_list):
-                print(f"Processing file {index+1}/{total_files}: {filename}")
+                # Path traversal protection: ensure filename doesn't escape directory
+                base_name = os.path.basename(filename)
+                if '..' in filename or filename != base_name:
+                    print(f"Skipping potentially malicious filename: {filename}")
+                    results[filename] = {'error': 'Invalid filename (path traversal detected)'}
+                    continue
+                
+                print(f"Processing file {index+1}/{total_files}: {base_name}")
                 self.update_state(state='PROGRESS',
                                   meta={
                                       'current': index + 1, 
                                       'total': total_files, 
-                                      'status': f'Processando OCR: {filename} ({index + 1}/{total_files})'
+                                      'status': f'Processando OCR: {base_name} ({index + 1}/{total_files})'
                                   })
 
                 # 1. Read image from ZIP
                 with zip_ref.open(filename) as file:
                     image_bytes = file.read()
                 
+                # Validate magic bytes to ensure it's actually an image
+                is_valid_image = False
+                for magic, img_type in image_magic_bytes.items():
+                    if image_bytes.startswith(magic):
+                        is_valid_image = True
+                        break
+                
+                if not is_valid_image:
+                    print(f"Invalid image file (magic bytes check failed): {base_name}")
+                    results[base_name] = {'error': 'Invalid image file format'}
+                    continue
+                
                 # 2. Convert/Optimize Image (e.g. to JPG)
                 try:
+                    # Set PIL protection limits
+                    Image.MAX_IMAGE_PIXELS = MAX_IMAGE_PIXELS
+                    
                     image = Image.open(io.BytesIO(image_bytes))
+                    
+                    # Check image dimensions before processing
+                    width, height = image.size
+                    if width > MAX_IMAGE_DIMENSION or height > MAX_IMAGE_DIMENSION:
+                        print(f"Image too large: {width}x{height}")
+                        results[base_name] = {'error': f'Image dimensions too large ({width}x{height})'}
+                        continue
+                    
                     # Ensure RGB
                     if image.mode != 'RGB':
                         image = image.convert('RGB')
                     
                     # Save to permanent storage
                     # structure: images/<uuid>_<filename>.jpg
-                    base_name = os.path.basename(filename)
                     clean_name = os.path.splitext(base_name)[0] + ".jpg"
                     storage_filename = f"{uuid.uuid4()}_{clean_name}"
                     storage_path = os.path.join(IMAGES_FOLDER, storage_filename)
@@ -185,21 +232,22 @@ def process_ocr_zip(self, zip_path):
                     
                     # 3. Perform OCR
                     # Use the saved file path or the bytes. Service accepts path.
-                    print(f"Calling OCR Service for {filename}...")
+                    print(f"Calling OCR Service for {base_name}...")
                     extracted_text = ocr_service.perform_ocr(storage_path)
-                    print(f"OCR Success for {filename}. Extracted {len(extracted_text)} chars.")
+                    print(f"OCR Success for {base_name}. Extracted {len(extracted_text)} chars.")
                     
                     # 4. Store raw text without tokenization
-                    results[filename] = {
+                    # Use only the base filename (last part after / or \)
+                    results[base_name] = {
                         'text_content': extracted_text,
                         'image_path': storage_filename
                     }
-                    print("Processed OCR: ", filename)
+                    print("Processed OCR: ", base_name)
 
                 except Exception as img_err:
-                    print(f"Error processing image {filename}: {img_err}")
+                    print(f"Error processing image {base_name}: {img_err}")
                     # Log error but continue?
-                    results[filename] = {
+                    results[base_name] = {
                         'error': str(img_err)
                     }
 
