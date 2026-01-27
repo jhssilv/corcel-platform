@@ -24,6 +24,8 @@ def upload_ocr_zip(current_user):
     """
     Uploads a ZIP file containing images for OCR processing.
     """
+    MAX_ZIP_SIZE = 1000 * 1024 * 1024  # 1000 MB limit for uploaded zip
+    
     if 'file' not in request.files:
         return jsonify(generic_schemas.ErrorResponse(error='File not found.').model_dump()), 400
     
@@ -31,6 +33,14 @@ def upload_ocr_zip(current_user):
     
     if file.filename == '' or not file.filename.endswith('.zip'):
         return jsonify(generic_schemas.ErrorResponse(error='Invalid file type. Must be .zip').model_dump()), 400
+    
+    # Check file size before saving
+    file.seek(0, os.SEEK_END)
+    file_size = file.tell()
+    file.seek(0)  # Reset to beginning
+    
+    if file_size > MAX_ZIP_SIZE:
+        return jsonify(generic_schemas.ErrorResponse(error=f'File too large. Maximum size is {MAX_ZIP_SIZE // (1024*1024)}MB').model_dump()), 400
                 
     filename = secure_filename(file.filename)
     unique_name = f"ocr_{uuid.uuid4()}_{filename}"
