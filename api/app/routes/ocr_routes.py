@@ -59,23 +59,6 @@ def get_raw_text_image(current_user, text_id):
     except NoResultFound:
         return jsonify({'error': 'Raw text not found.'}), 404
 
-@ocr_bp.route('/api/ocr/texts/<int:text_id>/image', methods=['GET'])
-@admin_required()
-def get_text_image(current_user, text_id):
-    """
-    Retrieves the image file associated with a text.
-    LEGACY: This route is for old OCR implementation.
-    Use /api/ocr/raw-texts/<id>/image instead.
-    """
-    try:
-        text = db.session.query(Text).filter(Text.id == text_id).one()
-        
-        # This route is legacy - raw texts are now in the raw_texts table
-        return jsonify({'error': 'This endpoint is deprecated. Use /api/ocr/raw-texts/<id>/image instead.'}), 410
-        
-    except NoResultFound:
-        return jsonify({'error': 'Text not found.'}), 404
-
 @ocr_bp.route('/api/ocr/texts/<int:text_id>/tokens', methods=['POST'])
 @admin_required()
 def update_token_ocr(current_user, text_id):
