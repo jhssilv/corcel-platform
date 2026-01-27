@@ -59,31 +59,3 @@ def get_raw_text_image(current_user, text_id):
     except NoResultFound:
         return jsonify({'error': 'Raw text not found.'}), 404
 
-@ocr_bp.route('/api/ocr/texts/<int:text_id>/tokens', methods=['POST'])
-@admin_required()
-def update_token_ocr(current_user, text_id):
-    """
-    Updates a token's text value (OCR correction).
-    Payload: { "token_id": int, "new_value": str }
-    """
-    data = request.get_json()
-    token_id = data.get('token_id')
-    new_value = data.get('new_value')
-    
-    if token_id is None or new_value is None:
-        return jsonify({'error': 'Missing token_id or new_value'}), 400
-
-    try:
-        token = db.session.query(Token).filter(Token.id == token_id, Token.text_id == text_id).one()
-        
-        old_value = token.token_text
-        token.token_text = new_value
-        db.session.commit()
-        
-        return jsonify({'message': 'Token updated successfully', 'old_value': old_value, 'new_value': new_value})
-
-    except NoResultFound:
-        return jsonify({'error': 'Token not found for this text.'}), 404
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': str(e)}), 500
