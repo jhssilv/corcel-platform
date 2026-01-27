@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import '../styles/ocr_modal.css';
-import { getRawTextImage } from './api/APIFunctions';
+import { getRawTextImage, finalizeRawText, updateRawText } from './api/APIFunctions';
 
 const OCREditModal = ({ rawText, onClose, onToggleImage, onFinish }) => {
   const [textContent, setTextContent] = useState('');
@@ -12,15 +12,19 @@ const OCREditModal = ({ rawText, onClose, onToggleImage, onFinish }) => {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [imageUrl, setImageUrl] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [isFinalizing, setIsFinalizing] = useState(false);
+  const [finalFileName, setFinalFileName] = useState('');
   const imageRef = useRef(null);
 
   useEffect(() => {
     if (rawText) {
       setTextContent(rawText.text_content || '');
+      setFinalFileName(rawText.source_file_name || '');
       // Reset zoom and position when text changes
       setZoomLevel(100);
       setImagePosition({ x: 0, y: 0 });
-      
+
       // Load image
       loadImage();
     }
@@ -87,16 +91,50 @@ const OCREditModal = ({ rawText, onClose, onToggleImage, onFinish }) => {
   };
 
   const handleFinish = async () => {
-    if (onFinish) {
-      setIsSaving(true);
-      try {
-        await onFinish(textContent);
-      } catch (error) {
-        console.error('Error saving:', error);
-      } finally {
-        setIsSaving(false);
+    setIsSaving(true);
+    try {
+      await updateRawText(rawText.id, textContent);
+      if (onFinish) {
+        onFinish();
       }
+      onClose();
+    } catch (error) {
+      console.error('Error saving text:', error);
+      alert('Erro ao salvar o texto. Tente novamente.');
+    } finally {
+      setIsSaving(false);
     }
+  };
+
+  const handleFinalize = () => {
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmFinalize = async () => {
+    setIsFinalizing(true);
+    try {
+      // First save the current content
+      await updateRawText(rawText.id, textContent);
+
+      // Then finalize (process and delete) with optional custom filename
+      await finalizeRawText(rawText.id, finalFileName);
+
+      alert('Texto finalizado com sucesso! Agora está disponível para normalização.');
+      if (onFinish) {
+        onFinish();
+      }
+      onClose();
+    } catch (error) {
+      console.error('Error finalizing text:', error);
+      alert('Erro ao finalizar o texto. Tente novamente.');
+    } finally {
+      setIsFinalizing(false);
+      setShowConfirmModal(false);
+    }
+  };
+
+  const handleCancelFinalize = () => {
+    setShowConfirmModal(false);
   };
 
   const handleTextChange = (e) => {
@@ -141,7 +179,7 @@ const OCREditModal = ({ rawText, onClose, onToggleImage, onFinish }) => {
                 <button className="ocr-control-btn" onClick={handleZoomIn}>+</button>
                 <button className="ocr-control-btn" onClick={handleResetZoom}>Reset</button>
               </div>
-              
+
               <div
                 className="ocr-image-container"
                 onMouseDown={handleMouseDown}
@@ -169,7 +207,7 @@ const OCREditModal = ({ rawText, onClose, onToggleImage, onFinish }) => {
           )}
 
           {/* Text Panel */}
-          <div 
+          <div
             className="ocr-modal-text-panel"
             style={imageHidden ? { gridColumn: '1 / -1' } : {}}
           >
@@ -179,16 +217,23 @@ const OCREditModal = ({ rawText, onClose, onToggleImage, onFinish }) => {
                 <button className="ocr-action-btn ocr-btn-secondary" onClick={handleToggleImage}>
                   {imageHidden ? 'Mostrar Imagem' : 'Ocultar Imagem'}
                 </button>
-                <button 
-                  className="ocr-action-btn ocr-btn-primary" 
+                <button
+                  className="ocr-action-btn ocr-btn-primary"
                   onClick={handleFinish}
                   disabled={isSaving}
                 >
                   {isSaving ? 'Salvando...' : 'Salvar e Fechar'}
                 </button>
+                <button
+                  className="ocr-action-btn ocr-btn-success"
+                  onClick={handleFinalize}
+                  disabled={isSaving || isFinalizing}
+                >
+                  {isFinalizing ? 'Finalizando...' : 'Finalizar'}
+                </button>
               </div>
             </div>
-            
+
             <textarea
               className="ocr-modal-textarea"
               value={textContent}
@@ -200,6 +245,49 @@ const OCREditModal = ({ rawText, onClose, onToggleImage, onFinish }) => {
           </div>
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      {showConfirmModal && (
+        <div className="ocr-confirm-modal-overlay" onClick={handleCancelFinalize}>
+          <div className="ocr-confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>Confirmar Finalização</h3>
+            <p>
+              Tem certeza que deseja finalizar este texto?
+              <br />
+              O texto será processado e ficará disponível para normalização.
+              <br />
+              <strong>A versão bruta e a imagem associada serão excluídas.</strong>
+            </p>
+            <div className="ocr-confirm-filename-group">
+              <label htmlFor="finalFileName">Nome do arquivo final:</label>
+              <input
+                id="finalFileName"
+                type="text"
+                value={finalFileName}
+                onChange={(e) => setFinalFileName(e.target.value)}
+                placeholder="Nome do arquivo"
+                disabled={isFinalizing}
+              />
+            </div>
+            <div className="ocr-confirm-modal-actions">
+              <button
+                className="ocr-action-btn ocr-btn-secondary"
+                onClick={handleCancelFinalize}
+                disabled={isFinalizing}
+              >
+                Cancelar
+              </button>
+              <button
+                className="ocr-action-btn ocr-btn-danger"
+                onClick={handleConfirmFinalize}
+                disabled={isFinalizing}
+              >
+                {isFinalizing ? 'Finalizando...' : 'Confirmar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

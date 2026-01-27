@@ -16,6 +16,7 @@
     from {
         opacity: 0;
     }
+
     to {
         opacity: 1;
     }
@@ -186,7 +187,7 @@
     background-color: #1a1a1a;
     color: #e0e0e0;
     outline: none;
-    
+
     /* Hide scrollbar */
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -237,4 +238,116 @@
     background-color: #666;
     cursor: not-allowed;
     opacity: 0.6;
+}
+
+.ocr-btn-success {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.ocr-btn-success:hover:not(:disabled) {
+    background-color: #218838;
+    transform: translateY(-1px);
+}
+
+.ocr-btn-success:disabled {
+    background-color: #5a6c5a;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.ocr-btn-danger {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.ocr-btn-danger:hover:not(:disabled) {
+    background-color: #c82333;
+    transform: translateY(-1px);
+}
+
+.ocr-btn-danger:disabled {
+    background-color: #6c4a4f;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* Confirmation Modal */
+.ocr-confirm-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10001;
+}
+
+.ocr-confirm-modal {
+    background-color: #1e1e1e;
+    border-radius: 8px;
+    padding: 2rem;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.ocr-confirm-modal h3 {
+    margin: 0 0 1rem 0;
+    color: #fff;
+    font-size: 1.5rem;
+}
+
+.ocr-confirm-modal p {
+    margin: 0 0 1.5rem 0;
+    color: #ccc;
+    line-height: 1.6;
+}
+
+.ocr-confirm-modal p strong {
+    color: #ff6b6b;
+}
+
+.ocr-confirm-filename-group {
+    margin-bottom: 1.5rem;
+}
+
+.ocr-confirm-filename-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #ccc;
+    font-weight: 500;
+}
+
+.ocr-confirm-filename-group input {
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: 4px;
+    border: 1px solid #555;
+    background-color: #2a2a2a;
+    color: #fff;
+    font-size: 1rem;
+}
+
+.ocr-confirm-filename-group input:focus {
+    outline: none;
+    border-color: #646cff;
+}
+
+.ocr-confirm-filename-group input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.ocr-confirm-modal-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
 }
