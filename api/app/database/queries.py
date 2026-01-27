@@ -171,18 +171,21 @@ def assign_text_to_user(db, text_id, user_id):
 
 def add_suggestion(text_id: int, token_id: int, text: str, db):
     # print(f"DEBUG: add_suggestion '{text}' for token {token_id}")
-    suggestion = db.session.query(Suggestion).filter_by(token_text=text).first()
+    # Handle both db extension and session objects
+    session = db.session if hasattr(db, 'session') else db
+    
+    suggestion = session.query(Suggestion).filter_by(token_text=text).first()
 
     if not suggestion:
         try:
-            with db.session.begin_nested():
+            with session.begin_nested():
                 suggestion = Suggestion(token_text=text)
-                db.session.add(suggestion)
-                db.session.flush()
+                session.add(suggestion)
+                session.flush()
         except IntegrityError as e:
             # print(f"DEBUG: IntegrityError creating user suggestion: {e}")
             # Could have been added by a concurrent transaction
-            suggestion = db.session.query(Suggestion).filter_by(token_text=text).first()
+            suggestion = session.query(Suggestion).filter_by(token_text=text).first()
         except Exception as e:
             print(f"DEBUG: Unexpected error creating suggestion '{text}': {e}")
             raise e
@@ -191,20 +194,20 @@ def add_suggestion(text_id: int, token_id: int, text: str, db):
         print(f"DEBUG: Failed to get/create suggestion for '{text}'")
         return
 
-    link_exists = db.session.query(TokensSuggestions).filter_by(
+    link_exists = session.query(TokensSuggestions).filter_by(
         token_id=token_id,
         suggestion_id=suggestion.id
     ).first()
 
     if not link_exists:
         try:
-            with db.session.begin_nested():
+            with session.begin_nested():
                 new_link = TokensSuggestions(
                     token_id=token_id,
                     suggestion_id=suggestion.id
                 )
-                db.session.add(new_link)
-                db.session.flush()
+                session.add(new_link)
+                session.flush()
         except IntegrityError:
             pass
         except Exception as e:
