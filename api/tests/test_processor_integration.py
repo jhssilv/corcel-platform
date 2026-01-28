@@ -84,7 +84,7 @@ def test_processor_and_db_insertion(app, mock_text_processor):
     assert text_id is not None
     
     # 4. Verify DB state
-    saved_text = db.session.query(Text).get(text_id)
+    saved_text = db.session.get(Text, text_id)
     assert saved_text is not None
     assert saved_text.source_file_name == "integration_test.txt"
     

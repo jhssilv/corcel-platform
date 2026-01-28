@@ -38,7 +38,7 @@ def get_texts_data(current_user):
                 "grade": row.grade,
                 "normalized_by_user": row.normalized_by_user or False,
                 "source_file_name": row.source_file_name,
-                "users_assigned": row.users_assigned or [],
+                "users_assigned": row.users_assigned or []
             }
             for row in texts_data_from_db
         ]
@@ -73,6 +73,180 @@ def get_text_detail(current_user, text_id: int):
         response_schema = text_schemas.TextDetailResponse(**text_data_dict)
         return jsonify(response_schema.model_dump(by_alias=True)), 200
     except Exception as e:
+        return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
+
+@text_bp.route('/api/raw-texts/', methods=['GET'])
+@login_required()
+def get_raw_texts_data(current_user):
+    """Retrieves the list of raw texts metadata.
+
+    Args:
+        current_user (User): The currently logged-in user.
+
+    Returns:
+        JSON response with list of raw texts.
+        
+    Pre-Conditions:
+        User must be logged in.
+        
+    """
+    try:
+        raw_texts_data = queries.get_raw_texts(session)
+        
+        texts_list = [
+            {
+                "id": row.id,
+                "sourceFileName": row.source_file_name,
+            }
+            for row in raw_texts_data
+        ]
+
+        return jsonify({"textsData": texts_list}), 200
+    except Exception as e:
+        return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
+
+@text_bp.route('/api/raw-texts/<int:text_id>', methods=['GET'])
+@login_required()
+@validate()
+def get_raw_text_detail(current_user, text_id: int):
+    """Retrieves the detailed information of a specific raw text.
+
+    Args:
+        current_user (User): The currently logged-in user.
+        text_id (int): The ID of the raw text to retrieve.
+
+    Returns:
+        JSON response with raw text details.
+        
+    Pre-Conditions:
+        User must be logged in.
+        
+    """
+    try:
+        raw_text_data = queries.get_raw_text_by_id(session, text_id)
+        if not raw_text_data:
+            return jsonify({"error": "Raw text not found"}), 404
+    
+        return jsonify(raw_text_data), 200
+    except Exception as e:
+        return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
+
+@text_bp.route('/api/raw-texts/<int:text_id>', methods=['PUT'])
+@login_required()
+@validate()
+def update_raw_text(current_user, text_id: int):
+    """Updates the text content of a specific raw text.
+
+    Args:
+        current_user (User): The currently logged-in user.
+        text_id (int): The ID of the raw text to update.
+
+    Returns:
+        JSON response with success message.
+        
+    Pre-Conditions:
+        User must be logged in.
+        Request body must contain 'text_content' field.
+        
+    """
+    from flask import request
+    
+    try:
+        data = request.get_json()
+        if not data or 'text_content' not in data:
+            return jsonify({"error": "Missing text_content in request body"}), 400
+        
+        new_content = data['text_content']
+        
+        success = queries.update_raw_text_content(session, text_id, new_content)
+        if not success:
+            return jsonify({"error": "Raw text not found"}), 404
+    
+        return jsonify({"message": "Text updated successfully"}), 200
+    except Exception as e:
+        return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
+
+@text_bp.route('/api/raw-texts/<int:text_id>/finalize', methods=['POST'])
+@login_required()
+@validate()
+def finalize_raw_text(current_user, text_id: int):
+    """Finalizes a raw text by processing it into tokens/suggestions and deleting the raw text.
+
+    Args:
+        current_user (User): The currently logged-in user.
+        text_id (int): The ID of the raw text to finalize.
+
+    Returns:
+        JSON response with the new text ID.
+        
+    Pre-Conditions:
+        User must be logged in.
+        Raw text must exist.
+        Request body may optionally contain 'source_file_name' to override the default.
+        
+    """
+    import os
+    from flask import request
+    from app.text_processor import TextProcessor
+    from app.database.models import Text, Token, RawText
+    
+    try:
+        # Get raw text
+        raw_text_data = queries.get_raw_text_by_id(session, text_id)
+        if not raw_text_data:
+            return jsonify({"error": "Raw text not found"}), 404
+        
+        # Get the actual RawText object for deletion
+        raw_text = session.query(RawText).filter(RawText.id == text_id).first()
+        if not raw_text:
+            return jsonify({"error": "Raw text not found"}), 404
+        
+        # Get optional source_file_name from request body
+        data = request.get_json() or {}
+        source_file_name = data.get('source_file_name', raw_text_data['source_file_name'])
+        
+        text_content = raw_text_data['text_content']
+        image_path = raw_text_data['image_path']
+        
+        # Process text with TextProcessor to get tokens and suggestions
+        processor = TextProcessor()
+        processed_data = processor.process_text(text_content)
+        
+        # Create Text object
+        text_obj = Text(source_file_name=source_file_name)
+        
+        # Create tokens with candidates list
+        tokens_with_candidates = []
+        for idx, token_data in processed_data.items():
+            token = Token(
+                position=token_data['idx'],
+                token_text=token_data['text'],
+                is_word=token_data['is_word'],
+                to_be_normalized=token_data['to_be_normalized'],
+                whitespace_after=token_data['whitespace_after']
+            )
+            candidates = token_data.get('suggestions', [])
+            tokens_with_candidates.append((token, candidates))
+        
+        # Add to database
+        new_text_id = queries.add_text(text_obj, tokens_with_candidates, session)
+        
+        # Delete raw text from database
+        session.delete(raw_text)
+        session.commit()
+        
+        # Delete image file if it exists
+        if image_path:
+            images_folder = os.path.join(os.getcwd(), 'images')
+            image_full_path = os.path.join(images_folder, image_path)
+            if os.path.exists(image_full_path):
+                os.remove(image_full_path)
+                print(f"Deleted image file: {image_full_path}")
+        
+        return jsonify({"message": "Text finalized successfully", "text_id": new_text_id}), 200
+    except Exception as e:
+        session.rollback()
+        print(f"Error finalizing raw text: {e}")
         return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
 
 @text_bp.route('/api/texts/<int:text_id>/normalizations', methods=['GET'])

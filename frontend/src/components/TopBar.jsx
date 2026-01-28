@@ -57,6 +57,11 @@ function TopBar({ onDownloadClick , showSidePanel = true}) {
     closePanel()
   }
 
+  const handleOCR = () => {
+      navigate("/ocr")
+      closePanel()
+  }
+
   const handleDownload = () => {
     if (onDownloadClick) {
       onDownloadClick()
@@ -98,6 +103,7 @@ function TopBar({ onDownloadClick , showSidePanel = true}) {
           onReport={openReport}
           onRegisterUser={openRegisterUser}
           onManageUsers={handleManageUsers}
+          onOCR={handleOCR}
           onLogout={handleLogout}
         /> : null}
 

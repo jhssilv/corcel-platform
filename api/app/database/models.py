@@ -8,7 +8,7 @@ from sqlalchemy import (
     Boolean,
     SmallInteger,
     TIMESTAMP,
-    Text,
+    Text as TextType,
     ForeignKey,
     PrimaryKeyConstraint,
     UniqueConstraint
@@ -50,11 +50,24 @@ class Text(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     grade = Column(SmallInteger, nullable=True)
-    source_file_name = Column(String(30), nullable=True)
+    source_file_name = Column(String(255), nullable=True)
 
     normalizations = relationship('Normalization', back_populates='text', cascade="all, delete-orphan")
     texts_association = relationship('TextsUsers', back_populates='text', cascade="all, delete-orphan")
     tokens = relationship('Token', back_populates='text', cascade="all, delete-orphan", order_by='Token.position')
+
+class RawText(Base):
+    """
+    Model for the 'raw_texts' table.
+    Stores the original raw text content before any processing.
+    """
+    __tablename__ = 'raw_texts'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    source_file_name = Column(String(255), nullable=True)
+    text_content = Column(TextType, nullable=False)
+    image_path = Column(String(255), nullable=True)
+
 
 class Token(Base):
     __tablename__ = 'tokens'

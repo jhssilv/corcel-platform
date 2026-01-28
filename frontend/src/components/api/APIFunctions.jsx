@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import {apiBlob, apiPublic, apiPrivate} from './APIClient';
+import { apiBlob, apiPublic, apiPrivate } from './APIClient';
 import * as schemas from './Schemas.jsx';
 import { saveAs } from 'file-saver';
 
@@ -9,7 +9,7 @@ import { saveAs } from 'file-saver';
 const handleApiError = (error, defaultMessage) => {
   if (error instanceof z.ZodError) {
     console.error('Erro de validação Zod:', error.issues);
-    
+
     const formattedErrors = error.issues.map(issue => {
       // Ex: "Field: 'username': The field is required."
       return `Field: '${issue.path.join('.')}': ${issue.message}`;
@@ -20,8 +20,8 @@ const handleApiError = (error, defaultMessage) => {
 
   // Error coming from the API (already formatted by the Axios interceptor)
   if (error && error.details) {
-      const formattedDetails = error.details.map(d => `${d.field}: ${d.message}`).join(', ');
-      return { error: `API error: ${formattedDetails}` };
+    const formattedDetails = error.details.map(d => `${d.field}: ${d.message}`).join(', ');
+    return { error: `API error: ${formattedDetails}` };
   }
 
   // Generic error
@@ -34,7 +34,7 @@ const handleApiError = (error, defaultMessage) => {
  */
 export async function getUsernames() {
   const data = await apiPublic.get('/users');
-  return schemas.UsernamesResponseSchema.parse(data); 
+  return schemas.UsernamesResponseSchema.parse(data);
 }
 
 /**
@@ -59,6 +59,14 @@ export async function getTextsData() {
 }
 
 /**
+ * Fetches the metadata of all raw texts (OCR module).
+ */
+export async function getRawTextsData() {
+  const data = await apiPrivate.get(`/raw-texts/`);
+  return data.textsData; // Simple array of {id, sourceFileName}
+}
+
+/**
  * Fetches the detailed data of a specific text.
  */
 export async function getTextById(textId) {
@@ -66,6 +74,32 @@ export async function getTextById(textId) {
   // BROKEN: find a fix later
   // return schemas.TextDetailResponseSchema.parse(data);
   return data;
+}
+
+/**
+ * Fetches the detailed data of a specific raw text.
+ */
+export async function getRawTextById(textId) {
+  const data = await apiPrivate.get(`/raw-texts/${textId}`);
+  return data;
+}
+
+/**
+ * Updates the text content of a raw text.
+ */
+export async function updateRawText(textId, textContent) {
+  const payload = { text_content: textContent };
+  const response = await apiPrivate.put(`/raw-texts/${textId}`, payload);
+  return response.data || response;
+}
+
+/**
+ * Finalizes a raw text by processing it into tokens/suggestions.
+ */
+export async function finalizeRawText(textId, sourceFileName = null) {
+  const payload = sourceFileName ? { source_file_name: sourceFileName } : {};
+  const response = await apiPrivate.post(`/raw-texts/${textId}/finalize`, payload);
+  return response.data;
 }
 
 /**
@@ -88,7 +122,7 @@ export async function postNormalization(textId, firstWordIndex, lastWordIndex, n
     suggest_for_all: suggestForAll,
   };
   schemas.NormalizationCreateRequestSchema.parse(payload);
-  
+
   return apiPrivate.post(`/texts/${textId}/normalizations`, payload);
 }
 
@@ -99,10 +133,10 @@ export async function postNormalization(textId, firstWordIndex, lastWordIndex, n
 export async function deleteNormalization(textId, wordIndex) {
   const payload = { word_index: wordIndex };
   schemas.NormalizationDeleteRequestSchema.parse(payload);
-  
+
   return apiPrivate.delete(`/texts/${textId}/normalizations`, { data: payload });
 }
-  
+
 /**
  * Toggles the "normalized" status of a text.
  */
@@ -123,12 +157,12 @@ export async function requestDownload(textIds, useTags) {
   const response = await apiBlob.post(`/download/`, payload, {
     responseType: 'blob',
     headers: {
-        'Content-Type': 'application/json' 
+      'Content-Type': 'application/json'
     }
   });
 
   let filename = 'normalized_texts.zip'; // Default filename
-  
+
   saveAs(response.data, filename);
 
   return { success: true, filename: filename };
@@ -142,7 +176,7 @@ export async function requestReport(textIds) {
   const response = await apiBlob.post(`/report/`, payload, {
     responseType: 'blob',
     headers: {
-        'Content-Type': 'application/json'
+      'Content-Type': 'application/json'
     }
   });
 
@@ -162,7 +196,7 @@ export async function uploadTextArchive(file) {
       'Content-Type': 'multipart/form-data',
     },
   });
-  
+
   return schemas.UploadResponseSchema.parse(data);
 }
 
@@ -215,14 +249,14 @@ export async function registerUser(username) {
  * Activates a user account.
  */
 export async function activateUser(username, password) {
-  const response = await apiPublic.post('/activate', { 
-    username, 
+  const response = await apiPublic.post('/activate', {
+    username,
     password
   });
   return schemas.MessageResponseSchema.parse(response.data || response);
 }
 
-export async function getUsersData(){
+export async function getUsersData() {
   const data = await apiPrivate.get('/users/data');
   return data.usersData;
 }
@@ -241,4 +275,68 @@ export async function deleteAllNormalizations(textId) {
   const response = await apiPrivate.delete(`/texts/${textId}/normalizations/all`);
   return response.data || response;
 
+}
+
+// --- OCR Functions ---
+
+/**
+ * Uploads a ZIP file containing images for OCR.
+ */
+export async function uploadOCRArchive(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await apiPrivate.post('/ocr/upload', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+    timeout: 300000, // 5 minutes
+  });
+  return response;
+}
+
+/**
+ * Fetches the image associated with a text.
+ */
+export async function getTextImage(textId) {
+  try {
+    const response = await apiPrivate.get(`/ocr/texts/${textId}/image`, { responseType: 'blob' });
+    // Handle case where interceptor returns data directly or full response
+    const blob = response.data || response;
+    if (!(blob instanceof Blob)) {
+      console.warn("Response is not a blob", blob);
+      return null;
+    }
+    return URL.createObjectURL(blob);
+  } catch (e) {
+    console.warn("Could not fetch image for text", textId, e);
+    return null;
+  }
+}
+/**
+ * Fetches the image associated with a raw text.
+ */
+export async function getRawTextImage(textId) {
+  try {
+    const response = await apiPrivate.get(`/ocr/raw-texts/${textId}/image`, { responseType: 'blob' });
+    const blob = response.data || response;
+    if (!(blob instanceof Blob)) {
+      console.warn("Response is not a blob", blob);
+      return null;
+    }
+    return URL.createObjectURL(blob);
+  } catch (e) {
+    console.error("Error fetching raw text image:", e);
+    return null;
+  }
+}
+/**
+ * Updates a token's text value (OCR correction).
+ */
+export async function updateToken(textId, tokenId, newValue) {
+  const payload = {
+    token_id: tokenId,
+    new_value: newValue
+  };
+  return apiPrivate.post(`/ocr/texts/${textId}/tokens`, payload);
 }

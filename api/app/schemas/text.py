@@ -64,3 +64,14 @@ class TextDetailResponse(BaseModel):
     source_file_name: Optional[str] = Field(alias="sourceFileName")
     assigned_to_user: bool = Field(alias="assignedToUser")
     model_config = ConfigDict(populate_by_name=True)
+
+class OCRTokenUpdateRequest(BaseModel):
+    token_id: int
+    new_value: str
+
+class RawTextUploadRequest(BaseModel):
+    """Schema for uploading a raw text.
+    Args:
+        text (str): The raw text content.
+    """
+    text: str
