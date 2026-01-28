@@ -174,7 +174,8 @@ def process_ocr_zip(self, zip_path):
             for index, filename in enumerate(file_list):
                 # Path traversal protection: ensure filename doesn't escape directory
                 base_name = os.path.basename(filename)
-                if '..' in filename or filename != base_name:
+                # Only block actual path traversal attempts (../) not subdirectories
+                if '..' in filename:
                     print(f"Skipping potentially malicious filename: {filename}")
                     results[filename] = {'error': 'Invalid filename (path traversal detected)'}
                     continue
