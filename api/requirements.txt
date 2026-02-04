@@ -32,6 +32,10 @@ pytest
 pytest-flask
 pytest-mock
 factory_boy
+Faker
 torch
 transformers
 python-docx
+Pillow
+google-genai
+ollama
