@@ -4,6 +4,7 @@ import shutil
 import zipfile
 from PIL import Image
 import os
+from docx import Document
 
 from .extensions import celery 
 from .text_processor import TextProcessor
@@ -77,11 +78,15 @@ def process_zip_texts(self, zip_path):
 
     try:
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-            # filters .txt files
-            file_list = [
-                f for f in zip_ref.namelist() 
-                if not f.startswith('__') and f.lower().endswith('.txt')
-            ]
+            # filters .txt and .docx files
+            file_list = []
+            for f in zip_ref.namelist():
+                # skip meta-files and hidden files
+                if f.startswith('__') or f.startswith('.') or '/.' in f:
+                    continue
+                
+                if f.lower().endswith('.txt') or f.lower().endswith('.docx'):
+                    file_list.append(f)
             
             total_files = len(file_list)
             
@@ -98,7 +103,11 @@ def process_zip_texts(self, zip_path):
                                   })
 
                 with zip_ref.open(filename) as f:
-                    text_content = f.read().decode('utf-8', errors='replace')
+                    if filename.lower().endswith('.docx'):
+                        doc = Document(io.BytesIO(f.read()))
+                        text_content = "\n".join([p.text for p in doc.paragraphs])
+                    else:
+                        text_content = f.read().decode('utf-8', errors='replace')
                 
                 processed_data = processor.process_text(text_content)
                 # Old structure compatibility: direct dict of tokens

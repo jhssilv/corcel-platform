@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import PropTypes from "prop-types";
 import JSZip from "jszip";
 
-import {uploadTextArchive, getTaskStatus, getTextsData} from './api/APIFunctions.jsx'
+import { uploadTextArchive, getTaskStatus, getTextsData } from './api/APIFunctions.jsx'
 
 function UploadModal({ isOpen, onClose }) {
     const [uploadFile, setUploadFile] = useState(null);
@@ -39,9 +39,9 @@ function UploadModal({ isOpen, onClose }) {
     useEffect(() => {
         const savedTaskId = localStorage.getItem("currentTaskId");
         if (savedTaskId && !isProcessing && !pollingInterval.current) {
-             // Check if task is still running
-             setIsProcessing(true);
-             pollStatus(savedTaskId);
+            // Check if task is still running
+            setIsProcessing(true);
+            pollStatus(savedTaskId);
         }
     }, []);
 
@@ -72,13 +72,13 @@ function UploadModal({ isOpen, onClose }) {
                 return;
             }
 
-            const allTxtFiles = fileEntries.every((name) => {
+            const allValidFiles = fileEntries.every((name) => {
                 const fileName = name.split("/").pop();
-                return fileName.toLowerCase().endsWith(".txt");
+                return fileName.toLowerCase().endsWith(".txt") || fileName.toLowerCase().endsWith(".docx");
             });
 
-            if (!allTxtFiles) {
-                setUploadError("O ZIP deve conter apenas arquivos .txt");
+            if (!allValidFiles) {
+                setUploadError("O ZIP deve conter apenas arquivos .txt ou .docx");
                 setIsValidating(false);
                 return;
             }
@@ -102,7 +102,7 @@ function UploadModal({ isOpen, onClose }) {
                     const percent = data.total > 0 ? Math.round((data.current / data.total) * 100) : 0;
                     setProgress(percent);
                     setStatusMessage(data.status || `Processando ${percent}%...(${data.current}/${data.total})`);
-                } 
+                }
                 else if (data.state === 'SUCCESS') {
                     clearInterval(pollingInterval.current);
                     pollingInterval.current = null;
@@ -110,13 +110,13 @@ function UploadModal({ isOpen, onClose }) {
                     setIsProcessing(false);
                     setProgress(100);
                     setStatusMessage("Concluído com sucesso!");
-                    
+
                     setTimeout(async () => {
                         alert("Textos processados e salvos!");
                         handleClose();
 
                     }, 500);
-                } 
+                }
                 else if (data.state === 'FAILURE') {
                     clearInterval(pollingInterval.current);
                     pollingInterval.current = null;
@@ -127,13 +127,13 @@ function UploadModal({ isOpen, onClose }) {
             } catch (error) {
                 console.error("Polling error:", error);
             }
-        }, 2000); 
+        }, 2000);
     };
 
     const handleDragOver = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        e.dataTransfer.dropEffect = "copy"; 
+        e.dataTransfer.dropEffect = "copy";
         setIsDragging(true);
     };
 
@@ -154,7 +154,7 @@ function UploadModal({ isOpen, onClose }) {
         e.preventDefault();
         e.stopPropagation();
         setIsDragging(false);
-        
+
         // Ensures compatibility with many browsers
         const files = e.dataTransfer.files;
         if (files && files.length > 0) {
@@ -181,7 +181,7 @@ function UploadModal({ isOpen, onClose }) {
 
         try {
             const response = await uploadTextArchive(uploadFile);
-            
+
             if (response.error) {
                 setUploadError(response.error);
                 setIsProcessing(false);
@@ -227,9 +227,8 @@ function UploadModal({ isOpen, onClose }) {
                         {/* Exhibition during upload (not processing yet) */}
                         {!isProcessing ? (
                             <div
-                                className={`upload-dropzone ${
-                                    isDragging ? "dragging" : ""
-                                } ${uploadFile ? "has-file" : ""}`}
+                                className={`upload-dropzone ${isDragging ? "dragging" : ""
+                                    } ${uploadFile ? "has-file" : ""}`}
                                 onDragEnter={handleDragEnter} // important to avoid stuttering
                                 onDragOver={handleDragOver}
                                 onDragLeave={handleDragLeave}
@@ -282,19 +281,19 @@ function UploadModal({ isOpen, onClose }) {
                         ) : (
                             /* Progress bar */
                             <div className="progress-container" style={{ padding: '20px', textAlign: 'center' }}>
-                                <div className="progress-bar-wrapper" style={{ 
-                                    width: '100%', 
-                                    backgroundColor: '#eee', 
-                                    borderRadius: '4px', 
-                                    height: '20px', 
+                                <div className="progress-bar-wrapper" style={{
+                                    width: '100%',
+                                    backgroundColor: '#eee',
+                                    borderRadius: '4px',
+                                    height: '20px',
                                     overflow: 'hidden',
                                     marginBottom: '15px'
                                 }}>
-                                    <div className="progress-bar-fill" style={{ 
-                                        width: `${progress}%`, 
-                                        backgroundColor: '#4caf50', 
-                                        height: '100%', 
-                                        transition: 'width 0.3s ease' 
+                                    <div className="progress-bar-fill" style={{
+                                        width: `${progress}%`,
+                                        backgroundColor: '#4caf50',
+                                        height: '100%',
+                                        transition: 'width 0.3s ease'
                                     }}></div>
                                 </div>
                                 <p className="upload-text" style={{ fontWeight: 'bold' }}>{statusMessage}</p>
@@ -315,7 +314,7 @@ function UploadModal({ isOpen, onClose }) {
                         >
                             {isProcessing ? "Fechar" : "Cancelar"}
                         </button>
-                        
+
                         {/* Confirm button appears only if not processing */}
                         {!isProcessing && (
                             <button

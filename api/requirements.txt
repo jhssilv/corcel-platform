@@ -34,3 +34,4 @@ pytest-mock
 factory_boy
 torch
 transformers
+python-docx
