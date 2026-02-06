@@ -13,6 +13,7 @@ function UploadModal({ isOpen, onClose }) {
     const [isProcessing, setIsProcessing] = useState(false);
     const [progress, setProgress] = useState(0);
     const [statusMessage, setStatusMessage] = useState("");
+    const [failedFiles, setFailedFiles] = useState([]);
 
     const pollingInterval = useRef(null);
 
@@ -24,6 +25,7 @@ function UploadModal({ isOpen, onClose }) {
         setIsProcessing(false);
         setProgress(0);
         setStatusMessage("");
+        setFailedFiles([]);
         if (pollingInterval.current) clearInterval(pollingInterval.current);
     };
 
@@ -109,10 +111,23 @@ function UploadModal({ isOpen, onClose }) {
                     localStorage.removeItem("currentTaskId");
                     setIsProcessing(false);
                     setProgress(100);
-                    setStatusMessage("Concluído com sucesso!");
+                    
+                    // Check for failed files
+                    const failedList = data.failed_files || [];
+                    setFailedFiles(failedList);
+                    
+                    if (failedList.length > 0) {
+                        setStatusMessage(`Concluído com ${failedList.length} arquivo(s) com falha.`);
+                    } else {
+                        setStatusMessage("Concluído com sucesso!");
+                    }
 
                     setTimeout(async () => {
-                        alert("Textos processados e salvos!");
+                        if (failedList.length > 0) {
+                            alert(`Textos processados! ${failedList.length} arquivo(s) falharam:\n${failedList.join('\n')}`);
+                        } else {
+                            alert("Textos processados e salvos!");
+                        }
                         handleClose();
 
                     }, 500);

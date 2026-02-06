@@ -53,9 +53,21 @@ class TextProcessor(Tokenizer):
         if not self.bert_model:
             self._load_bert()
 
-        # Prepare input for BERT
-        masked_tokens = sentence_tokens.copy()
-        masked_tokens[target_index] = self.bert_tokenizer.mask_token
+        # Prepare input for BERT with windowing to avoid 512 token limit
+        WINDOW_SIZE = 200
+        half_window = WINDOW_SIZE // 2
+        
+        start_idx = max(0, target_index - half_window)
+        end_idx = min(len(sentence_tokens), start_idx + WINDOW_SIZE)
+        
+        if end_idx - start_idx < WINDOW_SIZE and start_idx > 0:
+            start_idx = max(0, end_idx - WINDOW_SIZE)
+            
+        window_tokens = sentence_tokens[start_idx:end_idx]
+        relative_target_index = target_index - start_idx
+        
+        masked_tokens = window_tokens.copy()
+        masked_tokens[relative_target_index] = self.bert_tokenizer.mask_token
         
         text = " ".join(masked_tokens)
         inputs = self.bert_tokenizer(text, return_tensors="pt").to(self.device)
@@ -91,9 +103,21 @@ class TextProcessor(Tokenizer):
         if not candidates:
             return []
         
-        # Prepare input for BERT
-        masked_tokens = sentence_tokens.copy()
-        masked_tokens[target_index] = self.bert_tokenizer.mask_token
+        # Prepare input for BERT with windowing
+        WINDOW_SIZE = 200
+        half_window = WINDOW_SIZE // 2
+        
+        start_idx = max(0, target_index - half_window)
+        end_idx = min(len(sentence_tokens), start_idx + WINDOW_SIZE)
+        
+        if end_idx - start_idx < WINDOW_SIZE and start_idx > 0:
+            start_idx = max(0, end_idx - WINDOW_SIZE)
+            
+        window_tokens = sentence_tokens[start_idx:end_idx]
+        relative_target_index = target_index - start_idx
+
+        masked_tokens = window_tokens.copy()
+        masked_tokens[relative_target_index] = self.bert_tokenizer.mask_token
         
         text = " ".join(masked_tokens)
         inputs = self.bert_tokenizer(text, return_tensors="pt").to(self.device)

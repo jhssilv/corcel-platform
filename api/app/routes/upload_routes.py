@@ -72,6 +72,7 @@ def task_status(task_id):
     elif task.state == 'SUCCESS':
         response['status'] = 'Finished'
         response['result'] = task.info.get('result')
+        response['failed_files'] = task.info.get('failed_files', [])
     elif task.state == 'FAILURE':
         response['status'] = 'Processing Failed'
         response['error'] = str(task.info)

@@ -139,6 +139,7 @@ export const TaskStatusResponseSchema = z.object({
   total: z.number().optional(),
   result: z.any().optional(),
   error: z.string().optional(),
+  failed_files: z.array(z.string()).optional(),
 });
 
 export const WhitelistTokensResponseSchema = z.object({
