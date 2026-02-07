@@ -97,11 +97,14 @@ def process_zip_texts(self, zip_path):
                 return {'error': 'The zip file does not contain valid files.'}
 
             for index, filename in enumerate(file_list):
+                # Extract just the filename without directory prefix
+                base_name = os.path.basename(filename)
+                
                 self.update_state(state='PROGRESS',
                                   meta={
                                       'current': index + 1, 
                                       'total': total_files, 
-                                      'status': f'Processando: {filename} ({index + 1}/{total_files})'
+                                      'status': f'Processando: {base_name} ({index + 1}/{total_files})'
                                   })
 
                 with zip_ref.open(filename) as f:
@@ -114,8 +117,8 @@ def process_zip_texts(self, zip_path):
                 # Process text to get tokens with suggestions
                 processed_data = processor.process_text(text_content)
                 
-                # Create Text object
-                text_obj = models.Text(source_file_name=filename)
+                # Create Text object with just the filename (no directory prefix)
+                text_obj = models.Text(source_file_name=base_name)
                 
                 # Build tokens_with_candidates for add_text
                 tokens_with_candidates = []
@@ -125,7 +128,7 @@ def process_zip_texts(self, zip_path):
                         is_word=token_data['is_word'],
                         position=int(position),
                         to_be_normalized=token_data['to_be_normalized'],
-                        whitespace_after=token_data['whitespace_after'] if token_data['whitespace_after'] else ''
+                        whitespace_after=token_data['whitespace_after'] if token_data['whitespace_after'] else '',
                     )
                     candidates = token_data.get('suggestions', [])
                     tokens_with_candidates.append((token, candidates))
@@ -134,11 +137,11 @@ def process_zip_texts(self, zip_path):
                 db.session.remove()  # Ensure clean session for worker
                 text_id = add_text(text_obj, tokens_with_candidates, db.session)
                 
-                results[filename] = {
+                results[base_name] = {
                     'text_id': text_id,
                     'token_count': len(tokens_with_candidates)
                 }
-                print(f"Processed: {filename} -> text_id={text_id}")
+                print(f"Processed: {base_name} -> text_id={text_id}")
 
         os.remove(zip_path)
         
