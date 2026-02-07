@@ -14,6 +14,7 @@ from .routes.text_routes import text_bp
 from .routes.download_routes import download_bp
 from .routes.upload_routes import upload_bp
 from .routes.ocr_routes import ocr_bp
+from .routes.assignment_routes import assignment_bp
 from .config import Config
 from .database.models import User
 
@@ -64,6 +65,7 @@ def create_app():
     app.register_blueprint(download_bp)
     app.register_blueprint(upload_bp)
     app.register_blueprint(ocr_bp)
+    app.register_blueprint(assignment_bp)
     return app
 
 if __name__ == '__main__':

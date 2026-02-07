@@ -481,3 +481,46 @@ def count_admin_users(db):
     Returns the count of users with admin privileges.
     """
     return db.query(func.count(User.id)).filter(User.is_admin == True).scalar()
+
+
+def get_user_ids_by_usernames(db, usernames: list[str]) -> list[int]:
+    """
+    Returns a list of user IDs for the given usernames.
+    """
+    users = db.query(User.id).filter(User.username.in_(usernames)).all()
+    return [user.id for user in users]
+
+
+def bulk_assign_texts(db, text_ids: list[int], user_ids: list[int]):
+    """
+    Assigns texts to users using round-robin distribution.
+    Distributes texts evenly among the selected users.
+    
+    Args:
+        db: Database session
+        text_ids: List of text IDs to assign
+        user_ids: List of user IDs to assign texts to
+    
+    Returns:
+        dict: Mapping of user_id to count of assigned texts
+    """
+    if not text_ids or not user_ids:
+        return {}
+    
+    assignment_counts = {user_id: 0 for user_id in user_ids}
+    
+    for idx, text_id in enumerate(text_ids):
+        user_id = user_ids[idx % len(user_ids)]
+        
+        # Check if association already exists
+        assoc = db.query(TextsUsers).filter_by(text_id=text_id, user_id=user_id).first()
+        if assoc:
+            assoc.assigned = True
+        else:
+            new_assoc = TextsUsers(text_id=text_id, user_id=user_id, assigned=True, normalized=False)
+            db.add(new_assoc)
+        
+        assignment_counts[user_id] += 1
+    
+    db.commit()
+    return assignment_counts
