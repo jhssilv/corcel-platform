@@ -13,16 +13,6 @@ class TextProcessor(Tokenizer):
         self.bert_tokenizer = None
         self.bert_model = None
 
-    # Removed _load_resources, using Parent's one by inheritance 
-    # except that we need to ensure inheritance works for properties.
-    # Tokenizer has the properties nlp, hobj, spell.
-    
-    # We remove the duplicate helper functions _get_resource_path and _download_dict
-    # as they are handled in tokenizer.py now (although not exported there? 
-    # Actually wait, I need to check if I can rely on Tokenizer's internal helpers being available.
-    # I copied them to tokenizer.py but did not export them. 
-    # But `TextProcessor` in this new structure shouldn't need them directly if it uses `self.hobj` etc.
-    
     def _load_bert(self):
         if self.bert_tokenizer and self.bert_model:
             return
@@ -343,16 +333,7 @@ if __name__ == '__main__':
         eu acho que resoluar problema esse.
         
     """
-
-    text5 = """
-        Hola, tudo bem? Yo quero contar uma estória muito loca que aconteceu no fin de semana passada. Nós foi numa fiesta na casa do meu amigo, ele mora muito lejos da cidade, então pegamos o coche pra viajar. A estrada era muito larga e cansativa, cheia de buraco. Quando chegamos, a cena ainda não estava pronta e eu tinha muita fome, minha barriga doía.
-
-        Decidi esperar um rato na sala, mas tinha muito polvo nos móveis e o chão estava sucio, parecia que não limpavam faz anos. Pedi um vaso de água pra moça, mas ela me trouxe um copo que parecia ter grasas. A comida quando veio estava muito salada, quase impossível de comer, e a carne estava crua e roja. Minha prima estava lá, ela está embarazada e passou mal com o cheiro forte da cozinha.
-
-        Tinha uns homens muito borrachos fazendo barulho e brigando por causa de dinero e propina. Eu fiquei enojado com a situação toda. Todavía tentamos comer o pastel de sobremesa, mas tinha gosto de aceite velho. No final, saímos temprano porque ninguém aguentava mais aquilo. Foi um desastre total, pero fazer o que, né? A vida é assim as vezes.
-        
-    """
-
+    
     import time
     print("Processing text...")
     start_time = time.time()
