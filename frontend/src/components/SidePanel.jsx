@@ -18,6 +18,7 @@ function SidePanel({
   onRegisterUser,
   onManageUsers,
   onOCR,
+  onAssignments,
   onLogout 
 }) {
   return (
@@ -72,6 +73,10 @@ function SidePanel({
               <span style={{fontSize: '1.2rem', marginRight: '0.5rem'}}>📷</span>
               <span className="button-text">Módulo OCR</span>
             </button>
+            <button className="panel-button assignments-button" onClick={onAssignments}>
+              <span style={{fontSize: '1.2rem', marginRight: '0.5rem'}}>📋</span>
+              <span className="button-text">Atribuir Textos</span>
+            </button>
           </div>
 
           <div className="panel-logout-section">
@@ -91,6 +96,7 @@ SidePanel.propTypes = {
   onClose: PropTypes.func.isRequired,
   username: PropTypes.string,
   onOCR: PropTypes.func,
+  onAssignments: PropTypes.func,
   onDownload: PropTypes.func.isRequired,
   onUpload: PropTypes.func.isRequired,
   onWhitelist: PropTypes.func.isRequired,

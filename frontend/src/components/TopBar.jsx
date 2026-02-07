@@ -62,6 +62,11 @@ function TopBar({ onDownloadClick , showSidePanel = true}) {
       closePanel()
   }
 
+  const handleAssignments = () => {
+      navigate("/assignments")
+      closePanel()
+  }
+
   const handleDownload = () => {
     if (onDownloadClick) {
       onDownloadClick()
@@ -104,6 +109,7 @@ function TopBar({ onDownloadClick , showSidePanel = true}) {
           onRegisterUser={openRegisterUser}
           onManageUsers={handleManageUsers}
           onOCR={handleOCR}
+          onAssignments={handleAssignments}
           onLogout={handleLogout}
         /> : null}
 

@@ -67,7 +67,7 @@ function UserManagementDashboard() {
         <div className="main-page-container">
             <TopBar showSidePanel={true} />
             
-            <div className="main-page-section" style={{ marginTop: '20px' }}>
+            <div className="main-page-section" style={{ marginTop: '80px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                     <h2>Gerenciamento de Usuários</h2>
                     <button onClick={() => navigate('/main')} className="modal-button cancel-button">
