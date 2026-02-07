@@ -48,6 +48,69 @@ def get_texts_data(current_user):
     except Exception as e:
         return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
 
+@text_bp.route('/api/texts/filtered', methods=['GET'])
+@login_required()
+def get_filtered_texts_data(current_user):
+    """Retrieves filtered texts based on query parameters.
+
+    Query Parameters:
+        grades: Comma-separated list of grade values (e.g., "0,1,2")
+        assigned_users: Comma-separated list of usernames
+        normalized: Boolean filter for normalized status ("true" or "false")
+        file_name: Fuzzy search on source file name
+
+    Returns:
+        TextsDataResponse: The response containing the filtered list of texts.
+    """
+    from flask import request
+    
+    try:
+        # Parse query parameters
+        grades_param = request.args.get('grades', '')
+        assigned_users_param = request.args.get('assigned_users', '')
+        normalized_param = request.args.get('normalized', '')
+        file_name = request.args.get('file_name', '') or None
+        
+        # Parse grades
+        grades = None
+        if grades_param:
+            grades = [int(g.strip()) for g in grades_param.split(',') if g.strip()]
+        
+        # Parse assigned users
+        assigned_users = None
+        if assigned_users_param:
+            assigned_users = [u.strip() for u in assigned_users_param.split(',') if u.strip()]
+        
+        # Parse normalized - only filter if explicitly set
+        user_id = None
+        if normalized_param.lower() == 'true':
+            user_id = current_user.id
+        
+        # Use existing get_filtered_texts query
+        texts_data_from_db = queries.get_filtered_texts(
+            session,
+            grades=grades,
+            assigned_users=assigned_users,
+            user_id=user_id,
+            file_name=file_name
+        )
+        
+        texts_list = [
+            {
+                "id": row.id,
+                "grade": row.grade,
+                "normalized_by_user": row.normalized_by_user or False,
+                "source_file_name": row.source_file_name,
+                "users_assigned": row.users_assigned or []
+            }
+            for row in texts_data_from_db
+        ]
+
+        response = text_schemas.TextsDataResponse(textsData=texts_list)
+        return jsonify(response.model_dump(by_alias=True)), 200
+    except Exception as e:
+        return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
+
 @text_bp.route('/api/texts/<int:text_id>', methods=['GET'])
 @login_required()
 @validate()

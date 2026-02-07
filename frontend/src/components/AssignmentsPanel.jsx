@@ -1,8 +1,8 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TopBar from './TopBar';
 import DropdownSelect from './DropdownSelect';
-import { getTextsData, getUsernames, bulkAssignTexts } from './api/APIFunctions';
+import { getFilteredTextsData, getUsernames, bulkAssignTexts } from './api/APIFunctions';
 import '../styles/assignments_panel.css';
 import '../styles/main_page.css';
 
@@ -47,57 +47,62 @@ function AssignmentsPanel() {
     // Confirmation modal
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     
-    // Fetch initial data
+    // Fetch users on mount
     useEffect(() => {
-        const fetchData = async () => {
+        const fetchUsers = async () => {
             try {
-                setLoading(true);
-                const [textsResponse, usernamesResponse] = await Promise.all([
-                    getTextsData(),
-                    getUsernames()
-                ]);
-                setTextsData(textsResponse);
+                const usernamesResponse = await getUsernames();
                 const userOptions = (usernamesResponse.usernames || []).map(u => ({ value: u, label: u }));
                 setUsers(userOptions);
             } catch (err) {
-                setError('Erro ao carregar dados.');
                 console.error(err);
-            } finally {
-                setLoading(false);
             }
         };
-        fetchData();
+        fetchUsers();
     }, []);
     
-    // Fuzzy search logic (same as EssaySelector)
-    const fuzzySearchLogic = (sourceFileName, input) => {
-        if (!input) return true;
-        const pattern = input
-            .split(' ')
-            .map((char) => char.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
-            .join('.*');
-        const regex = new RegExp(pattern, 'i');
-        return regex.test(sourceFileName);
-    };
+    // Fetch filtered texts from backend
+    const fetchFilteredTexts = useCallback(async () => {
+        try {
+            setLoading(true);
+            
+            const filters = {};
+            
+            // Build filters
+            if (selectedGrades.length > 0) {
+                filters.grades = selectedGrades.map(g => g.value);
+            }
+            if (selectedAssignedUsers.length > 0) {
+                filters.assignedUsers = selectedAssignedUsers.map(u => u.value);
+            }
+            if (selectedNormalized.length === 1) {
+                // Only filter if exactly one option selected
+                filters.normalized = selectedNormalized[0].value;
+            }
+            if (searchText.trim()) {
+                filters.fileName = searchText.trim();
+            }
+            
+            const data = await getFilteredTextsData(filters);
+            setTextsData(data || []);
+            // Clear selection when filters change
+            setSelectedTextIds(new Set());
+        } catch (err) {
+            setError('Erro ao carregar textos.');
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    }, [selectedGrades, selectedAssignedUsers, selectedNormalized, searchText]);
     
-    // Filter texts based on current filter selections
-    const filteredTexts = useMemo(() => {
-        const selectedGradesList = selectedGrades.map(item => item.value);
-        const selectedAssignedUsersList = selectedAssignedUsers.map(item => item.value);
-        const selectedNormalizedList = selectedNormalized.map(item => item.value);
+    // Fetch filtered texts when filters change (debounced for search)
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            fetchFilteredTexts();
+        }, searchText ? 300 : 0); // Debounce search input
         
-        return textsData.filter((item) => {
-            const { grade, usersAssigned, normalizedByUser, sourceFileName } = item;
-            
-            const matchesGrade = selectedGradesList.length === 0 || selectedGradesList.includes(Number(grade));
-            const matchesAssignedUser = selectedAssignedUsersList.length === 0 || 
-                (usersAssigned || []).some(user => selectedAssignedUsersList.includes(user));
-            const matchesNormalized = selectedNormalizedList.length === 0 || selectedNormalizedList.includes(normalizedByUser);
-            const matchesSearch = fuzzySearchLogic(sourceFileName || '', searchText);
-            
-            return matchesGrade && matchesAssignedUser && matchesNormalized && matchesSearch;
-        });
-    }, [textsData, selectedGrades, selectedAssignedUsers, selectedNormalized, searchText]);
+        return () => clearTimeout(timeoutId);
+    }, [fetchFilteredTexts]);
     
     // Calculate assignment distribution
     const assignmentDistribution = useMemo(() => {
@@ -116,7 +121,7 @@ function AssignmentsPanel() {
     
     // Selection handlers
     const handleSelectAll = () => {
-        const allIds = new Set(filteredTexts.map(t => t.id));
+        const allIds = new Set(textsData.map(t => t.id));
         setSelectedTextIds(allIds);
     };
     
@@ -129,11 +134,10 @@ function AssignmentsPanel() {
         const n = parseInt(selectNValue, 10);
         if (isNaN(n) || n <= 0) return;
         
-        // Select first N from filtered texts (not already selected)
-        const toSelect = Math.min(n, filteredTexts.length);
+        const toSelect = Math.min(n, textsData.length);
         const newSet = new Set();
         for (let i = 0; i < toSelect; i++) {
-            newSet.add(filteredTexts[i].id);
+            newSet.add(textsData[i].id);
         }
         setSelectedTextIds(newSet);
         setSelectNValue('');
@@ -178,8 +182,7 @@ function AssignmentsPanel() {
             setSelectedTargetUsers([]);
             
             // Refresh texts data
-            const textsResponse = await getTextsData();
-            setTextsData(textsResponse);
+            await fetchFilteredTexts();
             
         } catch (err) {
             setError('Erro ao atribuir textos: ' + (err.message || 'Erro desconhecido'));
@@ -188,15 +191,6 @@ function AssignmentsPanel() {
             setAssigning(false);
         }
     };
-    
-    if (loading) {
-        return (
-            <div className="main-page-container">
-                <TopBar />
-                <div className="assignments-loading">Carregando...</div>
-            </div>
-        );
-    }
     
     return (
         <div className="main-page-container">
@@ -270,7 +264,7 @@ function AssignmentsPanel() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                             <h3 className="assignments-texts-title">Textos Disponíveis</h3>
                             <span className="selected-count-badge">
-                                {selectedTextIds.size} de {filteredTexts.length} selecionados
+                                {selectedTextIds.size} de {textsData.length} selecionados
                             </span>
                         </div>
                         <div className="assignments-selection-controls">
@@ -279,7 +273,7 @@ function AssignmentsPanel() {
                                 <input
                                     type="number"
                                     min="1"
-                                    max={filteredTexts.length}
+                                    max={textsData.length}
                                     placeholder="N"
                                     value={selectNValue}
                                     onChange={(e) => setSelectNValue(e.target.value)}
@@ -288,7 +282,7 @@ function AssignmentsPanel() {
                                 <button 
                                     className="selection-btn"
                                     onClick={handleSelectN}
-                                    disabled={!selectNValue || parseInt(selectNValue, 10) <= 0 || parseInt(selectNValue, 10) > filteredTexts.length}
+                                    disabled={!selectNValue || parseInt(selectNValue, 10) <= 0 || parseInt(selectNValue, 10) > textsData.length}
                                 >
                                     Selecionar N
                                 </button>
@@ -304,10 +298,12 @@ function AssignmentsPanel() {
                     
                     {/* Scrollable texts list */}
                     <div className="assignments-texts-list">
-                        {filteredTexts.length === 0 ? (
+                        {loading ? (
+                            <p className="no-selection-message">Carregando...</p>
+                        ) : textsData.length === 0 ? (
                             <p className="no-selection-message">Nenhum texto encontrado com os filtros atuais.</p>
                         ) : (
-                            filteredTexts.map(text => (
+                            textsData.map(text => (
                                 <div
                                     key={text.id}
                                     className={`assignments-text-item ${selectedTextIds.has(text.id) ? 'selected' : ''}`}

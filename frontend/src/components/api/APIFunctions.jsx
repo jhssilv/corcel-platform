@@ -67,6 +67,36 @@ export async function getRawTextsData() {
 }
 
 /**
+ * Fetches filtered texts based on filter parameters.
+ * @param {Object} filters - Filter options
+ * @param {number[]} filters.grades - Array of grade values
+ * @param {string[]} filters.assignedUsers - Array of usernames
+ * @param {boolean} filters.normalized - Filter by normalized status
+ * @param {string} filters.fileName - Fuzzy search on file name
+ */
+export async function getFilteredTextsData(filters = {}) {
+  const params = new URLSearchParams();
+  
+  if (filters.grades && filters.grades.length > 0) {
+    params.append('grades', filters.grades.join(','));
+  }
+  if (filters.assignedUsers && filters.assignedUsers.length > 0) {
+    params.append('assigned_users', filters.assignedUsers.join(','));
+  }
+  if (filters.normalized !== undefined && filters.normalized !== null) {
+    params.append('normalized', filters.normalized.toString());
+  }
+  if (filters.fileName) {
+    params.append('file_name', filters.fileName);
+  }
+  
+  const queryString = params.toString();
+  const url = queryString ? `/texts/filtered?${queryString}` : '/texts/filtered';
+  const data = await apiPrivate.get(url);
+  return data.textsData;
+}
+
+/**
  * Fetches the detailed data of a specific text.
  */
 export async function getTextById(textId) {

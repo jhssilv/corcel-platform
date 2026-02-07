@@ -439,34 +439,69 @@ def get_all_users(db):
     return db.query(User).order_by(User.id).all()
     
 def get_filtered_texts(db, grades:list[int]=None, assigned_users:list[str]=None, user_id:int=None, file_name:str=None):
-    texts = db.query(TextsUsers).join(Text).join(User)
-    # filter by grades
-    if grades:
-        texts = texts.filter(Text.grade.in_(grades))
-        
-    # filter by file name
-    if assigned_users:
-        texts = texts.filter(User.username.in_(assigned_users), TextsUsers.assigned == True)
-        
-    # filter by normalized by user
-    if user_id is not None:
-        texts = texts.filter(TextsUsers.normalized and TextsUsers.user_id == user_id)
-        
-    # filter by file name
-    if file_name:
-        # fuzzy search logic
-        pattern = '%' + '%'.join(file_name) + '%'
-        texts = texts.filter(Text.source_file_name.ilike(pattern))
-        
-    texts = texts.with_entities(
+    """
+    Fetch filtered texts with optional filter criteria.
+    Uses LEFT JOINs to include all texts, even those without assignments.
+    """
+    from sqlalchemy import select
+    from sqlalchemy.orm import aliased
+    
+    # Subquery for aggregating assigned usernames
+    users_agg_subquery = (
+        select(func.array_agg(User.username))
+        .join(TextsUsers, User.id == TextsUsers.user_id)
+        .where(TextsUsers.text_id == Text.id, TextsUsers.assigned == True)
+        .correlate(Text)
+        .scalar_subquery()
+    )
+    
+    # Subquery for normalized status (any user normalized)
+    normalized_subquery = (
+        select(func.bool_or(TextsUsers.normalized))
+        .where(TextsUsers.text_id == Text.id)
+        .correlate(Text)
+        .scalar_subquery()
+    )
+    
+    # Start query from Text table
+    query = db.query(
         Text.id.label("id"),
         Text.grade.label("grade"),
         Text.source_file_name.label("source_file_name"),
-        func.array_agg(User.username).label("users_assigned"),
-        func.bool_or(TextsUsers.normalized).label("normalized_by_user")
-    ).group_by(Text.id)
+        users_agg_subquery.label("users_assigned"),
+        func.coalesce(normalized_subquery, False).label("normalized_by_user")
+    )
     
-    return texts.all()
+    # Filter by grades
+    if grades:
+        query = query.filter(Text.grade.in_(grades))
+    
+    # Filter by assigned users - need a subquery check
+    if assigned_users:
+        assigned_subquery = (
+            select(TextsUsers.text_id)
+            .join(User, User.id == TextsUsers.user_id)
+            .where(User.username.in_(assigned_users), TextsUsers.assigned == True)
+        )
+        query = query.filter(Text.id.in_(assigned_subquery))
+    
+    # Filter by normalized status
+    if user_id is not None:
+        normalized_check = (
+            select(TextsUsers.text_id)
+            .where(TextsUsers.user_id == user_id, TextsUsers.normalized == True)
+        )
+        query = query.filter(Text.id.in_(normalized_check))
+        
+    # Filter by file name
+    if file_name:
+        # fuzzy search logic: split by spaces, add wildcards between terms
+        # "20152 t4" becomes "%20152%t4%" to match "20152t4p4363n3r.docx"
+        terms = file_name.split()
+        pattern = '%' + '%'.join(terms) + '%'
+        query = query.filter(Text.source_file_name.ilike(pattern))
+    
+    return query.all()
 
 def delete_all_normalizations(db, user_id:int, text_id:int):
     """
