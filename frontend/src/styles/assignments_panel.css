@@ -1,0 +1,341 @@
+.assignments-panel-container {
+    padding: 20px;
+    padding-top: 80px; /* Account for fixed top bar (60px) + extra spacing */
+}
+
+.assignments-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.assignments-panel-title {
+    color: #e4e4e7;
+    font-size: 1.5rem;
+    margin: 0;
+}
+
+/* Filters Section */
+.assignments-filters {
+    background-color: #1e1e1e;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #333;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.assignments-filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.assignments-search-row {
+    display: flex;
+    gap: 15px;
+    align-items: flex-end;
+}
+
+.assignments-search-row > div {
+    flex: 1;
+}
+
+/* Texts Table with sticky header */
+.assignments-texts-section {
+    background-color: #1e1e1e;
+    border-radius: 12px;
+    border: 1px solid #333;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    max-height: 450px;
+}
+
+.assignments-texts-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background-color: #1e1e1e;
+    border-bottom: 1px solid #333;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.assignments-texts-title {
+    color: #e4e4e7;
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.assignments-selection-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+/* Select N control */
+.select-n-control {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.select-n-input {
+    width: 70px;
+    padding: 6px 10px;
+    background-color: #252525;
+    border: 1px solid #444;
+    border-radius: 6px;
+    color: #e4e4e7;
+    font-size: 0.85rem;
+    text-align: center;
+}
+
+.select-n-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+}
+
+.select-n-input::placeholder {
+    color: #666;
+}
+
+.selection-btn {
+    background-color: #333;
+    color: #e4e4e7;
+    border: 1px solid #444;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.selection-btn:hover:not(:disabled) {
+    background-color: #444;
+    border-color: #555;
+}
+
+.selection-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Scrollable Texts List */
+.assignments-texts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 15px 20px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.assignments-text-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background-color: #252525;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    flex-shrink: 0;
+}
+
+.assignments-text-item:hover {
+    background-color: #2a2a2a;
+}
+
+.assignments-text-item.selected {
+    background-color: #1a3a4d;
+    border: 1px solid #3b82f6;
+}
+
+.assignments-text-checkbox {
+    width: 18px;
+    height: 18px;
+    accent-color: #3b82f6;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.assignments-text-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.assignments-text-name {
+    color: #e4e4e7;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.assignments-text-meta {
+    color: #888;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Users Selection */
+.assignments-users-section {
+    background-color: #1e1e1e;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #333;
+    margin-bottom: 20px;
+}
+
+.assignments-users-title {
+    color: #e4e4e7;
+    margin: 0 0 15px 0;
+    font-size: 1.1rem;
+}
+
+/* Assignment Preview */
+.assignments-preview {
+    background-color: #1e1e1e;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #333;
+    margin-bottom: 20px;
+}
+
+.assignments-preview-title {
+    color: #e4e4e7;
+    margin: 0 0 15px 0;
+    font-size: 1.1rem;
+}
+
+.assignments-distribution {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.distribution-item {
+    background-color: #252525;
+    padding: 12px 16px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 120px;
+}
+
+.distribution-username {
+    color: #3b82f6;
+    font-weight: 500;
+}
+
+.distribution-count {
+    color: #e4e4e7;
+    font-size: 1.2rem;
+}
+
+.no-selection-message {
+    color: #888;
+    font-style: italic;
+}
+
+/* Action Buttons */
+.assignments-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+}
+
+.assign-btn {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
+}
+
+.assign-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 10px rgba(59, 130, 246, 0.4);
+}
+
+.assign-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.back-btn {
+    background-color: #333;
+    color: #e4e4e7;
+    border: 1px solid #444;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.back-btn:hover {
+    background-color: #444;
+}
+
+/* Loading state */
+.assignments-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+    color: #888;
+}
+
+/* Success message */
+.assignments-success {
+    background-color: #1a4d2e;
+    border: 1px solid #22c55e;
+    color: #22c55e;
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.assignments-error {
+    background-color: #4d1a1a;
+    border: 1px solid #ef4444;
+    color: #ef4444;
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+/* Selected count badge */
+.selected-count-badge {
+    background-color: #3b82f6;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
