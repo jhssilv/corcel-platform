@@ -70,6 +70,8 @@ def add_to_database(results: dict):
 
 @celery.task(bind=True)
 def process_zip_texts(self, zip_path):
+    from app.extensions import db
+    
     if not os.path.exists(zip_path):
         return {'error': 'Temp file not found in server.'}
 
@@ -109,14 +111,36 @@ def process_zip_texts(self, zip_path):
                     else:
                         text_content = f.read().decode('utf-8', errors='replace')
                 
+                # Process text to get tokens with suggestions
                 processed_data = processor.process_text(text_content)
-                # Old structure compatibility: direct dict of tokens
-                results[filename] = processed_data
-                print("Processed: ", filename)
+                
+                # Create Text object
+                text_obj = models.Text(source_file_name=filename)
+                
+                # Build tokens_with_candidates for add_text
+                tokens_with_candidates = []
+                for position, token_data in processed_data.items():
+                    token = models.Token(
+                        token_text=token_data['text'],
+                        is_word=token_data['is_word'],
+                        position=int(position),
+                        to_be_normalized=token_data['to_be_normalized'],
+                        whitespace_after=token_data['whitespace_after'] if token_data['whitespace_after'] else ''
+                    )
+                    candidates = token_data.get('suggestions', [])
+                    tokens_with_candidates.append((token, candidates))
+                
+                # Insert into texts, tokens, suggestions tables
+                db.session.remove()  # Ensure clean session for worker
+                text_id = add_text(text_obj, tokens_with_candidates, db.session)
+                
+                results[filename] = {
+                    'text_id': text_id,
+                    'token_count': len(tokens_with_candidates)
+                }
+                print(f"Processed: {filename} -> text_id={text_id}")
 
         os.remove(zip_path)
-        
-        add_to_database(results)
         
         return {
             'status': 'Concluido', 

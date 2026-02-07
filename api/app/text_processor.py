@@ -70,7 +70,7 @@ class TextProcessor(Tokenizer):
         masked_tokens[relative_target_index] = self.bert_tokenizer.mask_token
         
         text = " ".join(masked_tokens)
-        inputs = self.bert_tokenizer(text, return_tensors="pt").to(self.device)
+        inputs = self.bert_tokenizer(text, return_tensors="pt", truncation=True, max_length=512).to(self.device)
         
         with torch.no_grad():
             outputs = self.bert_model(**inputs)
@@ -120,7 +120,7 @@ class TextProcessor(Tokenizer):
         masked_tokens[relative_target_index] = self.bert_tokenizer.mask_token
         
         text = " ".join(masked_tokens)
-        inputs = self.bert_tokenizer(text, return_tensors="pt").to(self.device)
+        inputs = self.bert_tokenizer(text, return_tensors="pt", truncation=True, max_length=512).to(self.device)
         
         with torch.no_grad():
             outputs = self.bert_model(**inputs)
