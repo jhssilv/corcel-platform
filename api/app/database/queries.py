@@ -521,9 +521,20 @@ def count_admin_users(db):
 def get_user_ids_by_usernames(db, usernames: list[str]) -> list[int]:
     """
     Returns a list of user IDs for the given usernames.
+    Preserves the order of input usernames.
     """
-    users = db.query(User.id).filter(User.username.in_(usernames)).all()
-    return [user.id for user in users]
+    # Get all matching users
+    users = db.query(User.id, User.username).filter(User.username.in_(usernames)).all()
+    # Create a mapping from username to user_id
+    username_to_id = {user.username: user.id for user in users}
+    # Return IDs in the same order as input usernames, skipping duplicates
+    seen = set()
+    result = []
+    for username in usernames:
+        if username in username_to_id and username not in seen:
+            result.append(username_to_id[username])
+            seen.add(username)
+    return result
 
 
 def bulk_assign_texts(db, text_ids: list[int], user_ids: list[int]):
@@ -542,9 +553,17 @@ def bulk_assign_texts(db, text_ids: list[int], user_ids: list[int]):
     if not text_ids or not user_ids:
         return {}
     
+    # Deduplicate text_ids while preserving order
+    seen_texts = set()
+    unique_text_ids = []
+    for text_id in text_ids:
+        if text_id not in seen_texts:
+            unique_text_ids.append(text_id)
+            seen_texts.add(text_id)
+    
     assignment_counts = {user_id: 0 for user_id in user_ids}
     
-    for idx, text_id in enumerate(text_ids):
+    for idx, text_id in enumerate(unique_text_ids):
         user_id = user_ids[idx % len(user_ids)]
         
         # Check if association already exists
