@@ -319,6 +319,18 @@ export async function bulkAssignTexts(textIds, usernames) {
   return response.data || response;
 }
 
+/**
+ * Removes text assignments from specified users.
+ */
+export async function bulkUnassignTexts(textIds, usernames) {
+  const payload = {
+    text_ids: textIds,
+    usernames: usernames
+  };
+  const response = await apiPrivate.delete('/assignments/', { data: payload });
+  return response.data || response;
+}
+
 // --- OCR Functions ---
 
 /**

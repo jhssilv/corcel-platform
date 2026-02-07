@@ -578,3 +578,35 @@ def bulk_assign_texts(db, text_ids: list[int], user_ids: list[int]):
     
     db.commit()
     return assignment_counts
+
+
+def bulk_unassign_texts(db, text_ids: list[int], user_ids: list[int]):
+    """
+    Removes assignments for texts from specified users.
+    
+    Args:
+        db: Database session
+        text_ids: List of text IDs to unassign
+        user_ids: List of user IDs to unassign texts from
+    
+    Returns:
+        dict: Mapping of user_id to count of unassigned texts
+    """
+    if not text_ids or not user_ids:
+        return {}
+    
+    # Deduplicate text_ids
+    unique_text_ids = list(set(text_ids))
+    
+    unassignment_counts = {user_id: 0 for user_id in user_ids}
+    
+    for text_id in unique_text_ids:
+        for user_id in user_ids:
+            # Find and update the association
+            assoc = db.query(TextsUsers).filter_by(text_id=text_id, user_id=user_id).first()
+            if assoc and assoc.assigned:
+                assoc.assigned = False
+                unassignment_counts[user_id] += 1
+    
+    db.commit()
+    return unassignment_counts

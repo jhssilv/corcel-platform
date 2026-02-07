@@ -16,6 +16,43 @@
     margin: 0;
 }
 
+/* Mode Toggle */
+.mode-toggle-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.mode-toggle-btn {
+    flex: 1;
+    padding: 14px 20px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 2px solid #444;
+    background-color: #252525;
+    color: #888;
+}
+
+.mode-toggle-btn:hover {
+    background-color: #2a2a2a;
+    border-color: #555;
+}
+
+.mode-toggle-btn.active {
+    background-color: #1a3a4d;
+    border-color: #3b82f6;
+    color: #3b82f6;
+}
+
+.mode-toggle-btn.unassign.active {
+    background-color: #4d1a1a;
+    border-color: #ef4444;
+    color: #ef4444;
+}
+
 /* Filters Section */
 .assignments-filters {
     background-color: #1e1e1e;
@@ -249,6 +286,19 @@
     font-size: 1.2rem;
 }
 
+/* Unassign mode variants */
+.distribution-item.unassign {
+    border-left: 3px solid #ef4444;
+}
+
+.distribution-username.unassign {
+    color: #ef4444;
+}
+
+.assignments-preview.unassign-mode {
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
 .no-selection-message {
     color: #888;
     font-style: italic;
@@ -297,6 +347,29 @@
 
 .back-btn:hover {
     background-color: #444;
+}
+
+.unassign-btn {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 6px rgba(239, 68, 68, 0.3);
+}
+
+.unassign-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 10px rgba(239, 68, 68, 0.4);
+}
+
+.unassign-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 /* Loading state */

@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TopBar from './TopBar';
 import DropdownSelect from './DropdownSelect';
-import { getFilteredTextsData, getUsernames, bulkAssignTexts } from './api/APIFunctions';
+import { getFilteredTextsData, getUsernames, bulkAssignTexts, bulkUnassignTexts } from './api/APIFunctions';
 import '../styles/assignments_panel.css';
 import '../styles/main_page.css';
 
@@ -23,13 +23,16 @@ const normalizedOptions = [
 function AssignmentsPanel() {
     const navigate = useNavigate();
     
+    // Mode: 'assign' or 'unassign'
+    const [mode, setMode] = useState('assign');
+    
     // Data states
     const [textsData, setTextsData] = useState([]);
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
-    const [assigning, setAssigning] = useState(false);
+    const [processing, setProcessing] = useState(false);
     
     // Filter states
     const [selectedGrades, setSelectedGrades] = useState([]);
@@ -68,7 +71,6 @@ function AssignmentsPanel() {
             
             const filters = {};
             
-            // Build filters
             if (selectedGrades.length > 0) {
                 filters.grades = selectedGrades.map(g => g.value);
             }
@@ -76,7 +78,6 @@ function AssignmentsPanel() {
                 filters.assignedUsers = selectedAssignedUsers.map(u => u.value);
             }
             if (selectedNormalized.length === 1) {
-                // Only filter if exactly one option selected
                 filters.normalized = selectedNormalized[0].value;
             }
             if (searchText.trim()) {
@@ -85,7 +86,6 @@ function AssignmentsPanel() {
             
             const data = await getFilteredTextsData(filters);
             setTextsData(data || []);
-            // Clear selection when filters change
             setSelectedTextIds(new Set());
         } catch (err) {
             setError('Erro ao carregar textos.');
@@ -95,29 +95,80 @@ function AssignmentsPanel() {
         }
     }, [selectedGrades, selectedAssignedUsers, selectedNormalized, searchText]);
     
-    // Fetch filtered texts when filters change (debounced for search)
     useEffect(() => {
         const timeoutId = setTimeout(() => {
             fetchFilteredTexts();
-        }, searchText ? 300 : 0); // Debounce search input
+        }, searchText ? 300 : 0);
         
         return () => clearTimeout(timeoutId);
     }, [fetchFilteredTexts]);
     
-    // Calculate assignment distribution
-    const assignmentDistribution = useMemo(() => {
+    // Get selected texts data
+    const selectedTexts = useMemo(() => {
+        return textsData.filter(t => selectedTextIds.has(t.id));
+    }, [textsData, selectedTextIds]);
+    
+    // Calculate affected entries for assign mode
+    // Only shows users who will get NEW assignments (texts not already assigned to them)
+    const assignPreview = useMemo(() => {
         if (selectedTextIds.size === 0 || selectedTargetUsers.length === 0) {
             return [];
         }
         
-        const textsPerUser = Math.floor(selectedTextIds.size / selectedTargetUsers.length);
-        const remainder = selectedTextIds.size % selectedTargetUsers.length;
+        const targetUsernames = selectedTargetUsers.map(u => u.value);
         
-        return selectedTargetUsers.map((user, index) => ({
-            username: user.value,
-            count: textsPerUser + (index < remainder ? 1 : 0)
-        }));
-    }, [selectedTextIds, selectedTargetUsers]);
+        // Round-robin distribution simulation
+        const userCounts = {};
+        targetUsernames.forEach(u => { userCounts[u] = 0; });
+        
+        let userIndex = 0;
+        for (const text of selectedTexts) {
+            const targetUser = targetUsernames[userIndex % targetUsernames.length];
+            const currentAssignees = text.usersAssigned || [];
+            
+            // Only count if not already assigned to this user
+            if (!currentAssignees.includes(targetUser)) {
+                userCounts[targetUser]++;
+            }
+            userIndex++;
+        }
+        
+        // Filter out users with 0 new assignments
+        return Object.entries(userCounts)
+            .filter(([, count]) => count > 0)
+            .map(([username, count]) => ({ username, count }));
+    }, [selectedTexts, selectedTargetUsers]);
+    
+    // Calculate affected entries for unassign mode
+    // Only shows users who have assignments that will be removed
+    const unassignPreview = useMemo(() => {
+        if (selectedTextIds.size === 0 || selectedTargetUsers.length === 0) {
+            return [];
+        }
+        
+        const targetUsernames = selectedTargetUsers.map(u => u.value);
+        const userCounts = {};
+        targetUsernames.forEach(u => { userCounts[u] = 0; });
+        
+        for (const text of selectedTexts) {
+            const currentAssignees = text.usersAssigned || [];
+            for (const targetUser of targetUsernames) {
+                // Only count if currently assigned to this user
+                if (currentAssignees.includes(targetUser)) {
+                    userCounts[targetUser]++;
+                }
+            }
+        }
+        
+        // Filter out users with 0 removals
+        return Object.entries(userCounts)
+            .filter(([, count]) => count > 0)
+            .map(([username, count]) => ({ username, count }));
+    }, [selectedTexts, selectedTargetUsers]);
+    
+    // Get the active preview based on mode
+    const activePreview = mode === 'assign' ? assignPreview : unassignPreview;
+    const totalAffected = activePreview.reduce((sum, item) => sum + item.count, 0);
     
     // Selection handlers
     const handleSelectAll = () => {
@@ -129,7 +180,6 @@ function AssignmentsPanel() {
         setSelectedTextIds(new Set());
     };
     
-    // Select N from filtered texts
     const handleSelectN = () => {
         const n = parseInt(selectNValue, 10);
         if (isNaN(n) || n <= 0) return;
@@ -155,40 +205,48 @@ function AssignmentsPanel() {
         });
     };
     
-    // Open confirmation modal
+    // Confirm action
     const handleOpenConfirmModal = () => {
         if (selectedTextIds.size === 0 || selectedTargetUsers.length === 0) {
+            return;
+        }
+        if (activePreview.length === 0) {
+            setError(mode === 'assign' 
+                ? 'Nenhum texto será atribuído (todos já estão atribuídos aos usuários selecionados).'
+                : 'Nenhuma atribuição será removida (nenhum texto está atribuído aos usuários selecionados).');
             return;
         }
         setShowConfirmModal(true);
     };
     
-    // Assignment handler
-    const handleConfirmAssign = async () => {
+    const handleConfirmAction = async () => {
         setShowConfirmModal(false);
         
         try {
-            setAssigning(true);
+            setProcessing(true);
             setError('');
             setSuccess('');
             
             const textIds = Array.from(selectedTextIds);
             const usernames = selectedTargetUsers.map(u => u.value);
             
-            const result = await bulkAssignTexts(textIds, usernames);
+            if (mode === 'assign') {
+                const result = await bulkAssignTexts(textIds, usernames);
+                setSuccess(`Textos atribuídos com sucesso! Total: ${result.totalTexts} textos para ${result.totalUsers} usuários.`);
+            } else {
+                const result = await bulkUnassignTexts(textIds, usernames);
+                setSuccess(`Atribuições removidas com sucesso! Total: ${result.totalTexts} textos de ${result.totalUsers} usuários.`);
+            }
             
-            setSuccess(`Textos atribuídos com sucesso! Total: ${result.totalTexts} textos para ${result.totalUsers} usuários.`);
             setSelectedTextIds(new Set());
             setSelectedTargetUsers([]);
-            
-            // Refresh texts data
             await fetchFilteredTexts();
             
         } catch (err) {
-            setError('Erro ao atribuir textos: ' + (err.message || 'Erro desconhecido'));
+            setError(`Erro: ${err.message || 'Erro desconhecido'}`);
             console.error(err);
         } finally {
-            setAssigning(false);
+            setProcessing(false);
         }
     };
     
@@ -198,9 +256,33 @@ function AssignmentsPanel() {
             
             <div className="assignments-panel-container main-page-section">
                 <div className="assignments-panel-header">
-                    <h2 className="assignments-panel-title">Atribuição de Textos</h2>
+                    <h2 className="assignments-panel-title">Gerenciamento de Atribuições</h2>
                     <button className="back-btn" onClick={() => navigate('/main')}>
                         ← Voltar para Busca
+                    </button>
+                </div>
+                
+                {/* Mode Toggle */}
+                <div className="mode-toggle-container">
+                    <button 
+                        className={`mode-toggle-btn ${mode === 'assign' ? 'active' : ''}`}
+                        onClick={() => setMode('assign')}
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M5 12h14"/><path d="M12 5v14"/>
+                        </svg>
+                        Atribuir Textos
+                    </button>
+                    <button 
+                        className={`mode-toggle-btn unassign ${mode === 'unassign' ? 'active' : ''}`}
+                        onClick={() => setMode('unassign')}
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M5 12h14"/>
+                        </svg>
+                        Remover Atribuições
                     </button>
                 </div>
                 
@@ -259,7 +341,6 @@ function AssignmentsPanel() {
                 
                 {/* Texts Selection Section */}
                 <div className="assignments-texts-section">
-                    {/* Sticky Header */}
                     <div className="assignments-texts-header">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                             <h3 className="assignments-texts-title">Textos Disponíveis</h3>
@@ -268,7 +349,6 @@ function AssignmentsPanel() {
                             </span>
                         </div>
                         <div className="assignments-selection-controls">
-                            {/* Select N input */}
                             <div className="select-n-control">
                                 <input
                                     type="number"
@@ -296,7 +376,6 @@ function AssignmentsPanel() {
                         </div>
                     </div>
                     
-                    {/* Scrollable texts list */}
                     <div className="assignments-texts-list">
                         {loading ? (
                             <p className="no-selection-message">Carregando...</p>
@@ -333,7 +412,9 @@ function AssignmentsPanel() {
                 
                 {/* Users Selection Section */}
                 <div className="assignments-users-section">
-                    <h3 className="assignments-users-title">Atribuir Para</h3>
+                    <h3 className="assignments-users-title">
+                        {mode === 'assign' ? 'Atribuir Para' : 'Remover De'}
+                    </h3>
                     <DropdownSelect
                         title="Selecione os usuários"
                         options={users}
@@ -343,18 +424,27 @@ function AssignmentsPanel() {
                     />
                 </div>
                 
-                {/* Assignment Preview */}
-                <div className="assignments-preview">
-                    <h3 className="assignments-preview-title">Prévia da Distribuição</h3>
-                    {assignmentDistribution.length === 0 ? (
+                {/* Preview Section */}
+                <div className={`assignments-preview ${mode === 'unassign' ? 'unassign-mode' : ''}`}>
+                    <h3 className="assignments-preview-title">
+                        {mode === 'assign' ? 'Prévia da Distribuição' : 'Atribuições a Remover'}
+                    </h3>
+                    {activePreview.length === 0 ? (
                         <p className="no-selection-message">
-                            Selecione textos e usuários para ver a distribuição.
+                            {selectedTextIds.size === 0 || selectedTargetUsers.length === 0
+                                ? 'Selecione textos e usuários para ver a prévia.'
+                                : mode === 'assign'
+                                    ? 'Nenhuma nova atribuição será feita (textos já atribuídos aos usuários).'
+                                    : 'Nenhuma atribuição será removida (textos não estão atribuídos aos usuários).'
+                            }
                         </p>
                     ) : (
                         <div className="assignments-distribution">
-                            {assignmentDistribution.map(item => (
-                                <div key={item.username} className="distribution-item">
-                                    <span className="distribution-username">{item.username}</span>
+                            {activePreview.map(item => (
+                                <div key={item.username} className={`distribution-item ${mode === 'unassign' ? 'unassign' : ''}`}>
+                                    <span className={`distribution-username ${mode === 'unassign' ? 'unassign' : ''}`}>
+                                        {item.username}
+                                    </span>
                                     <span className="distribution-count">{item.count} textos</span>
                                 </div>
                             ))}
@@ -368,11 +458,16 @@ function AssignmentsPanel() {
                         ← Voltar
                     </button>
                     <button
-                        className="assign-btn"
+                        className={mode === 'assign' ? 'assign-btn' : 'unassign-btn'}
                         onClick={handleOpenConfirmModal}
-                        disabled={selectedTextIds.size === 0 || selectedTargetUsers.length === 0 || assigning}
+                        disabled={selectedTextIds.size === 0 || selectedTargetUsers.length === 0 || processing || activePreview.length === 0}
                     >
-                        {assigning ? 'Atribuindo...' : `Atribuir ${selectedTextIds.size} Textos`}
+                        {processing 
+                            ? (mode === 'assign' ? 'Atribuindo...' : 'Removendo...')
+                            : mode === 'assign' 
+                                ? `Atribuir ${totalAffected} Textos`
+                                : `Remover ${totalAffected} Atribuições`
+                        }
                     </button>
                 </div>
             </div>
@@ -382,16 +477,24 @@ function AssignmentsPanel() {
                 <div className="modal-overlay">
                     <div className="upload-modal" style={{ maxWidth: '500px' }}>
                         <div className="modal-header">
-                            <h3 className="modal-title">Confirmar Atribuição</h3>
+                            <h3 className="modal-title">
+                                {mode === 'assign' ? 'Confirmar Atribuição' : 'Confirmar Remoção'}
+                            </h3>
                             <button className="modal-close-button" onClick={() => setShowConfirmModal(false)}>×</button>
                         </div>
                         <div className="modal-body">
-                            <p>Você está prestes a atribuir <strong>{selectedTextIds.size} textos</strong> para <strong>{selectedTargetUsers.length} usuário(s)</strong>.</p>
+                            <p>
+                                {mode === 'assign' 
+                                    ? <>Você está prestes a atribuir <strong>{totalAffected} textos</strong> para os seguintes usuários:</>
+                                    : <>Você está prestes a remover <strong>{totalAffected} atribuições</strong> dos seguintes usuários:</>
+                                }
+                            </p>
                             <div style={{ marginTop: '15px', padding: '10px', backgroundColor: '#252525', borderRadius: '8px' }}>
-                                <p style={{ color: '#888', marginBottom: '10px' }}>Distribuição:</p>
-                                {assignmentDistribution.map(item => (
+                                {activePreview.map(item => (
                                     <p key={item.username} style={{ color: '#e4e4e7' }}>
-                                        <span style={{ color: '#3b82f6' }}>{item.username}</span>: {item.count} textos
+                                        <span style={{ color: mode === 'assign' ? '#3b82f6' : '#ef4444' }}>
+                                            {item.username}
+                                        </span>: {item.count} textos
                                     </p>
                                 ))}
                             </div>
@@ -401,7 +504,7 @@ function AssignmentsPanel() {
                             <button className="modal-button cancel-button" onClick={() => setShowConfirmModal(false)}>
                                 Cancelar
                             </button>
-                            <button className="modal-button confirm-button valid" onClick={handleConfirmAssign}>
+                            <button className="modal-button confirm-button valid" onClick={handleConfirmAction}>
                                 Confirmar
                             </button>
                         </div>

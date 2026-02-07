@@ -65,3 +65,44 @@ def bulk_assign_texts(current_user, body: BulkAssignRequest):
         
     except Exception as e:
         return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
+
+
+@assignment_bp.route('/api/assignments/', methods=['DELETE'])
+@login_required()
+@validate()
+def bulk_unassign_texts(current_user, body: BulkAssignRequest):
+    """Removes text assignments from specified users.
+
+    Args:
+        current_user (User): The currently logged-in user.
+        body (BulkAssignRequest): The request body containing text_ids and usernames.
+
+    Returns:
+        JSON response with unassignment counts per user.
+    """
+    try:
+        user_ids = queries.get_user_ids_by_usernames(session, body.usernames)
+        
+        if not user_ids:
+            return jsonify(generic_schemas.ErrorResponse(error="No valid users found").model_dump()), 400
+        
+        if not body.text_ids:
+            return jsonify(generic_schemas.ErrorResponse(error="No texts provided").model_dump()), 400
+        
+        unassignment_counts = queries.bulk_unassign_texts(session, body.text_ids, user_ids)
+        
+        username_counts = {}
+        for user_id, count in unassignment_counts.items():
+            username = queries.get_username_by_id(session, user_id)
+            if username:
+                username_counts[username] = count
+        
+        return jsonify({
+            "message": "Assignments removed successfully",
+            "unassignments": username_counts,
+            "totalTexts": len(body.text_ids),
+            "totalUsers": len(user_ids)
+        }), 200
+        
+    except Exception as e:
+        return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
