@@ -8,6 +8,7 @@ import Footer from './components/Footer.jsx'
 import MainPage from './components/MainPage.jsx'
 import OCRPage from './components/OCRPage.jsx'
 import UserManagementDashboard from './components/UserManagementDashboard.jsx'
+import AssignmentsPanel from './components/AssignmentsPanel.jsx'
 import { AuthProvider } from './components/AuthContext.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 
@@ -42,6 +43,14 @@ createRoot(document.getElementById('root')).render(
                             </ProtectedRoute>
                         }
                     />
+                    <Route
+                        path="/assignments"
+                        element={
+                            <ProtectedRoute>
+                                <AssignmentsPanel />
+                            </ProtectedRoute>
+                        }
+                    />
                     <Route path="*" element={<Navigate to="/login" />} />
                 </Routes>
             </Router>
@@ -49,3 +58,4 @@ createRoot(document.getElementById('root')).render(
     <Footer />
   </StrictMode>,
 )
+

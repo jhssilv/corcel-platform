@@ -277,6 +277,18 @@ export async function deleteAllNormalizations(textId) {
 
 }
 
+/**
+ * Bulk assigns texts to users with round-robin distribution.
+ */
+export async function bulkAssignTexts(textIds, usernames) {
+  const payload = {
+    text_ids: textIds,
+    usernames: usernames
+  };
+  const response = await apiPrivate.post('/assignments/', payload);
+  return response.data || response;
+}
+
 // --- OCR Functions ---
 
 /**
