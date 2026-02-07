@@ -36,16 +36,21 @@ function UploadModal({ isOpen, onClose }) {
         onClose();
     };
 
-    // Effect to resume polling if there is an active task ID in localStorage
-    // This handles page refreshes or component remounts
+    // Effect to reset state when modal opens fresh
     useEffect(() => {
-        const savedTaskId = localStorage.getItem("currentTaskId");
-        if (savedTaskId && !isProcessing && !pollingInterval.current) {
-            // Check if task is still running
-            setIsProcessing(true);
-            pollStatus(savedTaskId);
+        if (isOpen) {
+            // Check for saved task first
+            const savedTaskId = localStorage.getItem("currentTaskId");
+            if (savedTaskId && !pollingInterval.current) {
+                // Resume polling for existing task
+                setIsProcessing(true);
+                pollStatus(savedTaskId);
+            } else if (!savedTaskId) {
+                // Fresh open - reset state
+                resetState();
+            }
         }
-    }, []);
+    }, [isOpen]);
 
     const validateZipFile = async (file) => {
         setIsValidating(true);
