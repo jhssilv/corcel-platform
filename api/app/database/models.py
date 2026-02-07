@@ -11,7 +11,8 @@ from sqlalchemy import (
     Text as TextType,
     ForeignKey,
     PrimaryKeyConstraint,
-    UniqueConstraint
+    UniqueConstraint,
+    func
 )
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import declarative_base, relationship
@@ -55,6 +56,7 @@ class Text(Base):
     normalizations = relationship('Normalization', back_populates='text', cascade="all, delete-orphan")
     texts_association = relationship('TextsUsers', back_populates='text', cascade="all, delete-orphan")
     tokens = relationship('Token', back_populates='text', cascade="all, delete-orphan", order_by='Token.position')
+    creation_date = Column(TIMESTAMP, nullable=False, default=func.now())
 
 class RawText(Base):
     """
