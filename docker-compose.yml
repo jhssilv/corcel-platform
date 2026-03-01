@@ -6,13 +6,12 @@ services:
       - "80:80"
     volumes:
       - ./frontend/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./frontend/dist:/usr/share/nginx/html  # Make sure you're pointing to the correct folder
+      - ./frontend/dist:/usr/share/nginx/html
     depends_on:
       - frontend
       - backend
     networks:
       - app_network
-
 
   frontend:
     build:
@@ -20,7 +19,7 @@ services:
       dockerfile: Dockerfile.frontend
     container_name: corcel_frontend
     ports:
-      - "8081:80"  
+      - "8081:80"
     ulimits:
       nofile:
         soft: 65535
@@ -37,8 +36,11 @@ services:
     container_name: corcel_backend
     ports:
       - "5000:5000"
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
     depends_on:
       - db
+      - ollama
     networks:
       - app_network
 
@@ -53,6 +55,48 @@ services:
       - app_network
     env_file:
       - ./api/.env
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: corcel_ollama
+    ports:
+      - "11435:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_CONTEXT_LENGTH=2048
+    networks:
+      - app_network
+    restart: unless-stopped
+    # GPU support (comment if NVIDIA GPU unavailable):
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [ gpu ]
+
+  ollama-pull:
+    image: ollama/ollama:latest
+    container_name: corcel_ollama_pull
+    depends_on:
+      - ollama
+    volumes:
+      - ollama_data:/root/.ollama
+    entrypoint: [ "/bin/sh", "-c" ]
+    command:
+      - |
+        echo 'Waiting for Ollama server...'
+        until OLLAMA_HOST=http://ollama:11434 ollama list > /dev/null 2>&1; do
+          sleep 2
+        done
+        echo 'Pulling gemma3:12b (this may take a while on first run)...'
+        OLLAMA_HOST=http://ollama:11434 ollama pull gemma3:12b
+        echo 'Model ready.'
+    networks:
+      - app_network
+    restart: "no"
 
   backups:
     build:
@@ -75,3 +119,4 @@ networks:
 
 volumes:
   postgres_data:
+  ollama_data:

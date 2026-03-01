@@ -1,323 +1,228 @@
+import json
 import os
-import torch
-from transformers import BertTokenizer, BertForMaskedLM
-import numpy as np
+import time
+import requests
 
-# Import Tokenizer
 from .tokenizer import Tokenizer
 
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+OLLAMA_MODEL = "gemma3:12b"
+
 class TextProcessor(Tokenizer):
-    
-    def __init__(self):
+
+    def __init__(self, model: str = OLLAMA_MODEL, ollama_url: str = OLLAMA_BASE_URL):
         super().__init__()
-        self.bert_tokenizer = None
-        self.bert_model = None
+        self.model = model
+        self.ollama_url = ollama_url.rstrip("/")
 
-    def _load_bert(self):
-        if self.bert_tokenizer and self.bert_model:
-            return
+    # ------------------------------------------------------------------
+    # Ollama helpers
+    # ------------------------------------------------------------------
 
-        print("Loading Bertimbau model...")
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    def _ollama_generate(self, prompt: str, temperature: float = 0.1) -> str:
+        payload = {
+            "model": self.model,
+            "prompt": prompt,
+            "stream": False,
+            "options": {
+                "temperature": temperature,
+            },
+        }
+        resp = requests.post(
+            f"{self.ollama_url}/api/generate",
+            json=payload,
+            timeout=120,
+        )
+        resp.raise_for_status()
+        return resp.json().get("response", "")
 
+    def _build_prompt(self, text: str) -> str:
+        return (
+            "Você é um corretor ortográfico de português brasileiro.\n"
+            "Analise o texto abaixo e identifique TODAS as palavras escritas "
+            "de forma incorreta, com erros ortográficos ou que não pertencem "
+            "ao português padrão (incluindo palavras estrangeiras.\n\n"
+            "Para CADA palavra incorreta, forneça:\n"
+            '  - "word": a palavra exatamente como aparece no texto\n'
+            '  - "suggestions": lista de até 5 sugestões de correção, '
+            "ordenadas da mais provável para a menos provável\n\n"
+            "Regras:\n"
+            "- NÃO inclua palavras corretas.\n"
+            "- NÃO altere nomes próprios, siglas ou abreviações.\n"
+            "- Mantenha a capitalização original na chave 'word'.\n"
+            "- Responda APENAS com um JSON array, sem texto adicional.\n\n"
+            "Texto:\n"
+            f'"""\n{text}\n"""\n\n'
+            "Resposta (JSON array):"
+        )
 
-    def _load_bert(self):
-        if self.bert_tokenizer and self.bert_model:
-            return
+    def _parse_llm_response(self, raw: str) -> dict[str, list[str]]:
+        text = raw.strip()
 
-        print("Loading Bertimbau model...")
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        print(f"Using device: {self.device}")
-        
-        model_name = 'neuralmind/bert-base-portuguese-cased'
-        self.bert_tokenizer = BertTokenizer.from_pretrained(model_name)
-        self.bert_model = BertForMaskedLM.from_pretrained(model_name)
-        self.bert_model.to(self.device)
-        self.bert_model.eval()
-        print("Bertimbau loaded.")
+        if text.startswith("```"):
+            lines = text.splitlines()
+            lines = [l for l in lines if not l.strip().startswith("```")]
+            text = "\n".join(lines).strip()
 
-    def _is_valid_pt_word(self, word):
-        return self.hobj.spell(word) or bool(self.spell.known([word]))
+        try:
+            items = json.loads(text)
+        except json.JSONDecodeError:
+            start = text.find("[")
+            end = text.rfind("]")
+            if start != -1 and end != -1:
+                try:
+                    items = json.loads(text[start : end + 1])
+                except json.JSONDecodeError:
+                    print(f"[LLM] Failed to parse response:\n{raw[:500]}")
+                    return {}
+            else:
+                print(f"[LLM] No JSON array found in response:\n{raw[:500]}")
+                return {}
 
-    def _get_bert_predictions(self, sentence_tokens, target_index, top_k=20):
-        if not self.bert_model:
-            self._load_bert()
-
-        # Prepare input for BERT with windowing to avoid 512 token limit
-        WINDOW_SIZE = 200
-        half_window = WINDOW_SIZE // 2
-        
-        start_idx = max(0, target_index - half_window)
-        end_idx = min(len(sentence_tokens), start_idx + WINDOW_SIZE)
-        
-        if end_idx - start_idx < WINDOW_SIZE and start_idx > 0:
-            start_idx = max(0, end_idx - WINDOW_SIZE)
-            
-        window_tokens = sentence_tokens[start_idx:end_idx]
-        relative_target_index = target_index - start_idx
-        
-        masked_tokens = window_tokens.copy()
-        masked_tokens[relative_target_index] = self.bert_tokenizer.mask_token
-        
-        text = " ".join(masked_tokens)
-        inputs = self.bert_tokenizer(text, return_tensors="pt", truncation=True, max_length=512).to(self.device)
-        
-        with torch.no_grad():
-            outputs = self.bert_model(**inputs)
-            predictions = outputs.logits
-            
-        # Find the index of the masked token
-        mask_token_indices = (inputs.input_ids == self.bert_tokenizer.mask_token_id)[0].nonzero(as_tuple=True)[0]
-        
-        if len(mask_token_indices) == 0:
-            return []
-            
-        mask_index = mask_token_indices[0]
-        
-        # Get top k predictions
-        probs = torch.nn.functional.softmax(predictions[0, mask_index], dim=-1)
-        top_k_weights, top_k_indices = torch.topk(probs, top_k, sorted=True)
-        
-        results = []
-        for i in range(top_k):
-            token_id = top_k_indices[i].item()
-            token = self.bert_tokenizer.decode([token_id]).strip()
-            
-            # Filter out subwords and special tokens
-            if not token.startswith("##") and token not in ["[UNK]", "[PAD]", "[CLS]", "[SEP]", "[MASK]"] and token.isalpha():
-                results.append(token)
-            
-        return results
-
-    def _rank_by_bert(self, sentence_tokens, target_index, candidates, top_k=5):
-        if not candidates:
-            return []
-        
-        # Prepare input for BERT with windowing
-        WINDOW_SIZE = 200
-        half_window = WINDOW_SIZE // 2
-        
-        start_idx = max(0, target_index - half_window)
-        end_idx = min(len(sentence_tokens), start_idx + WINDOW_SIZE)
-        
-        if end_idx - start_idx < WINDOW_SIZE and start_idx > 0:
-            start_idx = max(0, end_idx - WINDOW_SIZE)
-            
-        window_tokens = sentence_tokens[start_idx:end_idx]
-        relative_target_index = target_index - start_idx
-
-        masked_tokens = window_tokens.copy()
-        masked_tokens[relative_target_index] = self.bert_tokenizer.mask_token
-        
-        text = " ".join(masked_tokens)
-        inputs = self.bert_tokenizer(text, return_tensors="pt", truncation=True, max_length=512).to(self.device)
-        
-        with torch.no_grad():
-            outputs = self.bert_model(**inputs)
-            predictions = outputs.logits
-            
-        # Find the index of the masked token
-        mask_token_indices = (inputs.input_ids == self.bert_tokenizer.mask_token_id)[0].nonzero(as_tuple=True)[0]
-        
-        if len(mask_token_indices) == 0:
-            return candidates 
-            
-        mask_index = mask_token_indices[0]
-        
-        candidate_scores = []
-        for candidate in candidates:
-            candidate_ids = self.bert_tokenizer.encode(candidate, add_special_tokens=False)
-            if len(candidate_ids) == 0:
+        result: dict[str, list[str]] = {}
+        for entry in items:
+            if not isinstance(entry, dict):
                 continue
-            # Use the first token of the candidate for scoring
-            candidate_id = candidate_ids[0]
-            score = predictions[0, mask_index, candidate_id].item()
-            candidate_scores.append((candidate, score))
-            
-        candidate_scores.sort(key=lambda x: x[1], reverse=True)
-        return [c[0] for c in candidate_scores[:top_k]]
+            word = entry.get("word", "")
+            suggestions = entry.get("suggestions", [])
+            if word:
+                result[word.lower()] = [s for s in suggestions if isinstance(s, str)]
+        return result
+
+    def _get_llm_corrections(self, text: str) -> dict[str, list[str]]:
+        prompt = self._build_prompt(text)
+        raw = self._ollama_generate(prompt)
+        return self._parse_llm_response(raw)
 
     def tokenize_only(self, text: str):
+        """Tokenizes the text without spell checking (inherited from Tokenizer)."""
+        return super().tokenize_only(text)
+
+    def process_text(self, text: str, llm_assists_detection: bool = True):
         """
-        Tokenizes the text without performing spell checking or normalization suggestions.
+        Full processing pipeline:
+          1. Tokenize with Spacy.
+          2. Generate dictionary candidates (Hunspell + SpellChecker).
+          3. Ask the LLM (single call) which tokens are incorrect and
+             get its suggestions.
+          4. Merge dictionary candidates with LLM suggestions (LLM first).
+          5. Return token list with to_be_normalized flags and suggestions.
+
+        Args:
+            text: The input text to process.
+            llm_assists_detection: If True (default), the LLM helps decide
+                whether a word is incorrect (can override dictionary results).
+                If False, only dictionaries determine correctness; the LLM
+                still provides suggestions for words flagged by dictionaries.
         """
         doc = self.nlp(text)
         results = {}
 
-        for i, token in enumerate(doc):
-            word = token.text
-            is_word = word.isalpha()
-            
-            results[i] = {
-                'idx': i,
-                'text': word,
-                'to_be_normalized': False,
-                'suggestions': [],
-                'is_word': is_word,
-                'whitespace_after': token.whitespace_
-            }
-        
-        return results
-
-    def process_text(self, text: str):
-        doc = self.nlp(text)
-        results = {}
-        sentence_tokens = [token.text for token in doc]
+        # --- Phase 1: dictionary candidate generation per token -----------
+        token_candidates: dict[int, list[str]] = {}
 
         for i, token in enumerate(doc):
             word = token.text
-            
+
             if not word.isalpha():
-                
                 results[i] = {
-                    'idx': i,
-                    'text': word,
-                    'to_be_normalized': False,
-                    'suggestions': [],
-                    'is_word': False,
-                    'whitespace_after': token.whitespace_
+                    "idx": i,
+                    "text": word,
+                    "to_be_normalized": False,
+                    "suggestions": [],
+                    "is_word": False,
+                    "whitespace_after": token.whitespace_,
                 }
                 continue
 
-            candidates = set()
+            candidates: set[str] = set()
             candidates.update(self.spell.candidates(word) or [])
             try:
                 candidates.update(self.hobj.suggest(word))
-            except: pass
+            except Exception:
+                pass
 
-            if word in candidates:
-                candidates.remove(word)
+            candidates.discard(word)
 
-            final_candidates = []
-            temp_candidates = [c.capitalize() if word[0].isupper() else c.lower() for c in candidates]
-            
-            for c in temp_candidates:
+            # Case-match candidates to the original word
+            final: list[str] = []
+            for c in candidates:
                 if word.isupper():
-                    final_candidates.append(c.upper())
+                    final.append(c.upper())
                 elif word[0].isupper():
-                    final_candidates.append(c.capitalize())
+                    final.append(c.capitalize())
                 else:
-                    final_candidates.append(c.lower())
+                    final.append(c.lower())
 
-            is_correct = self._is_valid_pt_word(word)
-            
-            bert_suggestions = []
-            # If dictionary says incorrect, check with BERT for false positives
-            if not is_correct:
-                bert_preds = self._get_bert_predictions(sentence_tokens, i, top_k=50)
-                # If the word (or a case variant) is in BERT's top predictions, consider it correct
-                if word in bert_preds or word.lower() in [p.lower() for p in bert_preds]:
-                    is_correct = True
-                else:
-                    # Get top 2 BERT suggestions that are not the word itself AND are valid PT words
-                    for pred in bert_preds:
-                        if pred.lower() != word.lower() and \
-                           pred not in bert_suggestions and \
-                           self._is_valid_pt_word(pred):
-                            bert_suggestions.append(pred)
-                            if len(bert_suggestions) >= 2:
-                                break
+            token_candidates[i] = final
 
-            # BERT for context-aware ranking
-            if not is_correct:
-                if final_candidates:
-                    sorted_suggestions = self._rank_by_bert(sentence_tokens, i, final_candidates, top_k=5)
-                else:
-                    sorted_suggestions = []
-                
-                # Add BERT suggestions to the top
-                for bs in reversed(bert_suggestions):
-                    if bs not in sorted_suggestions:
-                        sorted_suggestions.insert(0, bs)
-            else:
-                sorted_suggestions = final_candidates[:7]
-                
             results[i] = {
-                'idx': i,
-                'text': word,
-                'to_be_normalized': not is_correct,
-                'suggestions': sorted_suggestions,
-                'is_word': True,
-                'whitespace_after': token.whitespace_
+                "idx": i,
+                "text": word,
+                "to_be_normalized": False,  # updated later
+                "suggestions": [],
+                "is_word": True,
+                "whitespace_after": token.whitespace_,
             }
+
+        # --- Phase 2: LLM error detection ------------------
+        llm_corrections = self._get_llm_corrections(text)
+
+        # --- Phase 3 -------------------------------------
+        for i, token in enumerate(doc):
+            if not results[i]["is_word"]:
+                continue
+
+            word = token.text
+            word_lower = word.lower()
+            dict_is_correct = self._is_valid_pt_word(word)
+            llm_flagged = word_lower in llm_corrections
+
+            if llm_assists_detection:
+                # LLM participates in the correctness decision
+                if llm_flagged and not dict_is_correct:
+                    to_be_normalized = True
+                elif llm_flagged and dict_is_correct:
+                    to_be_normalized = bool(llm_corrections[word_lower])
+                elif not llm_flagged and not dict_is_correct:
+                    # LLM didn't flag it
+                    to_be_normalized = False
+                else:
+                    to_be_normalized = False
+            else:
+                # Dictionary-only detection
+                to_be_normalized = not dict_is_correct
+
+            # Build suggestion list: LLM suggestions first, then dict candidates
+            suggestions: list[str] = []
+            if llm_flagged:
+                for s in llm_corrections[word_lower]:
+                    # Case-match LLM suggestions
+                    if word.isupper():
+                        s_matched = s.upper()
+                    elif word[0].isupper():
+                        s_matched = s.capitalize()
+                    else:
+                        s_matched = s.lower()
+                    if s_matched not in suggestions and s_matched.lower() != word_lower:
+                        suggestions.append(s_matched)
+
+            for c in token_candidates.get(i, []):
+                if c not in suggestions:
+                    suggestions.append(c)
+
+            MAX_SUGGESTIONS = 7
+            suggestions = suggestions[:MAX_SUGGESTIONS]
+
+            results[i]["to_be_normalized"] = to_be_normalized
+            results[i]["suggestions"] = suggestions
 
         return results
 
-    """
-    PSEUDOCODE EXPLANATION OF THE PIPELINE:
-
-    1. Tokenization:
-       - Input text is split into tokens using Spacy (Portuguese model).
-       - Non-alphabetic tokens (punctuation, numbers) are skipped.
-
-    2. Candidate Generation:
-       - For each word, generate a list of candidate corrections using:
-         a. HunSpell (morphological dictionary)
-         b. SpellChecker (Levenshtein distance based)
-       - Candidates are case-matched to the original word (e.g., "Word" -> "Candidate").
-
-    3. Initial Correctness Check:
-       - A word is considered "valid" if it exists in EITHER HunSpell OR SpellChecker dictionaries.
-
-    4. False Positive Filtering:
-       - If the word is flagged as INCORRECT by dictionaries:
-         - Ask Bertimbau (BERT model) for the top 50 most probable words in that context.
-         - If the original word (or a case variant) appears in BERT's predictions:
-           -> Mark the word as CORRECT (assume dictionary is missing it, e.g., proper noun).
-         - Else:
-           -> Extract the top 2 suggestions from BERT that are:
-              a. Not the original word.
-              b. Valid Portuguese words (exist in dictionaries).
-           -> Add these to a special "BERT suggestions" list.
-
-    5. Ranking & Final Suggestions:
-       - If the word is still INCORRECT:
-         - Rank the dictionary candidates using BERT:
-           -> Mask the word in the sentence.
-           -> Calculate the probability of each candidate filling that mask.
-         - Combine suggestions:
-           -> [Top 2 BERT-generated suggestions] + [BERT-ranked dictionary candidates]
-       - If the word is CORRECT:
-         - Return the top 7 dictionary candidates, but mark `to_be_normalized` as False.
-
-    6. Output:
-       - Return a list of tokens with their status (correct/incorrect) and ranked suggestions.
-    """
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     processor = TextProcessor()
-    text1 = """
-        O processamento de linguagem natural é uma área fascinante da inteligência artificial.
-        Muitas vezes, cometemos erros de digitação que podem ser corrigidos automaticamente.
-        Por exemplo, se eu escrever "computador" como "conputador", o sistema deve sugerir a correção.
-        Outro exemplo é a palavra "escessão", que deveria ser "exceção".
-        A "sessão" de cinema estava lotada, mas a "seção" de brinquedos estava vazia.
-        Vamos ver se ele consegue distinguir entre "concerto" (música) e "conserto" (reparo) pelo contexto.
-        O músico fez um belo concerto no teatro.
-        O mecânico fez o conserto do carro na oficina.
-    """
-    
-    text2 = """
-        20 de outubro de 2015, Belém
-        Senhores,
-        Prefeitura Municipal
 
-        Assunto: Casarões históricos da cidade
-
-        Atualmente nossa cidade vem sofrendo de roubos a grande parte da arquitetura dos casarões históricos da cidade, onde o foco municipal são os azulejos.
-        Uma das construções depredadas por exemplo é o Palacete Vitor Maria da Silva.
-        Além dessa construção tem outras que tem sido roubadas e causa preocupação devido que faz parte do património histórico, artistico e cultural. Muitos desses azulejos foram importados desde a Europa nos inícios do seculo XX e finais do XIX. Faz-se necessário que a prefeitura municipal tome medidas e sejam divulgadas Imediatamente para dar solução e parar tudo o que parece um mercado de azulejos na cidade.
-        Proteger e investigar é dever também de toda a comunidade, mas principalmente depende das medidas que implementa a prefeitura Municipal.
-         São Paulo - SP
-    """
-    
-    text3 = """
-        Actualmente, nossa ciudad vêm sufrendo de muita roubos de azuleijos.
-        vandalos estam destruindo-nos lo patrimonio histórico.
-        tenemos que tomar medidas inmediatas hasta protejer nostra cultura y historia.
-    """
-
-    text4 = """
+    text = """
         O problema e grande para mundo
 
         Necessidade renovar todos os idosos construção e vão limpar e organizar.
@@ -331,27 +236,27 @@ if __name__ == '__main__':
         Nos vamos ajudar com dinheiro ou com comida.
 
         eu acho que resoluar problema esse.
-        
     """
-    
-    import time
+
+    print(f"Using model: {OLLAMA_MODEL}")
+    print(f"Ollama URL: {OLLAMA_BASE_URL}")
     print("Processing text...")
+
     start_time = time.time()
-    results = processor.process_text(text4)
+    results = processor.process_text(text, llm_assists_detection=False)
     end_time = time.time()
-    
+
     total_time = end_time - start_time
     num_tokens = len(results)
     time_per_token = total_time / num_tokens if num_tokens > 0 else 0
-    
+
     print(f"\nPerformance Metrics:")
-    print(f"Total time: {total_time:.4f}s")
-    print(f"Total tokens: {num_tokens}")
-    print(f"Time per token: {time_per_token:.4f}s")
-    
-    print(f"\nText processed:\n{text4}")
+    print(f"  Total time: {total_time:.4f}s")
+    print(f"  Total tokens: {num_tokens}")
+    print(f"  Time per token: {time_per_token:.4f}s")
+
+    print(f"\nText processed:\n{text}")
     print("\nCorrections found:")
     for idx, data in results.items():
-        if data['to_be_normalized']:
-            print(f"Token {idx}: {data}")
-
+        if data["to_be_normalized"]:
+            print(f"  Token {idx}: '{data['text']}' -> {data['suggestions']}")
