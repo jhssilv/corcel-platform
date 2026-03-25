@@ -297,7 +297,7 @@ export async function toggleUserActive(username) {
 }
 
 export async function toggleUserAdmin(username) {
-  const response = await apiPrivate.patch('/users/changePassword', { username });
+  const response = await apiPrivate.patch('/users/toggleAdmin', { username });
   return response.data || response;
 }
 

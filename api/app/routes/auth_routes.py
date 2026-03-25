@@ -184,7 +184,7 @@ def deactivate_user(body: auth_schemas.UserRegisterRequest, current_user):
         response = generic_schemas.MessageResponse(message="User activated successfully.")
         return jsonify(response.model_dump()), 200
     
-@auth_bp.route('/api/users/changePassword', methods=['PATCH'])
+@auth_bp.route('/api/users/toggleAdmin', methods=['PATCH'])
 @validate()
 @admin_required()
 def toggle_user_is_admin(body: auth_schemas.UserRegisterRequest, current_user):
