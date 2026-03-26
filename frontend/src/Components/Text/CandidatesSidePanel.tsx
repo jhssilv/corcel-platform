@@ -184,6 +184,7 @@ const CandidatesSidePanel = ({
                         }}
                     />
                     <button
+                        data-testid="edit-button"
                         className="action-button edit-button"
                         title="Substituir Token"
                         onClick={() => {
@@ -197,6 +198,7 @@ const CandidatesSidePanel = ({
                         &#128393;
                     </button>
                     <button
+                        data-testid="delete-button"
                         className="action-button delete-button"
                         title="Remover Substituição"
                         onClick={() => {
@@ -206,6 +208,7 @@ const CandidatesSidePanel = ({
                         &#128465;
                     </button>
                     <button
+                        data-testid="toggle-suggestion-button"
                         className={`action-button remove-suggestions-button ${!toBeNormalized ? 'active-green' : ''}`}
                         title="Remover Marcação de Não Normalizado"
                         onClick={() => setShowRemoveConfirmation(true)}
@@ -238,7 +241,7 @@ const CandidatesSidePanel = ({
 
             {showRemoveConfirmation && (
                 <div className="confirmation-overlay">
-                    <div className="confirmation-dialog">
+                    <div className="confirmation-dialog" data-testid="confirmation-dialog">
                         <p>Marcar token como (in)correto? Isso apenas removerá ou adicionará a marcação de &quot;Não Normalizado&quot;</p>
                         <div className="confirmation-buttons">
                             <button

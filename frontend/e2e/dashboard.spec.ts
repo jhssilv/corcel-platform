@@ -99,7 +99,7 @@ test.describe('Dashboard', () => {
     await page.getByText('essay1.txt', { exact: true }).click();
 
     // Verify the essay content is displayed
-    await expect(page.locator('.document-title').filter({ hasText: 'essay1.txt' })).toBeVisible();
+    await expect(page.getByTestId('document-title').filter({ hasText: 'essay1.txt' })).toBeVisible();
     await expect(page.getByText('Hello')).toBeVisible();
     await expect(page.getByText('world')).toBeVisible();
   });
@@ -119,7 +119,7 @@ test.describe('Dashboard', () => {
 
   test('should update corrected count when essay is marked as finished', async ({ page }) => {
     // Initial count check
-    await expect(page.locator('.corrected-count')).toContainText('Finalizados: 1 de 2');
+    await expect(page.getByTestId('corrected-count')).toContainText('Finalizados: 1 de 2');
 
     // Mock the text detail API call for essay 1
     await page.route('**/api/texts/1', async route => {
@@ -216,12 +216,14 @@ test.describe('Dashboard', () => {
     });
 
     // Click the toggle
-    await page.locator('.finalized-toggle').click();
+    await page.getByTestId('finalized-toggle-input').evaluate((element) => {
+      (element as HTMLInputElement).click();
+    });
 
     // Wait for the refresh call to complete
     await refreshPromise;
 
     // Verify the count updates
-    await expect(page.locator('.corrected-count')).toContainText('Finalizados: 2 de 2');
+    await expect(page.getByTestId('corrected-count')).toContainText('Finalizados: 2 de 2');
   });
 });

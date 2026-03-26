@@ -104,7 +104,7 @@ const NewCorrectionPopup = ({
     if (!candidate) {
         return (
             <div className="confirmation-overlay" onClick={handleCloseButton}>
-                <div className="confirmation-dialog" style={dialogStyle}>
+                <div className="confirmation-dialog" style={dialogStyle} data-testid="confirmation-dialog">
                     <p>{username ? <><strong>{username}</strong>, </> : ''}você deseja remover a correção?</p>
                     <div className="confirmation-buttons">
                         <button
@@ -131,7 +131,7 @@ const NewCorrectionPopup = ({
 
     return (
         <div className="confirmation-overlay" onClick={handleCloseButton}>
-            <div className="confirmation-dialog" style={dialogStyle}>
+            <div className="confirmation-dialog" style={dialogStyle} data-testid="confirmation-dialog">
                 <p>
                     {username ? <><strong>{username}</strong>, </> : ''}
                     você deseja adicionar <i>{candidate}</i> como correção

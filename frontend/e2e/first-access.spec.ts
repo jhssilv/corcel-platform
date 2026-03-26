@@ -28,7 +28,8 @@ test.describe('First Access', () => {
     await page.click('button[type="submit"]');
 
     // Expect success message
-    await expect(page.locator('.message.success')).toContainText('Conta ativada com sucesso!');
+    await expect(page.getByTestId('first-access-message')).toHaveAttribute('data-message-type', 'success');
+    await expect(page.getByTestId('first-access-message')).toContainText('Conta ativada com sucesso!');
     
     // Should redirect to login (check URL after timeout)
     await page.waitForTimeout(2500);
@@ -44,6 +45,7 @@ test.describe('First Access', () => {
 
     await page.click('button[type="submit"]');
 
-    await expect(page.locator('.message.error')).toContainText('As senhas não coincidem.');
+    await expect(page.getByTestId('first-access-message')).toHaveAttribute('data-message-type', 'error');
+    await expect(page.getByTestId('first-access-message')).toContainText('As senhas não coincidem.');
   });
 });

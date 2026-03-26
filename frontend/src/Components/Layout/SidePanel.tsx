@@ -40,7 +40,7 @@ function SidePanel({
         <>
             {isOpen && <div className="panel-overlay" onClick={onClose}></div>}
 
-            <div className={`side-panel ${isOpen ? 'open' : ''}`}>
+            <div className={`side-panel ${isOpen ? 'open' : ''}`} data-testid="side-panel" data-open={isOpen ? 'true' : 'false'}>
                 <div className="panel-header">
                     <span className="username-display">Olá, {username}.</span>
                     <button className="close-button" onClick={onClose} aria-label="Close menu">
@@ -48,7 +48,7 @@ function SidePanel({
                     </button>
                 </div>
 
-                <div className="panel-content">
+                <div className="panel-content" data-testid="side-panel-content">
                     <div className="panel-main-section">
                         <button className="panel-button download-button" onClick={onDownload}>
                             <img src={downloadIcon || '/placeholder.svg'} alt="" className="button-icon-svg" />
@@ -96,7 +96,7 @@ function SidePanel({
                     </div>
 
                     <div className="panel-logout-section">
-                        <button className="panel-button logout-button" onClick={onLogout}>
+                        <button className="panel-button logout-button" onClick={onLogout} data-testid="logout-button">
                             <img src={logoutIcon || '/placeholder.svg'} alt="" className="button-icon-svg" />
                             <span className="button-text">Sair</span>
                         </button>

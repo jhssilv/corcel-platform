@@ -83,7 +83,16 @@ function FirstAccessPage() {
                         />
                     </div>
 
-                    {message.text && <div className={`message ${message.type}`}>{message.text}</div>}
+                    {message.text && (
+                        <div
+                            className={`message ${message.type}`}
+                            data-testid="first-access-message"
+                            data-message-type={message.type}
+                            role="status"
+                        >
+                            {message.text}
+                        </div>
+                    )}
 
                     <button type="submit" className="login-button" disabled={isSubmitting} style={{ color: 'white' }}>
                         {isSubmitting ? 'Ativando...' : 'Ativar Conta'}

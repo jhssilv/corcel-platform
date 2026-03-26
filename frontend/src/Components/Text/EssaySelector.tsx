@@ -233,7 +233,7 @@ const EssaySelector = ({
             </div>
 
             <div className="selector-footer">
-                <div className="corrected-count">
+                <div className="corrected-count" data-testid="corrected-count">
                     Finalizados:{' '}
                     <strong>
                         {

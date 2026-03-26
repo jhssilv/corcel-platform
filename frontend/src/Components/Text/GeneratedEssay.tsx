@@ -166,9 +166,9 @@ const GeneratedEssay = ({
     );
 
     return (
-        <div className="essay-container">
+        <div className="essay-container" data-testid="essay-container">
             <div className="document-header">
-                <span className="document-title">{essay.sourceFileName}</span>
+                <span className="document-title" data-testid="document-title">{essay.sourceFileName}</span>
                 {essay.grade !== undefined && essay.grade !== null && (
                     <span className="document-grade">Nota: {essay.grade}</span>
                 )}

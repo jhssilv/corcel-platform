@@ -1,4 +1,7 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+
+const tokenByText = (page: Page, tokenText: string) =>
+  page.locator(`[data-testid="essay-token"][data-token-text="${tokenText}"]`).first();
 
 test.describe('Text Interaction', () => {
   test.beforeEach(async ({ page }) => {
@@ -61,6 +64,15 @@ test.describe('Text Interaction', () => {
       });
     });
 
+    // Mock current user API call (AuthContext bootstrap)
+    await page.route('**/api/me', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ username: 'testuser', isAdmin: false }),
+      });
+    });
+
     // Simulate logged-in state
     await page.addInitScript(() => {
       localStorage.setItem('isAuthenticated', 'true');
@@ -95,7 +107,7 @@ test.describe('Text Interaction', () => {
 
   test('should display candidates when clicking a word', async ({ page }) => {
     // Click on 'wrld'
-    await page.locator('.clickable').filter({ hasText: 'wrld' }).click();
+    await tokenByText(page, 'wrld').click();
 
     // Verify candidates are displayed
     await expect(page.getByText('Alternativas para')).toBeVisible();
@@ -130,7 +142,7 @@ test.describe('Text Interaction', () => {
     });
 
     // Click on 'wrld'
-    await page.locator('.clickable').filter({ hasText: 'wrld' }).click();
+    await tokenByText(page, 'wrld').click();
 
     // Click on candidate 'world'
     await page.getByText('world', { exact: true }).click();
@@ -139,7 +151,7 @@ test.describe('Text Interaction', () => {
     await expect.poll(() => postCalled).toBe(true);
 
     // Verify the text is updated
-    await expect(page.locator('.clickable').filter({ hasText: 'world' })).toHaveClass(/corrected/);
+    await expect(tokenByText(page, 'world')).toHaveAttribute('data-token-state', /(^|\s)corrected(\s|$)/);
   });
 
   test('should apply a manual correction', async ({ page }) => {
@@ -166,16 +178,16 @@ test.describe('Text Interaction', () => {
     });
 
     // Click on 'wrld'
-    await page.locator('.clickable').filter({ hasText: 'wrld' }).click();
+    await tokenByText(page, 'wrld').click();
 
     // Type in new token input
     await page.getByPlaceholder('Novo Token').fill('custom');
 
     // Click the add button (pencil icon)
-    await page.locator('.edit-button').click();
+    await page.getByTestId('edit-button').click();
 
     // Verify update (no popup expected)
-    await expect(page.getByText('custom')).toHaveClass(/corrected/);
+    await expect(tokenByText(page, 'custom')).toHaveAttribute('data-token-state', /(^|\s)corrected(\s|$)/);
   });
 
   test('should delete a correction', async ({ page }) => {
@@ -205,10 +217,10 @@ test.describe('Text Interaction', () => {
     await page.getByText('essay1.txt', { exact: true }).click();
 
     // Click on the corrected word 'world'
-    await page.locator('.clickable').filter({ hasText: 'world' }).click();
+    await tokenByText(page, 'world').click();
 
     // Click the delete button (trash icon)
-    await page.locator('.delete-button').click();
+    await page.getByTestId('delete-button').click();
 
     // Verify DELETE was called
     expect(deleteCalled).toBe(true);
@@ -227,17 +239,17 @@ test.describe('Text Interaction', () => {
     });
 
     // Click on 'wrld' (which has toBeNormalized: true)
-    await page.locator('.clickable').filter({ hasText: 'wrld' }).click();
+    await tokenByText(page, 'wrld').click();
 
     // Verify candidates panel is open
     await expect(page.getByText('Alternativas para')).toBeVisible();
 
     // Click the toggle button (green checkmark/trash icon depending on state)
     // The button has class 'remove-suggestions-button'
-    await page.locator('.remove-suggestions-button').click();
+    await page.getByTestId('toggle-suggestion-button').click();
 
     // Verify the confirmation dialog appears
-    await expect(page.locator('.confirmation-dialog')).toBeVisible();
+    await expect(page.getByTestId('confirmation-dialog')).toBeVisible();
     await expect(page.getByText('Marcar token como (in)correto?')).toBeVisible();
 
     // Confirm
@@ -249,10 +261,13 @@ test.describe('Text Interaction', () => {
 
   test('should send global suggestion flag when adding a correction', async ({ page }) => {
     // Mock the save normalization API call
-    let savePayload = null;
+    let savedSuggestForAll: boolean | null = null;
+    let savedNewToken: string | null = null;
     await page.route('**/api/texts/1/normalizations', async route => {
       if (route.request().method() === 'POST') {
-        savePayload = route.request().postDataJSON();
+        const payload = route.request().postDataJSON() as { suggest_for_all?: boolean; new_token?: string };
+        savedSuggestForAll = payload.suggest_for_all ?? null;
+        savedNewToken = payload.new_token ?? null;
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
@@ -268,7 +283,7 @@ test.describe('Text Interaction', () => {
     });
 
     // Click on 'wrld'
-    await page.locator('.clickable').filter({ hasText: 'wrld' }).click();
+    await tokenByText(page, 'wrld').click();
 
     // Check the "Sugestão Global" checkbox
     await page.getByLabel('Sugestão Global').check();
@@ -277,19 +292,18 @@ test.describe('Text Interaction', () => {
     await page.getByRole('button', { name: 'world', exact: true }).click();
 
     // Verify confirmation popup
-    await expect(page.locator('.confirmation-dialog')).toBeVisible();
+    await expect(page.getByTestId('confirmation-dialog')).toBeVisible();
     await expect(page.getByText('você deseja adicionar world como correção para todas as ocorrências de "wrld"? Isso afetará todos os textos')).toBeVisible();
     await page.getByRole('button', { name: 'Adicionar' }).click();
 
     // Verify payload
-    expect(savePayload).toBeTruthy();
-    expect(savePayload.suggest_for_all).toBe(true);
-    expect(savePayload.new_token).toBe('world');
+    expect(savedSuggestForAll).toBe(true);
+    expect(savedNewToken).toBe('world');
   });
 
   test('should show popup when global suggestion is checked and manual token is entered', async ({ page }) => {
     // Click on 'wrld'
-    await page.locator('.clickable').filter({ hasText: 'wrld' }).click();
+    await tokenByText(page, 'wrld').click();
 
     // Check the "Sugestão Global" checkbox
     await page.getByLabel('Sugestão Global').check();
@@ -301,7 +315,7 @@ test.describe('Text Interaction', () => {
     await page.getByPlaceholder('Novo Token').press('Enter');
 
     // Verify confirmation popup
-    await expect(page.locator('.confirmation-dialog')).toBeVisible();
+    await expect(page.getByTestId('confirmation-dialog')).toBeVisible();
     await expect(page.getByText('você deseja adicionar custom_global como correção para todas as ocorrências de "wrld"? Isso afetará todos os textos')).toBeVisible();
   });
 });

@@ -1,4 +1,7 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+
+const tokenByText = (page: Page, tokenText: string) =>
+  page.locator(`[data-testid="essay-token"][data-token-text="${tokenText}"]`).first();
 
 test.describe('Multi-Token Interaction', () => {
   test.beforeEach(async ({ page }) => {
@@ -68,6 +71,15 @@ test.describe('Multi-Token Interaction', () => {
       });
     });
 
+    // Mock current user API call (AuthContext bootstrap)
+    await page.route('**/api/me', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ username: 'testuser', isAdmin: false }),
+      });
+    });
+
     // Simulate logged-in state
     await page.addInitScript(() => {
       localStorage.setItem('isAuthenticated', 'true');
@@ -102,45 +114,45 @@ test.describe('Multi-Token Interaction', () => {
 
   test('should select multiple tokens using Control key', async ({ page }) => {
     // Click 'quick' (index 1)
-    await page.locator('.clickable').filter({ hasText: 'quick' }).click();
+    await tokenByText(page, 'quick').click();
 
     // Hold Control and click 'fox' (index 3)
     await page.keyboard.down('Control');
-    await page.locator('.clickable').filter({ hasText: 'fox' }).click();
+    await tokenByText(page, 'fox').click();
     await page.keyboard.up('Control');
 
     // Verify selection visual state
     // 'quick', 'brown', 'fox' should be selected
-    await expect(page.locator('.clickable').filter({ hasText: 'quick' })).toHaveClass(/selected/);
-    await expect(page.locator('.clickable').filter({ hasText: 'brown' })).toHaveClass(/selected/);
-    await expect(page.locator('.clickable').filter({ hasText: 'fox' })).toHaveClass(/selected/);
+    await expect(tokenByText(page, 'quick')).toHaveAttribute('data-token-state', /(^|\s)selected(\s|$)/);
+    await expect(tokenByText(page, 'brown')).toHaveAttribute('data-token-state', /(^|\s)selected(\s|$)/);
+    await expect(tokenByText(page, 'fox')).toHaveAttribute('data-token-state', /(^|\s)selected(\s|$)/);
 
     // 'The' and 'jumps' should NOT be selected
     await expect(page.getByText('The', { exact: true })).not.toHaveClass(/selected/);
-    await expect(page.locator('.clickable').filter({ hasText: 'jumps' })).not.toHaveClass(/selected/);
+    await expect(tokenByText(page, 'jumps')).not.toHaveAttribute('data-token-state', /(^|\s)selected(\s|$)/);
   });
 
   test('should modify selection range using Control key', async ({ page }) => {
     // Initial selection: 'brown' (2) to 'jumps' (4)
-    await page.locator('.clickable').filter({ hasText: 'brown' }).click();
+    await tokenByText(page, 'brown').click();
     await page.keyboard.down('Control');
-    await page.locator('.clickable').filter({ hasText: 'jumps' }).click();
+    await tokenByText(page, 'jumps').click();
     await page.keyboard.up('Control');
 
     // Verify initial selection
-    await expect(page.locator('.clickable').filter({ hasText: 'brown' })).toHaveClass(/selected/);
-    await expect(page.locator('.clickable').filter({ hasText: 'fox' })).toHaveClass(/selected/);
-    await expect(page.locator('.clickable').filter({ hasText: 'jumps' })).toHaveClass(/selected/);
+    await expect(tokenByText(page, 'brown')).toHaveAttribute('data-token-state', /(^|\s)selected(\s|$)/);
+    await expect(tokenByText(page, 'fox')).toHaveAttribute('data-token-state', /(^|\s)selected(\s|$)/);
+    await expect(tokenByText(page, 'jumps')).toHaveAttribute('data-token-state', /(^|\s)selected(\s|$)/);
 
     // Expand left: Click 'quick' (1)
     await page.keyboard.down('Control');
-    await page.locator('.clickable').filter({ hasText: 'quick' }).click();
+    await tokenByText(page, 'quick').click();
     await page.keyboard.up('Control');
 
     // Verify expansion
-    await expect(page.locator('.clickable').filter({ hasText: 'quick' })).toHaveClass(/selected/);
-    await expect(page.locator('.clickable').filter({ hasText: 'brown' })).toHaveClass(/selected/);
-    await expect(page.locator('.clickable').filter({ hasText: 'jumps' })).toHaveClass(/selected/);
+    await expect(tokenByText(page, 'quick')).toHaveAttribute('data-token-state', /(^|\s)selected(\s|$)/);
+    await expect(tokenByText(page, 'brown')).toHaveAttribute('data-token-state', /(^|\s)selected(\s|$)/);
+    await expect(tokenByText(page, 'jumps')).toHaveAttribute('data-token-state', /(^|\s)selected(\s|$)/);
 
     // Shrink right: Click 'fox' (3)
     // Current range: 1 (quick) to 4 (jumps)
@@ -148,20 +160,20 @@ test.describe('Multi-Token Interaction', () => {
     // Logic: selectedOption (3) < selectedStartIndex (1) ? No.
     // So setSelectedEndIndex(3).
     await page.keyboard.down('Control');
-    await page.locator('.clickable').filter({ hasText: 'fox' }).click();
+    await tokenByText(page, 'fox').click();
     await page.keyboard.up('Control');
 
     // Verify shrink
     // Range should be 1 (quick) to 3 (fox)
-    await expect(page.locator('.clickable').filter({ hasText: 'quick' })).toHaveClass(/selected/);
-    await expect(page.locator('.clickable').filter({ hasText: 'fox' })).toHaveClass(/selected/);
+    await expect(tokenByText(page, 'quick')).toHaveAttribute('data-token-state', /(^|\s)selected(\s|$)/);
+    await expect(tokenByText(page, 'fox')).toHaveAttribute('data-token-state', /(^|\s)selected(\s|$)/);
     // 'jumps' (4) should no longer be selected
-    await expect(page.locator('.clickable').filter({ hasText: 'jumps' })).not.toHaveClass(/selected/);
+    await expect(tokenByText(page, 'jumps')).not.toHaveAttribute('data-token-state', /(^|\s)selected(\s|$)/);
   });
 
   test('should hide candidates list when multiple tokens are selected and reset selection', async ({ page }) => {
     // Select 'quick' (1)
-    await page.locator('.clickable').filter({ hasText: 'quick' }).click();
+    await tokenByText(page, 'quick').click();
 
     // Verify candidates might be visible (if it had any, but 'quick' has none in mock)
     // Let's assume 'quick' has no candidates, so "Alternativas para" is hidden anyway.
@@ -169,19 +181,19 @@ test.describe('Multi-Token Interaction', () => {
 
     // Select 'fox' (3) with Ctrl
     await page.keyboard.down('Control');
-    await page.locator('.clickable').filter({ hasText: 'fox' }).click();
+    await tokenByText(page, 'fox').click();
     await page.keyboard.up('Control');
 
     // Verify "Alternativas para" is NOT visible (it shouldn't be for multi-selection)
     await expect(page.getByText('Alternativas para')).not.toBeVisible();
 
     // Now click 'brown' (2) WITHOUT Ctrl
-    await page.locator('.clickable').filter({ hasText: 'brown' }).click();
+    await tokenByText(page, 'brown').click();
 
     // Verify selection is now JUST 'brown'
-    await expect(page.locator('.clickable').filter({ hasText: 'brown' })).toHaveClass(/selected/);
-    await expect(page.locator('.clickable').filter({ hasText: 'quick' })).not.toHaveClass(/selected/);
-    await expect(page.locator('.clickable').filter({ hasText: 'fox' })).not.toHaveClass(/selected/);
+    await expect(tokenByText(page, 'brown')).toHaveAttribute('data-token-state', /(^|\s)selected(\s|$)/);
+    await expect(tokenByText(page, 'quick')).not.toHaveAttribute('data-token-state', /(^|\s)selected(\s|$)/);
+    await expect(tokenByText(page, 'fox')).not.toHaveAttribute('data-token-state', /(^|\s)selected(\s|$)/);
   });
 
   test('should apply a correction to multiple tokens', async ({ page }) => {
@@ -211,16 +223,16 @@ test.describe('Multi-Token Interaction', () => {
     });
 
     // Select 'quick' to 'fox'
-    await page.locator('.clickable').filter({ hasText: 'quick' }).click();
+    await tokenByText(page, 'quick').click();
     await page.keyboard.down('Control');
-    await page.locator('.clickable').filter({ hasText: 'fox' }).click();
+    await tokenByText(page, 'fox').click();
     await page.keyboard.up('Control');
 
     // Type new token
     await page.getByPlaceholder('Novo Token').fill('fast animal');
 
     // Click add
-    await page.locator('.edit-button').click();
+    await page.getByTestId('edit-button').click();
 
     // Verify API call
     expect(postCalled).toBe(true);
@@ -230,10 +242,10 @@ test.describe('Multi-Token Interaction', () => {
     // Note: The frontend implementation replaces the tokens with the correction.
     // We need to check if 'fast animal' is visible and has 'corrected' class.
     await expect(page.getByText('fast animal')).toBeVisible();
-    await expect(page.getByText('fast animal')).toHaveClass(/corrected/);
+    await expect(tokenByText(page, 'fast animal')).toHaveAttribute('data-token-state', /(^|\s)corrected(\s|$)/);
 
     // Original tokens should not be visible individually or should be replaced
-    await expect(page.locator('.clickable').filter({ hasText: 'quick' })).not.toBeVisible();
+    await expect(tokenByText(page, 'quick')).not.toBeVisible();
   });
 
   test('should delete a multi-token correction', async ({ page }) => {
@@ -277,13 +289,13 @@ test.describe('Multi-Token Interaction', () => {
     await page.getByText('fast animal').click();
 
     // Click delete
-    await page.locator('.delete-button').click();
+    await page.getByTestId('delete-button').click();
 
     // Verify that the original tokens return
     // 'quick', 'brown', 'fox' should be visible again
-    await expect(page.locator('.clickable').filter({ hasText: 'quick' })).toBeVisible();
-    await expect(page.locator('.clickable').filter({ hasText: 'brown' })).toBeVisible();
-    await expect(page.locator('.clickable').filter({ hasText: 'fox' })).toBeVisible();
+    await expect(tokenByText(page, 'quick')).toBeVisible();
+    await expect(tokenByText(page, 'brown')).toBeVisible();
+    await expect(tokenByText(page, 'fox')).toBeVisible();
 
     // 'fast animal' should be gone
     await expect(page.getByText('fast animal')).not.toBeVisible();

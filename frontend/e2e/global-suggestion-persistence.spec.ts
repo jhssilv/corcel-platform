@@ -1,4 +1,7 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+
+const tokenByText = (page: Page, tokenText: string) =>
+  page.locator(`[data-testid="essay-token"][data-token-text="${tokenText}"]`).first();
 
 test.describe('Global Suggestion Persistence', () => {
   test.beforeEach(async ({ page }) => {
@@ -39,6 +42,14 @@ test.describe('Global Suggestion Persistence', () => {
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({}) });
     });
 
+    await page.route('**/api/me', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ username: 'testuser', isAdmin: false }),
+      });
+    });
+
     await page.addInitScript(() => {
       localStorage.setItem('isAuthenticated', 'true');
       localStorage.setItem('username', 'testuser');
@@ -52,14 +63,14 @@ test.describe('Global Suggestion Persistence', () => {
   });
 
   test('should persist global suggestion check when re-clicking the token', async ({ page }) => {
-    await page.locator('.clickable').filter({ hasText: 'wrld' }).click();
+    await tokenByText(page, 'wrld').click();
     await page.getByLabel('Sugestão Global').check();
 
     // Re-click the token
-    await page.locator('.clickable').filter({ hasText: 'wrld' }).click();
+    await tokenByText(page, 'wrld').click();
 
     await page.getByText('world', { exact: true }).click();
-    await expect(page.locator('.confirmation-dialog')).toBeVisible();
+    await expect(page.getByTestId('confirmation-dialog')).toBeVisible();
     await expect(page.getByText('você deseja adicionar world como correção para todas as ocorrências de "wrld"? Isso afetará todos os textos')).toBeVisible();
   });
 });

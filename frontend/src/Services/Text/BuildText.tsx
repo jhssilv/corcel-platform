@@ -35,23 +35,29 @@ function createSpan(
     const toBeNormalized = token.toBeNormalized;
     const whitelisted = token.whitelisted;
     let className = 'clickable';
+    const tokenStates: string[] = [];
 
     if (correction) {
         className += ' corrected';
+        tokenStates.push('corrected');
     } else if (toBeNormalized && !whitelisted) {
         className += ' candidates';
+        tokenStates.push('candidates');
     }
 
     if (selectedStartIndex !== null && selectedEndIndex !== null && index >= selectedStartIndex && index <= selectedEndIndex) {
         className += ' selected';
+        tokenStates.push('selected');
     }
 
     if (animatedIndices.has(index)) {
         className += ' token-updated';
+        tokenStates.push('updated');
     }
 
     if (highlightRange && highlightRange.start === index) {
         className += ' highlight-hover';
+        tokenStates.push('highlighted');
     }
 
     const tokenText = correction ? correction.new_token : token.text;
@@ -60,6 +66,10 @@ function createSpan(
         <span
             key={`${index}-${animationNonceByIndex[index] || 0}`}
             className={className}
+            data-testid="essay-token"
+            data-token-index={index}
+            data-token-text={tokenText}
+            data-token-state={tokenStates.join(' ')}
             onClick={(event) => {
                 handleSelectedWordIndex(index, event);
             }}

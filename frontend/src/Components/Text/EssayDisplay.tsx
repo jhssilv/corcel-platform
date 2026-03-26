@@ -82,6 +82,7 @@ function EssayDisplay({ essay, refreshEssay }: EssayDisplayProps) {
                 <div className="finalized-toggle-wrapper" style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #444', width: '100%', justifyContent: 'center' }}>
                     <label className="finalized-toggle">
                         <input
+                            data-testid="finalized-toggle-input"
                             type="checkbox"
                             checked={essay.normalizedByUser || false}
                             onChange={() => {
@@ -97,6 +98,7 @@ function EssayDisplay({ essay, refreshEssay }: EssayDisplayProps) {
 
                 <div style={{ marginTop: '10px', borderTop: '1px solid #444', width: '100%', display: 'flex', justifyContent: 'center', paddingTop: '10px', gap: '10px' }}>
                     <button
+                        data-testid="reset-corrections-btn"
                         className="reset-corrections-btn"
                         onClick={() => {
                             void handleResetCorrections();

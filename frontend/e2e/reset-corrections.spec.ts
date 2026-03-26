@@ -88,13 +88,13 @@ test.describe('Reset Corrections', () => {
         await page.getByText('essay1.txt', { exact: true }).click();
 
         // Wait for essay container
-        await expect(page.locator('.essay-container')).toBeVisible();
+        await expect(page.getByTestId('essay-container')).toBeVisible();
 
         // Handle confirmation dialog
         page.on('dialog', dialog => dialog.accept());
 
         // Click delete corrections button
-        const resetBtn = page.locator('.reset-corrections-btn');
+        const resetBtn = page.getByTestId('reset-corrections-btn');
         await expect(resetBtn).toBeVisible();
         await resetBtn.click();
 

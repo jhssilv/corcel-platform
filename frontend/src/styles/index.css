@@ -1,10 +1,10 @@
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: var(--font-family-base);
   line-height: 1.5;
   font-weight: 400;
 
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-root);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -14,12 +14,12 @@
 
 a {
   font-weight: 500;
-  color: #646cff;
+  color: var(--color-link-primary);
   text-decoration: inherit;
 }
 
 a:hover {
-  color: #535bf2;
+  color: var(--color-link-hover);
 }
 
 body {
@@ -36,19 +36,19 @@ h1 {
 }
 
 button {
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   border: 1px solid transparent;
-  padding: 0.6em 1.2em;
+  padding: var(--space-sm) var(--space-md);
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: var(--color-bg-control);
   cursor: pointer;
   transition: border-color 0.25s;
 }
 
 button:hover {
-  border-color: #646cff;
+  border-color: var(--color-link-primary);
 }
 
 button:focus,
@@ -57,14 +57,14 @@ button:focus-visible {
 }
 
 input {
-  padding: 0.6em;
+  padding: var(--space-sm);
   font-size: 1em;
   font-family: inherit;
-  background-color: #1a1a1a;
-  color: rgba(255, 255, 255, 0.87);
+  background-color: var(--color-bg-control);
+  color: var(--color-text-primary);
   border: 1px solid transparent;
-  border-radius: 8px;
-  margin: 0.2em;
+  border-radius: var(--radius-md);
+  margin: var(--space-xxs);
 }
 
 input:focus {

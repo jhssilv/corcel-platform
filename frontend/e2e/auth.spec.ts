@@ -115,6 +115,14 @@ test.describe('Authentication', () => {
       });
     });
 
+    await page.route('**/api/me', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ username: 'testuser', isAdmin: false }),
+      });
+    });
+
     // Simulate logged-in state
     await page.addInitScript(() => {
       localStorage.setItem('isAuthenticated', 'true');
@@ -130,9 +138,9 @@ test.describe('Authentication', () => {
     await page.locator('button[aria-label="Menu"]').click();
 
     // Click logout button
-    const logoutButton = page.locator('.side-panel.open .panel-button.logout-button');
-    await expect(page.locator('.side-panel.open')).toBeVisible();
-    await page.locator('.side-panel.open .panel-content').evaluate((el) => {
+    const logoutButton = page.getByTestId('logout-button');
+    await expect(page.getByTestId('side-panel')).toHaveAttribute('data-open', 'true');
+    await page.getByTestId('side-panel-content').evaluate((el) => {
       el.scrollTop = el.scrollHeight;
     });
     await expect(logoutButton).toBeVisible();
