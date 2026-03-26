@@ -1,28 +1,28 @@
-
 .download-button {
   background-color: transparent;
-  border: 1px solid transparent; 
-  padding: 0.5em; 
-  
+  border: 1px solid transparent;
+  padding: 0.5em;
+
   border-radius: 8px;
   cursor: pointer;
-  
+
   transition: border-color 0.25s, background-color 0.25s;
 }
 
 .download-button img {
   height: 2em;
   width: 2em;
-  vertical-align: middle; 
+  vertical-align: middle;
 
-  filter:brightness(100);
-  transition: filter 300ms; 
+  filter: brightness(100);
+  transition: filter 300ms;
 }
 
 .download-button:hover img {
-  filter:brightness(100);
+  filter: brightness(100);
 
 }
+
 .download-button:hover {
   border-color: #aaaaaa;
 }

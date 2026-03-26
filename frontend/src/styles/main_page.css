@@ -8,14 +8,17 @@
   max-width: 100%;
   margin: 0;
   padding: 0;
-  padding-top: 60px; /* Account for fixed top bar */
+  padding-top: 60px;
+  /* Account for fixed top bar */
   box-sizing: border-box;
-  background-color: #121212; /* Darker background for focus */
+  background-color: #121212;
+  /* Darker background for focus */
 }
 
 /* Container for the collapsible selection controls */
 .ocr-controls-header {
-  flex: 0 0 auto; /* Don't grow */
+  flex: 0 0 auto;
+  /* Don't grow */
   background-color: #1e1e1e;
   border-bottom: 1px solid #333;
   padding: 10px 20px;

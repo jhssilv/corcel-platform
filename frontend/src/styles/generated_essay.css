@@ -98,11 +98,13 @@
         box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.45);
         transform: scale(1);
     }
+
     55% {
         background-color: rgba(250, 204, 21, 0.25);
         box-shadow: 0 0 0 4px rgba(250, 204, 21, 0.18);
         transform: scale(1.01);
     }
+
     100% {
         background-color: transparent;
         box-shadow: 0 0 0 0 rgba(250, 204, 21, 0);
@@ -159,12 +161,13 @@
     transition: .3s cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 
-.finalized-toggle input:checked + .toggle-slider {
-    background-color: #10b981; /* Emerald green */
+.finalized-toggle input:checked+.toggle-slider {
+    background-color: #10b981;
+    /* Emerald green */
     border-color: #059669;
 }
 
-.finalized-toggle input:checked + .toggle-slider:before {
+.finalized-toggle input:checked+.toggle-slider:before {
     transform: translateX(22px);
     background-color: white;
 }
@@ -176,7 +179,7 @@
     transition: color 0.3s;
 }
 
-.finalized-toggle input:checked ~ .toggle-label {
+.finalized-toggle input:checked~.toggle-label {
     color: #10b981;
 }
 
@@ -195,9 +198,10 @@
     width: 100%;
 }
 
-.essay-comparison-container > .essay-container {
+.essay-comparison-container>.essay-container {
     flex: 1;
-    max-width: none; /* Override max-width when side-by-side */
+    max-width: none;
+    /* Override max-width when side-by-side */
 }
 
 /* Original Essay Specifics */
@@ -205,4 +209,3 @@
     opacity: 0.8;
     background-color: #1a1a1a;
 }
-

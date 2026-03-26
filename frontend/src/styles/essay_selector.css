@@ -40,7 +40,7 @@
     width: 100%;
 }
 
-.search-with-info > :first-child {
+.search-with-info> :first-child {
     flex-grow: 1;
 }
 
@@ -73,14 +73,16 @@
     padding: 8px;
     position: absolute;
     z-index: 1000;
-    bottom: 125%; /* Position above */
+    bottom: 125%;
+    /* Position above */
     left: 50%;
-    margin-left: -125px; /* Center the tooltip */
+    margin-left: -125px;
+    /* Center the tooltip */
     opacity: 0;
     transition: opacity 0.3s;
     font-size: 0.85rem;
     border: 1px solid #555;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
     pointer-events: none;
 }
 
@@ -99,4 +101,3 @@
     visibility: visible;
     opacity: 1;
 }
-

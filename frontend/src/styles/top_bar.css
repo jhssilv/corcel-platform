@@ -177,7 +177,8 @@
 .button-icon-svg {
   width: 20px;
   height: 20px;
-  filter: invert(1); /* Make icons white */
+  filter: invert(1);
+  /* Make icons white */
 }
 
 .panel-logout-section {
@@ -213,15 +214,17 @@
   background-color: rgba(220, 38, 38, 0.2);
   border-color: #ef4444;
 }
-  background-color: rgba(0, 0, 0, 0.6);
-  z-index: 999;
-  animation: fadeIn 0.3s ease;
+
+background-color: rgba(0, 0, 0, 0.6);
+z-index: 999;
+animation: fadeIn 0.3s ease;
 }
 
 @keyframes fadeIn {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -393,6 +396,7 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);

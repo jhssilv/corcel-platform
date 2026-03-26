@@ -1,6 +1,7 @@
 .assignments-panel-container {
     padding: 20px;
-    padding-top: 80px; /* Account for fixed top bar (60px) + extra spacing */
+    padding-top: 80px;
+    /* Account for fixed top bar (60px) + extra spacing */
 }
 
 .assignments-panel-header {
@@ -76,7 +77,7 @@
     align-items: flex-end;
 }
 
-.assignments-search-row > div {
+.assignments-search-row>div {
     flex: 1;
 }
 
