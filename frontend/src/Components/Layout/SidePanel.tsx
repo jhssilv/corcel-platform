@@ -4,6 +4,7 @@ import registerIcon from '../../assets/register.svg';
 import reportIcon from '../../assets/report.svg';
 import uploadIcon from '../../assets/upload.svg';
 import whitelistIcon from '../../assets/whitelist.svg';
+import styles from '../../styles/top_bar.module.css';
 
 interface SidePanelProps {
     isOpen: boolean;
@@ -38,67 +39,67 @@ function SidePanel({
 }: SidePanelProps) {
     return (
         <>
-            {isOpen && <div className="panel-overlay" onClick={onClose}></div>}
+            {isOpen && <div className={styles['panel-overlay']} onClick={onClose}></div>}
 
-            <div className={`side-panel ${isOpen ? 'open' : ''}`} data-testid="side-panel" data-open={isOpen ? 'true' : 'false'}>
-                <div className="panel-header">
-                    <span className="username-display">Olá, {username}.</span>
-                    <button className="close-button" onClick={onClose} aria-label="Close menu">
+            <div className={`${styles['side-panel']} ${isOpen ? styles.open : ''}`} data-testid="side-panel" data-open={isOpen ? 'true' : 'false'}>
+                <div className={styles['panel-header']}>
+                    <span className={styles['username-display']}>Olá, {username}.</span>
+                    <button className={styles['close-button']} onClick={onClose} aria-label="Close menu">
                         ×
                     </button>
                 </div>
 
-                <div className="panel-content" data-testid="side-panel-content">
-                    <div className="panel-main-section">
-                        <button className="panel-button download-button" onClick={onDownload}>
-                            <img src={downloadIcon || '/placeholder.svg'} alt="" className="button-icon-svg" />
-                            <span className="button-text">Download</span>
+                <div className={styles['panel-content']} data-testid="side-panel-content">
+                    <div className={styles['panel-main-section']}>
+                        <button className={`${styles['panel-button']} ${styles['download-button']}`} onClick={onDownload}>
+                            <img src={downloadIcon || '/placeholder.svg'} alt="" className={styles['button-icon-svg']} />
+                            <span className={styles['button-text']}>Download</span>
                         </button>
 
-                        <button className="panel-button upload-button" onClick={onUpload}>
-                            <img src={uploadIcon || '/placeholder.svg'} alt="" className="button-icon-svg" />
-                            <span className="button-text">Upload</span>
+                        <button className={`${styles['panel-button']} ${styles['upload-button']}`} onClick={onUpload}>
+                            <img src={uploadIcon || '/placeholder.svg'} alt="" className={styles['button-icon-svg']} />
+                            <span className={styles['button-text']}>Upload</span>
                         </button>
 
-                        <button className="panel-button whitelist-button" onClick={onWhitelist}>
-                            <img src={whitelistIcon || '/placeholder.svg'} alt="" className="button-icon-svg" />
-                            <span className="button-text">Whitelist</span>
+                        <button className={`${styles['panel-button']} ${styles['whitelist-button']}`} onClick={onWhitelist}>
+                            <img src={whitelistIcon || '/placeholder.svg'} alt="" className={styles['button-icon-svg']} />
+                            <span className={styles['button-text']}>Whitelist</span>
                         </button>
 
-                        <button className="panel-button report-button" onClick={onReport}>
-                            <img src={reportIcon || '/placeholder.svg'} alt="" className="button-icon-svg" />
-                            <span className="button-text">Gerar Relatório</span>
+                        <button className={`${styles['panel-button']} ${styles['report-button']}`} onClick={onReport}>
+                            <img src={reportIcon || '/placeholder.svg'} alt="" className={styles['button-icon-svg']} />
+                            <span className={styles['button-text']}>Gerar Relatório</span>
                         </button>
 
                         {isAdmin && (
                             <>
-                                <button className="panel-button register-button" onClick={onRegisterUser}>
-                                    <img src={registerIcon || '/placeholder.svg'} alt="" className="button-icon-svg" />
-                                    <span className="button-text">Registrar Usuário</span>
+                                <button className={`${styles['panel-button']} ${styles['register-button']}`} onClick={onRegisterUser}>
+                                    <img src={registerIcon || '/placeholder.svg'} alt="" className={styles['button-icon-svg']} />
+                                    <span className={styles['button-text']}>Registrar Usuário</span>
                                 </button>
-                                <button className="panel-button manage-users-button" onClick={onManageUsers}>
-                                    <img src={registerIcon || '/placeholder.svg'} alt="" className="button-icon-svg" />
-                                    <span className="button-text">Gerenciar Usuários</span>
+                                <button className={`${styles['panel-button']} ${styles['manage-users-button']}`} onClick={onManageUsers}>
+                                    <img src={registerIcon || '/placeholder.svg'} alt="" className={styles['button-icon-svg']} />
+                                    <span className={styles['button-text']}>Gerenciar Usuários</span>
                                 </button>
                             </>
                         )}
                     </div>
 
-                    <div className="panel-ocr-section">
-                        <button className="panel-button ocr-button" onClick={onOCR}>
+                    <div className={styles['panel-ocr-section']}>
+                        <button className={`${styles['panel-button']} ${styles['ocr-button']}`} onClick={onOCR}>
                             <span style={{ fontSize: '1.2rem', marginRight: '0.5rem' }}>📷</span>
-                            <span className="button-text">Módulo OCR</span>
+                            <span className={styles['button-text']}>Módulo OCR</span>
                         </button>
-                        <button className="panel-button assignments-button" onClick={onAssignments}>
+                        <button className={`${styles['panel-button']} ${styles['assignments-button']}`} onClick={onAssignments}>
                             <span style={{ fontSize: '1.2rem', marginRight: '0.5rem' }}>📋</span>
-                            <span className="button-text">Atribuir Textos</span>
+                            <span className={styles['button-text']}>Atribuir Textos</span>
                         </button>
                     </div>
 
-                    <div className="panel-logout-section">
-                        <button className="panel-button logout-button" onClick={onLogout} data-testid="logout-button">
-                            <img src={logoutIcon || '/placeholder.svg'} alt="" className="button-icon-svg" />
-                            <span className="button-text">Sair</span>
+                    <div className={styles['panel-logout-section']}>
+                        <button className={`${styles['panel-button']} ${styles['logout-button']}`} onClick={onLogout} data-testid="logout-button">
+                            <img src={logoutIcon || '/placeholder.svg'} alt="" className={styles['button-icon-svg']} />
+                            <span className={styles['button-text']}>Sair</span>
                         </button>
                     </div>
                 </div>

@@ -1,5 +1,6 @@
 import { useEffect, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { requestReport } from '../../Api';
+import styles from '../../styles/report_modal.module.css';
 
 interface ReportModalProps {
     isOpen: boolean;
@@ -45,25 +46,25 @@ function ReportModal({ isOpen, onClose, textCount }: ReportModalProps) {
     }
 
     return (
-        <div className="modal-overlay" onClick={onClose}>
-            <div className="report-modal" onClick={(event: ReactMouseEvent<HTMLDivElement>) => event.stopPropagation()}>
-                <div className="modal-header">
-                    <h2 className="modal-title">Gerar Relatório</h2>
-                    <button className="modal-close-button" onClick={onClose} aria-label="Close">
+        <div className={styles['modal-overlay']} onClick={onClose}>
+            <div className={styles['report-modal']} onClick={(event: ReactMouseEvent<HTMLDivElement>) => event.stopPropagation()}>
+                <div className={styles['modal-header']}>
+                    <h2 className={styles['modal-title']}>Gerar Relatório</h2>
+                    <button className={styles['modal-close-button']} onClick={onClose} aria-label="Close">
                         ×
                     </button>
                 </div>
 
-                <div className="modal-body">
-                    <p className="report-text">
+                <div className={styles['modal-body']}>
+                    <p className={styles['report-text']}>
                         Gerar relatório para os <b>{textCount}</b> textos <b>filtrados</b>?
                     </p>
                 </div>
 
-                <div className="modal-footer">
-                    <button className="modal-button cancel-button" onClick={onClose}>Cancelar</button>
+                <div className={styles['modal-footer']}>
+                    <button className={[styles['modal-button'], styles['cancel-button']].join(' ')} onClick={onClose}>Cancelar</button>
                     <button
-                        className="modal-button confirm-button report-confirm"
+                        className={[styles['modal-button'], styles['confirm-button'], styles['report-confirm']].join(' ')}
                         onClick={() => {
                             void handleConfirm();
                         }}

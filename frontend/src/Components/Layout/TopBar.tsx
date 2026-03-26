@@ -4,7 +4,7 @@ import WhitelistModal from '../Modals/WhiteListModal';
 import RegisterUserModal from '../Modals/RegisterUserModal';
 import ReportModal from '../Modals/ReportModal';
 import { UseTopBarModals } from '../../Hooks/UI/UseTopBarModals';
-import '../../styles/top_bar.css';
+import styles from '../../styles/top_bar.module.css';
 
 interface TopBarProps {
     onDownloadClick?: () => void;
@@ -40,19 +40,19 @@ function TopBar({ onDownloadClick, showSidePanel = true }: TopBarProps) {
 
     return (
         <>
-            <div className="top-bar">
-                <button className="hamburger-button" onClick={togglePanel} aria-label="Menu">
-                    <div className="hamburger-line"></div>
-                    <div className="hamburger-line"></div>
-                    <div className="hamburger-line"></div>
+            <div className={styles['top-bar']}>
+                <button className={styles['hamburger-button']} onClick={togglePanel} aria-label="Menu">
+                    <div className={styles['hamburger-line']}></div>
+                    <div className={styles['hamburger-line']}></div>
+                    <div className={styles['hamburger-line']}></div>
                 </button>
 
-                <div className="app-title-container">
-                    <h1 className="app-title">CorCel 🐎</h1>
-                    <p className="app-subtitle">Ferramenta de Normalização Ortográfica</p>
+                <div className={styles['app-title-container']}>
+                    <h1 className={styles['app-title']}>CorCel 🐎</h1>
+                    <p className={styles['app-subtitle']}>Ferramenta de Normalização Ortográfica</p>
                 </div>
 
-                <div className="top-bar-spacer"></div>
+                <div className={styles['top-bar-spacer']}></div>
             </div>
 
             {showSidePanel ? (

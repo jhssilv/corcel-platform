@@ -1,6 +1,7 @@
 import { useEffect, useState, type ChangeEvent, type DragEvent, type MouseEvent as ReactMouseEvent } from 'react';
 import { parseTextFile } from '../../Services/Text/FileParsers';
 import { addToWhitelist, getWhitelist, removeFromWhitelist } from '../../Api';
+import styles from '../../styles/whitelist_modal.module.css';
 
 interface WhitelistModalProps {
     isOpen: boolean;
@@ -111,21 +112,21 @@ function WhitelistModal({ isOpen, onClose }: WhitelistModalProps) {
     }
 
     return (
-        <div className="modal-overlay" onClick={handleCancel}>
-            <div className="whitelist-modal" onClick={(event: ReactMouseEvent<HTMLDivElement>) => event.stopPropagation()}>
-                <div className="modal-header">
-                    <h2 className="modal-title">Gerenciar Whitelist</h2>
-                    <button className="modal-close-button" onClick={handleCancel} aria-label="Close">
+        <div className={styles['modal-overlay']} onClick={handleCancel}>
+            <div className={styles['whitelist-modal']} onClick={(event: ReactMouseEvent<HTMLDivElement>) => event.stopPropagation()}>
+                <div className={styles['modal-header']}>
+                    <h2 className={styles['modal-title']}>Gerenciar Whitelist</h2>
+                    <button className={styles['modal-close-button']} onClick={handleCancel} aria-label="Close">
                         ×
                     </button>
                 </div>
 
-                <div className="modal-body">
-                    <label htmlFor="whitelist-textarea" className="textarea-label">
+                <div className={styles['modal-body']}>
+                    <label htmlFor="whitelist-textarea" className={styles['textarea-label']}>
                         Lista de palavras (separadas por vírgula):
                     </label>
                     <div
-                        className={`textarea-container ${isDragging ? 'dragging' : ''}`}
+                        className={[styles['textarea-container'], isDragging ? styles.dragging : ''].filter(Boolean).join(' ')}
                         onDragOver={handleDragOver}
                         onDragLeave={handleDragLeave}
                         onDrop={(event) => {
@@ -134,22 +135,22 @@ function WhitelistModal({ isOpen, onClose }: WhitelistModalProps) {
                     >
                         <textarea
                             id="whitelist-textarea"
-                            className="whitelist-textarea"
+                            className={styles['whitelist-textarea']}
                             value={whitelistText}
                             onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setWhitelistText(event.target.value)}
                             placeholder="Digite as palavras separadas por vírgula ou arraste arquivos de texto aqui..."
                             rows={15}
                         />
-                        {isDragging && <div className="drag-overlay">Solte os arquivos aqui</div>}
+                        {isDragging && <div className={styles['drag-overlay']}>Solte os arquivos aqui</div>}
                     </div>
                 </div>
 
-                <div className="modal-footer">
-                    <button className="modal-button cancel-button" onClick={handleCancel} disabled={isUpdating}>
+                <div className={styles['modal-footer']}>
+                    <button className={[styles['modal-button'], styles['cancel-button']].join(' ')} onClick={handleCancel} disabled={isUpdating}>
                         Cancelar
                     </button>
                     <button
-                        className="modal-button update-button"
+                        className={[styles['modal-button'], styles['update-button']].join(' ')}
                         onClick={() => {
                             void handleUpdate();
                         }}

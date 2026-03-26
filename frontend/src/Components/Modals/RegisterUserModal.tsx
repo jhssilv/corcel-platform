@@ -1,5 +1,6 @@
 import { useState, type ChangeEvent, type FormEvent, type MouseEvent as ReactMouseEvent } from 'react';
 import { registerUser } from '../../Api';
+import styles from '../../styles/register_user_modal.module.css';
 
 interface RegisterUserModalProps {
     isOpen: boolean;
@@ -48,18 +49,18 @@ function RegisterUserModal({ isOpen, onClose }: RegisterUserModalProps) {
     }
 
     return (
-        <div className="modal-overlay" onClick={handleClose}>
-            <div className="upload-modal" onClick={(event: ReactMouseEvent<HTMLDivElement>) => event.stopPropagation()}>
-                <div className="modal-header">
-                    <h2 className="modal-title">Registrar Novo Usuário</h2>
-                    <button className="modal-close-button" onClick={handleClose} aria-label="Close">
+        <div className={styles['modal-overlay']} onClick={handleClose}>
+            <div className={styles['register-modal']} onClick={(event: ReactMouseEvent<HTMLDivElement>) => event.stopPropagation()}>
+                <div className={styles['modal-header']}>
+                    <h2 className={styles['modal-title']}>Registrar Novo Usuário</h2>
+                    <button className={styles['modal-close-button']} onClick={handleClose} aria-label="Close">
                         ×
                     </button>
                 </div>
 
-                <div className="modal-body">
-                    <form onSubmit={handleSubmit} className="register-form">
-                        <div className="form-group">
+                <div className={styles['modal-body']}>
+                    <form onSubmit={handleSubmit} className={styles['register-form']}>
+                        <div className={styles['form-group']}>
                             <label htmlFor="username">Nome de Usuário</label>
                             <input
                                 type="text"
@@ -74,15 +75,15 @@ function RegisterUserModal({ isOpen, onClose }: RegisterUserModalProps) {
                             O usuário será criado como inativo e escolherá sua senha no primeiro acesso.
                         </p>
 
-                        {message.text && <div className={`message ${message.type}`}>{message.text}</div>}
+                        {message.text && <div className={[styles.message, styles[message.type]].join(' ')}>{message.text}</div>}
 
-                        <div className="modal-footer" style={{ padding: 0, marginTop: '20px' }}>
-                            <button type="button" className="modal-button cancel-button" onClick={handleClose}>
+                        <div className={styles['modal-footer']} style={{ padding: 0, marginTop: '20px' }}>
+                            <button type="button" className={[styles['modal-button'], styles['cancel-button']].join(' ')} onClick={handleClose}>
                                 Cancelar
                             </button>
                             <button
                                 type="submit"
-                                className="modal-button confirm-button valid"
+                                className={[styles['modal-button'], styles['confirm-button'], styles.valid].join(' ')}
                                 disabled={isSubmitting}
                             >
                                 {isSubmitting ? 'Criando...' : 'Criar Usuário'}

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type DragEvent, type MouseEvent } from 'react';
 import JSZip from 'jszip';
 import { getTaskStatus, uploadTextArchive } from '../../Api';
+import styles from '../../styles/upload_modal.module.css';
 
 interface UploadModalProps {
     isOpen: boolean;
@@ -247,19 +248,23 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 
     return (
         <div style={{ display: isOpen ? 'block' : 'none' }}>
-            <div className="modal-overlay" onClick={handleClose}>
-                <div className="upload-modal" onClick={handleOverlayClick}>
-                    <div className="modal-header">
-                        <h2 className="modal-title">Upload de Arquivo</h2>
-                        <button className="modal-close-button" onClick={handleClose} aria-label="Close">
+            <div className={styles['modal-overlay']} onClick={handleClose}>
+                <div className={styles['upload-modal']} onClick={handleOverlayClick}>
+                    <div className={styles['modal-header']}>
+                        <h2 className={styles['modal-title']}>Upload de Arquivo</h2>
+                        <button className={styles['modal-close-button']} onClick={handleClose} aria-label="Close">
                             ×
                         </button>
                     </div>
 
-                    <div className="modal-body">
+                    <div className={styles['modal-body']}>
                         {!isProcessing ? (
                             <div
-                                className={`upload-dropzone ${isDragging ? 'dragging' : ''} ${uploadFile ? 'has-file' : ''}`}
+                                className={[
+                                    styles['upload-dropzone'],
+                                    isDragging ? styles.dragging : '',
+                                    uploadFile ? styles['has-file'] : '',
+                                ].filter(Boolean).join(' ')}
                                 onDragEnter={handleDragEnter}
                                 onDragOver={handleDragOver}
                                 onDragLeave={handleDragLeave}
@@ -278,21 +283,21 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
                                 />
 
                                 {isValidating ? (
-                                    <div className="upload-status">
-                                        <div className="upload-spinner"></div>
-                                        <p className="upload-text">Validando arquivo...</p>
+                                    <div className={styles['upload-status']}>
+                                        <div className={styles['upload-spinner']}></div>
+                                        <p className={styles['upload-text']}>Validando arquivo...</p>
                                     </div>
                                 ) : uploadFile ? (
-                                    <div className="upload-status">
-                                        <div className={`upload-icon ${isValidZip ? 'valid' : 'invalid'}`}>
+                                    <div className={styles['upload-status']}>
+                                        <div className={[styles['upload-icon'], isValidZip ? styles.valid : styles.invalid].join(' ')}>
                                             {isValidZip ? '✓' : '✗'}
                                         </div>
-                                        <p className="upload-filename">{uploadFile.name}</p>
-                                        {isValidZip && <p className="upload-success">Arquivo válido!</p>}
+                                        <p className={styles['upload-filename']}>{uploadFile.name}</p>
+                                        {isValidZip && <p className={styles['upload-success']}>Arquivo válido!</p>}
                                     </div>
                                 ) : (
-                                    <div className="upload-prompt">
-                                        <svg className="upload-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <div className={styles['upload-prompt']}>
+                                        <svg className={styles['upload-icon-svg']} viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                             <path
                                                 strokeLinecap="round"
                                                 strokeLinejoin="round"
@@ -300,8 +305,8 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
                                                 d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
                                             />
                                         </svg>
-                                        <p className="upload-text">Arraste um arquivo ZIP aqui</p>
-                                        <p className="upload-subtext">ou clique para selecionar</p>
+                                        <p className={styles['upload-text']}>Arraste um arquivo ZIP aqui</p>
+                                        <p className={styles['upload-subtext']}>ou clique para selecionar</p>
                                     </div>
                                 )}
                             </div>
@@ -328,28 +333,32 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
                                         }}
                                     ></div>
                                 </div>
-                                <p className="upload-text" style={{ fontWeight: 'bold' }}>{statusMessage}</p>
-                                <p className="upload-subtext">Você pode fechar esta janela, o processo continuará em segundo plano.</p>
+                                <p className={styles['upload-text']} style={{ fontWeight: 'bold' }}>{statusMessage}</p>
+                                <p className={styles['upload-subtext']}>Você pode fechar esta janela, o processo continuará em segundo plano.</p>
                             </div>
                         )}
 
-                        {uploadError && <div className="upload-error">{uploadError}</div>}
+                        {uploadError && <div className={styles['upload-error']}>{uploadError}</div>}
 
                         {failedFiles.length > 0 && (
-                            <div className="upload-error" style={{ marginTop: '10px' }}>
+                            <div className={styles['upload-error']} style={{ marginTop: '10px' }}>
                                 Arquivos com falha: {failedFiles.join(', ')}
                             </div>
                         )}
                     </div>
 
-                    <div className="modal-footer">
-                        <button className="modal-button cancel-button" onClick={handleClose}>
+                    <div className={styles['modal-footer']}>
+                        <button className={[styles['modal-button'], styles['cancel-button']].join(' ')} onClick={handleClose}>
                             {isProcessing ? 'Fechar' : 'Cancelar'}
                         </button>
 
                         {!isProcessing && (
                             <button
-                                className={`modal-button confirm-button ${isValidZip ? 'valid' : ''}`}
+                                className={[
+                                    styles['modal-button'],
+                                    styles['confirm-button'],
+                                    isValidZip ? styles.valid : '',
+                                ].filter(Boolean).join(' ')}
                                 onClick={handleConfirm}
                                 disabled={!isValidZip}
                             >
