@@ -75,7 +75,7 @@ const GeneratedCandidates = ({
 
             if (isInsidePanel) {
                 const targetElement = eventTarget instanceof Element ? eventTarget : null;
-                if (!targetElement?.closest('.global-suggestion-label')) {
+                if (!targetElement?.closest('[data-testid="global-suggestion-label"]')) {
                     setShowFloatingList(false);
                 }
                 return;
@@ -83,9 +83,9 @@ const GeneratedCandidates = ({
 
             const targetElement = eventTarget instanceof Element ? eventTarget : null;
             if (
-                targetElement?.classList.contains('clickable')
-                || Boolean(targetElement?.closest('.confirmation-dialog'))
-                || Boolean(targetElement?.closest('.confirmation-overlay'))
+                Boolean(targetElement?.closest('[data-testid="essay-token"]'))
+                || Boolean(targetElement?.closest('[data-testid="confirmation-dialog"]'))
+                || Boolean(targetElement?.closest('[data-testid="confirmation-overlay"]'))
             ) {
                 return;
             }

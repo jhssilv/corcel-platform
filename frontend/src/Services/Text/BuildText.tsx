@@ -1,5 +1,6 @@
 import type { MouseEvent as ReactMouseEvent } from 'react';
 import type { NormalizationMap, TextDetailResponse } from '../../types';
+import styles from '../../styles/generated_essay.module.css';
 
 interface EssayToken {
     text: string;
@@ -34,29 +35,29 @@ function createSpan(
     const correction = corrections[String(index)];
     const toBeNormalized = token.toBeNormalized;
     const whitelisted = token.whitelisted;
-    let className = 'clickable';
+    const classNames: string[] = [styles.clickable];
     const tokenStates: string[] = [];
 
     if (correction) {
-        className += ' corrected';
+        classNames.push(styles.corrected);
         tokenStates.push('corrected');
     } else if (toBeNormalized && !whitelisted) {
-        className += ' candidates';
+        classNames.push(styles.candidates);
         tokenStates.push('candidates');
     }
 
     if (selectedStartIndex !== null && selectedEndIndex !== null && index >= selectedStartIndex && index <= selectedEndIndex) {
-        className += ' selected';
+        classNames.push(styles.selected);
         tokenStates.push('selected');
     }
 
     if (animatedIndices.has(index)) {
-        className += ' token-updated';
+        classNames.push(styles['token-updated']);
         tokenStates.push('updated');
     }
 
     if (highlightRange && highlightRange.start === index) {
-        className += ' highlight-hover';
+        classNames.push(styles['highlight-hover']);
         tokenStates.push('highlighted');
     }
 
@@ -65,7 +66,7 @@ function createSpan(
     return (
         <span
             key={`${index}-${animationNonceByIndex[index] || 0}`}
-            className={className}
+            className={classNames.join(' ')}
             data-testid="essay-token"
             data-token-index={index}
             data-token-text={tokenText}

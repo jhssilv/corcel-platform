@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import buildText from '../../Services/Text/BuildText';
-import '../../styles/generated_essay.css';
+import styles from '../../styles/generated_essay.module.css';
 import type { NormalizationMap, TextDetailResponse } from '../../types';
 
 interface TokenPosition {
@@ -166,14 +166,14 @@ const GeneratedEssay = ({
     );
 
     return (
-        <div className="essay-container" data-testid="essay-container">
-            <div className="document-header">
-                <span className="document-title" data-testid="document-title">{essay.sourceFileName}</span>
+        <div className={styles['essay-container']} data-testid="essay-container">
+            <div className={styles['document-header']}>
+                <span className={styles['document-title']} data-testid="document-title">{essay.sourceFileName}</span>
                 {essay.grade !== undefined && essay.grade !== null && (
-                    <span className="document-grade">Nota: {essay.grade}</span>
+                    <span className={styles['document-grade']}>Nota: {essay.grade}</span>
                 )}
             </div>
-            <div className="document-body">{spans}</div>
+            <div>{spans}</div>
         </div>
     );
 };

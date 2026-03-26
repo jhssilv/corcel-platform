@@ -1,4 +1,4 @@
-import '../../styles/generated_essay.css';
+import styles from '../../styles/generated_essay.module.css';
 import type { TextDetailResponse } from '../../types';
 import type { MouseEvent as ReactMouseEvent } from 'react';
 
@@ -31,16 +31,16 @@ const OriginalEssay = ({ essay, handleSelection, highlightRange, setHoveredIndex
 
         for (let i = 0; i < tokens.length; i += 1) {
             const token = tokens[i];
-            let className = 'clickable';
+            const classNames: string[] = [styles.clickable];
 
             if (highlightRange && i >= highlightRange.start && i <= highlightRange.end) {
-                className += ' highlight-hover';
+                classNames.push(styles['highlight-hover']);
             }
 
             spans.push(
                 <span
                     key={`opt-token-${i}`}
-                    className={className}
+                    className={classNames.join(' ')}
                     onMouseEnter={() => setHoveredIndex(i)}
                     onMouseLeave={() => setHoveredIndex(null)}
                     onClick={(event) => handleSelection?.(i, event)}
@@ -58,11 +58,11 @@ const OriginalEssay = ({ essay, handleSelection, highlightRange, setHoveredIndex
     };
 
     return (
-        <div className="essay-container original-essay-container">
-            <div className="document-header">
-                <span className="document-title">{essay.sourceFileName} (Original)</span>
+        <div className={`${styles['essay-container']} ${styles['original-essay-container']}`}>
+            <div className={styles['document-header']}>
+                <span className={styles['document-title']}>{essay.sourceFileName} (Original)</span>
             </div>
-            <div className="document-body">{renderTokens()}</div>
+            <div>{renderTokens()}</div>
         </div>
     );
 };

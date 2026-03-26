@@ -6,6 +6,7 @@ import NewCorrectionPopup from '../Modals/NewCorrectionPopup';
 import { UseCorrectionActions } from '../../Hooks/Text/UseCorrectionActions';
 import { UseTextSelection } from '../../Hooks/Text/UseTextSelection';
 import type { TextDetailResponse } from '../../types';
+import styles from '../../styles/generated_essay.module.css';
 
 interface EssayDisplayProps {
     essay: TextDetailResponse | null;
@@ -79,8 +80,8 @@ function EssayDisplay({ essay, refreshEssay }: EssayDisplayProps) {
                     </span>
                 </div>
 
-                <div className="finalized-toggle-wrapper" style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #444', width: '100%', justifyContent: 'center' }}>
-                    <label className="finalized-toggle">
+                <div className={styles['finalized-toggle-wrapper']} style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #444', width: '100%', justifyContent: 'center' }}>
+                    <label className={styles['finalized-toggle']}>
                         <input
                             data-testid="finalized-toggle-input"
                             type="checkbox"
@@ -89,8 +90,8 @@ function EssayDisplay({ essay, refreshEssay }: EssayDisplayProps) {
                                 void handleFinishedToggled();
                             }}
                         />
-                        <span className="toggle-slider"></span>
-                        <span className="toggle-label">
+                        <span className={styles['toggle-slider']}></span>
+                        <span className={styles['toggle-label']}>
                             {essay.normalizedByUser ? 'Finalizado! 🐎' : 'Marcar Como Finalizado'}
                         </span>
                     </label>
@@ -151,7 +152,7 @@ function EssayDisplay({ essay, refreshEssay }: EssayDisplayProps) {
                 essayId={essay.id}
             />
 
-            <div className={showOriginal ? 'essay-comparison-container' : ''}>
+            <div className={showOriginal ? styles['essay-comparison-container'] : ''}>
                 {showOriginal && (
                     <OriginalEssay
                         essay={essay}

@@ -32,7 +32,6 @@
     font-size: 0.9rem;
 }
 
-/* Info Tooltip Styles */
 .search-with-info {
     display: flex;
     align-items: center;
@@ -40,7 +39,7 @@
     width: 100%;
 }
 
-.search-with-info> :first-child {
+.search-with-info > :first-child {
     flex-grow: 1;
 }
 
@@ -74,10 +73,8 @@
     position: absolute;
     z-index: 1000;
     bottom: 125%;
-    /* Position above */
     left: 50%;
     margin-left: -125px;
-    /* Center the tooltip */
     opacity: 0;
     transition: opacity 0.3s;
     font-size: 0.85rem;

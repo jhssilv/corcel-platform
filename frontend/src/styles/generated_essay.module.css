@@ -56,7 +56,6 @@
     background-color: rgba(255, 255, 255, 0.1);
 }
 
-/* Candidates (Red) - Softer */
 .candidates {
     background-color: rgba(185, 28, 28, 0.25);
     border-bottom-color: #ef4444;
@@ -67,7 +66,6 @@
     background-color: rgba(185, 28, 28, 0.4);
 }
 
-/* Corrected (Blue) - Softer */
 .corrected {
     background-color: rgba(29, 78, 216, 0.25);
     border-bottom-color: #3b82f6;
@@ -78,7 +76,6 @@
     background-color: rgba(29, 78, 216, 0.4);
 }
 
-/* Selected (Gray/White) */
 .selected {
     background-color: rgba(255, 255, 255, 0.2);
     color: white;
@@ -118,7 +115,6 @@
     }
 }
 
-/* Finalized Toggle Switch */
 .finalized-toggle-wrapper {
     display: flex;
     align-items: center;
@@ -163,7 +159,6 @@
 
 .finalized-toggle input:checked+.toggle-slider {
     background-color: #10b981;
-    /* Emerald green */
     border-color: #059669;
 }
 
@@ -201,10 +196,8 @@
 .essay-comparison-container>.essay-container {
     flex: 1;
     max-width: none;
-    /* Override max-width when side-by-side */
 }
 
-/* Original Essay Specifics */
 .original-essay-container {
     opacity: 0.8;
     background-color: #1a1a1a;

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ChangeEvent, type MouseEvent as ReactMouseEvent, type MutableRefObject, type Ref } from 'react';
-import '../../styles/candidates_side_panel.css';
+import styles from '../../styles/candidates_side_panel.module.css';
 import { toggleToBeNormalized } from '../../Api';
 
 interface PanelPosition {
@@ -150,7 +150,7 @@ const CandidatesSidePanel = ({
 
     return (
         <div
-            className="candidates-panel"
+            className={styles['candidates-panel']}
             ref={assignForwardRef}
             style={{
                 top: panelPosition?.top ?? 150,
@@ -158,22 +158,22 @@ const CandidatesSidePanel = ({
                 right: panelPosition?.left == null ? 20 : 'auto',
             }}
         >
-            <button className="close-panel-button" onClick={onClose} title="Fechar painel">
+            <button className={styles['close-panel-button']} onClick={onClose} title="Fechar painel">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                     <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z" />
                 </svg>
             </button>
-            <div className="candidates-header" onMouseDown={handleDragStart}>
+            <div className={styles['candidates-header']} onMouseDown={handleDragStart}>
                 {hasCandidates && singleWordSelected ? 'Alternativas para ' : 'Substituir '}
-                <span className="selected-token">&quot;{selectedTokenText}&quot;</span>
+                <span className={styles['selected-token']}>&quot;{selectedTokenText}&quot;</span>
             </div>
 
-            <div className="panel-footer">
-                <div className="new-candidate-container">
+            <div className={styles['panel-footer']}>
+                <div className={styles['new-candidate-container']}>
                     <input
                         ref={inputRef}
                         placeholder="Novo Token"
-                        className="new-candidate-input"
+                        className={styles['new-candidate-input']}
                         onKeyDown={(event) => {
                             if (event.key === 'Enter') {
                                 event.preventDefault();
@@ -185,7 +185,7 @@ const CandidatesSidePanel = ({
                     />
                     <button
                         data-testid="edit-button"
-                        className="action-button edit-button"
+                        className={`${styles['action-button']} ${styles['edit-button'] ?? ''}`}
                         title="Substituir Token"
                         onClick={() => {
                             const value = inputRef.current?.value ?? '';
@@ -199,7 +199,7 @@ const CandidatesSidePanel = ({
                     </button>
                     <button
                         data-testid="delete-button"
-                        className="action-button delete-button"
+                        className={`${styles['action-button']} ${styles['delete-button'] ?? ''}`}
                         title="Remover Substituição"
                         onClick={() => {
                             onSelectCandidate('');
@@ -209,7 +209,7 @@ const CandidatesSidePanel = ({
                     </button>
                     <button
                         data-testid="toggle-suggestion-button"
-                        className={`action-button remove-suggestions-button ${!toBeNormalized ? 'active-green' : ''}`}
+                        className={`${styles['action-button']} ${styles['remove-suggestions-button']} ${!toBeNormalized ? styles['active-green'] : ''}`}
                         title="Remover Marcação de Não Normalizado"
                         onClick={() => setShowRemoveConfirmation(true)}
                     >
@@ -219,8 +219,8 @@ const CandidatesSidePanel = ({
                     </button>
                 </div>
 
-                <div className="global-suggestion-container">
-                    <label className="global-suggestion-label">
+                <div className={styles['global-suggestion-container']}>
+                    <label className={styles['global-suggestion-label']} data-testid="global-suggestion-label">
                         <input
                             type="checkbox"
                             checked={suggestForAll}
@@ -228,11 +228,11 @@ const CandidatesSidePanel = ({
                         />
                         Sugestão Global
                     </label>
-                    <div className="info-tooltip-container">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="info-icon">
+                    <div className={styles['info-tooltip-container']}>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={styles['info-icon']}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
                         </svg>
-                        <div className="tooltip-text">
+                        <div className={styles['tooltip-text']}>
                             Ao marcar esta opção, o novo token será sugerida para todas as ocorrências deste token nos textos.
                         </div>
                     </div>
@@ -240,19 +240,19 @@ const CandidatesSidePanel = ({
             </div>
 
             {showRemoveConfirmation && (
-                <div className="confirmation-overlay">
-                    <div className="confirmation-dialog" data-testid="confirmation-dialog">
+                <div className={styles['confirmation-overlay']} data-testid="confirmation-overlay">
+                    <div className={styles['confirmation-dialog']} data-testid="confirmation-dialog">
                         <p>Marcar token como (in)correto? Isso apenas removerá ou adicionará a marcação de &quot;Não Normalizado&quot;</p>
-                        <div className="confirmation-buttons">
+                        <div className={styles['confirmation-buttons']}>
                             <button
                                 onClick={() => {
                                     void handleConfirmRemove();
                                 }}
-                                className="confirm-btn"
+                                className={styles['confirm-btn']}
                             >
                                 Confirmar
                             </button>
-                            <button onClick={() => setShowRemoveConfirmation(false)} className="cancel-btn">Cancelar</button>
+                            <button onClick={() => setShowRemoveConfirmation(false)} className={styles['cancel-btn']}>Cancelar</button>
                         </div>
                     </div>
                 </div>

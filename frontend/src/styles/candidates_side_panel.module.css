@@ -20,7 +20,6 @@
     align-items: stretch;
     animation: slideLeft 0.3s ease-out;
     max-height: 80vh;
-    /* Limit height to 80% of viewport height */
 }
 
 @keyframes slideLeft {
@@ -63,7 +62,6 @@
     font-weight: 500;
     text-align: center;
     margin-top: 10px;
-    /* Add space for close button */
     cursor: move;
     user-select: none;
 }
@@ -83,12 +81,9 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
-    /* Reduced gap */
     width: 100%;
     overflow-y: auto;
-    /* Enable vertical scrolling */
     padding-right: 5px;
-    /* Space for scrollbar */
     flex: 1;
     min-height: 0;
 }
@@ -102,7 +97,6 @@
     flex-shrink: 0;
 }
 
-/* Custom scrollbar for candidates list */
 .candidates-list::-webkit-scrollbar {
     width: 6px;
 }
@@ -125,14 +119,12 @@
     border: 1px solid #555;
     color: #eee;
     padding: 6px 10px;
-    /* Reduced padding */
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.2s;
     width: 100%;
     text-align: left;
     font-size: 0.9em;
-    /* Slightly smaller font */
 }
 
 .candidate-button:hover {
@@ -157,7 +149,6 @@
     outline: none;
     flex: 1;
     min-width: 0;
-    /* Allow shrinking */
 }
 
 .new-candidate-input:focus {
@@ -261,7 +252,6 @@
     background-color: #c82333;
 }
 
-/* Global Suggestion Styles */
 .global-suggestion-container {
     display: flex;
     align-items: center;
@@ -271,7 +261,6 @@
     border-top: 1px solid #444;
     width: 100%;
     justify-content: space-between;
-    /* Changed from center to space-between */
 }
 
 .global-suggestion-label {
@@ -280,18 +269,15 @@
     gap: 10px;
     color: #eee;
     font-size: 1em;
-    /* Slightly smaller font */
     font-weight: 500;
     cursor: pointer;
     user-select: none;
     background-color: #3a3a3a;
     padding: 8px 10px;
-    /* Adjusted padding */
     border-radius: 6px;
     border: 1px solid #555;
     transition: background-color 0.2s;
     flex: 1;
-    /* Take available space */
     justify-content: center;
 }
 
@@ -303,7 +289,6 @@
     cursor: pointer;
     accent-color: #646cff;
     width: 18px;
-    /* Slightly smaller checkbox */
     height: 18px;
 }
 
@@ -329,7 +314,6 @@
 .tooltip-text {
     visibility: hidden;
     width: 200px;
-    /* Slightly narrower tooltip */
     background-color: #1a1a1a;
     color: #fff;
     text-align: center;
@@ -340,7 +324,6 @@
     bottom: auto;
     top: 50%;
     right: 130%;
-    /* Position to the left of the icon */
     left: auto;
     transform: translateY(-50%);
     margin-left: 0;
@@ -357,7 +340,6 @@
     position: absolute;
     top: 50%;
     left: 100%;
-    /* Arrow on the right side */
     margin-top: -5px;
     border-width: 5px;
     border-style: solid;

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import DropdownSelect, { type DropdownValue, type SelectOption } from '../Common/DropdownSelect';
 import { getRawTextsData, getTextsData, getUsernames } from '../../Api';
 import type { RawTextMetadata, TextMetadata } from '../../types';
-import '../../styles/essay_selector.css';
+import styles from '../../styles/essay_selector.module.css';
 
 const gradeOptions: SelectOption<number>[] = [
     { value: 0, label: 'Nota 0' },
@@ -182,9 +182,9 @@ const EssaySelector = ({
     }
 
     return (
-        <form className="essay-selector-container">
-            <div className="selector-main-search">
-                <div className="search-with-info">
+        <form className={styles['essay-selector-container']}>
+            <div className={styles['selector-main-search']}>
+                <div className={styles['search-with-info']}>
                     <DropdownSelect
                         title="ID do Texto"
                         options={filteredEssays}
@@ -197,18 +197,18 @@ const EssaySelector = ({
                         controlShouldRenderValue={false}
                         blurInputOnSelect={false}
                     />
-                    <div className="info-tooltip-container">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="info-icon">
+                    <div className={styles['info-tooltip-container']}>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={styles['info-icon']}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
                         </svg>
-                        <div className="tooltip-text">
+                        <div className={styles['tooltip-text']}>
                             Digite o id do texto para buscar. Exemplo: &quot;2015 n4&quot; encontrará &quot;2015_n4_12345.txt&quot;.
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div className="selector-filters-grid">
+            <div className={styles['selector-filters-grid']}>
                 <DropdownSelect
                     title="Notas"
                     options={gradeOptions}
@@ -232,8 +232,8 @@ const EssaySelector = ({
                 />
             </div>
 
-            <div className="selector-footer">
-                <div className="corrected-count" data-testid="corrected-count">
+            <div className={styles['selector-footer']}>
+                <div className={styles['corrected-count']} data-testid="corrected-count">
                     Finalizados:{' '}
                     <strong>
                         {
