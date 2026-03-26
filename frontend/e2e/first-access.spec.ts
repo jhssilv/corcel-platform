@@ -6,10 +6,10 @@ test.describe('First Access', () => {
     await page.route('**/api/activate', async route => {
       const request = route.request();
       const postData = request.postDataJSON();
-      
+
       expect(postData.username).toBe('newuser');
       expect(postData.password).toBe('newpassword123');
-      
+
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -30,7 +30,7 @@ test.describe('First Access', () => {
     // Expect success message
     await expect(page.getByTestId('first-access-message')).toHaveAttribute('data-message-type', 'success');
     await expect(page.getByTestId('first-access-message')).toContainText('Conta ativada com sucesso!');
-    
+
     // Should redirect to login (check URL after timeout)
     await page.waitForTimeout(2500);
     await expect(page).toHaveURL('/login');

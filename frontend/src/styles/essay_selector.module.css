@@ -39,7 +39,7 @@
     width: 100%;
 }
 
-.search-with-info > :first-child {
+.search-with-info> :first-child {
     flex-grow: 1;
 }
 

@@ -41,7 +41,7 @@ test.describe('Authentication', () => {
 
     // Expect to be redirected to the main page
     await expect(page).toHaveURL('/main');
-    
+
     // Verify that the main page content is visible
     await expect(page.getByRole('heading', { name: 'Busca de Textos' })).toBeVisible();
   });
@@ -148,7 +148,7 @@ test.describe('Authentication', () => {
 
     // Expect to be redirected to login
     await expect(page).toHaveURL(/\/login/);
-    
+
     // Verify localStorage is cleared (optional, but good practice)
     const isAuthenticated = await page.evaluate(() => localStorage.getItem('isAuthenticated'));
     expect(isAuthenticated).toBeNull();
