@@ -1,0 +1,11 @@
+FROM ollama/ollama:latest
+
+ENV OLLAMA_CONTEXT_LENGTH=2048
+
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
+
+EXPOSE 11434
+
+ENTRYPOINT ["/bin/ollama"]
+CMD ["serve"]

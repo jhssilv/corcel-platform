@@ -63,7 +63,7 @@ class Tokenizer:
         os.makedirs(_get_resource_path('dicts/'), exist_ok=True)            
 
         sc_path = os.getenv('SPELLCHECKER_DICT', _get_resource_path('dicts/br-utf8.json'))
-        self._spell = SpellChecker(local_dictionary=sc_path)
+        self._spell = SpellChecker(language=None, local_dictionary=sc_path)
 
         try:
             spacy_udpipe.download("pt")

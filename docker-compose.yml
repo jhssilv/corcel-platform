@@ -57,25 +57,25 @@ services:
       - ./api/.env
 
   ollama:
-    image: ollama/ollama:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.ollama
     container_name: corcel_ollama
     ports:
       - "11435:11434"
     volumes:
       - ollama_data:/root/.ollama
-    environment:
-      - OLLAMA_CONTEXT_LENGTH=2048
     networks:
       - app_network
     restart: unless-stopped
-    # GPU support (comment if NVIDIA GPU unavailable):
     deploy:
       resources:
         reservations:
           devices:
             - driver: nvidia
               count: all
-              capabilities: [ gpu ]
+              capabilities:
+                - gpu
 
   ollama-pull:
     image: ollama/ollama:latest
@@ -91,8 +91,8 @@ services:
         until OLLAMA_HOST=http://ollama:11434 ollama list > /dev/null 2>&1; do
           sleep 2
         done
-        echo 'Pulling gemma3:12b (this may take a while on first run)...'
-        OLLAMA_HOST=http://ollama:11434 ollama pull gemma3:12b
+        echo 'Pulling gemma3:4b (this may take a while on first run)...'
+        OLLAMA_HOST=http://ollama:11434 ollama pull gemma3:4b
         echo 'Model ready.'
     networks:
       - app_network
