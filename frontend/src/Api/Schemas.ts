@@ -36,6 +36,11 @@ export const LoginResponseSchema = z.object({
     isAdmin: z.boolean(),
 });
 
+export const CurrentUserResponseSchema = z.object({
+    username: z.string(),
+    isAdmin: z.boolean(),
+});
+
 
 // --- Schemas for /api/texts ---
 

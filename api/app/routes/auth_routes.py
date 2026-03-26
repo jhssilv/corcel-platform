@@ -42,6 +42,17 @@ def get_usernames(current_user):
         return jsonify(error_response.model_dump()), 500
 
 
+@auth_bp.route('/api/me', methods=['GET'])
+@login_required()
+def get_current_user(current_user):
+    """Returns current authenticated user basic profile."""
+    response_data = user_schemas.CurrentUserResponse(
+        username=current_user.username,
+        isAdmin=current_user.is_admin,
+    )
+    return jsonify(response_data.model_dump(by_alias=True)), 200
+
+
 @auth_bp.route('/api/register', methods=['POST'])
 @validate()
 @admin_required()

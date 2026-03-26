@@ -38,7 +38,7 @@ createRoot(document.getElementById('root')!).render(
                     <Route
                         path="/users"
                         element={(
-                            <ProtectedRoute>
+                            <ProtectedRoute requireAdmin={true}>
                                 <UserManagementDashboard />
                             </ProtectedRoute>
                         )}

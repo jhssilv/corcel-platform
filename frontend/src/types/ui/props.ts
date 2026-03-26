@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 
 export interface ProtectedRouteProps {
     children: ReactNode;
+    requireAdmin?: boolean;
 }
 
 export interface TopBarProps {

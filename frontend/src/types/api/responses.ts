@@ -1,7 +1,7 @@
 import type { MessageResponse } from '../domain/common';
 import type { NormalizationMap } from '../domain/normalization';
 import type { TextDetail, TextMetadata } from '../domain/text';
-import type { UserData, LoginResponse } from '../domain/user';
+import type { CurrentUser, UserData, LoginResponse } from '../domain/user';
 import type { TaskStatusResponse } from '../domain/ocr';
 
 export interface UsernamesResponse {
@@ -9,6 +9,8 @@ export interface UsernamesResponse {
 }
 
 export type LoginApiResponse = LoginResponse;
+
+export type CurrentUserApiResponse = CurrentUser;
 
 export type TextsDataResponse = TextMetadata[];
 

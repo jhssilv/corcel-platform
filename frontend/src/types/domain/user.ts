@@ -10,6 +10,11 @@ export interface LoginResponse {
     isAdmin: boolean;
 }
 
+export interface CurrentUser {
+    username: string;
+    isAdmin: boolean;
+}
+
 export interface UserData {
     username: string;
     isAdmin: boolean;

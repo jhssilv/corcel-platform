@@ -1,7 +1,7 @@
 import { apiPublic, apiPrivate } from './Client';
 import * as schemas from './Schemas';
 import { unwrapData } from './Utils';
-import type { LoginApiResponse, MessageApiResponse, UsernamesResponse } from '../types';
+import type { CurrentUserApiResponse, LoginApiResponse, MessageApiResponse, UsernamesResponse } from '../types';
 
 export async function getUsernames(): Promise<UsernamesResponse> {
     const data = unwrapData(await apiPublic.get<UsernamesResponse>('/users'));
@@ -11,6 +11,11 @@ export async function getUsernames(): Promise<UsernamesResponse> {
 export async function authenticateUser(username: string, password: string): Promise<LoginApiResponse> {
     const response = unwrapData(await apiPublic.post<LoginApiResponse>('/login', { username, password }));
     return schemas.LoginResponseSchema.parse(response);
+}
+
+export async function getCurrentUser(): Promise<CurrentUserApiResponse> {
+    const response = unwrapData(await apiPrivate.get<CurrentUserApiResponse>('/me'));
+    return schemas.CurrentUserResponseSchema.parse(response);
 }
 
 export async function logoutUser(): Promise<MessageApiResponse> {

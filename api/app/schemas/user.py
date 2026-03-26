@@ -9,6 +9,14 @@ class UsernamesResponse(BaseModel):
     """
     usernames: List[str] = Field(..., json_schema_extra={"example": ["user1", "admin", "guest"]})
 
+
+class CurrentUserResponse(BaseModel):
+    """Schema for current authenticated user data."""
+    username: str
+    is_admin: bool = Field(alias="isAdmin")
+
+    model_config = ConfigDict(populate_by_name=True)
+
 class UserData(BaseModel):
     """Schema for user data.
     Args:

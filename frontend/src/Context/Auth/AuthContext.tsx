@@ -1,8 +1,10 @@
-import { createContext, useEffect, useState, type ReactNode } from 'react';
-import { logoutUser } from '../../Api';
+import { createContext, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { getCurrentUser, logoutUser } from '../../Api';
+import { STORAGE_KEYS } from '../../types/constants/storageKeys';
 
 export interface AuthContextValue {
     isAuthenticated: boolean;
+    isAuthLoading: boolean;
     username: string | null;
     isAdmin: boolean;
     login: (username: string, isAdmin: boolean) => void;
@@ -15,30 +17,48 @@ interface AuthProviderProps {
     children: ReactNode;
 }
 
+const setStoredAuth = (nextUsername: string, nextIsAdmin: boolean) => {
+    localStorage.setItem(STORAGE_KEYS.IS_AUTHENTICATED, 'true');
+    localStorage.setItem(STORAGE_KEYS.USERNAME, nextUsername);
+    localStorage.setItem(STORAGE_KEYS.IS_ADMIN, nextIsAdmin.toString());
+};
+
+const clearStoredAuth = () => {
+    localStorage.removeItem(STORAGE_KEYS.IS_AUTHENTICATED);
+    localStorage.removeItem(STORAGE_KEYS.USERNAME);
+    localStorage.removeItem(STORAGE_KEYS.IS_ADMIN);
+};
+
 export const AuthProvider = ({ children }: AuthProviderProps) => {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-        return localStorage.getItem('isAuthenticated') === 'true';
+        return localStorage.getItem(STORAGE_KEYS.IS_AUTHENTICATED) === 'true';
     });
 
     const [username, setUsername] = useState<string | null>(() => {
-        return localStorage.getItem('username');
+        return localStorage.getItem(STORAGE_KEYS.USERNAME);
     });
 
     const [isAdmin, setIsAdmin] = useState<boolean>(() => {
-        return localStorage.getItem('isAdmin') === 'true';
+        return localStorage.getItem(STORAGE_KEYS.IS_ADMIN) === 'true';
     });
 
-    const login = (nextUsername: string, nextIsAdmin: boolean) => {
+    const [isAuthLoading, setIsAuthLoading] = useState<boolean>(true);
+    const isAuthenticatedRef = useRef(isAuthenticated);
+
+    useEffect(() => {
+        isAuthenticatedRef.current = isAuthenticated;
+    }, [isAuthenticated]);
+
+    const login = useCallback((nextUsername: string, nextIsAdmin: boolean) => {
         setIsAuthenticated(true);
         setUsername(nextUsername);
         setIsAdmin(nextIsAdmin);
+        setIsAuthLoading(false);
 
-        localStorage.setItem('isAuthenticated', 'true');
-        localStorage.setItem('username', nextUsername);
-        localStorage.setItem('isAdmin', nextIsAdmin.toString());
-    };
+        setStoredAuth(nextUsername, nextIsAdmin);
+    }, []);
 
-    const logout = async () => {
+    const logout = useCallback(async () => {
         try {
             await logoutUser();
         } catch (error) {
@@ -47,14 +67,55 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             setIsAuthenticated(false);
             setUsername(null);
             setIsAdmin(false);
-            localStorage.removeItem('isAuthenticated');
-            localStorage.removeItem('username');
-            localStorage.removeItem('isAdmin');
+            setIsAuthLoading(false);
+            clearStoredAuth();
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        let mounted = true;
+
+        const syncAuthFromSession = async () => {
+            try {
+                const currentUser = await getCurrentUser();
+
+                if (!mounted) {
+                    return;
+                }
+
+                setIsAuthenticated(true);
+                setUsername(currentUser.username);
+                setIsAdmin(currentUser.isAdmin);
+                setStoredAuth(currentUser.username, currentUser.isAdmin);
+            } catch {
+                if (!mounted) {
+                    return;
+                }
+
+                setIsAuthenticated(false);
+                setUsername(null);
+                setIsAdmin(false);
+                clearStoredAuth();
+            } finally {
+                if (mounted) {
+                    setIsAuthLoading(false);
+                }
+            }
+        };
+
+        void syncAuthFromSession();
+
+        return () => {
+            mounted = false;
+        };
+    }, []);
 
     useEffect(() => {
         const handleUnauthorized = () => {
+            if (!isAuthenticatedRef.current) {
+                return;
+            }
+
             alert('Sua sessão expirou. Por favor, faça login novamente.');
             void logout();
         };
@@ -64,10 +125,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         return () => {
             window.removeEventListener('auth:unauthorized', handleUnauthorized);
         };
-    }, []);
+    }, [logout]);
+
+    const contextValue = useMemo(
+        () => ({ isAuthenticated, isAuthLoading, login, logout, username, isAdmin }),
+        [isAuthenticated, isAuthLoading, login, logout, username, isAdmin],
+    );
 
     return (
-        <AuthContext.Provider value={{ isAuthenticated, login, logout, username, isAdmin }}>
+        <AuthContext.Provider value={contextValue}>
             {children}
         </AuthContext.Provider>
     );
