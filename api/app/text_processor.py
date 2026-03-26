@@ -124,7 +124,7 @@ class TextProcessor(Tokenizer):
         for i, token in enumerate(doc):
             word = token.text
 
-            if not word.isalpha():
+            if not word.replace("-", "").isalpha():
                 results[i] = {
                     "idx": i,
                     "text": word,
