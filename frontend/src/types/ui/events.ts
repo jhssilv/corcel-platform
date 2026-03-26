@@ -1,9 +1,9 @@
 export type AppEventName = 'auth:unauthorized';
 
 export interface UnauthorizedEvent extends Event {
-  type: 'auth:unauthorized';
+    type: 'auth:unauthorized';
 }
 
 export type AppEventMap = {
-  'auth:unauthorized': UnauthorizedEvent;
+    'auth:unauthorized': UnauthorizedEvent;
 };

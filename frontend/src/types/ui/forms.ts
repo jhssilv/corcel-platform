@@ -1,18 +1,18 @@
 export interface LoginFormValues {
-  username: string;
-  password: string;
+    username: string;
+    password: string;
 }
 
 export interface RegisterUserFormValues {
-  username: string;
+    username: string;
 }
 
 export interface ActivateUserFormValues {
-  username: string;
-  password: string;
+    username: string;
+    password: string;
 }
 
 export interface CorrectionFormValues {
-  newToken: string;
-  suggestForAll: boolean;
+    newToken: string;
+    suggestForAll: boolean;
 }

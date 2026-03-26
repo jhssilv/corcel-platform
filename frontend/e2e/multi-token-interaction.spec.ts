@@ -74,28 +74,28 @@ test.describe('Multi-Token Interaction', () => {
       localStorage.setItem('username', 'testuser');
       localStorage.setItem('isAdmin', 'false');
       localStorage.setItem('textsData', JSON.stringify([
-            {
-              id: 2,
-              grade: 8,
-              usersAssigned: ['testuser'],
-              normalizedByUser: false,
-              sourceFileName: 'essay2.txt',
-            },
+        {
+          id: 2,
+          grade: 8,
+          usersAssigned: ['testuser'],
+          normalizedByUser: false,
+          sourceFileName: 'essay2.txt',
+        },
       ]));
     });
 
     await page.goto('/main');
-    
+
     // Ensure we are on the main page
     await expect(page).toHaveURL('/main');
-    
+
     // Wait for the dashboard to load
     await expect(page.getByRole('heading', { name: 'Busca de Textos' })).toBeVisible();
 
     // Select the essay
     await page.getByRole('combobox').first().click();
     await page.getByText('essay2.txt', { exact: true }).click();
-    
+
     // Wait for the essay text to be visible
     await expect(page.getByText('The', { exact: true })).toBeVisible();
   });
@@ -103,7 +103,7 @@ test.describe('Multi-Token Interaction', () => {
   test('should select multiple tokens using Control key', async ({ page }) => {
     // Click 'quick' (index 1)
     await page.locator('.clickable').filter({ hasText: 'quick' }).click();
-    
+
     // Hold Control and click 'fox' (index 3)
     await page.keyboard.down('Control');
     await page.locator('.clickable').filter({ hasText: 'fox' }).click();
@@ -114,7 +114,7 @@ test.describe('Multi-Token Interaction', () => {
     await expect(page.locator('.clickable').filter({ hasText: 'quick' })).toHaveClass(/selected/);
     await expect(page.locator('.clickable').filter({ hasText: 'brown' })).toHaveClass(/selected/);
     await expect(page.locator('.clickable').filter({ hasText: 'fox' })).toHaveClass(/selected/);
-    
+
     // 'The' and 'jumps' should NOT be selected
     await expect(page.getByText('The', { exact: true })).not.toHaveClass(/selected/);
     await expect(page.locator('.clickable').filter({ hasText: 'jumps' })).not.toHaveClass(/selected/);
@@ -162,11 +162,11 @@ test.describe('Multi-Token Interaction', () => {
   test('should hide candidates list when multiple tokens are selected and reset selection', async ({ page }) => {
     // Select 'quick' (1)
     await page.locator('.clickable').filter({ hasText: 'quick' }).click();
-    
+
     // Verify candidates might be visible (if it had any, but 'quick' has none in mock)
     // Let's assume 'quick' has no candidates, so "Alternativas para" is hidden anyway.
     // But let's check that selecting multiple ensures it stays hidden or behaves correctly.
-    
+
     // Select 'fox' (3) with Ctrl
     await page.keyboard.down('Control');
     await page.locator('.clickable').filter({ hasText: 'fox' }).click();
@@ -218,7 +218,7 @@ test.describe('Multi-Token Interaction', () => {
 
     // Type new token
     await page.getByPlaceholder('Novo Token').fill('fast animal');
-    
+
     // Click add
     await page.locator('.edit-button').click();
 
@@ -231,7 +231,7 @@ test.describe('Multi-Token Interaction', () => {
     // We need to check if 'fast animal' is visible and has 'corrected' class.
     await expect(page.getByText('fast animal')).toBeVisible();
     await expect(page.getByText('fast animal')).toHaveClass(/corrected/);
-    
+
     // Original tokens should not be visible individually or should be replaced
     await expect(page.locator('.clickable').filter({ hasText: 'quick' })).not.toBeVisible();
   });
@@ -241,28 +241,28 @@ test.describe('Multi-Token Interaction', () => {
 
     // Dynamic mock for normalizations
     await page.route('**/api/texts/2/normalizations', async route => {
-        if (route.request().method() === 'GET') {
-            if (!isDeleted) {
-                await route.fulfill({
-                    status: 200,
-                    contentType: 'application/json',
-                    body: JSON.stringify({
-                      "1": { last_index: 3, new_token: "fast animal" }
-                    }),
-                });
-            } else {
-                await route.fulfill({
-                    status: 200,
-                    contentType: 'application/json',
-                    body: JSON.stringify({}),
-                });
-            }
-        } else if (route.request().method() === 'DELETE') {
-            const postData = route.request().postDataJSON();
-            expect(postData).toEqual({ word_index: 1 });
-            isDeleted = true;
-            await route.fulfill({ status: 200 });
+      if (route.request().method() === 'GET') {
+        if (!isDeleted) {
+          await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({
+              "1": { last_index: 3, new_token: "fast animal" }
+            }),
+          });
+        } else {
+          await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({}),
+          });
         }
+      } else if (route.request().method() === 'DELETE') {
+        const postData = route.request().postDataJSON();
+        expect(postData).toEqual({ word_index: 1 });
+        isDeleted = true;
+        await route.fulfill({ status: 200 });
+      }
     });
 
     // Reload to get the corrected state
@@ -284,7 +284,7 @@ test.describe('Multi-Token Interaction', () => {
     await expect(page.locator('.clickable').filter({ hasText: 'quick' })).toBeVisible();
     await expect(page.locator('.clickable').filter({ hasText: 'brown' })).toBeVisible();
     await expect(page.locator('.clickable').filter({ hasText: 'fox' })).toBeVisible();
-    
+
     // 'fast animal' should be gone
     await expect(page.getByText('fast animal')).not.toBeVisible();
   });

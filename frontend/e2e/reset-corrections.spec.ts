@@ -25,12 +25,12 @@ test.describe('Reset Corrections', () => {
                 }),
             });
         });
-        
-         // Mock Usernames
+
+        // Mock Usernames
         await page.route('**/api/users', async route => {
             await route.fulfill({ status: 200, body: JSON.stringify({ usernames: ['testuser'] }) });
         });
-        
+
         // Go to login and login
         await page.goto('/');
         await page.fill('input[type="text"]', 'testuser');
@@ -43,7 +43,7 @@ test.describe('Reset Corrections', () => {
 
         // Mock Text Detail
         await page.route('**/api/texts/1', async route => {
-             await route.fulfill({
+            await route.fulfill({
                 status: 200,
                 body: JSON.stringify({
                     id: 1,
@@ -61,16 +61,16 @@ test.describe('Reset Corrections', () => {
 
         // Mock Normalizations
         await page.route('**/api/texts/1/normalizations', async route => {
-             if (route.request().method() === 'GET') {
-                 await route.fulfill({
-                     status: 200,
-                     body: JSON.stringify(normalizations)
-                 });
-             } else {
-                 await route.continue();
-             }
+            if (route.request().method() === 'GET') {
+                await route.fulfill({
+                    status: 200,
+                    body: JSON.stringify(normalizations)
+                });
+            } else {
+                await route.continue();
+            }
         });
-        
+
         // Mock Delete
         let deleteCalled = false;
         await page.route('**/api/texts/1/normalizations/all', async route => {
@@ -86,7 +86,7 @@ test.describe('Reset Corrections', () => {
         // Select the text
         await page.getByRole('combobox').first().click();
         await page.getByText('essay1.txt', { exact: true }).click();
-        
+
         // Wait for essay container
         await expect(page.locator('.essay-container')).toBeVisible();
 
@@ -100,7 +100,7 @@ test.describe('Reset Corrections', () => {
 
         // Verify API was called
         await expect.poll(() => deleteCalled).toBe(true);
-        
+
         // Verify UI update (optional, but good)
         // Since we mocked normalizations to be empty on next fetch, 
         // if UI refreshed, it should show original state (no corrections)

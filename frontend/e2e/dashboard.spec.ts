@@ -52,7 +52,7 @@ test.describe('Dashboard', () => {
     await page.fill('input[name="username_input"]', 'testuser');
     await page.fill('input[name="password_input"]', 'password123');
     await page.click('button[type="submit"]');
-    
+
     // Wait for navigation to main
     await expect(page).toHaveURL('/main');
   });
@@ -94,7 +94,7 @@ test.describe('Dashboard', () => {
     // Select the essay from the dropdown
     // We target the first combobox (ID do Texto)
     await page.getByRole('combobox').first().click();
-    
+
     // Click option 'essay1.txt'
     await page.getByText('essay1.txt', { exact: true }).click();
 
@@ -107,10 +107,10 @@ test.describe('Dashboard', () => {
   test('should open download dialog', async ({ page }) => {
     // Open side panel using specific selector
     await page.locator('button[aria-label="Menu"]').click();
-    
+
     // Click download button
     await page.getByRole('button', { name: 'Download' }).click();
-    
+
     await expect(page.getByRole('heading', { name: 'Opções de Download' })).toBeVisible();
     await expect(page.getByText('Todos os textos selecionados no filtro serão baixados.')).toBeVisible();
     await page.getByRole('button', { name: 'Cancelar' }).click();

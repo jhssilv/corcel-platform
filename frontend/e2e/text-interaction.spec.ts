@@ -67,28 +67,28 @@ test.describe('Text Interaction', () => {
       localStorage.setItem('username', 'testuser');
       localStorage.setItem('isAdmin', 'false');
       localStorage.setItem('textsData', JSON.stringify([
-            {
-              id: 1,
-              grade: 5,
-              usersAssigned: ['testuser'],
-              normalizedByUser: false,
-              sourceFileName: 'essay1.txt',
-            },
+        {
+          id: 1,
+          grade: 5,
+          usersAssigned: ['testuser'],
+          normalizedByUser: false,
+          sourceFileName: 'essay1.txt',
+        },
       ]));
     });
 
     await page.goto('/main');
-    
+
     // Ensure we are on the main page
     await expect(page).toHaveURL('/main');
-    
+
     // Wait for the dashboard to load
     await expect(page.getByRole('heading', { name: 'Busca de Textos' })).toBeVisible();
 
     // Select the essay using the robust selector
     await page.getByRole('combobox').first().click();
     await page.getByText('essay1.txt', { exact: true }).click();
-    
+
     // Wait for the essay text to be visible
     await expect(page.getByText('Hello')).toBeVisible();
   });
@@ -139,7 +139,7 @@ test.describe('Text Interaction', () => {
     await expect.poll(() => postCalled).toBe(true);
 
     // Verify the text is updated
-    await expect(page.locator('.clickable').filter({ hasText: 'world' })).toHaveClass(/corrected/); 
+    await expect(page.locator('.clickable').filter({ hasText: 'world' })).toHaveClass(/corrected/);
   });
 
   test('should apply a manual correction', async ({ page }) => {
@@ -170,7 +170,7 @@ test.describe('Text Interaction', () => {
 
     // Type in new token input
     await page.getByPlaceholder('Novo Token').fill('custom');
-    
+
     // Click the add button (pencil icon)
     await page.locator('.edit-button').click();
 
@@ -182,20 +182,20 @@ test.describe('Text Interaction', () => {
     let deleteCalled = false;
     // Start with a corrected text
     await page.route('**/api/texts/1/normalizations', async route => {
-        if (route.request().method() === 'GET') {
-            await route.fulfill({
-                status: 200,
-                contentType: 'application/json',
-                body: JSON.stringify({
-                  "1": { last_index: 1, new_token: "world" }
-                }),
-            });
-        } else if (route.request().method() === 'DELETE') {
-            deleteCalled = true;
-            const postData = route.request().postDataJSON();
-            expect(postData).toEqual({ word_index: 1 });
-            await route.fulfill({ status: 200 });
-        }
+      if (route.request().method() === 'GET') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            "1": { last_index: 1, new_token: "world" }
+          }),
+        });
+      } else if (route.request().method() === 'DELETE') {
+        deleteCalled = true;
+        const postData = route.request().postDataJSON();
+        expect(postData).toEqual({ word_index: 1 });
+        await route.fulfill({ status: 200 });
+      }
     });
 
     // Reload to get the corrected state
@@ -296,7 +296,7 @@ test.describe('Text Interaction', () => {
 
     // Enter manual token
     await page.getByPlaceholder('Novo Token').fill('custom_global');
-    
+
     // Press Enter
     await page.getByPlaceholder('Novo Token').press('Enter');
 
