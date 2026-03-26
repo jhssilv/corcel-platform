@@ -1,5 +1,4 @@
 import pytest
-from unittest.mock import MagicMock
 from app.text_processor import TextProcessor
 from app.database.models import Text, Token, Suggestion
 from app.database.queries import add_text
@@ -8,28 +7,13 @@ from app.extensions import db
 @pytest.fixture
 def mock_text_processor(mocker):
     """
-    Fixture that returns a TextProcessor with BERT mocked out
-    to avoid heavy model loading during tests.
+    Fixture that returns a TextProcessor with LLM calls mocked out
+    to avoid external dependency/network calls during tests.
     """
-    # Patch _load_bert to prevent actual model loading
-    mocker.patch('app.text_processor.TextProcessor._load_bert')
-    
     processor = TextProcessor()
-    
-    # Mock the BERT attributes
-    processor.bert_tokenizer = MagicMock()
-    processor.bert_model = MagicMock()
-    processor.device = "cpu"
-    
-    # Mock _get_bert_predictions to return dummy suggestions
-    # This ensures the pipeline runs without erroring on BERT calls
-    mocker.patch.object(processor, '_get_bert_predictions', return_value=['sugestão_bert_1', 'sugestão_bert_2'])
-    
-    # Mock _rank_by_bert to return candidates as-is (no re-ranking)
-    def mock_rank(s, t, candidates, top_k=5):
-        return candidates[:top_k]
 
-    mocker.patch.object(processor, '_rank_by_bert', side_effect=mock_rank)
+    # Avoid external LLM call and provide deterministic correction for this test case
+    mocker.patch.object(processor, '_get_llm_corrections', return_value={'caza': ['casa']})
     
     return processor
 
