@@ -113,6 +113,8 @@ def test_get_users_protected(client):
     """Test accessing protected route without login."""
     response = client.get('/api/users')
     assert response.status_code == 401
+    assert response.json["error"] == "Not authenticated"
+    assert response.json["code"] == "AUTH_NOT_AUTHENTICATED"
 
 def test_get_users_authenticated(auth_client):
     """Test accessing protected route with login."""

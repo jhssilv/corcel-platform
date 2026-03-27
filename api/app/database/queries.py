@@ -438,7 +438,7 @@ def get_all_users(db):
     """
     return db.query(User).order_by(User.id).all()
     
-def get_filtered_texts(db, grades:list[int]=None, assigned_users:list[str]=None, user_id:int=None, file_name:str=None):
+def get_filtered_texts(db, grades:list[int]=None, assigned_users:list[str]=None, user_id:int=None, normalized:bool=None, file_name:str=None):
     """
     Fetch filtered texts with optional filter criteria.
     Uses LEFT JOINs to include all texts, even those without assignments.
@@ -455,13 +455,23 @@ def get_filtered_texts(db, grades:list[int]=None, assigned_users:list[str]=None,
         .scalar_subquery()
     )
     
-    # Subquery for normalized status (any user normalized)
-    normalized_subquery = (
-        select(func.bool_or(TextsUsers.normalized))
-        .where(TextsUsers.text_id == Text.id)
-        .correlate(Text)
-        .scalar_subquery()
-    )
+    # Subquery for normalized status.
+    # If user_id is provided, this is the current user's normalized status.
+    # Otherwise, fallback to aggregate "any user normalized" semantics.
+    if user_id is not None:
+        normalized_subquery = (
+            select(TextsUsers.normalized)
+            .where(TextsUsers.text_id == Text.id, TextsUsers.user_id == user_id)
+            .correlate(Text)
+            .scalar_subquery()
+        )
+    else:
+        normalized_subquery = (
+            select(func.bool_or(TextsUsers.normalized))
+            .where(TextsUsers.text_id == Text.id)
+            .correlate(Text)
+            .scalar_subquery()
+        )
     
     # Start query from Text table
     query = db.query(
@@ -485,13 +495,19 @@ def get_filtered_texts(db, grades:list[int]=None, assigned_users:list[str]=None,
         )
         query = query.filter(Text.id.in_(assigned_subquery))
     
-    # Filter by normalized status
-    if user_id is not None:
+    # Filter by normalized status for current user.
+    if user_id is not None and normalized is True:
         normalized_check = (
             select(TextsUsers.text_id)
             .where(TextsUsers.user_id == user_id, TextsUsers.normalized == True)
         )
         query = query.filter(Text.id.in_(normalized_check))
+    elif user_id is not None and normalized is False:
+        normalized_check = (
+            select(TextsUsers.text_id)
+            .where(TextsUsers.user_id == user_id, TextsUsers.normalized == True)
+        )
+        query = query.filter(~Text.id.in_(normalized_check))
         
     # Filter by file name
     if file_name:

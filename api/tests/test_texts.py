@@ -25,6 +25,53 @@ def test_get_texts_list(auth_client, mocker):
     assert len(data["textsData"]) == 1
     assert data["textsData"][0]["id"] == 1
 
+
+def test_get_filtered_texts_normalized_true(auth_client, mocker):
+    """Test filtered texts with normalized=true."""
+    mock_get = mocker.patch('app.database.queries.get_filtered_texts')
+    mock_get.return_value = [
+        MagicMock(id=1, grade=10, normalized_by_user=True, source_file_name="test.txt", users_assigned=["testuser"])
+    ]
+
+    response = auth_client.get('/api/texts/filtered?normalized=true')
+
+    assert response.status_code == 200
+    assert response.json["textsData"][0]["normalizedByUser"] is True
+
+    call_args = mock_get.call_args.kwargs
+    assert call_args["normalized"] is True
+    assert call_args["user_id"] is not None
+
+
+def test_get_filtered_texts_normalized_false(auth_client, mocker):
+    """Test filtered texts with normalized=false."""
+    mock_get = mocker.patch('app.database.queries.get_filtered_texts')
+    mock_get.return_value = [
+        MagicMock(id=2, grade=8, normalized_by_user=False, source_file_name="essay.txt", users_assigned=[])
+    ]
+
+    response = auth_client.get('/api/texts/filtered?normalized=false')
+
+    assert response.status_code == 200
+    assert response.json["textsData"][0]["normalizedByUser"] is False
+
+    call_args = mock_get.call_args.kwargs
+    assert call_args["normalized"] is False
+    assert call_args["user_id"] is not None
+
+
+def test_get_filtered_texts_normalized_invalid(auth_client, mocker):
+    """Test filtered texts validation for invalid normalized value."""
+    mock_get = mocker.patch('app.database.queries.get_filtered_texts')
+
+    response = auth_client.get('/api/texts/filtered?normalized=invalid')
+
+    assert response.status_code == 400
+    assert response.json["error"] == "Validation failed"
+    assert response.json["details"][0]["field"] == "normalized"
+    assert "true" in response.json["details"][0]["message"]
+    mock_get.assert_not_called()
+
 def test_get_text_detail(auth_client, mocker):
     """Test retrieving text details."""
     mock_get = mocker.patch('app.database.queries.get_text_by_id')

@@ -3,6 +3,11 @@ from flask import jsonify
 from flask_jwt_extended import verify_jwt_in_request, current_user
 
 
+def _error_response(message: str, code: str, status_code: int):
+    """Builds a standardized error payload (Option C)."""
+    return jsonify({"error": message, "code": code}), status_code
+
+
 def login_required():
     """
     Decorator to restrict access to logged-in users only.
@@ -17,11 +22,19 @@ def login_required():
         def decorator(*args, **kwargs):
             try:
                 verify_jwt_in_request()
-            except Exception as e:
-                raise e
+            except Exception:
+                return _error_response(
+                    message="Not authenticated",
+                    code="AUTH_NOT_AUTHENTICATED",
+                    status_code=401,
+                )
 
             if not current_user:
-                return jsonify({"msg": "User not found or invalid token"}), 401
+                return _error_response(
+                    message="User not found or invalid token",
+                    code="AUTH_INVALID_USER",
+                    status_code=401,
+                )
 
             return fn(*args, current_user=current_user, **kwargs)
         return decorator
@@ -36,16 +49,26 @@ def admin_required():
         def decorator(*args, **kwargs):
             try:
                 verify_jwt_in_request()
-            except Exception as e:
-                raise e
+            except Exception:
+                return _error_response(
+                    message="Not authenticated",
+                    code="AUTH_NOT_AUTHENTICATED",
+                    status_code=401,
+                )
 
             if not current_user:
-                return jsonify({"msg": "User not found or invalid token"}), 401
+                return _error_response(
+                    message="User not found or invalid token",
+                    code="AUTH_INVALID_USER",
+                    status_code=401,
+                )
             
             if not current_user.is_admin:
-                return jsonify({
-                    "msg": "Access forbidden: Admins only",
-                }), 403
+                return _error_response(
+                    message="Access forbidden: Admins only",
+                    code="AUTH_FORBIDDEN",
+                    status_code=403,
+                )
 
             return fn(*args, current_user=current_user, **kwargs)
         return decorator

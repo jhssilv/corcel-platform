@@ -29,8 +29,12 @@ def test_get_users_data_non_admin(auth_client):
     """Test getting users data as non-admin."""
     response = auth_client.get('/api/users/data')
     assert response.status_code == 403 # Assuming admin_required returns 403 or 401
+    assert response.json["error"] == "Access forbidden: Admins only"
+    assert response.json["code"] == "AUTH_FORBIDDEN"
 
 def test_get_users_data_unauthenticated(client):
     """Test getting users data without authentication."""
     response = client.get('/api/users/data')
     assert response.status_code == 401
+    assert response.json["error"] == "Not authenticated"
+    assert response.json["code"] == "AUTH_NOT_AUTHENTICATED"

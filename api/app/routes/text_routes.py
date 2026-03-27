@@ -14,6 +14,34 @@ session = db.session
 
 text_bp = Blueprint('text', __name__)
 
+
+def _parse_normalized_filter(normalized_param: str):
+    """Parses normalized query param as tri-state: True, False, or None.
+
+    Returns:
+        tuple[bool | None, dict | None]:
+            - Parsed normalized filter value.
+            - Validation error response body (or None).
+    """
+    if normalized_param == '':
+        return None, None
+
+    normalized_value = normalized_param.lower()
+    if normalized_value == 'true':
+        return True, None
+    if normalized_value == 'false':
+        return False, None
+
+    return None, {
+        "error": "Validation failed",
+        "details": [
+            {
+                "field": "normalized",
+                "message": "Must be 'true' or 'false'"
+            }
+        ]
+    }
+
 @text_bp.route('/api/texts/', methods=['GET'])
 @login_required()
 def get_texts_data(current_user):
@@ -81,17 +109,17 @@ def get_filtered_texts_data(current_user):
         if assigned_users_param:
             assigned_users = [u.strip() for u in assigned_users_param.split(',') if u.strip()]
         
-        # Parse normalized - only filter if explicitly set
-        user_id = None
-        if normalized_param.lower() == 'true':
-            user_id = current_user.id
+        normalized_filter, normalized_error = _parse_normalized_filter(normalized_param)
+        if normalized_error:
+            return jsonify(normalized_error), 400
         
         # Use existing get_filtered_texts query
         texts_data_from_db = queries.get_filtered_texts(
             session,
             grades=grades,
             assigned_users=assigned_users,
-            user_id=user_id,
+            user_id=current_user.id,
+            normalized=normalized_filter,
             file_name=file_name
         )
         
