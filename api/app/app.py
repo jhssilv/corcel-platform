@@ -24,7 +24,7 @@ def make_celery(app_name=__name__):
         app_name,
         backend=redis_url,
         broker=redis_url,
-        include=['api.app.tasks'] # Ajuste o caminho das tasks conforme necessário
+        include=['api.app.tasks.celery_tasks'] # Ajuste o caminho das tasks conforme necessário
     )
     return celery_instance
 

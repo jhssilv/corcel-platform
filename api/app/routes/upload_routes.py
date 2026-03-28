@@ -3,7 +3,8 @@ import uuid
 from flask import Blueprint, request, jsonify
 from werkzeug.utils import secure_filename
 
-from app.tasks import process_zip_texts 
+from app.tasks.celery_tasks import process_zip_texts
+from app.tasks.constants import TEMP_UPLOADS_FOLDER
 from app.utils.decorators import admin_required
 
 from app.schemas import generic as generic_schemas
@@ -11,8 +12,7 @@ from app.schemas import generic as generic_schemas
 
 upload_bp = Blueprint('upload', __name__)
 
-UPLOAD_FOLDER = os.path.join(os.getcwd(), 'temp_uploads')
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+UPLOAD_FOLDER = TEMP_UPLOADS_FOLDER
 
 @upload_bp.route('/api/upload', methods=['POST'])
 @admin_required()

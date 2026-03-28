@@ -4,7 +4,10 @@ import io
 import zipfile
 import uuid
 from PIL import Image
-from app.tasks import process_ocr_zip, format_text_content, add_to_database
+from app.tasks.celery_tasks import process_ocr_zip
+from app.tasks.constants import IMAGES_FOLDER
+from app.tasks.persistence import add_to_database
+from app.tasks.text_formatting import format_text_content
 from app.database.models import RawText
 from app.extensions import db
 
@@ -75,7 +78,7 @@ def test_process_ocr_zip_success(app, mocker, tmp_path):
         zf.writestr('test_image.jpg', img_bytes.getvalue())
     
     # Mock OCR service
-    mocker.patch('app.tasks.ocr_service.perform_ocr', return_value="Extracted text content")
+    mocker.patch('app.tasks.ocr_task_logic.ocr_service.perform_ocr', return_value="Extracted text content")
     
     # Mock the update_state method on the task
     mocker.patch.object(process_ocr_zip, 'update_state')
@@ -97,7 +100,6 @@ def test_process_ocr_zip_success(app, mocker, tmp_path):
         assert raw_texts[0].image_path is not None
         
         # Verify image was saved
-        from app.tasks import IMAGES_FOLDER
         saved_image_path = os.path.join(IMAGES_FOLDER, raw_texts[0].image_path)
         assert os.path.exists(saved_image_path)
         
@@ -121,7 +123,7 @@ def test_process_ocr_zip_multiple_images(app, mocker, tmp_path):
             zf.writestr(f'image_{i}.jpg', img_bytes.getvalue())
     
     # Mock OCR service to return different text for each image
-    mock_ocr = mocker.patch('app.tasks.ocr_service.perform_ocr')
+    mock_ocr = mocker.patch('app.tasks.ocr_task_logic.ocr_service.perform_ocr')
     mock_ocr.side_effect = [f"Text {i}" for i in range(3)]
     
     # Mock update_state
@@ -138,7 +140,6 @@ def test_process_ocr_zip_multiple_images(app, mocker, tmp_path):
         assert len(raw_texts) == 3
         
         # Cleanup saved images
-        from app.tasks import IMAGES_FOLDER
         for rt in raw_texts:
             img_path = os.path.join(IMAGES_FOLDER, rt.image_path)
             if os.path.exists(img_path):
@@ -188,7 +189,7 @@ def test_process_ocr_zip_mixed_files(app, mocker, tmp_path):
         img2.save(img_bytes2, format='JPEG')
         zf.writestr('valid2.jpg', img_bytes2.getvalue())
     
-    mocker.patch('app.tasks.ocr_service.perform_ocr', return_value="OCR text")
+    mocker.patch('app.tasks.ocr_task_logic.ocr_service.perform_ocr', return_value="OCR text")
     mocker.patch.object(process_ocr_zip, 'update_state')
     
     with app.app_context():
@@ -201,7 +202,6 @@ def test_process_ocr_zip_mixed_files(app, mocker, tmp_path):
         assert len(raw_texts) == 2
         
         # Cleanup
-        from app.tasks import IMAGES_FOLDER
         for rt in raw_texts:
             img_path = os.path.join(IMAGES_FOLDER, rt.image_path)
             if os.path.exists(img_path):
@@ -222,7 +222,7 @@ def test_process_ocr_zip_filters_double_underscore(app, mocker, tmp_path):
         # Should be filtered
         zf.writestr('__MACOSX/hidden.jpg', img_bytes.getvalue())
     
-    mocker.patch('app.tasks.ocr_service.perform_ocr', return_value="Text")
+    mocker.patch('app.tasks.ocr_task_logic.ocr_service.perform_ocr', return_value="Text")
     mocker.patch.object(process_ocr_zip, 'update_state')
     
     with app.app_context():
@@ -233,7 +233,6 @@ def test_process_ocr_zip_filters_double_underscore(app, mocker, tmp_path):
         assert 'normal.jpg' in result['result']
         
         # Cleanup
-        from app.tasks import IMAGES_FOLDER
         for rt in db.session.query(RawText).all():
             img_path = os.path.join(IMAGES_FOLDER, rt.image_path)
             if os.path.exists(img_path):
@@ -251,7 +250,7 @@ def test_process_ocr_zip_image_conversion(app, mocker, tmp_path):
         img.save(img_bytes, format='PNG')
         zf.writestr('rgba_image.png', img_bytes.getvalue())
     
-    mocker.patch('app.tasks.ocr_service.perform_ocr', return_value="Converted text")
+    mocker.patch('app.tasks.ocr_task_logic.ocr_service.perform_ocr', return_value="Converted text")
     mocker.patch.object(process_ocr_zip, 'update_state')
     
     with app.app_context():
@@ -262,7 +261,6 @@ def test_process_ocr_zip_image_conversion(app, mocker, tmp_path):
         # Verify image was saved as JPEG
         assert raw_text.image_path.endswith('.jpg')
         
-        from app.tasks import IMAGES_FOLDER
         saved_path = os.path.join(IMAGES_FOLDER, raw_text.image_path)
         
         # Load and verify it's RGB JPEG
@@ -284,7 +282,7 @@ def test_process_ocr_zip_unique_filenames(app, mocker, tmp_path):
         img.save(img_bytes, format='JPEG')
         zf.writestr('same_name.jpg', img_bytes.getvalue())
     
-    mocker.patch('app.tasks.ocr_service.perform_ocr', return_value="Text")
+    mocker.patch('app.tasks.ocr_task_logic.ocr_service.perform_ocr', return_value="Text")
     mocker.patch.object(process_ocr_zip, 'update_state')
     
     with app.app_context():
@@ -299,7 +297,6 @@ def test_process_ocr_zip_unique_filenames(app, mocker, tmp_path):
         assert len(uuid_part) == 36  # UUID length with dashes
         
         # Cleanup
-        from app.tasks import IMAGES_FOLDER
         img_path = os.path.join(IMAGES_FOLDER, raw_text.image_path)
         if os.path.exists(img_path):
             os.remove(img_path)
@@ -317,7 +314,7 @@ def test_process_ocr_zip_ocr_error_continues(app, mocker, tmp_path):
             zf.writestr(f'image_{i}.jpg', img_bytes.getvalue())
     
     # Make OCR fail for the second image
-    mock_ocr = mocker.patch('app.tasks.ocr_service.perform_ocr')
+    mock_ocr = mocker.patch('app.tasks.ocr_task_logic.ocr_service.perform_ocr')
     mock_ocr.side_effect = ["Text 0", Exception("OCR failed"), "Text 2"]
     
     mocker.patch.object(process_ocr_zip, 'update_state')
@@ -336,7 +333,6 @@ def test_process_ocr_zip_ocr_error_continues(app, mocker, tmp_path):
         assert len(raw_texts) == 2
         
         # Cleanup
-        from app.tasks import IMAGES_FOLDER
         for rt in raw_texts:
             img_path = os.path.join(IMAGES_FOLDER, rt.image_path)
             if os.path.exists(img_path):

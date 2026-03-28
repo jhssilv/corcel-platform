@@ -4,7 +4,8 @@ from flask import Blueprint, request, jsonify, send_from_directory, current_app
 from werkzeug.utils import secure_filename
 from sqlalchemy.orm.exc import NoResultFound
 
-from app.tasks import process_ocr_zip
+from app.tasks.celery_tasks import process_ocr_zip
+from app.tasks.constants import IMAGES_FOLDER, TEMP_UPLOADS_FOLDER
 from app.utils.decorators import admin_required
 from app.database.models import Token, Text, RawText
 from app.extensions import db
@@ -12,11 +13,7 @@ from app.schemas import generic as generic_schemas
 
 ocr_bp = Blueprint('ocr', __name__)
 
-# Same as in tasks.py
-UPLOAD_FOLDER = os.path.join(os.getcwd(), 'temp_uploads')
-IMAGES_FOLDER = os.path.join(os.getcwd(), 'images')
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-os.makedirs(IMAGES_FOLDER, exist_ok=True)
+UPLOAD_FOLDER = TEMP_UPLOADS_FOLDER
 
 @ocr_bp.route('/api/ocr/upload', methods=['POST'])
 @admin_required()
