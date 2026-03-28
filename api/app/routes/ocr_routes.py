@@ -24,7 +24,7 @@ def upload_ocr_zip(current_user):
     """
     Uploads a ZIP file containing images for OCR processing.
     """
-    MAX_ZIP_SIZE = 1000 * 1024 * 1024  # 1000 MB limit for uploaded zip
+    MAX_ZIP_SIZE = 500 * 1024 * 1024  # 500 MB limit for uploaded zip
     
     if 'file' not in request.files:
         return jsonify(generic_schemas.ErrorResponse(error='File not found.').model_dump()), 400

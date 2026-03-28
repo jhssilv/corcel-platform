@@ -8,7 +8,6 @@ from docx import Document
 
 from .extensions import celery 
 from .text_processor import TextProcessor
-from .tokenizer import Tokenizer
 from .database.queries import add_text
 from .database import models as models
 from .services import ocr_service
@@ -73,7 +72,7 @@ def process_zip_texts(self, zip_path):
     from app.extensions import db
     
     if not os.path.exists(zip_path):
-        return {'error': 'Temp file not found in server.'}
+        raise FileNotFoundError('Temp file not found in server.')
 
     processor = TextProcessor()
     results = {}
@@ -93,8 +92,7 @@ def process_zip_texts(self, zip_path):
             total_files = len(file_list)
             
             if total_files == 0:
-                os.remove(zip_path)
-                return {'error': 'The zip file does not contain valid files.'}
+                raise ValueError('The zip file does not contain valid files.')
 
             for index, filename in enumerate(file_list):
                 # Extract just the filename without directory prefix
@@ -143,38 +141,36 @@ def process_zip_texts(self, zip_path):
                 }
                 print(f"Processed: {base_name} -> text_id={text_id}")
 
-        os.remove(zip_path)
-        
         return {
             'status': 'Concluido', 
             'total': total_files, 
-            'result': results
+            'result': results,
+            'failed_files': []
         }
 
     except Exception as e:
+        raise RuntimeError(f'Server Internal Error: {str(e)}') from e
+    finally:
         if os.path.exists(zip_path):
             os.remove(zip_path)
-
-        return {'error': f'Server Internal Error: {str(e)}'}
 
 @celery.task(bind=True)
 def process_ocr_zip(self, zip_path):
     """
     Process a ZIP file containing images with OCR.
     """
-    MAX_UNCOMPRESSED_SIZE = 500 * 1024 * 1024  # 500 MB limit for uncompressed content
+    MAX_UNCOMPRESSED_SIZE = 1000 * 1024 * 1024  # 1000 MB limit for uncompressed content
     MAX_IMAGE_PIXELS = 89478485  # ~300 megapixels (PIL default is 89478485)
     MAX_IMAGE_DIMENSION = 20000  # Maximum width or height in pixels
     
     print(f"Starting OCR processing for zip: {zip_path}")
     if not os.path.exists(zip_path):
         print(f"Error: Zip file not found at {zip_path}")
-        return {'error': 'Temp file not found in server.'}
+        raise FileNotFoundError('Temp file not found in server.')
 
     # Ensure images directory exists (in case it was deleted or worker runs in different context)
     os.makedirs(IMAGES_FOLDER, exist_ok=True)
 
-    processor = Tokenizer() # Using lightweight Tokenizer
     results = {}
     
     valid_extensions = ('.png', '.jpg', '.jpeg', '.tif', '.tiff')
@@ -191,8 +187,10 @@ def process_ocr_zip(self, zip_path):
         with zipfile.ZipFile(zip_path, 'r') as zip_check:
             total_size = sum(info.file_size for info in zip_check.infolist())
             if total_size > MAX_UNCOMPRESSED_SIZE:
-                os.remove(zip_path)
-                return {'error': f'Uncompressed size too large ({total_size // (1024*1024)}MB). Maximum is {MAX_UNCOMPRESSED_SIZE // (1024*1024)}MB.'}
+                raise ValueError(
+                    f'Uncompressed size too large ({total_size // (1024*1024)}MB). '
+                    f'Maximum is {MAX_UNCOMPRESSED_SIZE // (1024*1024)}MB.'
+                )
         
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
             file_list = [
@@ -204,17 +202,14 @@ def process_ocr_zip(self, zip_path):
             print(f"Found {total_files} images in zip.")
             
             if total_files == 0:
-                os.remove(zip_path)
-                return {'error': 'The zip file does not contain valid images.'}
+                raise ValueError('The zip file does not contain valid images.')
 
             for index, filename in enumerate(file_list):
                 # Path traversal protection: ensure filename doesn't escape directory
                 base_name = os.path.basename(filename)
                 # Only block actual path traversal attempts (../) not subdirectories
                 if '..' in filename:
-                    print(f"Skipping potentially malicious filename: {filename}")
-                    results[filename] = {'error': 'Invalid filename (path traversal detected)'}
-                    continue
+                    raise ValueError(f'Invalid filename (path traversal detected): {filename}')
                 
                 print(f"Processing file {index+1}/{total_files}: {base_name}")
                 self.update_state(state='PROGRESS',
@@ -236,74 +231,60 @@ def process_ocr_zip(self, zip_path):
                         break
                 
                 if not is_valid_image:
-                    print(f"Invalid image file (magic bytes check failed): {base_name}")
-                    results[base_name] = {'error': 'Invalid image file format'}
-                    continue
+                    raise ValueError(f'Invalid image file format (magic bytes check failed): {base_name}')
                 
                 # 2. Convert/Optimize Image (e.g. to JPG)
-                try:
-                    # Set PIL protection limits
-                    Image.MAX_IMAGE_PIXELS = MAX_IMAGE_PIXELS
-                    
-                    image = Image.open(io.BytesIO(image_bytes))
-                    
-                    # Check image dimensions before processing
-                    width, height = image.size
-                    if width > MAX_IMAGE_DIMENSION or height > MAX_IMAGE_DIMENSION:
-                        print(f"Image too large: {width}x{height}")
-                        results[base_name] = {'error': f'Image dimensions too large ({width}x{height})'}
-                        continue
-                    
-                    # Ensure RGB
-                    if image.mode != 'RGB':
-                        image = image.convert('RGB')
-                    
-                    # Save to permanent storage
-                    # structure: images/<uuid>_<filename>.jpg
-                    clean_name = os.path.splitext(base_name)[0] + ".jpg"
-                    storage_filename = f"{uuid.uuid4()}_{clean_name}"
-                    storage_path = os.path.join(IMAGES_FOLDER, storage_filename)
-                    
-                    image.save(storage_path, format="JPEG", quality=85)
-                    print(f"Image saved to {storage_path}")
-                    
-                    # 3. Perform OCR
-                    # Use the saved file path or the bytes. Service accepts path.
-                    print(f"Calling OCR Service for {base_name}...")
-                    extracted_text = ocr_service.perform_ocr(storage_path)
-                    print(f"OCR Success for {base_name}. Extracted {len(extracted_text)} chars.")
-                    
-                    # 4. Store raw text without tokenization
-                    # Use only the base filename (last part after / or \)
-                    results[base_name] = {
-                        'text_content': extracted_text,
-                        'image_path': storage_filename
-                    }
-                    print("Processed OCR: ", base_name)
+                # Set PIL protection limits
+                Image.MAX_IMAGE_PIXELS = MAX_IMAGE_PIXELS
+                
+                image = Image.open(io.BytesIO(image_bytes))
+                
+                # Check image dimensions before processing
+                width, height = image.size
+                if width > MAX_IMAGE_DIMENSION or height > MAX_IMAGE_DIMENSION:
+                    raise ValueError(f'Image dimensions too large ({width}x{height}) for {base_name}')
+                
+                # Ensure RGB
+                if image.mode != 'RGB':
+                    image = image.convert('RGB')
+                
+                # Save to permanent storage
+                # structure: images/<uuid>_<filename>.jpg
+                clean_name = os.path.splitext(base_name)[0] + ".jpg"
+                storage_filename = f"{uuid.uuid4()}_{clean_name}"
+                storage_path = os.path.join(IMAGES_FOLDER, storage_filename)
+                
+                image.save(storage_path, format="JPEG", quality=85)
+                print(f"Image saved to {storage_path}")
+                
+                # 3. Perform OCR
+                # Use the saved file path or the bytes. Service accepts path.
+                print(f"Calling OCR Service for {base_name}...")
+                extracted_text = ocr_service.perform_ocr(storage_path)
+                print(f"OCR Success for {base_name}. Extracted {len(extracted_text)} chars.")
+                
+                # 4. Store raw text without tokenization
+                # Use only the base filename (last part after / or \)
+                results[base_name] = {
+                    'text_content': extracted_text,
+                    'image_path': storage_filename
+                }
+                print("Processed OCR: ", base_name)
 
-                except Exception as img_err:
-                    print(f"Error processing image {base_name}: {img_err}")
-                    # Log error but continue?
-                    results[base_name] = {
-                        'error': str(img_err)
-                    }
-
-        os.remove(zip_path)
-        
-        # Filter out errors before adding to DB
-        valid_results = {k: v for k, v in results.items() if 'error' not in v}
-        print(f"Adding {len(valid_results)} texts to database...")
-        add_to_database(valid_results)
+        print(f"Adding {len(results)} texts to database...")
+        add_to_database(results)
         print("Database update complete.")
         
         return {
             'status': 'Concluido', 
             'total': total_files, 
-            'result': results # Contains errors if any
+            'result': results,
+            'failed_files': []
         }
 
     except Exception as e:
         print(f"Fatal error in process_ocr_zip: {e}")
+        raise RuntimeError(f'OCR Processing Error: {str(e)}') from e
+    finally:
         if os.path.exists(zip_path):
             os.remove(zip_path)
-        return {'error': f'OCR Processing Error: {str(e)}'}
