@@ -48,7 +48,7 @@ function TopBar({ onDownloadClick, showSidePanel = true }: TopBarProps) {
                 </button>
 
                 <div className={styles['app-title-container']}>
-                    <h1 className={styles['app-title']}>CorCel 🐎</h1>
+                    <h1 className={styles['app-title']}>CorSpell 🐎</h1>
                     <p className={styles['app-subtitle']}>Ferramenta de Normalização Ortográfica</p>
                 </div>
 
