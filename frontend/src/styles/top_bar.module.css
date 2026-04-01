@@ -109,7 +109,7 @@
 .username-display {
   font-size: 1.1rem;
   font-weight: 600;
-  color: var(--color-text-inverse);
+  color: var(--color-text-primary);
 }
 
 .close-button {
@@ -124,7 +124,7 @@
 }
 
 .close-button:hover {
-  color: var(--color-text-inverse);
+  color: var(--color-text-primary);
 }
 
 .panel-content {

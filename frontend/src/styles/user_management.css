@@ -174,7 +174,7 @@
 .ocr-page-title {
     margin: 0;
     font-size: 1.2rem;
-    color: var(--color-text-inverse);
+    color: var(--color-text-primary);
 }
 
 /* Empty state text */

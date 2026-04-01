@@ -43,7 +43,7 @@
 
 .close-floating-button:hover {
     background-color: var(--color-bg-hover);
-    color: var(--color-text-inverse);
+    color: var(--color-text-primary);
     border-color: var(--color-border-hover);
 }
 

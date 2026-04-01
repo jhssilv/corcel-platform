@@ -129,7 +129,7 @@
 
 .ocr-control-btn {
     background-color: var(--color-bg-hover);
-    color: var(--color-text-inverse);
+    color: var(--color-text-primary);
     border: 1px solid var(--color-border-hover);
     border-radius: 4px;
     padding: 6px 12px;
@@ -214,7 +214,7 @@
 
 .ocr-btn-secondary {
     background-color: var(--color-bg-hover);
-    color: var(--color-text-inverse);
+    color: var(--color-text-primary);
     border: 1px solid var(--color-border-hover);
 }
 
@@ -301,7 +301,7 @@
 
 .ocr-confirm-modal h3 {
     margin: 0 0 1rem 0;
-    color: var(--color-text-inverse);
+    color: var(--color-text-primary);
     font-size: 1.5rem;
     text-align: center;
 }
@@ -333,7 +333,7 @@
     border-radius: 4px;
     border: 1px solid var(--color-border-hover);
     background-color: var(--color-bg-hover);
-    color: var(--color-text-inverse);
+    color: var(--color-text-primary);
     font-size: 1rem;
 }
 

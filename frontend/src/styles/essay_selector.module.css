@@ -59,14 +59,14 @@
 }
 
 .info-tooltip-container:hover .info-icon {
-    color: var(--color-text-inverse);
+    color: var(--color-text-primary);
 }
 
 .tooltip-text {
     visibility: hidden;
     width: 250px;
     background-color: var(--color-bg-hover);
-    color: var(--color-text-inverse);
+    color: var(--color-text-primary);
     text-align: center;
     border-radius: 6px;
     padding: 8px;

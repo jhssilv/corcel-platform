@@ -136,7 +136,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  color: var(--color-text-inverse);
+  color: var(--color-text-primary);
   font-weight: bold;
   font-size: 1.2rem;
   pointer-events: none;
