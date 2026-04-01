@@ -1,34 +1,20 @@
-# Corcel Platform
+# Corspell
 
-**Corcel Platform** is a modular platform designed to automate the detection of spelling variants and suggestion of form replacements for Brazilian Portuguese texts in order to normalize spelling. Once completed, it will allow researchers and educators to analyze, grade, and improve essays using a pre-existing corpus, with a modern web interface and robust backend.
+**Corspell** is a modular application designed to automate the detection of non-standard words and the generation of  form replacements for Brazilian Portuguese texts in order to normalize spelling. Thought it is still under development, we aimed at a design that allows others developers and researchers to easily swap, customize and modify core features, like our [text processing pipeline](api/docs/text-processing-pipeline.md).
 
 ![Login page](images/userauth.png)
 ![Main page](images/mainpage.png)
+![Text Visualization](images/text-visualization.png)
 
 ---
 
 ## Features
 
-- **Corpus Integration:** Works with a dataset of graded essays and form replacement candidates for unknown tokens.
-- **User Interface:** Responsive web interface built with **React**.
-- **Backend API:** Powered by **Flask** for managing normalization and user interaction.
-- **Database:** Uses **Postgres** for essays, users, grades, candidates and user input data.
-- **Deployment:** Containerized with **Docker** and served via **Nginx** for scalable, reproducible deployments.
+### Text processing and normalization
+CorSpell currently supports the upload of zipped batches of text files in `txt` and `docx` formats. Once uploaded, these go through a customizeable processing pipeline, further detailed [here](api/docs/text-processing-pipeline.md), and is then made available to users for normalization. 
 
-## Architecture
-
-- `frontend/`: React app for user interaction.
-- `api/`: Flask-based API for data processing and communication.
-- `backups/`: (Optional) Backups and migration scripts.
-- `docker-compose.yml`: Orchestrates multi-container deployment (frontend, backend, database, nginx).
-- `images/`: Static images for documentation and UI.
-
-## Use Case
-
-The platform is ideal for:
-- Researchers in natural language processing for Portuguese.
-- Analysis of brazilian portuguese texts.
-- Anyone seeking to analyze and improve large volumes of written Brazilian Portuguese.
+### OCR processing
+This application currently supports OCR processing via the Gemini API. Though completely optional, it is suitable for users that need to more easily transcribe and review large quantites of digitized handwritten documents.
 
 ## Quick Start
 
