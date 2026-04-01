@@ -1,6 +1,6 @@
 # Asynchronous Tasks
 
-This document describes the Celery-based task system used for long-running operations: text file processing and OCR. It also explains how to customize the text processing and OCR modules for your own use case.
+This document describes the Celery-based task system used for long-running operations: text file processing and OCR. It also explains how to customize the OCR module for your own use case.
 
 Source files: [tasks.py](../app/tasks.py) · [text_processor.py](../app/text_processor.py) · [tokenizer.py](../app/tokenizer.py) · [ocr_service.py](../app/services/ocr_service.py) · [run_worker.py](../run_worker.py) · [start.sh](../start.sh)
 
@@ -74,9 +74,12 @@ flowchart TD
 
 1. **Extract** — The ZIP is opened and filtered for `.txt` and `.docx` files (hidden files and `__MACOSX` are skipped).
 2. **Read** — `.docx` files are parsed with `python-docx`; `.txt` files are decoded as UTF-8.
-3. **Process** — Each file's text is passed to `TextProcessor.process_text()`, which returns tokenized data with spell-check results and ranked suggestions (see [Output Structure](#textprocessorprocess_text-output) below).
+3. **Process** — Each file's text is passed to `TextProcessor.process_text()`, which returns tokenized data with spell-check results and ranked suggestions.
 4. **Store** — For each token, a `Token` model is created and paired with its suggestion candidates. The entire batch is inserted via `queries.add_text()`.
 5. **Progress** — After each file, the task calls `self.update_state()` with the current progress.
+
+> [!NOTE]
+> For a user-facing explanation of text processing behavior (tokenization, suggestions, correction workflow, and outputs), see [Text Processing Pipeline](text-processing-pipeline.md).
 
 ### Return Value
 
@@ -174,118 +177,6 @@ If any file fails validation or OCR processing, the task raises and ends as `FAI
 - Input ZIP entries are normalized to basename keys in task results.
 - Stored image files are renamed to UUID-prefixed JPEG filenames under `images/`.
 - RawText records store the normalized source filename and stored image path.
-
----
-
-## Customizing the Text Processing Module
-
-The `process_zip_texts` task relies on `TextProcessor.process_text()` to convert raw text into tokens with suggestion candidates. You can replace or modify this module to use a different NLP pipeline (e.g., a different language, a different model, or no model at all).
-
-### `TextProcessor.process_text()` Output
-
-The method must return a **dictionary** where:
-- **Keys** are integer position indices (0-based)
-- **Values** are token dictionaries with the following structure:
-
-```python
-{
-    0: {
-        "idx": 0,              # int — same as the key
-        "text": "Hello",       # str — the token string
-        "is_word": True,       # bool — True if alphabetic, False for punctuation/numbers
-        "to_be_normalized": False,  # bool — whether the token should be flagged for correction
-        "suggestions": ["Hallo", "Help"],  # list[str] — ranked correction candidates
-        "whitespace_after": " "    # str — whitespace character(s) following this token ("" if none).
-    },
-    1: {
-        "idx": 1,
-        "text": ",",
-        "is_word": False,
-        "to_be_normalized": False,
-        "suggestions": [],
-        "whitespace_after": " "
-    },
-    # ... one entry per token
-}
-```
-> Note: If your tokenizer does not provide a `whitespace_after` field, you can use a database query to add it after the token is inserted into the database. For example:
-
-```sql
--- This query adds a whitespace after each token that is a word. 
--- It is a naive approach, you may want to improve it.
-UPDATE tokens
-SET whitespace_after = ' '
-WHERE text_id = <text_id>
-  AND is_word = TRUE;
-```
-
-
-
-### Field Reference
-
-| Field | Type | Required | Used For |
-|---|---|---|---|
-| `idx` | `int` | Yes | Stored as `Token.position` in the database |
-| `text` | `str` | Yes | Stored as `Token.token_text` |
-| `is_word` | `bool` | Yes | Stored as `Token.is_word`; affects UI rendering |
-| `to_be_normalized` | `bool` | Yes | Stored as `Token.to_be_normalized`; flags the token for correction in the UI |
-| `suggestions` | `list[str]` | Yes | Each string becomes a `Suggestion` record linked to the token via `TokensSuggestions` |
-| `whitespace_after` | `str` | Yes | Stored as `Token.whitespace_after`; used to reconstruct the original text layout |
-
-### How to Replace the Processor
-
-To use your own text processing logic:
-
-1. **Create your processor class** with a `process_text(self, text: str) -> dict` method that returns data in the format above.
-
-2. **Update the import** in [tasks.py](../app/tasks.py):
-
-```diff
--from .text_processor import TextProcessor
-+from .my_processor import MyProcessor
-```
-
-3. **Update the instantiation** in `process_zip_texts`:
-
-```diff
--processor = TextProcessor()
-+processor = MyProcessor()
-```
-
-### Minimal Example
-
-Here's the simplest possible processor that tokenizes text by whitespace with no suggestions:
-
-```python
-class SimpleProcessor:
-    def process_text(self, text: str) -> dict:
-        results = {}
-        for i, word in enumerate(text.split()):
-            results[i] = {
-                "idx": i,
-                "text": word,
-                "is_word": word.isalpha(),
-                "to_be_normalized": False,
-                "suggestions": [],
-                "whitespace_after": " "
-            }
-        return results
-```
-
-> This would work, but all tokens would be marked as correct with no suggestions. The value comes from implementing spell checking in your processor.
-
-### Current Implementation: Pipeline Overview
-
-The built-in `TextProcessor` (which extends `Tokenizer`) uses a multi-stage pipeline:
-
-1. **Tokenization** — spaCy Portuguese model splits text into tokens
-2. **Spell Check** — Hunspell + pyspellchecker generate correction candidates
-3. **False Positive Filtering** — BERTimbau checks if "misspelled" words are actually valid in context (e.g., proper nouns)
-4. **Context-Aware Ranking** — BERTimbau ranks candidates by contextual probability using masked language modeling
-
-For a full explanation of the NLP pipeline stages, refer to the implementation in [text_processor.py](../app/text_processor.py) and [tokenizer.py](../app/tokenizer.py).
-
----
 
 ## Customizing the OCR Module
 
