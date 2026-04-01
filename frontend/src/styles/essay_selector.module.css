@@ -1,10 +1,10 @@
 .essay-selector-container {
-    background-color: #1e1e1e;
+    background-color: var(--color-bg-panel-alt);
     padding: 20px;
     border-radius: 12px;
-    border: 1px solid #333;
+    border: 1px solid var(--color-border-primary);
     margin-bottom: 30px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    box-shadow: var(--shadow-lg);
 }
 
 .selector-main-search {
@@ -23,12 +23,12 @@
     justify-content: space-between;
     align-items: center;
     padding-top: 15px;
-    border-top: 1px solid #333;
+    border-top: 1px solid var(--color-border-primary);
     margin-top: 10px;
 }
 
 .corrected-count {
-    color: #aaa;
+    color: var(--color-text-on-panel-dim);
     font-size: 0.9rem;
 }
 
@@ -54,19 +54,19 @@
 .info-icon {
     width: 20px;
     height: 20px;
-    color: #888;
+    color: var(--color-text-muted);
     transition: color 0.2s;
 }
 
 .info-tooltip-container:hover .info-icon {
-    color: #fff;
+    color: var(--color-text-inverse);
 }
 
 .tooltip-text {
     visibility: hidden;
     width: 250px;
-    background-color: #333;
-    color: #fff;
+    background-color: var(--color-bg-hover);
+    color: var(--color-text-inverse);
     text-align: center;
     border-radius: 6px;
     padding: 8px;
@@ -78,8 +78,8 @@
     opacity: 0;
     transition: opacity 0.3s;
     font-size: 0.85rem;
-    border: 1px solid #555;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--color-border-hover);
+    box-shadow: var(--shadow-md);
     pointer-events: none;
 }
 
@@ -91,7 +91,7 @@
     margin-left: -5px;
     border-width: 5px;
     border-style: solid;
-    border-color: #333 transparent transparent transparent;
+    border-color: var(--color-bg-hover) transparent transparent transparent;
 }
 
 .info-tooltip-container:hover .tooltip-text {

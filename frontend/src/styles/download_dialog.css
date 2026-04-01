@@ -1,103 +1,75 @@
 .confirmation-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 2000;
-  backdrop-filter: blur(3px);
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background-color: var(--color-bg-overlay);
+  display: flex; justify-content: center; align-items: center;
+  z-index: 2000; backdrop-filter: blur(3px);
 }
 
 .confirmation-dialog {
-  background-color: #2b2b2b;
-  padding: 20px;
-  border-radius: 8px;
-  border: 1px solid #444;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-  text-align: center;
-  max-width: 400px;
-  width: 90%;
+  background-color: var(--color-bg-panel);
+  padding: 20px; border-radius: 8px;
+  border: 1px solid var(--color-border-secondary);
+  box-shadow: var(--shadow-md);
+  text-align: center; max-width: 400px; width: 90%;
 }
 
 .dialog-title {
-  font-size: 1.5em;
-  line-height: 1.2;
-  font-weight: 600;
-  margin-top: 0;
-  margin-bottom: 1em;
-  color: #fff;
+  font-size: 1.5em; line-height: 1.2; font-weight: 600;
+  margin-top: 0; margin-bottom: 1em;
+  color: var(--color-text-inverse);
 }
 
 .dialog-content {
   margin-bottom: 2em;
-  color: #e4e4e7;
+  color: var(--color-text-on-panel);
 }
 
 .dialog-checkbox-wrapper {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  padding: 0.5em;
-  border-radius: 6px;
-  transition: background-color 0.2s;
-  margin-top: 10px;
+  display: flex; align-items: center; cursor: pointer;
+  padding: 0.5em; border-radius: 6px;
+  transition: background-color 0.2s; margin-top: 10px;
 }
 
 .dialog-checkbox-wrapper:hover {
-  background-color: #3a3a3a;
+  background-color: var(--color-bg-hover);
 }
 
 .dialog-checkbox-wrapper input[type="checkbox"] {
-  width: 1.2em;
-  height: 1.2em;
-  margin-right: 0.75em;
-  cursor: pointer;
-  accent-color: #646cff;
+  width: 1.2em; height: 1.2em; margin-right: 0.75em;
+  cursor: pointer; accent-color: var(--color-accent);
 }
 
 .confirmation-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
+  display: flex; justify-content: center; gap: 10px;
 }
 
-.confirm-btn,
-.cancel-btn {
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  border: none;
-  font-weight: bold;
+.confirm-btn, .cancel-btn {
+  padding: 8px 16px; border-radius: 4px;
+  cursor: pointer; border: none; font-weight: bold;
 }
 
 .confirm-btn {
-  background-color: #28a745;
-  color: white;
+  background-color: var(--color-btn-success); color: white;
 }
 
 .confirm-btn:hover {
-  background-color: #218838;
+  background-color: var(--color-btn-success-hover);
 }
 
 .confirm-btn:disabled {
-  background-color: #3a3a3a;
-  color: rgba(255, 255, 255, 0.3);
+  background-color: var(--color-disabled-bg);
+  color: var(--color-disabled-text);
   cursor: not-allowed;
 }
 
 .confirm-btn:disabled:hover {
-  background-color: #3a3a3a;
+  background-color: var(--color-disabled-bg);
 }
 
 .cancel-btn {
-  background-color: #dc3545;
-  color: white;
+  background-color: var(--color-btn-danger); color: white;
 }
 
 .cancel-btn:hover {
-  background-color: #c82333;
+  background-color: var(--color-btn-danger-hover);
 }

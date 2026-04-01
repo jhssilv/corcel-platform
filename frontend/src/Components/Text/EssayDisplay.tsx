@@ -7,6 +7,7 @@ import { UseCorrectionActions } from '../../Hooks/Text/UseCorrectionActions';
 import { UseTextSelection } from '../../Hooks/Text/UseTextSelection';
 import type { TextDetailResponse } from '../../types';
 import styles from '../../styles/generated_essay.module.css';
+import '../../styles/user_management.css';
 
 interface EssayDisplayProps {
     essay: TextDetailResponse | null;
@@ -46,41 +47,28 @@ function EssayDisplay({ essay, refreshEssay }: EssayDisplayProps) {
 
     return (
         <div>
-            <div
-                style={{
-                    marginBottom: '15px',
-                    padding: '15px',
-                    backgroundColor: '#2b2b2b',
-                    borderRadius: '8px',
-                    fontSize: '0.9em',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '10px',
-                    border: '1px solid #444',
-                }}
-            >
-                <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', justifyContent: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <span style={{ width: '12px', height: '12px', backgroundColor: '#ef4444', marginRight: '8px', borderRadius: '2px' }}></span>
+            <div className="essay-legend">
+                <div className="essay-legend-items">
+                    <div className="essay-legend-item">
+                        <span className="essay-legend-swatch essay-legend-swatch--danger"></span>
                         <span>Não Normalizado</span>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <span style={{ width: '12px', height: '12px', backgroundColor: '#3b82f6', marginRight: '8px', borderRadius: '2px' }}></span>
+                    <div className="essay-legend-item">
+                        <span className="essay-legend-swatch essay-legend-swatch--info"></span>
                         <span>Substituído</span>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <span style={{ width: '12px', height: '12px', backgroundColor: '#e4e4e7', marginRight: '8px', borderRadius: '2px' }}></span>
+                    <div className="essay-legend-item">
+                        <span className="essay-legend-swatch essay-legend-swatch--neutral"></span>
                         <span>Selecionado</span>
                     </div>
                 </div>
-                <div style={{ textAlign: 'center', color: '#ccc' }}>
+                <div className="essay-legend-hint">
                     <span>
                         Segure <strong>Ctrl</strong> para selecionar múltiplos tokens.
                     </span>
                 </div>
 
-                <div className={styles['finalized-toggle-wrapper']} style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #444', width: '100%', justifyContent: 'center' }}>
+                <div className={`${styles['finalized-toggle-wrapper']} essay-legend-divider`}>
                     <label className={styles['finalized-toggle']}>
                         <input
                             data-testid="finalized-toggle-input"
@@ -97,36 +85,19 @@ function EssayDisplay({ essay, refreshEssay }: EssayDisplayProps) {
                     </label>
                 </div>
 
-                <div style={{ marginTop: '10px', borderTop: '1px solid #444', width: '100%', display: 'flex', justifyContent: 'center', paddingTop: '10px', gap: '10px' }}>
+                <div className="essay-actions-bar">
                     <button
                         data-testid="reset-corrections-btn"
-                        className="reset-corrections-btn"
+                        className="essay-action-btn--danger"
                         onClick={() => {
                             void handleResetCorrections();
-                        }}
-                        style={{
-                            background: 'none',
-                            border: '1px solid #ef4444',
-                            color: '#ef4444',
-                            padding: '5px 10px',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontSize: '0.85em',
                         }}
                     >
                         Excluir Normalizações
                     </button>
                     <button
                         onClick={() => setShowOriginal(!showOriginal)}
-                        style={{
-                            background: 'none',
-                            border: '1px solid #555',
-                            color: showOriginal ? '#646cff' : '#aaa',
-                            padding: '5px 10px',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontSize: '0.85em',
-                        }}
+                        className={`essay-action-btn--secondary ${showOriginal ? 'active' : ''}`}
                     >
                         {showOriginal ? 'Ocultar Original' : 'Comparar Com Original'}
                     </button>

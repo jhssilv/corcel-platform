@@ -2,43 +2,36 @@
 
 .ocr-container {
     display: flex;
-    /* Remove fixed height, use 100% of parent */
     height: 100%;
     width: 100%;
     gap: 0;
-    /* Remove gap for a flush split-screen look */
     padding: 0;
 }
 
 .ocr-text-area {
     flex: 1;
-    /* Default 50% split, adjustable via JS if needed later */
     display: flex;
     flex-direction: column;
-    background: #1e1e1e;
+    background: var(--color-bg-panel-alt);
     padding: 0;
-    border-right: 1px solid #333;
-    /* Separator */
+    border-right: 1px solid var(--color-border-primary);
     border-radius: 0;
     min-width: 300px;
-    /* Minimum width constraint */
 }
 
 .ocr-textarea {
     flex-grow: 1;
     width: 100%;
     height: 100%;
-    background-color: #1e1e1e;
-    color: #E0E0E0;
+    background-color: var(--color-bg-panel-alt);
+    color: var(--color-text-on-surface);
     border: none;
     outline: none;
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-    /* Monospace is better for OCR correction */
     font-size: 1rem;
     line-height: 1.6;
     resize: none;
     padding: 20px;
-    /* Internal padding for text */
     box-sizing: border-box;
 }
 
@@ -46,9 +39,8 @@
     flex: 1;
     position: relative;
     overflow: hidden;
-    background: #0d0d0d;
+    background: var(--color-bg-image);
     border-radius: 0;
-    /* Reset generic flex alignment to handle the image transform correctly */
     display: block;
 }
 
@@ -56,14 +48,13 @@
 .ocr-textarea::-webkit-scrollbar {
     width: 10px;
     display: block;
-    /* Show scrollbar now that we are in a fixed container */
 }
 
 .ocr-textarea::-webkit-scrollbar-track {
-    background: #1e1e1e;
+    background: var(--color-bg-panel-alt);
 }
 
 .ocr-textarea::-webkit-scrollbar-thumb {
-    background: #444;
+    background: var(--color-scrollbar-thumb);
     border-radius: 5px;
 }

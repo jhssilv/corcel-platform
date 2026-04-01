@@ -1,8 +1,8 @@
 /* Dropdown Select Styles */
 
 .react-select__control {
-  background-color: #2b2b2b !important;
-  border-color: #444 !important;
+  background-color: var(--color-bg-panel) !important;
+  border-color: var(--color-border-secondary) !important;
   border-radius: 8px !important;
   padding: 4px !important;
   box-shadow: none !important;
@@ -11,20 +11,20 @@
 }
 
 .react-select__control:hover {
-  border-color: #646cff !important;
+  border-color: var(--color-accent) !important;
 }
 
 .react-select__control--is-focused {
-  border-color: #646cff !important;
-  box-shadow: 0 0 0 1px #646cff !important;
+  border-color: var(--color-accent) !important;
+  box-shadow: 0 0 0 1px var(--color-accent) !important;
 }
 
 .react-select__menu {
-  background-color: #2b2b2b !important;
+  background-color: var(--color-bg-panel) !important;
   border-radius: 8px !important;
-  border: 1px solid #444 !important;
+  border: 1px solid var(--color-border-secondary) !important;
   margin-top: 6px !important;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5) !important;
+  box-shadow: var(--shadow-panel) !important;
   z-index: 100 !important;
 }
 
@@ -38,21 +38,21 @@
 }
 
 .react-select__menu-list::-webkit-scrollbar-track {
-  background: #1a1a1a;
+  background: var(--color-bg-control);
 }
 
 .react-select__menu-list::-webkit-scrollbar-thumb {
-  background: #444;
+  background: var(--color-scrollbar-thumb);
   border-radius: 4px;
 }
 
 .react-select__menu-list::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: var(--color-scrollbar-thumb-hover);
 }
 
 .react-select__option {
   background-color: transparent !important;
-  color: #e4e4e7 !important;
+  color: var(--color-text-on-panel) !important;
   padding: 10px 12px !important;
   border-radius: 4px !important;
   cursor: pointer !important;
@@ -60,28 +60,28 @@
 }
 
 .react-select__option--is-focused {
-  background-color: #3a3a3a !important;
+  background-color: var(--color-bg-hover) !important;
 }
 
 .react-select__option--is-selected {
-  background-color: #646cff !important;
+  background-color: var(--color-accent) !important;
   color: #ffffff !important;
 }
 
 .react-select__option:active {
-  background-color: #535bf2 !important;
+  background-color: var(--color-accent-hover) !important;
 }
 
 .react-select__placeholder {
-  color: rgba(255, 255, 255, 0.5) !important;
+  color: var(--color-icon-secondary) !important;
 }
 
 .react-select__single-value {
-  color: rgba(255, 255, 255, 0.87) !important;
+  color: var(--color-text-primary) !important;
 }
 
 .react-select__multi-value {
-  background-color: #646cff !important;
+  background-color: var(--color-accent) !important;
   border-radius: 4px !important;
 }
 
@@ -96,41 +96,41 @@
 }
 
 .react-select__multi-value__remove:hover {
-  background-color: #535bf2 !important;
+  background-color: var(--color-accent-hover) !important;
   color: #ffffff !important;
 }
 
 .react-select__input-container {
-  color: rgba(255, 255, 255, 0.87) !important;
+  color: var(--color-text-primary) !important;
   opacity: 1 !important;
 }
 
 .react-select__input {
-  color: rgba(255, 255, 255, 0.87) !important;
+  color: var(--color-text-primary) !important;
   opacity: 1 !important;
 }
 
 .react-select__indicator-separator {
-  background-color: #3a3a3a !important;
+  background-color: var(--color-bg-hover) !important;
 }
 
 .react-select__dropdown-indicator {
-  color: rgba(255, 255, 255, 0.5) !important;
+  color: var(--color-icon-secondary) !important;
   transition: all 0.2s ease !important;
 }
 
 .react-select__dropdown-indicator:hover {
-  color: #646cff !important;
+  color: var(--color-accent) !important;
 }
 
 .react-select__control--is-focused .react-select__dropdown-indicator {
-  color: #646cff !important;
+  color: var(--color-accent) !important;
 }
 
 .react-select__clear-indicator {
-  color: rgba(255, 255, 255, 0.5) !important;
+  color: var(--color-icon-secondary) !important;
 }
 
 .react-select__clear-indicator:hover {
-  color: #646cff !important;
+  color: var(--color-accent) !important;
 }

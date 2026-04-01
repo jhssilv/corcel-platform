@@ -1,26 +1,26 @@
 .essay-container {
-    background-color: #1e1e1e;
+    background-color: var(--color-bg-panel-alt);
     padding: 3rem;
     border-radius: 12px;
     line-height: 1.8;
     font-size: 1.15rem;
     white-space: pre-wrap;
     font-family: 'Georgia', 'Cambria', 'Times New Roman', serif;
-    color: #e4e4e7;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+    color: var(--color-text-on-panel);
+    box-shadow: var(--shadow-lg);
     max-width: 900px;
     margin: 0 auto;
-    border: 1px solid #333;
+    border: 1px solid var(--color-border-primary);
 }
 
 .document-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid var(--color-border-primary);
     padding-bottom: 1rem;
     margin-bottom: 1.5rem;
-    color: #888;
+    color: var(--color-text-muted);
     font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
 }
 
@@ -29,17 +29,17 @@
     font-size: 1.0rem;
     text-transform: lowercase;
     letter-spacing: 1px;
-    color: #666;
+    color: var(--color-text-faint);
     font-variant-numeric: lining-nums;
 }
 
 .document-grade {
-    background-color: #2b2b2b;
+    background-color: var(--color-bg-panel);
     padding: 0.2rem 0.6rem;
     border-radius: 4px;
     font-size: 0.85rem;
-    color: #e4e4e7;
-    border: 1px solid #333;
+    color: var(--color-text-on-panel);
+    border: 1px solid var(--color-border-primary);
     font-weight: 500;
 }
 
@@ -53,34 +53,34 @@
 }
 
 .clickable:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: var(--color-token-hover-bg);
 }
 
 .candidates {
-    background-color: rgba(185, 28, 28, 0.25);
-    border-bottom-color: #ef4444;
-    color: #fca5a5;
+    background-color: var(--color-token-candidates-bg);
+    border-bottom-color: var(--color-danger);
+    color: var(--color-token-candidates-text);
 }
 
 .candidates:hover {
-    background-color: rgba(185, 28, 28, 0.4);
+    background-color: var(--color-token-candidates-hover);
 }
 
 .corrected {
-    background-color: rgba(29, 78, 216, 0.25);
-    border-bottom-color: #3b82f6;
-    color: #93c5fd;
+    background-color: var(--color-token-corrected-bg);
+    border-bottom-color: var(--color-info);
+    color: var(--color-token-corrected-text);
 }
 
 .corrected:hover {
-    background-color: rgba(29, 78, 216, 0.4);
+    background-color: var(--color-token-corrected-hover);
 }
 
 .selected {
-    background-color: rgba(255, 255, 255, 0.2);
-    color: white;
+    background-color: var(--color-token-selected-bg);
+    color: var(--color-text-inverse);
     font-weight: 500;
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 0 2px var(--color-token-selected-shadow);
     border-radius: 4px;
     border-bottom-color: transparent;
 }
@@ -139,10 +139,10 @@
     position: relative;
     width: 48px;
     height: 26px;
-    background-color: #3a3a3a;
+    background-color: var(--color-toggle-bg);
     border-radius: 26px;
     transition: .3s cubic-bezier(0.4, 0.0, 0.2, 1);
-    border: 1px solid #555;
+    border: 1px solid var(--color-border-hover);
 }
 
 .toggle-slider:before {
@@ -152,39 +152,39 @@
     width: 18px;
     left: 3px;
     bottom: 3px;
-    background-color: #aaa;
+    background-color: var(--color-toggle-knob);
     border-radius: 50%;
     transition: .3s cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 
 .finalized-toggle input:checked+.toggle-slider {
-    background-color: #10b981;
-    border-color: #059669;
+    background-color: var(--color-toggle-checked-bg);
+    border-color: var(--color-toggle-checked-border);
 }
 
 .finalized-toggle input:checked+.toggle-slider:before {
     transform: translateX(22px);
-    background-color: white;
+    background-color: var(--color-toggle-checked-knob);
 }
 
 .toggle-label {
     font-weight: 600;
-    color: #e4e4e7;
+    color: var(--color-text-on-panel);
     font-size: 0.95rem;
     transition: color 0.3s;
 }
 
 .finalized-toggle input:checked~.toggle-label {
-    color: #10b981;
+    color: var(--color-toggle-checked-bg);
 }
 
 .finalized-toggle:hover .toggle-slider {
-    border-color: #646cff;
+    border-color: var(--color-accent);
 }
 
 .highlight-hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    border-bottom: 2px solid #555;
+    background-color: var(--color-token-hover-bg);
+    border-bottom: 2px solid var(--color-border-hover);
 }
 
 .essay-comparison-container {
@@ -200,5 +200,5 @@
 
 .original-essay-container {
     opacity: 0.8;
-    background-color: #1a1a1a;
+    background-color: var(--color-bg-control);
 }

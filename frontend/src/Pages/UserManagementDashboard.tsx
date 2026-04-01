@@ -5,6 +5,7 @@ import { getUsersData, toggleUserActive, toggleUserAdmin } from '../Api';
 import { useAuth } from '../Context/Auth/UseAuth';
 import type { UserData } from '../types';
 import '../styles/main_page.css';
+import '../styles/user_management.css';
 
 function UserManagementDashboard() {
     const [users, setUsers] = useState<UserData[]>([]);
@@ -76,8 +77,8 @@ function UserManagementDashboard() {
         <div className="main-page-container">
             <TopBar showSidePanel={true} />
 
-            <div className="main-page-section" style={{ marginTop: '80px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <div className="main-page-section user-management-section">
+                <div className="user-management-header">
                     <h2>Gerenciamento de Usuários</h2>
                     <button onClick={() => navigate('/main')} className="modal-button cancel-button">
                         Voltar
@@ -89,7 +90,7 @@ function UserManagementDashboard() {
                     placeholder="Buscar usuário..."
                     value={searchTerm}
                     onChange={(event: ChangeEvent<HTMLInputElement>) => setSearchTerm(event.target.value)}
-                    style={{ width: '100%', marginBottom: '20px', padding: '10px' }}
+                    className="user-management-search"
                 />
 
                 {loading ? (
@@ -97,43 +98,37 @@ function UserManagementDashboard() {
                 ) : error ? (
                     <p className="error">{error}</p>
                 ) : (
-                    <div style={{ overflowX: 'auto' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', color: '#e4e4e7' }}>
+                    <div className="user-management-table-container">
+                        <table className="user-management-table">
                             <thead>
-                                <tr style={{ borderBottom: '1px solid #333', textAlign: 'left' }}>
-                                    <th style={{ padding: '10px' }}>Usuário</th>
-                                    <th style={{ padding: '10px' }}>Último Login</th>
-                                    <th style={{ padding: '10px' }}>Admin</th>
-                                    <th style={{ padding: '10px' }}>Ativo</th>
+                                <tr>
+                                    <th>Usuário</th>
+                                    <th>Último Login</th>
+                                    <th>Admin</th>
+                                    <th>Ativo</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {filteredUsers.map((user) => (
-                                    <tr key={user.username} style={{ borderBottom: '1px solid #222' }}>
-                                        <td style={{ padding: '10px' }}>{user.username}</td>
-                                        <td style={{ padding: '10px' }}>{user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Nunca'}</td>
-                                        <td style={{ padding: '10px' }}>
+                                    <tr key={user.username}>
+                                        <td>{user.username}</td>
+                                        <td>{user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Nunca'}</td>
+                                        <td>
                                             <button
                                                 onClick={() => setConfirmAdminToggle(user.username)}
                                                 disabled={user.username === currentUsername}
-                                                style={{
-                                                    backgroundColor: user.isAdmin ? '#4caf50' : '#333',
-                                                    opacity: user.username === currentUsername ? 0.5 : 1,
-                                                }}
+                                                className={`${user.isAdmin ? 'status-btn-active' : 'status-btn-inactive'} ${user.username === currentUsername ? 'status-btn-disabled' : ''}`}
                                             >
                                                 {user.isAdmin ? 'Sim' : 'Não'}
                                             </button>
                                         </td>
-                                        <td style={{ padding: '10px' }}>
+                                        <td>
                                             <button
                                                 onClick={() => {
                                                     void handleToggleActive(user.username);
                                                 }}
                                                 disabled={user.username === currentUsername}
-                                                style={{
-                                                    backgroundColor: user.isActive ? '#4caf50' : '#f44336',
-                                                    opacity: user.username === currentUsername ? 0.5 : 1,
-                                                }}
+                                                className={`${user.isActive ? 'status-btn-active' : 'status-btn-danger'} ${user.username === currentUsername ? 'status-btn-disabled' : ''}`}
                                             >
                                                 {user.isActive ? 'Ativo' : 'Inativo'}
                                             </button>
@@ -148,7 +143,7 @@ function UserManagementDashboard() {
 
             {confirmAdminToggle && (
                 <div className="modal-overlay">
-                    <div className="upload-modal" style={{ maxWidth: '400px' }}>
+                    <div className="upload-modal user-management-confirm-modal">
                         <div className="modal-header">
                             <h3 className="modal-title">Confirmar Alteração</h3>
                             <button className="modal-close-button" onClick={() => setConfirmAdminToggle(null)}>×</button>

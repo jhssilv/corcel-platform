@@ -2,10 +2,8 @@
   background-color: transparent;
   border: 1px solid transparent;
   padding: 0.5em;
-
   border-radius: 8px;
   cursor: pointer;
-
   transition: border-color 0.25s, background-color 0.25s;
 }
 
@@ -13,24 +11,22 @@
   height: 2em;
   width: 2em;
   vertical-align: middle;
-
-  filter: brightness(100);
+  filter: var(--img-filter);
   transition: filter 300ms;
 }
 
 .download-button:hover img {
-  filter: brightness(100);
-
+  filter: var(--img-filter);
 }
 
 .download-button:hover {
-  border-color: #aaaaaa;
+  border-color: var(--color-download-border);
 }
 
 .download-button:focus,
 .download-button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
-  border-color: #ffffff;
+  border-color: var(--color-download-border-focus);
 }
 
 .download-button:disabled {

@@ -31,7 +31,7 @@ body {
 }
 
 h1 {
-  font-size: 3.2em;
+  font-size: 2em;
   line-height: 1.1;
 }
 
@@ -43,12 +43,14 @@ button {
   font-weight: 500;
   font-family: inherit;
   background-color: var(--color-bg-control);
+  color: var(--color-text-primary);
   cursor: pointer;
   transition: border-color 0.25s;
+  margin: var(--space-xxs);
 }
 
 button:hover {
-  border-color: var(--color-link-primary);
+  border-color: var(--color-accent);
 }
 
 button:focus,
@@ -69,4 +71,12 @@ input {
 
 input:focus {
   outline: 4px auto -webkit-focus-ring-color;
+}
+
+#root {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
 }
