@@ -23,11 +23,13 @@ def run_zip_texts_pipeline(task, zip_path):
             # filters .txt and .docx files
             file_list = []
             for f in zip_ref.namelist():
-                # skip meta-files and hidden files
-                if f.startswith('__') or f.startswith('.') or '/.' in f:
+                base_name = os.path.basename(f)
+                
+                # skip directories, meta-files, and hidden files
+                if not base_name or base_name.startswith('__') or base_name.startswith('.'):
                     continue
 
-                if f.lower().endswith('.txt') or f.lower().endswith('.docx'):
+                if base_name.lower().endswith('.txt') or base_name.lower().endswith('.docx'):
                     file_list.append(f)
 
             total_files = len(file_list)
