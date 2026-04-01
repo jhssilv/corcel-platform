@@ -13,28 +13,38 @@ interface UploadErrorShape {
     message?: string;
 }
 
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+
 function UploadModal({ isOpen, onClose }: UploadModalProps) {
-    const [uploadFile, setUploadFile] = useState<File | null>(null);
+    const [stagedFiles, setStagedFiles] = useState<File[]>([]);
+    const [ignoredFiles, setIgnoredFiles] = useState<string[]>([]);
     const [uploadError, setUploadError] = useState('');
-    const [isValidZip, setIsValidZip] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
     const [isValidating, setIsValidating] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const [progress, setProgress] = useState(0);
     const [statusMessage, setStatusMessage] = useState('');
     const [failedFiles, setFailedFiles] = useState<string[]>([]);
+    const [uploadSuccess, setUploadSuccess] = useState(false);
 
     const pollingInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+    const abortControllerRef = useRef<AbortController | null>(null);
 
     const resetState = useCallback(() => {
-        setUploadFile(null);
+        setStagedFiles([]);
+        setIgnoredFiles([]);
         setUploadError('');
-        setIsValidZip(false);
         setIsDragging(false);
         setIsProcessing(false);
         setProgress(0);
         setStatusMessage('');
         setFailedFiles([]);
+        setUploadSuccess(false);
+
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+            abortControllerRef.current = null;
+        }
 
         if (pollingInterval.current) {
             clearInterval(pollingInterval.current);
@@ -46,7 +56,6 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
         if (!isProcessing) {
             resetState();
         }
-
         onClose();
     }, [isProcessing, onClose, resetState]);
 
@@ -59,7 +68,7 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
                     if (typeof data.total === 'number' && data.total > 0 && typeof data.current === 'number') {
                         const percent = Math.round((data.current / data.total) * 100);
                         setProgress(percent);
-                        setStatusMessage(data.status || `Processando ${percent}%...(${data.current}/${data.total})`);
+                        setStatusMessage(data.status || `Processando ${percent}%... (${data.current}/${data.total})`);
                     } else {
                         setStatusMessage(data.status || 'Processando...');
                     }
@@ -75,21 +84,15 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 
                     const failedList = data.failed_files || [];
                     setFailedFiles(failedList);
+                    setUploadSuccess(true);
+                    setStagedFiles([]);
+                    setIgnoredFiles([]);
 
                     if (failedList.length > 0) {
-                        setStatusMessage(`Concluído com ${failedList.length} arquivo(s) com falha.`);
+                         setStatusMessage(`Concluído com ${failedList.length} arquivo(s) com falha.`);
                     } else {
-                        setStatusMessage('Concluído com sucesso!');
+                         setStatusMessage('Processamento concluído com sucesso!');
                     }
-
-                    setTimeout(() => {
-                        if (failedList.length > 0) {
-                            alert(`Textos processados! ${failedList.length} arquivo(s) falharam:\n${failedList.join('\n')}`);
-                        } else {
-                            alert('Textos processados e salvos!');
-                        }
-                        handleClose();
-                    }, 500);
                 } else if (data.state === 'FAILURE') {
                     if (pollingInterval.current) {
                         clearInterval(pollingInterval.current);
@@ -98,13 +101,13 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 
                     localStorage.removeItem('currentTaskId');
                     setIsProcessing(false);
-                    setUploadError(`Server error: ${data.error || 'Unexpected Error'}`);
+                    setUploadError(`Erro do Servidor: ${data.error || 'Erro inesperado'}`);
                 }
             } catch (error) {
                 console.error('Polling error:', error);
             }
         }, 2000);
-    }, [handleClose]);
+    }, []);
 
     useEffect(() => {
         if (!isOpen) {
@@ -115,51 +118,81 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
         if (savedTaskId && !pollingInterval.current) {
             setIsProcessing(true);
             void pollStatus(savedTaskId);
-        } else if (!savedTaskId) {
+        } else if (!savedTaskId && !isProcessing && !uploadSuccess) {
             resetState();
         }
-    }, [isOpen, pollStatus, resetState]);
+    }, [isOpen, pollStatus, resetState, isProcessing, uploadSuccess]);
 
-    const validateZipFile = async (file: File) => {
+    useEffect(() => {
+        return () => {
+            if (pollingInterval.current) clearInterval(pollingInterval.current);
+            if (abortControllerRef.current) abortControllerRef.current.abort();
+        };
+    }, []);
+
+    const processFiles = async (files: FileList | File[]) => {
         setIsValidating(true);
         setUploadError('');
-        setIsValidZip(false);
+        setUploadSuccess(false);
+        setFailedFiles([]);
+        
+        const newStaged: File[] = [];
+        const newIgnored: string[] = [];
 
         try {
-            if (!file.name.toLowerCase().endsWith('.zip')) {
-                setUploadError('O arquivo deve ser um ZIP.');
-                setIsValidating(false);
-                return;
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const loweredName = file.name.toLowerCase();
+
+                if (loweredName.endsWith('.zip')) {
+                    const zip = new JSZip();
+                    const zipContents = await zip.loadAsync(file);
+                    
+                    for (const [name, zipObj] of Object.entries(zipContents.files)) {
+                        if (zipObj.dir) continue;
+                        
+                        const fileName = name.split('/').pop() ?? '';
+                        const loweredFileName = fileName.toLowerCase();
+                        
+                        // Ignore system/hidden files silently
+                        if (!fileName || fileName.startsWith('.') || fileName.startsWith('__')) {
+                            continue;
+                        }
+                        
+                        if (loweredFileName.endsWith('.txt') || loweredFileName.endsWith('.docx')) {
+                            const blob = await zipObj.async('blob');
+                            if (blob.size > MAX_FILE_SIZE) {
+                                newIgnored.push(`${fileName} (Excede 50MB)`);
+                            } else {
+                                // Prevent duplicates by name in the staged files list
+                                newStaged.push(new File([blob], fileName, { type: loweredFileName.endsWith('.txt') ? 'text/plain' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }));
+                            }
+                        } else {
+                            newIgnored.push(`${fileName} (Formato inválido)`);
+                        }
+                    }
+                } else if (loweredName.endsWith('.txt') || loweredName.endsWith('.docx')) {
+                    if (file.size > MAX_FILE_SIZE) {
+                        newIgnored.push(`${file.name} (Excede 50MB)`);
+                    } else {
+                        newStaged.push(file);
+                    }
+                } else {
+                    newIgnored.push(`${file.name} (Formato inválido)`);
+                }
             }
-
-            const zip = new JSZip();
-            const zipContents = await zip.loadAsync(file);
-            const files = Object.keys(zipContents.files);
-            const fileEntries = files.filter((name) => !zipContents.files[name].dir);
-
-            if (fileEntries.length === 0) {
-                setUploadError('O arquivo ZIP está vazio.');
-                setIsValidating(false);
-                return;
-            }
-
-            const allValidFiles = fileEntries.every((name) => {
-                const fileName = name.split('/').pop() ?? '';
-                const lowered = fileName.toLowerCase();
-                return lowered.endsWith('.txt') || lowered.endsWith('.docx');
+            
+            setStagedFiles((prev) => {
+                // Combine and remove exact name duplicates
+                const combined = [...prev, ...newStaged];
+                const unique = Array.from(new Map(combined.map(f => [f.name, f])).values());
+                return unique;
             });
-
-            if (!allValidFiles) {
-                setUploadError('O ZIP deve conter apenas arquivos .txt ou .docx');
-                setIsValidating(false);
-                return;
-            }
-
-            setIsValidZip(true);
-            setUploadError('');
+            setIgnoredFiles((prev) => [...prev, ...newIgnored]);
+            
         } catch (error) {
-            setUploadError('Erro ao processar o arquivo ZIP.');
-            console.error('ZIP validation error:', error);
+            setUploadError('Erro ao ler arquivos. Verifique se o ZIP não está corrompido.');
+            console.error('File validation error:', error);
         } finally {
             setIsValidating(false);
         }
@@ -181,9 +214,7 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
     const handleDragLeave = (e: DragEvent<HTMLDivElement>) => {
         e.preventDefault();
         e.stopPropagation();
-        if (e.currentTarget.contains(e.relatedTarget as Node)) {
-            return;
-        }
+        if (e.currentTarget.contains(e.relatedTarget as Node)) return;
         setIsDragging(false);
     };
 
@@ -192,125 +223,182 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
         e.stopPropagation();
         setIsDragging(false);
 
-        const files = e.dataTransfer.files;
-        if (files && files.length > 0) {
-            const file = files[0];
-            setUploadFile(file);
-            void validateZipFile(file);
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            void processFiles(e.dataTransfer.files);
         }
     };
 
     const handleFileSelect = (e: ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            setUploadFile(file);
-            void validateZipFile(file);
+        if (e.target.files && e.target.files.length > 0) {
+            void processFiles(e.target.files);
+            e.target.value = ''; // Reset input to allow re-selecting same files
         }
+    };
+
+    const removeStagedFile = (nameToRemove: string) => {
+        setStagedFiles((prev) => prev.filter(f => f.name !== nameToRemove));
+    };
+
+    const handleCancelRequest = () => {
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+            abortControllerRef.current = null;
+        }
+        setIsProcessing(false);
+        setStatusMessage('Upload cancelado.');
+        setUploadError('Operação cancelada pelo usuário.');
     };
 
     const handleConfirm = async () => {
-        if (!isValidZip || !uploadFile) {
-            return;
-        }
+        if (stagedFiles.length === 0) return;
 
         setIsProcessing(true);
         setUploadError('');
-        setStatusMessage('Iniciando upload...');
+        setStatusMessage('Compactando arquivos para envio...');
+        setProgress(0);
 
         try {
-            const response = await uploadTextArchive(uploadFile);
+            // Build ZIP blob in memory
+            const zip = new JSZip();
+            stagedFiles.forEach(file => {
+                zip.file(file.name, file);
+            });
+            
+            const zipBlob = await zip.generateAsync({ type: 'blob' });
+            const uploadFile = new File([zipBlob], 'upload_batch.zip', { type: 'application/zip' });
+
+            setStatusMessage('Enviando para o servidor...');
+            const controller = new AbortController();
+            abortControllerRef.current = controller;
+
+            const response = await uploadTextArchive(uploadFile, controller.signal);
+            
+            abortControllerRef.current = null; // Clean up
             localStorage.setItem('currentTaskId', response.task_id);
-            setStatusMessage('Aguardando servidor...');
+            setStatusMessage('Aguardando processamento...');
             void pollStatus(response.task_id);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Erro no upload:', error);
-            const typedError = error as UploadErrorShape;
-            setUploadError(typedError.error || typedError.message || 'Falha ao enviar arquivo.');
-            setIsProcessing(false);
+            if (error.name === 'CanceledError' || error.message === 'canceled') {
+                // Handled in handleCancelRequest
+            } else {
+                const typedError = error as UploadErrorShape;
+                setUploadError(typedError.error || typedError.message || 'Falha ao enviar arquivos.');
+                setIsProcessing(false);
+            }
         }
     };
-
-    useEffect(() => {
-        return () => {
-            if (pollingInterval.current) {
-                clearInterval(pollingInterval.current);
-            }
-        };
-    }, []);
-
-    if (!isOpen && !isProcessing) {
-        return null;
-    }
 
     const handleOverlayClick = (e: MouseEvent<HTMLDivElement>) => {
         e.stopPropagation();
     };
+
+    if (!isOpen && !isProcessing) {
+        return null;
+    }
 
     return (
         <div style={{ display: isOpen ? 'block' : 'none' }}>
             <div className={styles['modal-overlay']} onClick={handleClose}>
                 <div className={styles['upload-modal']} onClick={handleOverlayClick}>
                     <div className={styles['modal-header']}>
-                        <h2 className={styles['modal-title']}>Upload de Arquivo</h2>
+                        <h2 className={styles['modal-title']}>Upload de Textos</h2>
                         <button className={styles['modal-close-button']} onClick={handleClose} aria-label="Close">
                             ×
                         </button>
                     </div>
 
                     <div className={styles['modal-body']}>
-                        {!isProcessing ? (
-                            <div
-                                className={[
-                                    styles['upload-dropzone'],
-                                    isDragging ? styles.dragging : '',
-                                    uploadFile ? styles['has-file'] : '',
-                                ].filter(Boolean).join(' ')}
-                                onDragEnter={handleDragEnter}
-                                onDragOver={handleDragOver}
-                                onDragLeave={handleDragLeave}
-                                onDrop={handleDrop}
-                                onClick={() => {
-                                    const fileInput = document.getElementById('file-input') as HTMLInputElement | null;
-                                    fileInput?.click();
-                                }}
-                            >
-                                <input
-                                    id="file-input"
-                                    type="file"
-                                    accept=".zip"
-                                    onChange={handleFileSelect}
-                                    style={{ display: 'none' }}
-                                />
+                        {uploadSuccess && (
+                            <div className={`${styles['status-banner']} ${styles['status-success']}`}>
+                                {statusMessage}
+                            </div>
+                        )}
+                        
+                        {failedFiles.length > 0 && !isProcessing && (
+                            <div className={`${styles['status-banner']} ${styles['status-error']}`}>
+                                <p><strong>Os seguintes arquivos falharam:</strong></p>
+                                <ul style={{ textAlign: 'left', marginTop: '10px', fontSize: '0.9rem' }}>
+                                    {failedFiles.map((f, i) => <li key={i}>{f}</li>)}
+                                </ul>
+                            </div>
+                        )}
 
-                                {isValidating ? (
-                                    <div className={styles['upload-status']}>
-                                        <div className={styles['upload-spinner']}></div>
-                                        <p className={styles['upload-text']}>Validando arquivo...</p>
-                                    </div>
-                                ) : uploadFile ? (
-                                    <div className={styles['upload-status']}>
-                                        <div className={[styles['upload-icon'], isValidZip ? styles.valid : styles.invalid].join(' ')}>
-                                            {isValidZip ? '✓' : '✗'}
+                        {!isProcessing && !uploadSuccess && (
+                            <>
+                                <div
+                                    className={[
+                                        styles['upload-dropzone'],
+                                        isDragging ? styles.dragging : '',
+                                    ].filter(Boolean).join(' ')}
+                                    onDragEnter={handleDragEnter}
+                                    onDragOver={handleDragOver}
+                                    onDragLeave={handleDragLeave}
+                                    onDrop={handleDrop}
+                                    onClick={() => {
+                                        const fileInput = document.getElementById('file-input') as HTMLInputElement | null;
+                                        fileInput?.click();
+                                    }}
+                                >
+                                    <input
+                                        id="file-input"
+                                        type="file"
+                                        multiple
+                                        accept=".zip,.txt,.docx"
+                                        onChange={handleFileSelect}
+                                        style={{ display: 'none' }}
+                                    />
+
+                                    {isValidating ? (
+                                        <div className={styles['upload-status']}>
+                                            <div className={styles['upload-spinner']}></div>
+                                            <p className={styles['upload-text']}>Verificando arquivos...</p>
                                         </div>
-                                        <p className={styles['upload-filename']}>{uploadFile.name}</p>
-                                        {isValidZip && <p className={styles['upload-success']}>Arquivo válido!</p>}
-                                    </div>
-                                ) : (
-                                    <div className={styles['upload-prompt']}>
-                                        <svg className={styles['upload-icon-svg']} viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                                            />
-                                        </svg>
-                                        <p className={styles['upload-text']}>Arraste um arquivo ZIP aqui</p>
-                                        <p className={styles['upload-subtext']}>ou clique para selecionar</p>
+                                    ) : (
+                                        <div className={styles['upload-prompt']}>
+                                            <svg className={styles['upload-icon-svg']} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                            </svg>
+                                            <p className={styles['upload-text']}>Arraste arquivos TXT, DOCX ou ZIPs</p>
+                                            <p className={styles['upload-subtext']}>ou clique para selecionar (Máx 50MB por arquivo)</p>
+                                        </div>
+                                    )}
+                                </div>
+                                
+                                {stagedFiles.length > 0 && (
+                                    <div>
+                                        <h4 style={{ margin: '10px 0 5px 0', fontSize: '0.95rem' }}>Arquivos Válidos ({stagedFiles.length})</h4>
+                                        <div className={styles['staged-files-list']}>
+                                            {stagedFiles.map((file, idx) => (
+                                                <div key={idx} className={styles['staged-file-item']}>
+                                                    <span className={styles.fileName} title={file.name}>{file.name}</span>
+                                                    <button 
+                                                        className={styles['remove-file-button']} 
+                                                        onClick={(e) => { e.stopPropagation(); removeStagedFile(file.name); }}
+                                                        title="Remover"
+                                                    >×</button>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
-                            </div>
-                        ) : (
+
+                                {ignoredFiles.length > 0 && (
+                                    <div>
+                                        <h4 style={{ margin: '10px 0 5px 0', fontSize: '0.95rem', color: 'var(--color-danger)' }}>Arquivos Ignorados ({ignoredFiles.length})</h4>
+                                        <div className={styles['ignored-files-list']}>
+                                            {ignoredFiles.map((err, idx) => (
+                                                <div key={idx} className={styles['ignored-file-item']}>
+                                                    <span className={styles.fileName}>{err}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </>
+                        )}
+                        
+                        {isProcessing && (
                             <div className="progress-container" style={{ padding: '20px', textAlign: 'center' }}>
                                 <div
                                     className="progress-bar-wrapper"
@@ -334,35 +422,37 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
                                     ></div>
                                 </div>
                                 <p className={styles['upload-text']} style={{ fontWeight: 'bold' }}>{statusMessage}</p>
-                                <p className={styles['upload-subtext']}>Você pode fechar esta janela, o processo continuará em segundo plano.</p>
+                                {progress < 100 && (
+                                    <p className={styles['upload-subtext']}>Você pode fechar esta janela, o processo continuará em segundo plano.</p>
+                                )}
                             </div>
                         )}
 
                         {uploadError && <div className={styles['upload-error']}>{uploadError}</div>}
-
-                        {failedFiles.length > 0 && (
-                            <div className={styles['upload-error']} style={{ marginTop: '10px' }}>
-                                Arquivos com falha: {failedFiles.join(', ')}
-                            </div>
-                        )}
                     </div>
 
                     <div className={styles['modal-footer']}>
-                        <button className={[styles['modal-button'], styles['cancel-button']].join(' ')} onClick={handleClose}>
-                            {isProcessing ? 'Fechar' : 'Cancelar'}
-                        </button>
+                        {isProcessing && progress < 100 ? (
+                            <button className={[styles['modal-button'], styles['cancel-button']].join(' ')} onClick={handleCancelRequest}>
+                                Cancelar Envio
+                            </button>
+                        ) : (
+                            <button className={[styles['modal-button'], styles['cancel-button']].join(' ')} onClick={handleClose}>
+                                {uploadSuccess ? 'Fechar' : 'Cancelar'}
+                            </button>
+                        )}
 
-                        {!isProcessing && (
+                        {!isProcessing && !uploadSuccess && (
                             <button
                                 className={[
                                     styles['modal-button'],
                                     styles['confirm-button'],
-                                    isValidZip ? styles.valid : '',
+                                    stagedFiles.length > 0 ? styles.valid : '',
                                 ].filter(Boolean).join(' ')}
                                 onClick={handleConfirm}
-                                disabled={!isValidZip}
+                                disabled={stagedFiles.length === 0}
                             >
-                                Confirmar
+                                Enviar
                             </button>
                         )}
                     </div>
