@@ -9,6 +9,7 @@ import app.schemas.download as download_schemas
 import app.schemas.generic as generic_schemas
 from app.download_texts import save_modified_texts
 from app.generate_report import generate_report
+from app.extensions import limiter
 
 download_bp = Blueprint('download', __name__)
 
@@ -16,6 +17,7 @@ download_log_manager = DownloadLogger(log_file='logs/download_activity.log')
 logger = download_log_manager.get_logger()
 
 @download_bp.route('/api/report/', methods=['POST'])
+@limiter.limit("10 per minute")
 @login_required()
 @validate()
 def request_report(current_user, body: download_schemas.ReportRequest):  
@@ -39,6 +41,7 @@ def request_report(current_user, body: download_schemas.ReportRequest):
     return response
 
 @download_bp.route('/api/download/', methods=['POST'])
+@limiter.limit("5 per minute")
 @login_required()
 @validate()
 def download_normalized_texts(current_user, body: download_schemas.DownloadRequest):

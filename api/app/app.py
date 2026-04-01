@@ -8,7 +8,7 @@ from flask_cors import CORS
 from pydantic import ValidationError
 from celery import Celery
 
-from .extensions import db, celery, jwt
+from .extensions import db, celery, jwt, limiter
 from .routes.auth_routes import auth_bp
 from .routes.text_routes import text_bp
 from .routes.download_routes import download_bp
@@ -41,6 +41,7 @@ def create_app():
     CORS(app) 
     jwt.init_app(app)
     db.init_app(app)
+    limiter.init_app(app)
     
     # Atualiza a configuração da instância global do Celery
     celery.conf.update(app.config)
@@ -59,6 +60,10 @@ def create_app():
             "error": "Validation failed",
             "details": error_details
         }), 400
+
+    @app.errorhandler(429)
+    def ratelimit_handler(e):
+        return jsonify(error="Rate limit exceeded", message=str(e.description)), 429
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(text_bp)

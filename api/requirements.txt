@@ -29,3 +29,4 @@ pytest-mock
 python-docx
 Pillow
 google-genai
+flask-limiter

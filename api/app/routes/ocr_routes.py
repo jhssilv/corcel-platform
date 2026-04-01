@@ -8,7 +8,7 @@ from app.tasks.celery_tasks import process_ocr_zip
 from app.tasks.constants import IMAGES_FOLDER, TEMP_UPLOADS_FOLDER
 from app.utils.decorators import admin_required
 from app.database.models import Token, Text, RawText
-from app.extensions import db
+from app.extensions import db, limiter
 from app.schemas import generic as generic_schemas
 
 ocr_bp = Blueprint('ocr', __name__)
@@ -16,6 +16,7 @@ ocr_bp = Blueprint('ocr', __name__)
 UPLOAD_FOLDER = TEMP_UPLOADS_FOLDER
 
 @ocr_bp.route('/api/ocr/upload', methods=['POST'])
+@limiter.limit("5 per minute; 20 per hour")
 @admin_required()
 def upload_ocr_zip(current_user):
     """

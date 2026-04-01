@@ -11,7 +11,7 @@ from app.schemas import user as user_schemas
 import app.database.queries as queries
 from app.database.models import User
 from app.utils.decorators import login_required, admin_required
-from app.extensions import db
+from app.extensions import db, limiter
 
 session = db.session
 
@@ -54,6 +54,7 @@ def get_current_user(current_user):
 
 
 @auth_bp.route('/api/register', methods=['POST'])
+@limiter.limit("10 per hour; 20 per day")
 @validate()
 @admin_required()
 def register(body: auth_schemas.UserRegisterRequest, current_user=None):
@@ -88,6 +89,7 @@ def register(body: auth_schemas.UserRegisterRequest, current_user=None):
     return jsonify({"msg": "User created successfully"}), 201
 
 @auth_bp.route('/api/activate', methods=['POST'])
+@limiter.limit("5 per hour")
 @validate()
 def activate_account(body: auth_schemas.UserActivationRequest):
     """Activates a user account by setting the password and marking the account as active.
@@ -119,6 +121,7 @@ def activate_account(body: auth_schemas.UserActivationRequest):
     return jsonify({"message": "Account activated successfully."}), 200
 
 @auth_bp.route('/api/login', methods=['POST'])
+@limiter.limit("10 per minute; 20 per hour")
 @validate()
 def login(body: auth_schemas.UserCredentials):
     """Logs in a user by verifying credentials and issuing a JWT token.
@@ -163,6 +166,7 @@ def logout():
     return response, 200
 
 @auth_bp.route('/api/users/toggleActive', methods=['PATCH'])
+@limiter.limit("10 per minute")
 @validate()
 @admin_required()
 def deactivate_user(body: auth_schemas.UserRegisterRequest, current_user):
@@ -196,6 +200,7 @@ def deactivate_user(body: auth_schemas.UserRegisterRequest, current_user):
         return jsonify(response.model_dump()), 200
     
 @auth_bp.route('/api/users/toggleAdmin', methods=['PATCH'])
+@limiter.limit("10 per minute")
 @validate()
 @admin_required()
 def toggle_user_is_admin(body: auth_schemas.UserRegisterRequest, current_user):

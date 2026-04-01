@@ -6,6 +6,7 @@ from werkzeug.utils import secure_filename
 from app.tasks.celery_tasks import process_zip_texts
 from app.tasks.constants import TEMP_UPLOADS_FOLDER
 from app.utils.decorators import admin_required
+from app.extensions import limiter
 
 from app.schemas import generic as generic_schemas
 
@@ -15,6 +16,7 @@ upload_bp = Blueprint('upload', __name__)
 UPLOAD_FOLDER = TEMP_UPLOADS_FOLDER
 
 @upload_bp.route('/api/upload', methods=['POST'])
+@limiter.limit("10 per minute; 50 per hour")
 @admin_required()
 def upload_file(current_user):
     """Uploads a ZIP file for processing.
@@ -48,6 +50,7 @@ def upload_file(current_user):
     return jsonify({'task_id': task.id}), 202
 
 @upload_bp.route('/api/status/<task_id>', methods=['GET'])
+@limiter.limit("120 per minute")
 def task_status(task_id):
     """Gets the status of a background text processing task.
 

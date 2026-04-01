@@ -3,7 +3,7 @@ from flask_pydantic import validate
 
 from app.utils.decorators import login_required
 import app.database.queries as queries
-from app.extensions import db
+from app.extensions import db, limiter
 
 from app.schemas import text as text_schemas
 from app.schemas import generic as generic_schemas
@@ -258,6 +258,7 @@ def update_raw_text(current_user, text_id: int):
         return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
 
 @text_bp.route('/api/raw-texts/<int:text_id>/finalize', methods=['POST'])
+@limiter.limit("20 per minute")
 @login_required()
 @validate()
 def finalize_raw_text(current_user, text_id: int):
