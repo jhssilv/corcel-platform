@@ -3,7 +3,7 @@ import * as schemas from './Schemas';
 import { unwrapData } from './Utils';
 import type { TaskStatusApiResponse, UploadResponse } from '../types';
 
-export async function uploadTextArchive(file: File): Promise<UploadResponse> {
+export async function uploadTextArchive(file: File, signal?: AbortSignal): Promise<UploadResponse> {
     const formData = new FormData();
     formData.append('file', file);
 
@@ -11,6 +11,7 @@ export async function uploadTextArchive(file: File): Promise<UploadResponse> {
         headers: {
             'Content-Type': 'multipart/form-data',
         },
+        signal,
     }));
 
     return schemas.UploadResponseSchema.parse(data);
