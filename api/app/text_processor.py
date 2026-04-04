@@ -4,9 +4,12 @@ import time
 import requests
 
 from .tokenizer import Tokenizer
+from .logging_config import get_logger
 
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 OLLAMA_MODEL = "gemma3:4b"
+
+logger = get_logger('app.task.text_processor', source='task', task_module='text_task_logic')
 
 class TextProcessor(Tokenizer):
 
@@ -115,109 +118,145 @@ class TextProcessor(Tokenizer):
                 If False, only dictionaries determine correctness; the LLM
                 still provides suggestions for words flagged by dictionaries.
         """
-        doc = self.nlp(text)
-        results = {}
+        start_time = time.perf_counter()
+        logger.info(
+            'Text processing started',
+            extra={
+                'event': {
+                    'status': 'started',
+                    'text_length': len(text),
+                    'llm_assists_detection': llm_assists_detection,
+                }
+            },
+        )
 
-        # --- Phase 1: dictionary candidate generation per token -----------
-        token_candidates: dict[int, list[str]] = {}
+        try:
+            doc = self.nlp(text)
+            results = {}
 
-        for i, token in enumerate(doc):
-            word = token.text
+            # --- Phase 1: dictionary candidate generation per token -----------
+            token_candidates: dict[int, list[str]] = {}
 
-            if not word.replace("-", "").isalpha():
+            for i, token in enumerate(doc):
+                word = token.text
+
+                if not word.replace("-", "").isalpha():
+                    results[i] = {
+                        "idx": i,
+                        "text": word,
+                        "to_be_normalized": False,
+                        "suggestions": [],
+                        "is_word": False,
+                        "whitespace_after": token.whitespace_,
+                    }
+                    continue
+
+                candidates: set[str] = set()
+                candidates.update(self.spell.candidates(word) or [])
+                try:
+                    candidates.update(self.hobj.suggest(word))
+                except Exception:
+                    pass
+
+                candidates.discard(word)
+
+                # Case-match candidates to the original word
+                final: list[str] = []
+                for c in candidates:
+                    if word.isupper():
+                        final.append(c.upper())
+                    elif word[0].isupper():
+                        final.append(c.capitalize())
+                    else:
+                        final.append(c.lower())
+
+                token_candidates[i] = final
+
                 results[i] = {
                     "idx": i,
                     "text": word,
-                    "to_be_normalized": False,
+                    "to_be_normalized": False,  # updated later
                     "suggestions": [],
-                    "is_word": False,
+                    "is_word": True,
                     "whitespace_after": token.whitespace_,
                 }
-                continue
 
-            candidates: set[str] = set()
-            candidates.update(self.spell.candidates(word) or [])
-            try:
-                candidates.update(self.hobj.suggest(word))
-            except Exception:
-                pass
+            # --- Phase 2: LLM error detection ------------------
+            llm_corrections = self._get_llm_corrections(text)
 
-            candidates.discard(word)
+            # --- Phase 3 -------------------------------------
+            for i, token in enumerate(doc):
+                if not results[i]["is_word"]:
+                    continue
 
-            # Case-match candidates to the original word
-            final: list[str] = []
-            for c in candidates:
-                if word.isupper():
-                    final.append(c.upper())
-                elif word[0].isupper():
-                    final.append(c.capitalize())
-                else:
-                    final.append(c.lower())
+                word = token.text
+                word_lower = word.lower()
+                dict_is_correct = self._is_valid_pt_word(word)
+                llm_flagged = word_lower in llm_corrections
 
-            token_candidates[i] = final
-
-            results[i] = {
-                "idx": i,
-                "text": word,
-                "to_be_normalized": False,  # updated later
-                "suggestions": [],
-                "is_word": True,
-                "whitespace_after": token.whitespace_,
-            }
-
-        # --- Phase 2: LLM error detection ------------------
-        llm_corrections = self._get_llm_corrections(text)
-
-        # --- Phase 3 -------------------------------------
-        for i, token in enumerate(doc):
-            if not results[i]["is_word"]:
-                continue
-
-            word = token.text
-            word_lower = word.lower()
-            dict_is_correct = self._is_valid_pt_word(word)
-            llm_flagged = word_lower in llm_corrections
-
-            if llm_assists_detection:
-                # LLM participates in the correctness decision
-                if llm_flagged and not dict_is_correct:
-                    to_be_normalized = True
-                elif llm_flagged and dict_is_correct:
-                    to_be_normalized = bool(llm_corrections[word_lower])
-                elif not llm_flagged and not dict_is_correct:
-                    # LLM didn't flag it
-                    to_be_normalized = False
-                else:
-                    to_be_normalized = False
-            else:
-                # Dictionary-only detection
-                to_be_normalized = not dict_is_correct
-
-            # Build suggestion list: LLM suggestions first, then dict candidates
-            suggestions: list[str] = []
-            if llm_flagged:
-                for s in llm_corrections[word_lower]:
-                    # Case-match LLM suggestions
-                    if word.isupper():
-                        s_matched = s.upper()
-                    elif word[0].isupper():
-                        s_matched = s.capitalize()
+                if llm_assists_detection:
+                    # LLM participates in the correctness decision
+                    if llm_flagged and not dict_is_correct:
+                        to_be_normalized = True
+                    elif llm_flagged and dict_is_correct:
+                        to_be_normalized = bool(llm_corrections[word_lower])
+                    elif not llm_flagged and not dict_is_correct:
+                        # LLM didn't flag it
+                        to_be_normalized = False
                     else:
-                        s_matched = s.lower()
-                    if s_matched not in suggestions and s_matched.lower() != word_lower:
-                        suggestions.append(s_matched)
+                        to_be_normalized = False
+                else:
+                    # Dictionary-only detection
+                    to_be_normalized = not dict_is_correct
 
-            for c in token_candidates.get(i, []):
-                if c not in suggestions:
-                    suggestions.append(c)
+                # Build suggestion list: LLM suggestions first, then dict candidates
+                suggestions: list[str] = []
+                if llm_flagged:
+                    for s in llm_corrections[word_lower]:
+                        # Case-match LLM suggestions
+                        if word.isupper():
+                            s_matched = s.upper()
+                        elif word[0].isupper():
+                            s_matched = s.capitalize()
+                        else:
+                            s_matched = s.lower()
+                        if s_matched not in suggestions and s_matched.lower() != word_lower:
+                            suggestions.append(s_matched)
 
-            MAX_SUGGESTIONS = 7
-            suggestions = suggestions[:MAX_SUGGESTIONS]
+                for c in token_candidates.get(i, []):
+                    if c not in suggestions:
+                        suggestions.append(c)
 
-            results[i]["to_be_normalized"] = to_be_normalized
-            results[i]["suggestions"] = suggestions
+                MAX_SUGGESTIONS = 7
+                suggestions = suggestions[:MAX_SUGGESTIONS]
 
-        return results
+                results[i]["to_be_normalized"] = to_be_normalized
+                results[i]["suggestions"] = suggestions
+
+            logger.info(
+                'Text processing finished',
+                extra={
+                    'event': {
+                        'status': 'success',
+                        'duration_ms': int((time.perf_counter() - start_time) * 1000),
+                        'token_count': len(results),
+                    }
+                },
+            )
+
+            return results
+        except Exception as e:
+            logger.exception(
+                'Text processing finished with error',
+                extra={
+                    'event': {
+                        'status': 'error',
+                        'duration_ms': int((time.perf_counter() - start_time) * 1000),
+                        'error': str(e),
+                    }
+                },
+            )
+            raise
 
 if __name__ == "__main__":
     processor = TextProcessor()

@@ -1,5 +1,9 @@
 from ..database import models
+from ..logging_config import get_logger
 from .text_formatting import format_text_content
+
+
+logger = get_logger('app.task.persistence', source='task', task_module='persistence')
 
 
 def add_to_database(results: dict):
@@ -7,9 +11,9 @@ def add_to_database(results: dict):
 
     db.session.remove() 
 
-    print(f"DEBUG: Starting batch insert for {len(results)} files")
+    logger.info('Starting batch insert', extra={'event': {'count': len(results)}})
     for file_name, data in results.items():
-        print(f"DEBUG: Preparing data for {file_name}")
+        logger.info('Preparing raw text payload', extra={'event': {'file_name': file_name}})
 
         # Format text content (only happens once during initial insert)
         formatted_text = format_text_content(data['text_content'])
@@ -24,8 +28,8 @@ def add_to_database(results: dict):
 
     try:
         db.session.commit()
-        print(f"DEBUG: Successfully committed {len(results)} raw texts to database")
+        logger.info('Committed raw texts batch', extra={'event': {'count': len(results)}})
     except Exception as e:
         db.session.rollback()
-        print(f"ERROR during commit: {e}")
+        logger.exception('Error committing raw texts batch', extra={'event': {'error': str(e)}})
         raise e

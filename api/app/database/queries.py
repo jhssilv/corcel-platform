@@ -5,6 +5,10 @@ from sqlalchemy.dialects.postgresql import insert
 
 from app.database.models import Token, User, Text, Normalization, TextsUsers, Suggestion, TokensSuggestions, WhitelistTokens, RawText
 from app.extensions import db
+from app.logging_config import get_logger
+
+
+logger = get_logger('app.task.queries', source='task', task_module='persistence')
 
 
 
@@ -187,11 +191,14 @@ def add_suggestion(text_id: int, token_id: int, text: str, db):
             # Could have been added by a concurrent transaction
             suggestion = session.query(Suggestion).filter_by(token_text=text).first()
         except Exception as e:
-            print(f"DEBUG: Unexpected error creating suggestion '{text}': {e}")
+            logger.exception(
+                'Unexpected error creating suggestion',
+                extra={'event': {'suggestion_text': text, 'error': str(e)}},
+            )
             raise e
     
     if not suggestion:
-        print(f"DEBUG: Failed to get/create suggestion for '{text}'")
+        logger.warning('Failed to create or fetch suggestion', extra={'event': {'suggestion_text': text}})
         return
 
     link_exists = session.query(TokensSuggestions).filter_by(
@@ -211,7 +218,7 @@ def add_suggestion(text_id: int, token_id: int, text: str, db):
         except IntegrityError:
             pass
         except Exception as e:
-            print(f"DEBUG: Error linking suggestion: {e}")
+            logger.exception('Error linking suggestion to token', extra={'event': {'error': str(e)}})
             # Don't raise, just skip link
             pass
 
@@ -336,7 +343,7 @@ def add_raw_text(db, tokens: list[Token], source_file_name: str ):
 
     except Exception as e:
         db.rollback()
-        print(f"Error adding raw text: {e}")
+        logger.exception('Error adding raw text', extra={'event': {'error': str(e)}})
         raise e
 
 
@@ -374,7 +381,7 @@ def add_text(text_obj: Text, tokens_with_candidates: list[tuple[Token, list[str]
 
     except Exception as e:
         db.rollback()
-        print(f"Error adding text: {e}")
+        logger.exception('Error adding processed text', extra={'event': {'error': str(e)}})
         raise e
     
 def get_user_by_username(db, username: str):

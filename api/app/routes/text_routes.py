@@ -9,10 +9,12 @@ from app.schemas import text as text_schemas
 from app.schemas import generic as generic_schemas
 from app.schemas import normalization as normalization_schemas
 from app.schemas import whitelist as whitelist_schemas
+from app.logging_config import get_logger
 
 session = db.session
 
 text_bp = Blueprint('text', __name__)
+logger = get_logger('app.route.text', source='route', blueprint='text')
 
 
 def _parse_normalized_filter(normalized_param: str):
@@ -333,12 +335,18 @@ def finalize_raw_text(current_user, text_id: int):
             image_full_path = os.path.join(images_folder, image_path)
             if os.path.exists(image_full_path):
                 os.remove(image_full_path)
-                print(f"Deleted image file: {image_full_path}")
+                logger.info(
+                    'Deleted OCR image file after finalization',
+                    extra={'event': {'source': 'route', 'blueprint': 'text', 'image_path': image_full_path}},
+                )
         
         return jsonify({"message": "Text finalized successfully", "text_id": new_text_id}), 200
     except Exception as e:
         session.rollback()
-        print(f"Error finalizing raw text: {e}")
+        logger.exception(
+            'Error finalizing raw text',
+            extra={'event': {'source': 'route', 'blueprint': 'text', 'error': str(e), 'text_id': text_id}},
+        )
         return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
 
 @text_bp.route('/api/texts/<int:text_id>/normalizations', methods=['GET'])

@@ -1,10 +1,10 @@
 import os
 import shutil
-from flask import Blueprint, jsonify, make_response, send_from_directory, request, after_this_request
+from flask import Blueprint, jsonify, make_response, send_from_directory, after_this_request
 from flask_pydantic import validate
 
 from app.utils.decorators import login_required
-from app.logging_config import DownloadLogger
+from app.logging_config import get_logger
 import app.schemas.download as download_schemas
 import app.schemas.generic as generic_schemas
 from app.download_texts import save_modified_texts
@@ -13,8 +13,7 @@ from app.extensions import limiter
 
 download_bp = Blueprint('download', __name__)
 
-download_log_manager = DownloadLogger(log_file='logs/download_activity.log')
-logger = download_log_manager.get_logger()
+logger = get_logger('app.route.download', source='route', blueprint='download')
 
 @download_bp.route('/api/report/', methods=['POST'])
 @limiter.limit("10 per minute")
@@ -60,7 +59,10 @@ def download_normalized_texts(current_user, body: download_schemas.DownloadReque
         
     """
     try:
-        logger.info(f"Download request received for user ID: {current_user.id}")
+        logger.info(
+            'Download request received',
+            extra={'event': {'source': 'route', 'blueprint': 'download', 'user_id': str(current_user.id)}},
+        )
 
         text_ids = body.text_ids
         use_tags = body.use_tags
@@ -82,11 +84,24 @@ def download_normalized_texts(current_user, body: download_schemas.DownloadReque
                 if os.path.exists(directory):
                     shutil.rmtree(directory)
             except Exception as e:
-                logger.error(f"Cleanup error: {e}")
+                logger.error(
+                    'Cleanup error while removing temp download directory',
+                    extra={
+                        'event': {
+                            'source': 'route',
+                            'blueprint': 'download',
+                            'error': str(e),
+                            'directory': directory,
+                        }
+                    },
+                )
             return response
 
         return send_from_directory(directory=directory, path=filename, as_attachment=True)
 
-    except Exception as e:
-        logger.exception("Error during download")
+    except Exception:
+        logger.exception(
+            'Error during download',
+            extra={'event': {'source': 'route', 'blueprint': 'download'}},
+        )
         return jsonify(generic_schemas.ErrorResponse(error="Internal server error").model_dump()), 500

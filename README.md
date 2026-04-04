@@ -15,31 +15,3 @@ CorSpell currently supports the upload of zipped batches of text files in `txt` 
 
 ### OCR processing
 This application currently supports OCR processing via the Gemini API. Though completely optional, it is suitable for users that need to more easily transcribe and review large quantites of digitized handwritten documents.
-
-## Quick Start
-
-> **Note:** This project does not include the original private database due to sensitive data. The public repo demonstrates architecture, UI, and integration points.
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/jhssilv/corcel-platform.git
-   cd corcel-platform
-   ```
-2. Copy or create your own Postgres database and update connection info in `docker-compose.yml` and backend configuration.
-3. Start the platform:
-   ```bash
-   docker-compose up --build
-   ```
-4. Access the web interface at `http://localhost:8080`.
-
-For a detailed setup and development guide, see [HOWTO.md](HOWTO.md).
-
-## Contributing
-
-Pull requests, bug reports, and feature suggestions are welcome! Please open an issue first to discuss major changes.
-
----
-
-## Disclaimer
-
-**This version is for demonstration and development.** It does not include the proprietary database used in production.

@@ -10,8 +10,10 @@ from app.utils.decorators import admin_required
 from app.database.models import Token, Text, RawText
 from app.extensions import db, limiter
 from app.schemas import generic as generic_schemas
+from app.logging_config import get_logger
 
 ocr_bp = Blueprint('ocr', __name__)
+logger = get_logger('app.route.ocr', source='route', blueprint='ocr')
 
 UPLOAD_FOLDER = TEMP_UPLOADS_FOLDER
 
@@ -25,11 +27,16 @@ def upload_ocr_zip(current_user):
     MAX_ZIP_SIZE = 500 * 1024 * 1024  # 500 MB limit for uploaded zip
     
     if 'file' not in request.files:
+        logger.warning('OCR upload missing file', extra={'event': {'source': 'route', 'blueprint': 'ocr'}})
         return jsonify(generic_schemas.ErrorResponse(error='File not found.').model_dump()), 400
     
     file = request.files['file']
     
     if file.filename == '' or not file.filename.endswith('.zip'):
+        logger.warning(
+            'OCR upload rejected due to invalid extension',
+            extra={'event': {'source': 'route', 'blueprint': 'ocr', 'filename': file.filename}},
+        )
         return jsonify(generic_schemas.ErrorResponse(error='Invalid file type. Must be .zip').model_dump()), 400
     
     # Check file size before saving
@@ -38,6 +45,17 @@ def upload_ocr_zip(current_user):
     file.seek(0)  # Reset to beginning
     
     if file_size > MAX_ZIP_SIZE:
+        logger.warning(
+            'OCR upload rejected due to oversized payload',
+            extra={
+                'event': {
+                    'source': 'route',
+                    'blueprint': 'ocr',
+                    'file_size': file_size,
+                    'max_size': MAX_ZIP_SIZE,
+                }
+            },
+        )
         return jsonify(generic_schemas.ErrorResponse(error=f'File too large. Maximum size is {MAX_ZIP_SIZE // (1024*1024)}MB').model_dump()), 400
                 
     filename = secure_filename(file.filename)
@@ -65,5 +83,9 @@ def get_raw_text_image(current_user, text_id):
         return send_from_directory(IMAGES_FOLDER, raw_text.image_path)
         
     except NoResultFound:
+        logger.warning(
+            'Raw text image requested for nonexistent record',
+            extra={'event': {'source': 'route', 'blueprint': 'ocr', 'text_id': text_id}},
+        )
         return jsonify({'error': 'Raw text not found.'}), 404
 

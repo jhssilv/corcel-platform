@@ -7,11 +7,13 @@ from app.tasks.celery_tasks import process_zip_texts
 from app.tasks.constants import TEMP_UPLOADS_FOLDER
 from app.utils.decorators import admin_required
 from app.extensions import limiter
+from app.logging_config import get_logger
 
 from app.schemas import generic as generic_schemas
 
 
 upload_bp = Blueprint('upload', __name__)
+logger = get_logger('app.route.upload', source='route', blueprint='upload')
 
 UPLOAD_FOLDER = TEMP_UPLOADS_FOLDER
 
@@ -32,11 +34,19 @@ def upload_file(current_user):
         
     """
     if 'file' not in request.files:
+        logger.warning(
+            'Upload request missing file',
+            extra={'event': {'source': 'route', 'blueprint': 'upload'}},
+        )
         return jsonify(generic_schemas.ErrorResponse(error='File not found.').model_dump()), 400
     
     file = request.files['file']
     
     if file.filename == '' or not file.filename.endswith('.zip'):
+        logger.warning(
+            'Upload rejected due to invalid file extension',
+            extra={'event': {'source': 'route', 'blueprint': 'upload', 'filename': file.filename}},
+        )
         return jsonify(generic_schemas.ErrorResponse(error='Invalid file type.').model_dump()), 400
                 
     filename = secure_filename(file.filename)
@@ -79,5 +89,16 @@ def task_status(task_id):
     elif task.state == 'FAILURE':
         response['status'] = 'Processing Failed'
         response['error'] = str(task.info)
+        logger.error(
+            'Upload task failed',
+            extra={
+                'event': {
+                    'source': 'route',
+                    'blueprint': 'upload',
+                    'celery_task_id': task_id,
+                    'error': str(task.info),
+                }
+            },
+        )
         
     return jsonify(response)

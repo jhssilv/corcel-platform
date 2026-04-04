@@ -6,6 +6,7 @@ import zipfile
 from PIL import Image
 
 from ..services import ocr_service
+from ..logging_config import get_logger
 from .constants import (
     IMAGE_MAGIC_BYTES,
     IMAGES_FOLDER,
@@ -17,13 +18,16 @@ from .constants import (
 from .persistence import add_to_database
 
 
+logger = get_logger('app.task.ocr_task_logic', source='task', task_module='ocr_task_logic')
+
+
 def run_ocr_zip_pipeline(task, zip_path):
     """
     Process a ZIP file containing images with OCR.
     """
-    print(f"Starting OCR processing for zip: {zip_path}")
+    logger.info('Starting OCR zip pipeline', extra={'event': {'zip_path': zip_path}})
     if not os.path.exists(zip_path):
-        print(f"Error: Zip file not found at {zip_path}")
+        logger.error('OCR zip file not found', extra={'event': {'zip_path': zip_path}})
         raise FileNotFoundError('Temp file not found in server.')
 
     # Ensure images directory exists (in case it was deleted or worker runs in different context)
@@ -49,7 +53,7 @@ def run_ocr_zip_pipeline(task, zip_path):
             ]
 
             total_files = len(file_list)
-            print(f"Found {total_files} images in zip.")
+            logger.info('Found images in OCR zip', extra={'event': {'total_files': total_files}})
 
             if total_files == 0:
                 raise ValueError('The zip file does not contain valid images.')
@@ -61,7 +65,17 @@ def run_ocr_zip_pipeline(task, zip_path):
                 if '..' in filename:
                     raise ValueError(f'Invalid filename (path traversal detected): {filename}')
 
-                print(f"Processing file {index + 1}/{total_files}: {base_name}")
+                logger.info(
+                    'Image processing started',
+                    extra={
+                        'event': {
+                            'status': 'started',
+                            'index': index + 1,
+                            'total_files': total_files,
+                            'file_name': base_name,
+                        }
+                    },
+                )
                 task.update_state(
                     state='PROGRESS',
                     meta={
@@ -71,65 +85,86 @@ def run_ocr_zip_pipeline(task, zip_path):
                     },
                 )
 
-                # 1. Read image from ZIP
-                with zip_ref.open(filename) as file:
-                    image_bytes = file.read()
+                try:
+                    # 1. Read image from ZIP
+                    with zip_ref.open(filename) as file:
+                        image_bytes = file.read()
 
-                # Validate magic bytes to ensure it's actually an image
-                is_valid_image = False
-                for magic in IMAGE_MAGIC_BYTES:
-                    if image_bytes.startswith(magic):
-                        is_valid_image = True
-                        break
+                    # Validate magic bytes to ensure it's actually an image
+                    is_valid_image = False
+                    for magic in IMAGE_MAGIC_BYTES:
+                        if image_bytes.startswith(magic):
+                            is_valid_image = True
+                            break
 
-                if not is_valid_image:
-                    raise ValueError(
-                        f'Invalid image file format (magic bytes check failed): {base_name}'
+                    if not is_valid_image:
+                        raise ValueError(
+                            f'Invalid image file format (magic bytes check failed): {base_name}'
+                        )
+
+                    # 2. Convert/Optimize Image (e.g. to JPG)
+                    # Set PIL protection limits
+                    Image.MAX_IMAGE_PIXELS = OCR_MAX_IMAGE_PIXELS
+
+                    image = Image.open(io.BytesIO(image_bytes))
+
+                    # Check image dimensions before processing
+                    width, height = image.size
+                    if width > OCR_MAX_IMAGE_DIMENSION or height > OCR_MAX_IMAGE_DIMENSION:
+                        raise ValueError(
+                            f'Image dimensions too large ({width}x{height}) for {base_name}'
+                        )
+
+                    # Ensure RGB
+                    if image.mode != 'RGB':
+                        image = image.convert('RGB')
+
+                    # Save to permanent storage
+                    # structure: images/<uuid>_<filename>.jpg
+                    clean_name = os.path.splitext(base_name)[0] + '.jpg'
+                    storage_filename = f"{uuid.uuid4()}_{clean_name}"
+                    storage_path = os.path.join(IMAGES_FOLDER, storage_filename)
+
+                    image.save(storage_path, format='JPEG', quality=85)
+                    logger.info('Image saved for OCR', extra={'event': {'storage_path': storage_path}})
+
+                    # 3. Perform OCR
+                    # Use the saved file path or the bytes. Service accepts path.
+                    logger.info('Calling OCR service', extra={'event': {'file_name': base_name}})
+                    extracted_text = ocr_service.perform_ocr(storage_path)
+
+                    # 4. Store raw text without tokenization
+                    # Use only the base filename (last part after / or \\\)
+                    results[base_name] = {
+                        'text_content': extracted_text,
+                        'image_path': storage_filename,
+                    }
+                    logger.info(
+                        'Image processing finished',
+                        extra={
+                            'event': {
+                                'status': 'success',
+                                'file_name': base_name,
+                                'extracted_chars': len(extracted_text),
+                            }
+                        },
                     )
-
-                # 2. Convert/Optimize Image (e.g. to JPG)
-                # Set PIL protection limits
-                Image.MAX_IMAGE_PIXELS = OCR_MAX_IMAGE_PIXELS
-
-                image = Image.open(io.BytesIO(image_bytes))
-
-                # Check image dimensions before processing
-                width, height = image.size
-                if width > OCR_MAX_IMAGE_DIMENSION or height > OCR_MAX_IMAGE_DIMENSION:
-                    raise ValueError(
-                        f'Image dimensions too large ({width}x{height}) for {base_name}'
+                except Exception as e:
+                    logger.exception(
+                        'Image processing finished with error',
+                        extra={
+                            'event': {
+                                'status': 'error',
+                                'file_name': base_name,
+                                'error': str(e),
+                            }
+                        },
                     )
+                    raise
 
-                # Ensure RGB
-                if image.mode != 'RGB':
-                    image = image.convert('RGB')
-
-                # Save to permanent storage
-                # structure: images/<uuid>_<filename>.jpg
-                clean_name = os.path.splitext(base_name)[0] + '.jpg'
-                storage_filename = f"{uuid.uuid4()}_{clean_name}"
-                storage_path = os.path.join(IMAGES_FOLDER, storage_filename)
-
-                image.save(storage_path, format='JPEG', quality=85)
-                print(f"Image saved to {storage_path}")
-
-                # 3. Perform OCR
-                # Use the saved file path or the bytes. Service accepts path.
-                print(f"Calling OCR Service for {base_name}...")
-                extracted_text = ocr_service.perform_ocr(storage_path)
-                print(f"OCR Success for {base_name}. Extracted {len(extracted_text)} chars.")
-
-                # 4. Store raw text without tokenization
-                # Use only the base filename (last part after / or \\\)
-                results[base_name] = {
-                    'text_content': extracted_text,
-                    'image_path': storage_filename,
-                }
-                print('Processed OCR: ', base_name)
-
-        print(f"Adding {len(results)} texts to database...")
-        add_to_database(results)
-        print('Database update complete.')
+            logger.info('Persisting OCR results to database', extra={'event': {'count': len(results)}})
+            add_to_database(results)
+            logger.info('OCR zip pipeline finished', extra={'event': {'status': 'success', 'count': len(results)}})
 
         return {
             'status': 'Concluido',
@@ -139,7 +174,10 @@ def run_ocr_zip_pipeline(task, zip_path):
         }
 
     except Exception as e:
-        print(f"Fatal error in process_ocr_zip: {e}")
+        logger.exception(
+            'OCR zip pipeline finished with error',
+            extra={'event': {'status': 'error', 'error': str(e)}},
+        )
         raise RuntimeError(f'OCR Processing Error: {str(e)}') from e
     finally:
         if os.path.exists(zip_path):

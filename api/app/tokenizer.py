@@ -6,7 +6,11 @@ from hunspell import HunSpell
 from spellchecker import SpellChecker
 import requests
 import json
-import logging
+
+from app.logging_config import get_logger
+
+
+logger = get_logger('app.task.tokenizer', source='task', task_module='text_task_logic')
 
 def _get_resource_path(relative_path):
     base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -19,18 +23,18 @@ def _download_dict():
     data = {}
 
     if not os.path.exists(txt_file_path):
-        print("Downloading dictionary...")
+        logger.info('Downloading tokenizer dictionary')
         try:
             r = requests.get(dict_url)
             with open(txt_file_path, "wb") as f:
                 f.write(r.content)
-            print("Download finished.")
+            logger.info('Tokenizer dictionary download finished')
         except Exception as e:
-            print(f"Error downloading dictionary: {e}")
+            logger.exception('Error downloading tokenizer dictionary', extra={'event': {'error': str(e)}})
             return
 
     if not os.path.exists(json_file_path):
-        print("Converting dictionary to JSON...")
+        logger.info('Converting tokenizer dictionary to JSON')
         with open(txt_file_path, 'r', encoding='utf-8') as file:
             for index, line in enumerate(file, start=1):
                 data[line.strip()] = 1 # removes blank spaces
@@ -38,7 +42,7 @@ def _download_dict():
         # conversion to json
         with open(json_file_path, 'w', encoding='utf-8') as json_file:
             json.dump(data, json_file, ensure_ascii=False, indent=4)
-        print("JSON dictionary created.")
+        logger.info('Tokenizer JSON dictionary created')
 
 class Tokenizer:
     def __init__(self):
@@ -50,14 +54,14 @@ class Tokenizer:
         if self._nlp:
             return
 
-        print("Loading Spacy/Hunspell resources (Tokenizer)...")
+        logger.info('Loading Spacy/Hunspell resources')
         dic_path = os.getenv('HUNSPELL_DIC', '/usr/share/hunspell/pt_BR.dic')
         aff_path = os.getenv('HUNSPELL_AFF', '/usr/share/hunspell/pt_BR.aff')
         
         try:
             self._hobj = HunSpell(dic_path, aff_path)
         except Exception as e:
-            print(f"Hunspell load error: {e}. Ensure pt_BR dictionaries are installed.")
+            logger.exception('Hunspell load error', extra={'event': {'error': str(e)}})
 
         _download_dict()
         os.makedirs(_get_resource_path('dicts/'), exist_ok=True)            
@@ -71,9 +75,9 @@ class Tokenizer:
             nlp.tokenizer = spacy.blank("pt").tokenizer
             self._nlp = nlp
         except Exception as e:
-            print(f"Spacy load error: {e}")
+            logger.exception('spaCy resource load error', extra={'event': {'error': str(e)}})
             
-        print("Tokenizer Resources loaded.")
+        logger.info('Tokenizer resources loaded')
 
     @property
     def nlp(self):

@@ -7,10 +7,12 @@ from app.utils.decorators import login_required
 import app.database.queries as queries
 from app.schemas import generic as generic_schemas
 from app.extensions import db
+from app.logging_config import get_logger
 
 session = db.session
 
 assignment_bp = Blueprint('assignment', __name__)
+logger = get_logger('app.route.assignment', source='route', blueprint='assignment')
 
 
 class BulkAssignRequest(BaseModel):
@@ -64,6 +66,10 @@ def bulk_assign_texts(current_user, body: BulkAssignRequest):
         }), 200
         
     except Exception as e:
+        logger.exception(
+            'Bulk assignment failed',
+            extra={'event': {'source': 'route', 'blueprint': 'assignment', 'error': str(e)}},
+        )
         return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
 
 
@@ -105,4 +111,8 @@ def bulk_unassign_texts(current_user, body: BulkAssignRequest):
         }), 200
         
     except Exception as e:
+        logger.exception(
+            'Bulk unassignment failed',
+            extra={'event': {'source': 'route', 'blueprint': 'assignment', 'error': str(e)}},
+        )
         return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
