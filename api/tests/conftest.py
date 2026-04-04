@@ -6,6 +6,7 @@ from app.database.models import User, Base
 # Set environment variables BEFORE any imports of app modules
 os.environ['DATABASE_URL'] = 'sqlite:///:memory:'
 os.environ['TESTING'] = 'True'
+os.environ['RATELIMIT_ENABLED'] = 'False'
 
 from app.app import create_app
 
@@ -20,8 +21,11 @@ def app():
         "WTF_CSRF_ENABLED": False,  # Disable CSRF for testing if used
         "JWT_COOKIE_CSRF_PROTECT": False, # Disable JWT CSRF for testing
         "CELERY_BROKER_URL": "memory://",
-        "CELERY_RESULT_BACKEND": "memory://"
+        "CELERY_RESULT_BACKEND": "memory://",
+        "RATELIMIT_ENABLED": False,
     })
+    from app.extensions import limiter
+    limiter.enabled = False
 
     with app.app_context():
         # Create tables for models defined with Base
@@ -59,6 +63,7 @@ def auth_client(client):
         "username": "testuser",
         "password": "password123"
     })
+    assert response.status_code == 200
     
     # The client now has the cookies set
     return client
@@ -78,5 +83,6 @@ def admin_client(client):
         "username": "adminuser",
         "password": "adminpass"
     })
+    assert client.get('/api/me').status_code == 200
     
     return client

@@ -2,7 +2,6 @@ import pytest
 import os
 import io
 import zipfile
-import uuid
 from PIL import Image
 from app.tasks.celery_tasks import process_ocr_zip
 from app.tasks.constants import IMAGES_FOLDER
@@ -149,10 +148,8 @@ def test_process_ocr_zip_multiple_images(app, mocker, tmp_path):
 def test_process_ocr_zip_file_not_found(app, mocker):
     """Test processing non-existent ZIP file."""
     with app.app_context():
-        result = process_ocr_zip.run("/non/existent/path.zip")
-        
-        assert 'error' in result
-        assert 'not found' in result['error'].lower()
+        with pytest.raises(FileNotFoundError, match='Temp file not found in server'):
+            process_ocr_zip.run('/non/existent/path.zip')
 
 
 def test_process_ocr_zip_no_images(app, mocker, tmp_path):
@@ -163,10 +160,8 @@ def test_process_ocr_zip_no_images(app, mocker, tmp_path):
         zf.writestr('readme.txt', b'No images here')
     
     with app.app_context():
-        result = process_ocr_zip.run(str(zip_path))
-        
-        assert 'error' in result
-        assert 'not contain valid images' in result['error']
+        with pytest.raises(RuntimeError, match='does not contain valid images'):
+            process_ocr_zip.run(str(zip_path))
 
 
 def test_process_ocr_zip_mixed_files(app, mocker, tmp_path):
@@ -302,8 +297,8 @@ def test_process_ocr_zip_unique_filenames(app, mocker, tmp_path):
             os.remove(img_path)
 
 
-def test_process_ocr_zip_ocr_error_continues(app, mocker, tmp_path):
-    """Test that OCR error on one image doesn't stop processing others."""
+def test_process_ocr_zip_ocr_error_raises_runtime_error(app, mocker, tmp_path):
+    """Test that an OCR failure aborts the pipeline with RuntimeError."""
     zip_path = tmp_path / "error_test.zip"
     
     with zipfile.ZipFile(zip_path, 'w') as zf:
@@ -313,27 +308,26 @@ def test_process_ocr_zip_ocr_error_continues(app, mocker, tmp_path):
             img.save(img_bytes, format='JPEG')
             zf.writestr(f'image_{i}.jpg', img_bytes.getvalue())
     
-    # Make OCR fail for the second image
+    # Make OCR fail during processing
     mock_ocr = mocker.patch('app.tasks.ocr_task_logic.ocr_service.perform_ocr')
-    mock_ocr.side_effect = ["Text 0", Exception("OCR failed"), "Text 2"]
+    mock_ocr.side_effect = Exception('OCR failed')
     
     mocker.patch.object(process_ocr_zip, 'update_state')
+
+    existing_files = set(os.listdir(IMAGES_FOLDER)) if os.path.isdir(IMAGES_FOLDER) else set()
     
     with app.app_context():
-        result = process_ocr_zip.run(str(zip_path))
-        
-        # Should have processed all 3, but only 2 succeeded
-        assert result['total'] == 3
-        assert 'image_0.jpg' in result['result']
-        assert 'image_2.jpg' in result['result']
-        assert 'error' in result['result']['image_1.jpg']
-        
-        # Only 2 should be in database (errors filtered out)
+        with pytest.raises(RuntimeError, match='OCR Processing Error: OCR failed'):
+            process_ocr_zip.run(str(zip_path))
+
+        # No partial persistence is expected because failures abort before DB write.
         raw_texts = db.session.query(RawText).all()
-        assert len(raw_texts) == 2
-        
-        # Cleanup
-        for rt in raw_texts:
-            img_path = os.path.join(IMAGES_FOLDER, rt.image_path)
-            if os.path.exists(img_path):
-                os.remove(img_path)
+        assert len(raw_texts) == 0
+
+    # Cleanup saved temp images generated before the failure.
+    if os.path.isdir(IMAGES_FOLDER):
+        current_files = set(os.listdir(IMAGES_FOLDER))
+        for file_name in current_files - existing_files:
+            file_path = os.path.join(IMAGES_FOLDER, file_name)
+            if os.path.isfile(file_path):
+                os.remove(file_path)
