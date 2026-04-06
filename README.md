@@ -15,3 +15,6 @@ CorSpell currently supports the upload of zipped batches of text files in `txt` 
 
 ### OCR processing
 This application currently supports OCR processing via the Gemini API. Though completely optional, it is suitable for users that need to more easily transcribe and review large quantites of digitized handwritten documents.
+
+## Documentation (WIP)
+The documentation for Corspell is available [here](api/docs/README.md). It includes detailed information about the architecture, design decisions, and implementation of the application, as well as instructions for installation and usage. 
