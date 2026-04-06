@@ -1,6 +1,7 @@
 import json
 import os
 import time
+import re
 import requests
 
 from .tokenizer import Tokenizer
@@ -8,6 +9,8 @@ from .logging_config import get_logger
 
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 OLLAMA_MODEL = "gemma3:4b"
+OLLAMA_MIN_CTX = int(os.getenv("OLLAMA_MIN_CTX", "1024"))
+OLLAMA_MAX_CTX = int(os.getenv("OLLAMA_MAX_CTX", "8192"))
 
 logger = get_logger('app.task.text_processor', source='task', task_module='text_task_logic')
 
@@ -22,7 +25,30 @@ class TextProcessor(Tokenizer):
     # Ollama helpers
     # ------------------------------------------------------------------
 
-    def _ollama_generate(self, prompt: str, temperature: float = 0.1) -> str:
+    def _estimate_token_count(self, text: str) -> int:
+        # Heuristic estimate to avoid expensive tokenization calls on each request.
+        if not text:
+            return 0
+
+        char_estimate = (len(text) + 3) // 4
+        word_estimate = len(re.findall(r"\S+", text))
+        return max(char_estimate, word_estimate)
+
+    def _compute_context_size(self, prompt: str, source_text: str) -> int:
+        prompt_tokens = self._estimate_token_count(prompt)
+
+        source_tokens = self._estimate_token_count(source_text)
+        estimated_output_tokens = 96 + min(512, int(source_tokens * 1.8))
+
+        estimated_total = int((prompt_tokens + estimated_output_tokens) * 1.15)
+        estimated_total = max(OLLAMA_MIN_CTX, estimated_total)
+
+        if OLLAMA_MAX_CTX < OLLAMA_MIN_CTX:
+            return estimated_total
+
+        return min(estimated_total, OLLAMA_MAX_CTX)
+
+    def _ollama_generate(self, prompt: str, temperature: float = 0.1, num_ctx: int | None = None) -> str:
         payload = {
             "model": self.model,
             "prompt": prompt,
@@ -31,6 +57,9 @@ class TextProcessor(Tokenizer):
                 "temperature": temperature,
             },
         }
+        if num_ctx is not None:
+            payload["options"]["num_ctx"] = num_ctx
+
         resp = requests.post(
             f"{self.ollama_url}/api/generate",
             json=payload,
@@ -94,7 +123,19 @@ class TextProcessor(Tokenizer):
 
     def _get_llm_corrections(self, text: str) -> dict[str, list[str]]:
         prompt = self._build_prompt(text)
-        raw = self._ollama_generate(prompt)
+        num_ctx = self._compute_context_size(prompt, text)
+        logger.info(
+            'LLM request context estimated',
+            extra={
+                'event': {
+                    'model': self.model,
+                    'estimated_prompt_tokens': self._estimate_token_count(prompt),
+                    'estimated_source_tokens': self._estimate_token_count(text),
+                    'num_ctx': num_ctx,
+                }
+            },
+        )
+        raw = self._ollama_generate(prompt, num_ctx=num_ctx)
         return self._parse_llm_response(raw)
 
     def tokenize_only(self, text: str):
