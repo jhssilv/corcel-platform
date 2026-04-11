@@ -37,6 +37,7 @@ function DownloadDialog({ show, onClose, onDownload }: DownloadDialogProps) {
                 await downloadTexts(useBrackets);
             }
             onClose();
+            addSnackbar({ text: 'Download iniciado com sucesso!', type: 'success' });
         } catch (err) {
             console.error('Download failed:', err);
             addSnackbar({

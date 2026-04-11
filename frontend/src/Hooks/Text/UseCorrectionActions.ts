@@ -20,6 +20,7 @@ export function UseCorrectionActions(
 
     await toggleNormalizedStatus(essay.id);
     await refreshEssay();
+    addSnackbar({ text: 'Status do texto atualizado com sucesso!', type: 'success' });
   };
 
   const handleResetCorrections = async () => {
@@ -34,6 +35,7 @@ export function UseCorrectionActions(
     try {
       await deleteAllNormalizations(essay.id);
       await refreshEssay();
+      addSnackbar({ text: 'Normalizações excluídas com sucesso.', type: 'success' });
     } catch (error) {
       console.error('Failed to delete all normalizations:', error);
       addSnackbar({ text: 'Falha ao excluir normalizações.', type: 'error' });

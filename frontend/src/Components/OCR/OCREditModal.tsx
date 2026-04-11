@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent, type KeyboardEvent, type MouseEvent as ReactMouseEvent, type WheelEvent as ReactWheelEvent } from 'react';
 import '../../styles/ocr_modal.css';
 import { finalizeRawText, getRawTextImage, updateRawText } from '../../Api';
+import { useSnackbar } from '../../Context/UI/SnackbarContext';
 import type { RawTextDetail } from '../../types';
 
 interface OCREditModalProps {
@@ -18,6 +19,7 @@ interface Point {
 }
 
 const OCREditModal = ({ rawText, onClose, onToggleImage, onFinish }: OCREditModalProps) => {
+    const { addSnackbar } = useSnackbar();
     const [textContent, setTextContent] = useState('');
     const [imageHidden, setImageHidden] = useState(false);
     const [zoomLevel, setZoomLevel] = useState(100);
@@ -124,10 +126,12 @@ const OCREditModal = ({ rawText, onClose, onToggleImage, onFinish }: OCREditModa
         setIsSaving(true);
         try {
             await updateRawText(rawText.id, textContent);
+            addSnackbar({ text: 'Texto salvo com sucesso!', type: 'success' });
             onFinish?.();
             onClose();
         } catch (error) {
             console.error('Error saving text:', error);
+            addSnackbar({ text: 'Erro ao salvar texto.', type: 'error' });
         } finally {
             setIsSaving(false);
         }
@@ -150,17 +154,13 @@ const OCREditModal = ({ rawText, onClose, onToggleImage, onFinish }: OCREditModa
             await updateRawText(rawText.id, textContent);
             await finalizeRawText(rawText.id, finalFileName);
 
-            setProcessingState('success');
-            setProcessingMessage('Texto finalizado com sucesso! Agora está disponível para normalização.');
-
-            setTimeout(() => {
-                onFinish?.();
-                onClose();
-            }, 3000);
+            addSnackbar({ text: 'Texto finalizado com sucesso!', type: 'success' });
+            onFinish?.();
+            onClose();
         } catch (error) {
             console.error('Error finalizing text:', error);
-            setProcessingState('error');
-            setProcessingMessage('Erro ao finalizar o texto. Tente novamente.');
+            handleCloseProcessing();
+            addSnackbar({ text: 'Erro ao finalizar o texto.', type: 'error' });
         } finally {
             setIsFinalizing(false);
         }
@@ -340,28 +340,6 @@ const OCREditModal = ({ rawText, onClose, onToggleImage, onFinish }: OCREditModa
                                     <div className="ocr-loading-spinner"></div>
                                 </div>
                                 <p className="ocr-processing-text">{processingMessage}</p>
-                            </>
-                        )}
-
-                        {processingState === 'success' && (
-                            <>
-                                <h3>✓ Sucesso</h3>
-                                <p className="ocr-success-text">{processingMessage}</p>
-                            </>
-                        )}
-
-                        {processingState === 'error' && (
-                            <>
-                                <h3>✗ Erro</h3>
-                                <p className="ocr-error-text">{processingMessage}</p>
-                                <div className="ocr-confirm-modal-actions">
-                                    <button
-                                        className="ocr-action-btn ocr-btn-primary"
-                                        onClick={handleCloseProcessing}
-                                    >
-                                        Fechar
-                                    </button>
-                                </div>
                             </>
                         )}
                     </div>

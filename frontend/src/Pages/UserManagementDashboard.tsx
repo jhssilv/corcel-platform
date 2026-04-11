@@ -59,6 +59,7 @@ function UserManagementDashboard() {
         try {
             await toggleUserActive(username);
             await fetchUsers();
+            addSnackbar({ text: `Status de '${username}' atualizado com sucesso.`, type: 'success' });
         } catch (err) {
             console.error('Failed to toggle active status', err);
             addSnackbar({
@@ -75,8 +76,10 @@ function UserManagementDashboard() {
 
         try {
             await toggleUserAdmin(confirmAdminToggle);
+            const userRef = confirmAdminToggle;
             setConfirmAdminToggle(null);
             await fetchUsers();
+            addSnackbar({ text: `Privilégios de '${userRef}' atualizados com sucesso.`, type: 'success' });
         } catch (err) {
             console.error('Failed to toggle admin status', err);
             addSnackbar({

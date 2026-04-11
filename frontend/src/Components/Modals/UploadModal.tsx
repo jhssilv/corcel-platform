@@ -90,8 +90,10 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 
                     if (failedList.length > 0) {
                          setStatusMessage(`Concluído com ${failedList.length} arquivo(s) com falha.`);
+                         addSnackbar({ text: `Concluído com ${failedList.length} arquivo(s) com falha. Verifique a lista.`, type: 'warning', duration: 6000 });
                     } else {
                          setStatusMessage('Processamento concluído com sucesso!');
+                         addSnackbar({ text: 'Todos os textos enviados com sucesso!', type: 'success' });
                     }
                 } else if (data.state === 'FAILURE') {
                     if (pollingInterval.current) {
@@ -314,12 +316,6 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
                     </div>
 
                     <div className={styles['modal-body']}>
-                        {uploadSuccess && (
-                            <div className={`${styles['status-banner']} ${styles['status-success']}`}>
-                                {statusMessage}
-                            </div>
-                        )}
-                        
                         {failedFiles.length > 0 && !isProcessing && (
                             <div className={`${styles['status-banner']} ${styles['status-error']}`}>
                                 <p><strong>Os seguintes arquivos falharam:</strong></p>
