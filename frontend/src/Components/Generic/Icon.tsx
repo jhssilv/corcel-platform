@@ -36,12 +36,13 @@ export default function Icon({
     style,
 }: IconProps) {
     const IconComponent = iconRegistry[name] ?? fallbackIcon;
+    const resolvedColor = typeof style?.color === 'string' ? style.color : iconColorMap[color];
 
     return (
         <IconComponent
             size={size}
             strokeWidth={strokeWidth}
-            color={iconColorMap[color]}
+            color={resolvedColor}
             className={className}
             style={style}
             aria-label={title}

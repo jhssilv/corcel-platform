@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type DragEvent, type MouseEvent } from 'react';
 import JSZip from 'jszip';
 import { uploadTextArchive, getBatchStatus } from '../../Api/UploadApi';
-import { Badge } from '../Generic';
+import { Badge, Icon } from '../Generic';
 import { useSnackbar } from '../../Context/Generic';
 import styles from '../../styles/upload_modal.module.css';
 import type { BatchStatusItem } from '../../types/api/responses';
@@ -14,9 +14,23 @@ interface UploadModalProps {
 interface UploadErrorShape {
     error?: string;
     message?: string;
+    name?: string;
 }
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+
+const isCanceledUpload = (error: unknown): boolean => {
+    if (error instanceof Error) {
+        return error.name === 'CanceledError' || error.message === 'canceled';
+    }
+
+    if (typeof error === 'object' && error !== null) {
+        const maybeError = error as UploadErrorShape;
+        return maybeError.name === 'CanceledError' || maybeError.message === 'canceled';
+    }
+
+    return false;
+};
 
 const renderTrackingBadge = (status: BatchStatusItem['processing_status']) => {
     if (status === 'PENDING') {
@@ -319,9 +333,9 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
             setFailedFiles([]);
 
             void pollBatchStatus(response.text_ids);
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Erro no upload:', error);
-            if (error.name === 'CanceledError' || error.message === 'canceled') {
+            if (isCanceledUpload(error)) {
                 // Handled in handleCancelRequest
             } else {
                 console.error(error);
@@ -419,9 +433,7 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
                                         </div>
                                     ) : (
                                         <div className={styles['upload-prompt']}>
-                                            <svg className={styles['upload-icon-svg']} viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                            </svg>
+                                            <Icon name="Upload" color="black" className={styles['upload-icon-svg']} style={{ color: 'currentColor' }} />
                                             <p className={styles['upload-text']}>Arraste arquivos TXT, DOCX ou ZIPs</p>
                                             <p className={styles['upload-subtext']}>ou clique para selecionar (Máx 50MB por arquivo)</p>
                                         </div>

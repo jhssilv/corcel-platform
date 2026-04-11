@@ -1,4 +1,4 @@
-import { useEffect, useState, type ChangeEvent } from 'react';
+import { useCallback, useEffect, useState, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TopBar from '../Components/Layout/TopBar';
 import { getUsersData, toggleUserActive, toggleUserAdmin } from '../Api';
@@ -19,7 +19,7 @@ function UserManagementDashboard() {
     const navigate = useNavigate();
     const { addSnackbar } = useSnackbar();
 
-    const fetchUsers = async () => {
+    const fetchUsers = useCallback(async () => {
         try {
             setLoading(true);
             const data = await getUsersData();
@@ -35,11 +35,11 @@ function UserManagementDashboard() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [addSnackbar]);
 
     useEffect(() => {
         void fetchUsers();
-    }, []);
+    }, [fetchUsers]);
 
     useEffect(() => {
         if (searchTerm) {

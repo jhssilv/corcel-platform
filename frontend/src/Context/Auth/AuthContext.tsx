@@ -128,7 +128,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         return () => {
             window.removeEventListener('auth:unauthorized', handleUnauthorized);
         };
-    }, [logout]);
+    }, [logout, addSnackbar]);
 
     const contextValue = useMemo(
         () => ({ isAuthenticated, isAuthLoading, login, logout, username, isAdmin }),

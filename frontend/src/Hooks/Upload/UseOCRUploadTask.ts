@@ -70,7 +70,7 @@ export function UseOCRUploadTask({
 
     setIsValidZip(true);
     setIsValidating(false);
-  }, []);
+  }, [addSnackbar]);
 
   const pollStatus = useCallback((taskId: string) => {
     setStatusMessage('Aguardando início do processamento...');
@@ -133,7 +133,7 @@ export function UseOCRUploadTask({
         console.error('Polling error:', error);
       }
     }, 2000);
-  }, [onSuccess, onUploadComplete, resetOnSuccess, storageKey, successDelayMs]);
+  }, [onSuccess, onUploadComplete, resetOnSuccess, storageKey, successDelayMs, addSnackbar]);
 
   useEffect(() => {
     const savedTaskId = localStorage.getItem(storageKey);
@@ -194,7 +194,7 @@ export function UseOCRUploadTask({
       });
       setIsProcessing(false);
     }
-  }, [isValidZip, pollStatus, storageKey, uploadFile]);
+  }, [isValidZip, pollStatus, storageKey, uploadFile, addSnackbar]);
 
   const handleDragOver = useCallback((event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();

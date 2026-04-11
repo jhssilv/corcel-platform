@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TopBar from '../Components/Layout/TopBar';
-import { Badge } from '../Components/Generic';
+import { Badge, Icon } from '../Components/Generic';
 import DropdownSelect, { type DropdownValue, type SelectOption } from '../Components/Common/DropdownSelect';
 import { bulkAssignTexts, bulkUnassignTexts, getFilteredTextsData, getUsernames } from '../Api';
 import { useSnackbar } from '../Context/Generic';
@@ -76,7 +76,7 @@ function AssignmentsPanel() {
         };
 
         void fetchUsers();
-    }, []);
+    }, [addSnackbar]);
 
     const fetchFilteredTexts = useCallback(async () => {
         try {
@@ -112,7 +112,7 @@ function AssignmentsPanel() {
         } finally {
             setLoading(false);
         }
-    }, [selectedGrades, selectedAssignedUsers, selectedNormalized, searchText]);
+    }, [selectedGrades, selectedAssignedUsers, selectedNormalized, searchText, addSnackbar]);
 
     useEffect(() => {
         const timeoutId = setTimeout(() => {
@@ -309,10 +309,7 @@ function AssignmentsPanel() {
                         onClick={() => setMode('assign')}
                         style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M5 12h14" />
-                            <path d="M12 5v14" />
-                        </svg>
+                        <Icon name="Plus" color="black" size={18} style={{ color: 'currentColor' }} />
                         Atribuir Textos
                     </button>
                     <button
@@ -320,9 +317,7 @@ function AssignmentsPanel() {
                         onClick={() => setMode('unassign')}
                         style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M5 12h14" />
-                        </svg>
+                        <Icon name="Minus" color="black" size={18} style={{ color: 'currentColor' }} />
                         Remover Atribuições
                     </button>
                 </div>

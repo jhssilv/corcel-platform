@@ -50,7 +50,9 @@ export function UseTextSelection(essay: TextDetailResponse | null): UseTextSelec
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [suggestForAll, setSuggestForAll] = useState(false);
 
-  const tokens = (essay?.tokens ?? []) as unknown as EssayToken[];
+  const tokens = useMemo(() => {
+    return (essay?.tokens ?? []) as unknown as EssayToken[];
+  }, [essay?.tokens]);
 
   useEffect(() => {
     setSelectedStartIndex(null);

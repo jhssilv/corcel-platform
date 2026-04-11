@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import EssaySelector from '../Components/Text/EssaySelector';
 import OCREditModal from '../Components/OCR/OCREditModal';
 import OCRUploadSection from '../Components/OCR/OCRUploadSection';
+import { Icon } from '../Components/Generic';
 import TopBar from '../Components/Layout/TopBar';
 import { getRawTextById } from '../Api';
 import { useToast } from '../Context/Generic';
@@ -74,9 +75,7 @@ function OCRPage() {
                                 window.location.href = '/main';
                             }}
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M19 12H5M12 19l-7-7 7-7" />
-                            </svg>
+                            <Icon name="ArrowLeft" color="black" size={16} style={{ color: 'currentColor' }} />
                             Voltar
                         </button>
                         <h2 style={{ margin: 0, fontSize: '1.2rem', color: '#fff' }}>Buscar Textos Transcritos Com OCR</h2>

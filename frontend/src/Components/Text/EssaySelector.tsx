@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import DropdownSelect, { type DropdownValue, type SelectOption } from '../Common/DropdownSelect';
+import { Icon } from '../Generic';
 import { getRawTextsData, getTextsData, getUsernames } from '../../Api';
 import { useSnackbar } from '../../Context/Generic';
 import type { RawTextMetadata, TextMetadata } from '../../types';
@@ -60,7 +61,7 @@ const EssaySelector = ({
         };
 
         void fetchUsernames();
-    }, []);
+    }, [addSnackbar]);
 
     useEffect(() => {
         const fetchTexts = async () => {
@@ -78,7 +79,7 @@ const EssaySelector = ({
         };
 
         void fetchTexts();
-    }, [refreshTrigger, onlyRaw]);
+    }, [refreshTrigger, onlyRaw, addSnackbar]);
 
     const fuzzySearchLogic = (candidateLabel: string, input: string) => {
         if (!input) {
@@ -214,9 +215,7 @@ const EssaySelector = ({
                         blurInputOnSelect={false}
                     />
                     <div className={styles['info-tooltip-container']}>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={styles['info-icon']}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
-                        </svg>
+                        <Icon name="CircleHelp" color="black" className={styles['info-icon']} style={{ color: 'currentColor' }} />
                         <div className={styles['tooltip-text']}>
                             Digite o id do texto para buscar. Exemplo: &quot;2015 n4&quot; encontrará &quot;2015_n4_12345.txt&quot;.
                         </div>

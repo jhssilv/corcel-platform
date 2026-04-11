@@ -1,5 +1,6 @@
 import { type MouseEvent as ReactMouseEvent } from 'react';
 import '../../styles/ocr_upload_modal.css';
+import { Icon } from '../Generic';
 import { UseOCRUploadTask } from '../../Hooks/Upload/UseOCRUploadTask';
 
 interface OCRUploadSectionProps {
@@ -40,9 +41,7 @@ function OCRUploadSection({ onUploadComplete }: OCRUploadSectionProps) {
                     >
                         {!uploadFile ? (
                             <>
-                                <svg className="upload-icon-svg" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                </svg>
+                                <Icon name="Upload" color="black" className="upload-icon-svg" style={{ color: 'currentColor' }} />
                                 <div className="upload-text-container">
                                     <p className="upload-main-text">
                                         {isDragging ? 'Solte o arquivo aqui' : 'Arraste e solte seu arquivo ZIP aqui'}
@@ -62,17 +61,15 @@ function OCRUploadSection({ onUploadComplete }: OCRUploadSectionProps) {
                             </>
                         ) : (
                             <div className="file-info-container">
-                                <svg className="file-icon-svg" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                </svg>
+                                <Icon name="FileText" color="black" className="file-icon-svg" style={{ color: 'currentColor' }} />
                                 <div className="file-details">
                                     <span className="file-name">{uploadFile.name}</span>
                                     <span className="file-size">{(uploadFile.size / 1024 / 1024).toFixed(2)} MB</span>
                                 </div>
                                 <div className="file-status">
                                     {isValidating && <span className="validating">Validando...</span>}
-                                    {!isValidating && isValidZip && <span className="valid-mark">✓ Válido</span>}
-                                    {!isValidating && !isValidZip && hasError && <span className="invalid-mark">✗ Inválido</span>}
+                                    {!isValidating && isValidZip && <span className="valid-mark">Válido</span>}
+                                    {!isValidating && !isValidZip && hasError && <span className="invalid-mark">Inválido</span>}
                                 </div>
                                 <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
                                     <button
@@ -82,7 +79,7 @@ function OCRUploadSection({ onUploadComplete }: OCRUploadSectionProps) {
                                             clearFileSelection();
                                         }}
                                     >
-                                        ✕ Remover
+                                        Remover
                                     </button>
                                     <button
                                         className={`confirm-button ${isValidZip && !isValidating ? 'enabled' : ''}`}

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ChangeEvent, type MouseEvent as ReactMouseEvent, type MutableRefObject, type Ref } from 'react';
+import { Icon } from '../Generic';
 import styles from '../../styles/candidates_side_panel.module.css';
 import { toggleToBeNormalized } from '../../Api';
 
@@ -159,9 +160,7 @@ const CandidatesSidePanel = ({
             }}
         >
             <button className={styles['close-panel-button']} onClick={onClose} title="Fechar painel">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                    <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z" />
-                </svg>
+                <Icon name="X" color="black" size={16} style={{ color: 'currentColor' }} />
             </button>
             <div className={styles['candidates-header']} onMouseDown={handleDragStart}>
                 {hasCandidates && singleWordSelected ? 'Alternativas para ' : 'Substituir '}
@@ -195,7 +194,7 @@ const CandidatesSidePanel = ({
                             }
                         }}
                     >
-                        &#128393;
+                        <Icon name="Pencil" color="black" size={16} style={{ color: 'currentColor' }} />
                     </button>
                     <button
                         data-testid="delete-button"
@@ -205,7 +204,7 @@ const CandidatesSidePanel = ({
                             onSelectCandidate('');
                         }}
                     >
-                        &#128465;
+                        <Icon name="Trash2" color="black" size={16} style={{ color: 'currentColor' }} />
                     </button>
                     <button
                         data-testid="toggle-suggestion-button"
@@ -213,9 +212,7 @@ const CandidatesSidePanel = ({
                         title="Remover Marcação de Não Normalizado"
                         onClick={() => setShowRemoveConfirmation(true)}
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z" />
-                        </svg>
+                        <Icon name="CheckCircle2" color="black" size={16} style={{ color: 'currentColor' }} />
                     </button>
                 </div>
 
@@ -229,9 +226,7 @@ const CandidatesSidePanel = ({
                         Sugestão Global
                     </label>
                     <div className={styles['info-tooltip-container']}>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={styles['info-icon']}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
-                        </svg>
+                        <Icon name="CircleHelp" color="black" className={styles['info-icon']} style={{ color: 'currentColor' }} />
                         <div className={styles['tooltip-text']}>
                             Ao marcar esta opção, o novo token será sugerida para todas as ocorrências deste token nos textos.
                         </div>

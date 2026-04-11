@@ -35,7 +35,7 @@ function WhitelistModal({ isOpen, onClose }: WhitelistModalProps) {
         if (isOpen) {
             void fetchWhitelist();
         }
-    }, [isOpen]);
+    }, [isOpen, addSnackbar]);
 
     const handleUpdate = async () => {
         setIsUpdating(true);

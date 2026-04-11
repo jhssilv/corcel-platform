@@ -4,6 +4,7 @@ import registerIcon from '../../assets/register.svg';
 import reportIcon from '../../assets/report.svg';
 import uploadIcon from '../../assets/upload.svg';
 import whitelistIcon from '../../assets/whitelist.svg';
+import { Icon } from '../Generic';
 import styles from '../../styles/top_bar.module.css';
 
 interface SidePanelProps {
@@ -87,11 +88,11 @@ function SidePanel({
 
                     <div className={styles['panel-ocr-section']}>
                         <button className={`${styles['panel-button']} ${styles['ocr-button']}`} onClick={onOCR}>
-                            <span style={{ fontSize: '1.2rem', marginRight: '0.5rem' }}>📷</span>
+                            <Icon name="Camera" color="black" size={20} style={{ color: 'currentColor' }} />
                             <span className={styles['button-text']}>Módulo OCR</span>
                         </button>
                         <button className={`${styles['panel-button']} ${styles['assignments-button']}`} onClick={onAssignments}>
-                            <span style={{ fontSize: '1.2rem', marginRight: '0.5rem' }}>📋</span>
+                            <Icon name="ClipboardList" color="black" size={20} style={{ color: 'currentColor' }} />
                             <span className={styles['button-text']}>Atribuir Textos</span>
                         </button>
                     </div>
