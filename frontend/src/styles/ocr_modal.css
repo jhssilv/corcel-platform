@@ -382,19 +382,3 @@
     font-size: 1rem;
     margin: 1rem 0 0 0;
 }
-
-.ocr-success-text {
-    text-align: center;
-    color: var(--color-success-text);
-    font-size: 1rem;
-    margin: 1rem 0;
-    line-height: 1.6;
-}
-
-.ocr-error-text {
-    text-align: center;
-    color: var(--color-error-text);
-    font-size: 1rem;
-    margin: 1rem 0;
-    line-height: 1.6;
-}
