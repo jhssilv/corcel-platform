@@ -3,15 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import TopBar from '../Components/Layout/TopBar';
 import { authenticateUser } from '../Api';
 import { useAuth } from '../Context/Auth/UseAuth';
+import { useSnackbar } from '../Context/UI/SnackbarContext';
 import '../styles/login_page.css';
 
 interface LoginErrorShape {
     error?: string;
-    response?: {
-        data?: {
-            error?: string;
-        };
-    };
 }
 
 function LoginPage() {
@@ -19,6 +15,7 @@ function LoginPage() {
     const [password, setPassword] = useState('');
     const navigate = useNavigate();
     const { login } = useAuth();
+    const { addSnackbar } = useSnackbar();
 
     const handleUsernameChange = (event: ChangeEvent<HTMLInputElement>) => {
         setUsername(event.target.value);
@@ -35,10 +32,13 @@ function LoginPage() {
             const loginData = await authenticateUser(username, password);
             login(username, loginData.isAdmin);
             navigate('/main');
-        } catch (error) {
-            console.error(error);
-            const typedError = error as LoginErrorShape;
-            alert(typedError.error || typedError.response?.data?.error || 'Login failed');
+        } catch (err) {
+            console.error(err);
+            addSnackbar({
+                text: 'Falha no login. Verifique suas credenciais.',
+                type: 'error',
+                duration: 4000
+            });
         }
     };
 

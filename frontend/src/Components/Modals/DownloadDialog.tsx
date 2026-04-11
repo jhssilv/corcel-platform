@@ -1,6 +1,7 @@
 import { useEffect, useState, type ChangeEvent, type MouseEvent as ReactMouseEvent } from 'react';
 import '../../styles/download_dialog.css';
 import downloadTexts from '../../Api/DownloadTexts';
+import { useSnackbar } from '../../Context/UI/SnackbarContext';
 
 interface DownloadDialogProps {
     show: boolean;
@@ -11,6 +12,7 @@ interface DownloadDialogProps {
 function DownloadDialog({ show, onClose, onDownload }: DownloadDialogProps) {
     const [useBrackets, setUseBrackets] = useState(false);
     const [confirmEnabled, setConfirmEnabled] = useState(false);
+    const { addSnackbar } = useSnackbar();
 
     useEffect(() => {
         if (!show) {
@@ -28,13 +30,21 @@ function DownloadDialog({ show, onClose, onDownload }: DownloadDialogProps) {
     }
 
     const handleSubmitClick = async () => {
-        if (onDownload) {
-            await onDownload(useBrackets);
-        } else {
-            await downloadTexts(useBrackets);
+        try {
+            if (onDownload) {
+                await onDownload(useBrackets);
+            } else {
+                await downloadTexts(useBrackets);
+            }
+            onClose();
+        } catch (err) {
+            console.error('Download failed:', err);
+            addSnackbar({
+                text: 'Erro ao realizar o download.',
+                type: 'error',
+                duration: 5000
+            });
         }
-
-        onClose();
     };
 
     const handleOverlayClick = (event: ReactMouseEvent<HTMLDivElement>) => {

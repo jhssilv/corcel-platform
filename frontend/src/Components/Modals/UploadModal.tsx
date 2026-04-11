@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type DragEvent, type MouseEvent } from 'react';
 import JSZip from 'jszip';
 import { getTaskStatus, uploadTextArchive } from '../../Api';
+import { useSnackbar } from '../../Context/UI/SnackbarContext';
 import styles from '../../styles/upload_modal.module.css';
 
 interface UploadModalProps {
@@ -18,7 +19,7 @@ const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 function UploadModal({ isOpen, onClose }: UploadModalProps) {
     const [stagedFiles, setStagedFiles] = useState<File[]>([]);
     const [ignoredFiles, setIgnoredFiles] = useState<string[]>([]);
-    const [uploadError, setUploadError] = useState('');
+    const { addSnackbar } = useSnackbar();
     const [isDragging, setIsDragging] = useState(false);
     const [isValidating, setIsValidating] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
@@ -33,7 +34,6 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
     const resetState = useCallback(() => {
         setStagedFiles([]);
         setIgnoredFiles([]);
-        setUploadError('');
         setIsDragging(false);
         setIsProcessing(false);
         setProgress(0);
@@ -101,7 +101,11 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 
                     localStorage.removeItem('currentTaskId');
                     setIsProcessing(false);
-                    setUploadError(`Erro do Servidor: ${data.error || 'Erro inesperado'}`);
+                    addSnackbar({
+                        text: 'Erro do Servidor ao processar arquivos.',
+                        type: 'error',
+                        duration: 5000
+                    });
                 }
             } catch (error) {
                 console.error('Polling error:', error);
@@ -132,7 +136,6 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 
     const processFiles = async (files: FileList | File[]) => {
         setIsValidating(true);
-        setUploadError('');
         setUploadSuccess(false);
         setFailedFiles([]);
         
@@ -191,7 +194,10 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
             setIgnoredFiles((prev) => [...prev, ...newIgnored]);
             
         } catch (error) {
-            setUploadError('Erro ao ler arquivos. Verifique se o ZIP não está corrompido.');
+            addSnackbar({
+                text: 'Erro ao ler arquivos. Verifique se o ZIP não está corrompido.',
+                type: 'error',
+            });
             console.error('File validation error:', error);
         } finally {
             setIsValidating(false);
@@ -246,14 +252,13 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
         }
         setIsProcessing(false);
         setStatusMessage('Upload cancelado.');
-        setUploadError('Operação cancelada pelo usuário.');
+        addSnackbar({ text: 'Operação cancelada pelo usuário.', type: 'info' });
     };
 
     const handleConfirm = async () => {
         if (stagedFiles.length === 0) return;
 
         setIsProcessing(true);
-        setUploadError('');
         setStatusMessage('Compactando arquivos para envio...');
         setProgress(0);
 
@@ -282,8 +287,8 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
             if (error.name === 'CanceledError' || error.message === 'canceled') {
                 // Handled in handleCancelRequest
             } else {
-                const typedError = error as UploadErrorShape;
-                setUploadError(typedError.error || typedError.message || 'Falha ao enviar arquivos.');
+                console.error(error);
+                addSnackbar({ text: 'Falha ao enviar arquivos.', type: 'error', duration: 5000 });
                 setIsProcessing(false);
             }
         }
@@ -427,8 +432,6 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
                                 )}
                             </div>
                         )}
-
-                        {uploadError && <div className={styles['upload-error']}>{uploadError}</div>}
                     </div>
 
                     <div className={styles['modal-footer']}>

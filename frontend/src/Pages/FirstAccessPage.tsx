@@ -38,8 +38,8 @@ function FirstAccessPage() {
                 navigate('/');
             }, 2000);
         } catch (error) {
-            const typedError = error as ApiErrorShape;
-            setMessage({ text: typedError.error || 'Erro ao ativar conta.', type: 'error' });
+            console.error(error);
+            setMessage({ text: 'Erro ao ativar conta.', type: 'error' });
         } finally {
             setIsSubmitting(false);
         }

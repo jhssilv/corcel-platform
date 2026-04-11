@@ -1,6 +1,7 @@
 import { createContext, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { getCurrentUser, logoutUser } from '../../Api';
 import { STORAGE_KEYS } from '../../types/constants/storageKeys';
+import { useSnackbar } from '../UI/SnackbarContext';
 
 export interface AuthContextValue {
     isAuthenticated: boolean;
@@ -30,6 +31,8 @@ const clearStoredAuth = () => {
 };
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
+    const { addSnackbar } = useSnackbar();
+    
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
         return localStorage.getItem(STORAGE_KEYS.IS_AUTHENTICATED) === 'true';
     });
@@ -116,7 +119,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
                 return;
             }
 
-            alert('Sua sessão expirou. Por favor, faça login novamente.');
+            addSnackbar({ text: 'Sua sessão expirou. Por favor, faça login novamente.', type: 'error', duration: 5000 });
             void logout();
         };
 

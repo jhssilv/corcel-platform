@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type DragEvent } from 'react';
 import { getTaskStatus, uploadOCRArchive } from '../../Api';
 import { validateImageZipFile } from '../../Services/Upload/ZipValidators';
+import { useSnackbar } from '../../Context/UI/SnackbarContext';
 
 interface UploadErrorShape {
   message?: string;
@@ -23,7 +24,8 @@ export function UseOCRUploadTask({
   successDelayMs = 2000,
 }: UseOCRUploadTaskOptions = {}) {
   const [uploadFile, setUploadFile] = useState<File | null>(null);
-  const [uploadError, setUploadError] = useState('');
+  const [hasError, setHasError] = useState(false);
+  const { addSnackbar } = useSnackbar();
   const [isValidZip, setIsValidZip] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
@@ -35,7 +37,7 @@ export function UseOCRUploadTask({
   const clearFileSelection = useCallback(() => {
     setUploadFile(null);
     setIsValidZip(false);
-    setUploadError('');
+    setHasError(false);
   }, []);
 
   const resetState = useCallback(() => {
@@ -52,12 +54,16 @@ export function UseOCRUploadTask({
 
   const validateZipFile = useCallback(async (file: File) => {
     setIsValidating(true);
-    setUploadError('');
+    setHasError(false);
     setIsValidZip(false);
 
     const result = await validateImageZipFile(file);
     if (!result.isValid) {
-      setUploadError(result.error || 'Erro ao validar ZIP.');
+      setHasError(true);
+      addSnackbar({
+        text: result.error || 'Erro ao validar ZIP.',
+        type: 'error',
+      });
       setIsValidating(false);
       return;
     }
@@ -115,7 +121,12 @@ export function UseOCRUploadTask({
           }
 
           setIsProcessing(false);
-          setUploadError(`Falha no processamento: ${data.error || 'Erro desconhecido'}`);
+          setHasError(true);
+          addSnackbar({
+            text: 'Falha no processamento.',
+            type: 'error',
+            duration: 5000,
+          });
           localStorage.removeItem(storageKey);
         }
       } catch (error) {
@@ -154,7 +165,7 @@ export function UseOCRUploadTask({
     }
 
     setIsProcessing(true);
-    setUploadError('');
+    setHasError(false);
     setStatusMessage('Enviando arquivo...');
 
     try {
@@ -162,7 +173,11 @@ export function UseOCRUploadTask({
       const taskId = response.task_id;
 
       if (!taskId) {
-        setUploadError('O servidor não retornou um ID de tarefa.');
+        setHasError(true);
+        addSnackbar({
+          text: 'O servidor não retornou um ID de tarefa.',
+          type: 'error',
+        });
         setIsProcessing(false);
         return;
       }
@@ -171,8 +186,12 @@ export function UseOCRUploadTask({
       pollStatus(taskId);
     } catch (error) {
       console.error(error);
-      const typedError = error as UploadErrorShape;
-      setUploadError(typedError.message || typedError.error || 'Erro no upload.');
+      setHasError(true);
+      addSnackbar({
+        text: 'Erro no upload.',
+        type: 'error',
+        duration: 5000,
+      });
       setIsProcessing(false);
     }
   }, [isValidZip, pollStatus, storageKey, uploadFile]);
@@ -202,7 +221,7 @@ export function UseOCRUploadTask({
 
   return {
     uploadFile,
-    uploadError,
+    hasError,
     isValidZip,
     isDragging,
     isValidating,

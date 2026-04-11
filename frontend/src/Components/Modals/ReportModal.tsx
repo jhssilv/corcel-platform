@@ -1,5 +1,6 @@
 import { useEffect, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { requestReport } from '../../Api';
+import { useSnackbar } from '../../Context/UI/SnackbarContext';
 import styles from '../../styles/report_modal.module.css';
 
 interface ReportModalProps {
@@ -14,6 +15,7 @@ interface ApiErrorShape {
 
 function ReportModal({ isOpen, onClose, textCount }: ReportModalProps) {
     const [confirmEnabled, setConfirmEnabled] = useState(false);
+    const { addSnackbar } = useSnackbar();
 
     useEffect(() => {
         if (!isOpen) {
@@ -35,9 +37,17 @@ function ReportModal({ isOpen, onClose, textCount }: ReportModalProps) {
 
             onClose();
             await requestReport(textIds);
+            addSnackbar({
+                text: 'Relatório gerado com sucesso!',
+                type: 'success',
+            });
         } catch (error) {
-            const typedError = error as ApiErrorShape;
-            alert(typedError.error || 'Houve um erro ao gerar o relatório.');
+            console.error(error);
+            addSnackbar({
+                text: 'Houve um erro ao gerar o relatório.',
+                type: 'error',
+                duration: 5000
+            });
         }
     };
 

@@ -9,7 +9,7 @@ interface OCRUploadSectionProps {
 function OCRUploadSection({ onUploadComplete }: OCRUploadSectionProps) {
     const {
         uploadFile,
-        uploadError,
+        hasError,
         isValidZip,
         isDragging,
         isValidating,
@@ -72,7 +72,7 @@ function OCRUploadSection({ onUploadComplete }: OCRUploadSectionProps) {
                                 <div className="file-status">
                                     {isValidating && <span className="validating">Validando...</span>}
                                     {!isValidating && isValidZip && <span className="valid-mark">✓ Válido</span>}
-                                    {!isValidating && !isValidZip && uploadError && <span className="invalid-mark">✗ Inválido</span>}
+                                    {!isValidating && !isValidZip && hasError && <span className="invalid-mark">✗ Inválido</span>}
                                 </div>
                                 <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
                                     <button
@@ -97,7 +97,6 @@ function OCRUploadSection({ onUploadComplete }: OCRUploadSectionProps) {
                             </div>
                         )}
                     </div>
-                    {uploadError && <div className="error-message">{uploadError}</div>}
                 </>
             ) : (
                 <div className="processing-container">

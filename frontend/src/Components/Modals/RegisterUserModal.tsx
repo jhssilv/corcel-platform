@@ -31,8 +31,8 @@ function RegisterUserModal({ isOpen, onClose }: RegisterUserModalProps) {
             setMessage({ text: response.message || 'Usuário criado com sucesso!', type: 'success' });
             setUsername('');
         } catch (error) {
-            const typedError = error as ApiErrorShape;
-            setMessage({ text: typedError.error || 'Erro ao registrar usuário.', type: 'error' });
+            console.error(error);
+            setMessage({ text: 'Erro ao registrar usuário.', type: 'error' });
         } finally {
             setIsSubmitting(false);
         }

@@ -5,6 +5,7 @@ import TopBar from '../Components/Layout/TopBar';
 import DownloadDialog from '../Components/Modals/DownloadDialog';
 import downloadTexts from '../Api/DownloadTexts';
 import { getNormalizationsByText, getTextById } from '../Api';
+import { useToast } from '../Context/UI/ToastContext';
 import type { Option, TextDetailResponse } from '../types';
 import '../styles/main_page.css';
 
@@ -13,17 +14,26 @@ function MainPage() {
     const [currentText, setCurrentText] = useState<TextDetailResponse | null>(null);
     const [showDownloadDialog, setShowDownloadDialog] = useState(false);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
+    const { addToast } = useToast();
 
     const fetchEssay = useCallback(async () => {
         if (!selectedEssay) {
             return;
         }
 
-        const text = await getTextById(selectedEssay.value);
-        const normalizations = await getNormalizationsByText(selectedEssay.value);
-
-        setCurrentText({ ...text, corrections: normalizations });
-    }, [selectedEssay]);
+        try {
+            const text = await getTextById(selectedEssay.value);
+            const normalizations = await getNormalizationsByText(selectedEssay.value);
+            setCurrentText({ ...text, corrections: normalizations });
+        } catch (err) {
+            console.error('Failed to fetch essay details:', err);
+            addToast({
+                text: 'Erro ao carregar detalhes do texto.',
+                type: 'error',
+                duration: 5000,
+            });
+        }
+    }, [selectedEssay, addToast]);
 
     const handleEssayUpdate = async () => {
         await fetchEssay();

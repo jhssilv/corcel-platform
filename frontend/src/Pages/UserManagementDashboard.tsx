@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import TopBar from '../Components/Layout/TopBar';
 import { getUsersData, toggleUserActive, toggleUserAdmin } from '../Api';
 import { useAuth } from '../Context/Auth/UseAuth';
+import { useSnackbar } from '../Context/UI/SnackbarContext';
 import type { UserData } from '../types';
 import '../styles/main_page.css';
 import '../styles/user_management.css';
@@ -12,11 +13,11 @@ function UserManagementDashboard() {
     const [filteredUsers, setFilteredUsers] = useState<UserData[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
     const [confirmAdminToggle, setConfirmAdminToggle] = useState<string | null>(null);
 
     const { username: currentUsername } = useAuth();
     const navigate = useNavigate();
+    const { addSnackbar } = useSnackbar();
 
     const fetchUsers = async () => {
         try {
@@ -25,8 +26,12 @@ function UserManagementDashboard() {
             setUsers(data);
             setFilteredUsers(data);
         } catch (fetchError) {
-            setError('Failed to load users.');
             console.error(fetchError);
+            addSnackbar({
+                text: 'Failed to load users.',
+                type: 'error',
+                duration: 5000
+            });
         } finally {
             setLoading(false);
         }
@@ -54,8 +59,12 @@ function UserManagementDashboard() {
         try {
             await toggleUserActive(username);
             await fetchUsers();
-        } catch {
-            alert('Failed to toggle active status');
+        } catch (err) {
+            console.error('Failed to toggle active status', err);
+            addSnackbar({
+                text: 'Failed to toggle active status',
+                type: 'error',
+            });
         }
     };
 
@@ -68,8 +77,13 @@ function UserManagementDashboard() {
             await toggleUserAdmin(confirmAdminToggle);
             setConfirmAdminToggle(null);
             await fetchUsers();
-        } catch {
-            alert('Failed to toggle admin status');
+        } catch (err) {
+            console.error('Failed to toggle admin status', err);
+            addSnackbar({
+                text: 'Failed to toggle admin status',
+                type: 'error',
+            });
+            setConfirmAdminToggle(null);
         }
     };
 
@@ -95,8 +109,6 @@ function UserManagementDashboard() {
 
                 {loading ? (
                     <p>Carregando...</p>
-                ) : error ? (
-                    <p className="error">{error}</p>
                 ) : (
                     <div className="user-management-table-container">
                         <table className="user-management-table">

@@ -1,6 +1,7 @@
 import { useEffect, useState, type ChangeEvent, type DragEvent, type MouseEvent as ReactMouseEvent } from 'react';
 import { parseTextFile } from '../../Services/Text/FileParsers';
 import { addToWhitelist, getWhitelist, removeFromWhitelist } from '../../Api';
+import { useSnackbar } from '../../Context/UI/SnackbarContext';
 import styles from '../../styles/whitelist_modal.module.css';
 
 interface WhitelistModalProps {
@@ -13,6 +14,7 @@ function WhitelistModal({ isOpen, onClose }: WhitelistModalProps) {
     const [originalWhitelistText, setOriginalWhitelistText] = useState('');
     const [isUpdating, setIsUpdating] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
+    const { addSnackbar } = useSnackbar();
 
     useEffect(() => {
         const fetchWhitelist = async () => {
@@ -22,7 +24,11 @@ function WhitelistModal({ isOpen, onClose }: WhitelistModalProps) {
                 setWhitelistText(joined);
                 setOriginalWhitelistText(joined);
             } catch (error) {
-                console.error('[TODO] Handle API fetch error:', error);
+                console.error('Handle API fetch error:', error);
+                addSnackbar({
+                    text: 'Falha ao carregar a whitelist.',
+                    type: 'error',
+                });
             }
         };
 
@@ -50,10 +56,17 @@ function WhitelistModal({ isOpen, onClose }: WhitelistModalProps) {
 
             await new Promise((resolve) => setTimeout(resolve, 500));
             setOriginalWhitelistText(whitelistText);
+            addSnackbar({
+                text: 'Whitelist atualizada com sucesso!',
+                type: 'success',
+            });
             onClose();
         } catch (error) {
             console.error('Error updating whitelist:', error);
-            alert('Houve um erro ao atualizar a whitelist.');
+            addSnackbar({
+                text: 'Houve um erro ao atualizar a whitelist.',
+                type: 'error',
+            });
         } finally {
             setIsUpdating(false);
         }
@@ -101,7 +114,10 @@ function WhitelistModal({ isOpen, onClose }: WhitelistModalProps) {
             }
         } catch (error) {
             console.error('Error parsing files:', error);
-            alert('Erro ao ler arquivos de texto.');
+            addSnackbar({
+                text: 'Erro ao ler arquivos de texto.',
+                type: 'error',
+            });
         }
     };
 

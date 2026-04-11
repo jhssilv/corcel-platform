@@ -1,5 +1,6 @@
 import { deleteAllNormalizations, toggleNormalizedStatus } from '../../Api';
 import type { TextDetailResponse } from '../../types';
+import { useSnackbar } from '../../Context/UI/SnackbarContext';
 
 interface UseCorrectionActionsResult {
   handleFinishedToggled: () => Promise<void>;
@@ -10,6 +11,8 @@ export function UseCorrectionActions(
   essay: TextDetailResponse | null,
   refreshEssay: () => Promise<void> | void,
 ): UseCorrectionActionsResult {
+  const { addSnackbar } = useSnackbar();
+
   const handleFinishedToggled = async () => {
     if (!essay) {
       return;
@@ -33,7 +36,7 @@ export function UseCorrectionActions(
       await refreshEssay();
     } catch (error) {
       console.error('Failed to delete all normalizations:', error);
-      alert('Falha ao excluir normalizações.');
+      addSnackbar({ text: 'Falha ao excluir normalizações.', type: 'error' });
     }
   };
 

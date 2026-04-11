@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import DropdownSelect, { type DropdownValue, type SelectOption } from '../Common/DropdownSelect';
 import { getRawTextsData, getTextsData, getUsernames } from '../../Api';
+import { useSnackbar } from '../../Context/UI/SnackbarContext';
 import type { RawTextMetadata, TextMetadata } from '../../types';
 import styles from '../../styles/essay_selector.module.css';
 
@@ -40,12 +41,22 @@ const EssaySelector = ({
     const [filteredEssays, setFilteredEssays] = useState<SelectOption<number>[]>([]);
     const [teachers, setTeachers] = useState<SelectOption<string>[]>([]);
     const [essayInputValue, setEssayInputValue] = useState('');
+    const { addSnackbar } = useSnackbar();
 
     useEffect(() => {
         const fetchUsernames = async () => {
-            const usernamesData = await getUsernames();
-            const usernames = usernamesData.usernames || [];
-            setTeachers(usernames.map((username: string) => ({ value: username, label: username })));
+            try {
+                const usernamesData = await getUsernames();
+                const usernames = usernamesData.usernames || [];
+                setTeachers(usernames.map((username: string) => ({ value: username, label: username })));
+            } catch (err) {
+                console.error('Failed to fetch usernames:', err);
+                addSnackbar({
+                    text: 'Erro ao carregar usuários.',
+                    type: 'error',
+                    duration: 4000
+                });
+            }
         };
 
         void fetchUsernames();
@@ -56,8 +67,13 @@ const EssaySelector = ({
             try {
                 const data = onlyRaw ? await getRawTextsData() : await getTextsData();
                 setTextsData(data);
-            } catch (error) {
-                console.error('Failed to fetch texts data:', error);
+            } catch (err) {
+                console.error('Failed to fetch texts data:', err);
+                addSnackbar({
+                    text: 'Erro ao carregar lista de textos.',
+                    type: 'error',
+                    duration: 5000
+                });
             }
         };
 

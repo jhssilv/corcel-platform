@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import TopBar from '../Components/Layout/TopBar';
 import DropdownSelect, { type DropdownValue, type SelectOption } from '../Components/Common/DropdownSelect';
 import { bulkAssignTexts, bulkUnassignTexts, getFilteredTextsData, getUsernames } from '../Api';
+import { useSnackbar } from '../Context/UI/SnackbarContext';
 import type { FilterTextsRequest, TextMetadata } from '../types';
 import '../styles/assignments_panel.css';
 import '../styles/main_page.css';
@@ -44,9 +45,8 @@ function AssignmentsPanel() {
     const [textsData, setTextsData] = useState<TextMetadata[]>([]);
     const [users, setUsers] = useState<SelectOption<string>[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
     const [processing, setProcessing] = useState(false);
+    const { addSnackbar } = useSnackbar();
 
     const [selectedGrades, setSelectedGrades] = useState<SelectOption<number>[]>([]);
     const [selectedAssignedUsers, setSelectedAssignedUsers] = useState<SelectOption<string>[]>([]);
@@ -67,6 +67,10 @@ function AssignmentsPanel() {
                 setUsers(userOptions);
             } catch (fetchError) {
                 console.error(fetchError);
+                addSnackbar({
+                    text: 'Erro ao carregar usuários.',
+                    type: 'error',
+                });
             }
         };
 
@@ -99,8 +103,11 @@ function AssignmentsPanel() {
             setTextsData(data || []);
             setSelectedTextIds(new Set());
         } catch (fetchError) {
-            setError('Erro ao carregar textos.');
             console.error(fetchError);
+            addSnackbar({
+                text: 'Erro ao carregar textos.',
+                type: 'error',
+            });
         } finally {
             setLoading(false);
         }
@@ -218,11 +225,12 @@ function AssignmentsPanel() {
         }
 
         if (activePreview.length === 0) {
-            setError(
-                mode === 'assign'
+            addSnackbar({
+                text: mode === 'assign'
                     ? 'Nenhum texto será atribuído (todos já estão atribuídos aos usuários selecionados).'
                     : 'Nenhuma atribuição será removida (nenhum texto está atribuído aos usuários selecionados).',
-            );
+                type: 'warning',
+            });
             return;
         }
 
@@ -234,27 +242,33 @@ function AssignmentsPanel() {
 
         try {
             setProcessing(true);
-            setError('');
-            setSuccess('');
 
             const textIds = Array.from(selectedTextIds);
             const usernames = selectedTargetUsers.map((user) => user.value);
 
             if (mode === 'assign') {
                 const result = (await bulkAssignTexts(textIds, usernames)) as AssignmentResult;
-                setSuccess(`Textos atribuídos com sucesso! Total: ${result.totalTexts} textos para ${result.totalUsers} usuários.`);
+                addSnackbar({
+                    text: `Textos atribuídos com sucesso! Total: ${result.totalTexts} textos para ${result.totalUsers} usuários.`,
+                    type: 'success',
+                });
             } else {
                 const result = (await bulkUnassignTexts(textIds, usernames)) as AssignmentResult;
-                setSuccess(`Atribuições removidas com sucesso! Total: ${result.totalTexts} textos de ${result.totalUsers} usuários.`);
+                addSnackbar({
+                    text: `Atribuições removidas com sucesso! Total: ${result.totalTexts} textos de ${result.totalUsers} usuários.`,
+                    type: 'success',
+                });
             }
 
             setSelectedTextIds(new Set());
             setSelectedTargetUsers([]);
             await fetchFilteredTexts();
         } catch (actionError) {
-            const typedError = actionError as ErrorLike;
-            setError(`Erro: ${typedError.message || 'Erro desconhecido'}`);
             console.error(actionError);
+            addSnackbar({
+                text: 'Erro desconhecido ao processar atribuições.',
+                type: 'error',
+            });
         } finally {
             setProcessing(false);
         }
@@ -311,9 +325,6 @@ function AssignmentsPanel() {
                         Remover Atribuições
                     </button>
                 </div>
-
-                {success && <div className="assignments-success">{success}</div>}
-                {error && <div className="assignments-error">{error}</div>}
 
                 <div className="assignments-filters">
                     <div className="assignments-search-row">

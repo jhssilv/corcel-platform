@@ -4,6 +4,7 @@ import OCREditModal from '../Components/OCR/OCREditModal';
 import OCRUploadSection from '../Components/OCR/OCRUploadSection';
 import TopBar from '../Components/Layout/TopBar';
 import { getRawTextById } from '../Api';
+import { useToast } from '../Context/UI/ToastContext';
 import type { Option, RawTextDetail } from '../types';
 import '../styles/main_page.css';
 import '../styles/ocr_toolbar.css';
@@ -15,6 +16,7 @@ function OCRPage() {
     const [currentText, setCurrentText] = useState<OCREditableRawText | null>(null);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const { addToast } = useToast();
 
     const fetchEssay = useCallback(async () => {
         if (!selectedEssay) {
@@ -28,10 +30,15 @@ function OCRPage() {
                 source_file_name: rawText.source_file_name ?? '',
             });
             setIsEditModalOpen(true);
-        } catch (error) {
-            console.error('Failed to fetch raw text', error);
+        } catch (err) {
+            console.error('Failed to fetch raw text', err);
+            addToast({
+                text: 'Erro ao carregar texto OCR.',
+                type: 'error',
+                duration: 5000
+            });
         }
-    }, [selectedEssay]);
+    }, [selectedEssay, addToast]);
 
     useEffect(() => {
         if (selectedEssay) {
