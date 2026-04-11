@@ -12,8 +12,16 @@ from sqlalchemy import (
     ForeignKey,
     PrimaryKeyConstraint,
     UniqueConstraint,
-    func
+    func,
+    Enum as SQLAlchemyEnum
 )
+import enum
+
+class ProcessingStatus(enum.Enum):
+    PENDING = 'PENDING'
+    PROCESSING = 'PROCESSING'
+    READY = 'READY'
+    FAILED = 'FAILED'
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import declarative_base, relationship
 
@@ -57,6 +65,7 @@ class Text(Base):
     texts_association = relationship('TextsUsers', back_populates='text', cascade="all, delete-orphan")
     tokens = relationship('Token', back_populates='text', cascade="all, delete-orphan", order_by='Token.position')
     creation_date = Column(TIMESTAMP, nullable=False, default=func.now())
+    processing_status = Column(SQLAlchemyEnum(ProcessingStatus), nullable=False, default=ProcessingStatus.PENDING)
 
 class RawText(Base):
     """

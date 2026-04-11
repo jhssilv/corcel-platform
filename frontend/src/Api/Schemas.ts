@@ -54,6 +54,7 @@ const TextMetadataSchema = z.object({
     normalizedByUser: z.boolean(),
     sourceFileName: z.string().nullable(),
     isRaw: z.boolean().optional().default(false),
+    processingStatus: z.enum(['PENDING', 'PROCESSING', 'READY', 'FAILED']).default('PENDING'),
 });
 
 /**
@@ -95,6 +96,7 @@ export const TextDetailResponseSchema = z.object({
     assignedToUser: z.boolean(),
     usersWhoNormalized: z.array(z.string()).optional().default([]),
     isRaw: z.boolean().optional().default(false),
+    processingStatus: z.enum(['PENDING', 'PROCESSING', 'READY', 'FAILED']).default('PENDING'),
 });
 
 export const RawTextDetailResponseSchema = z.object({
@@ -146,6 +148,21 @@ export const DownloadRequestSchema = z.object({
 });
 
 export const UploadResponseSchema = z.object({
+    message: z.string(),
+    text_ids: z.array(z.number()),
+});
+
+export const BatchStatusItemSchema = z.object({
+    id: z.number(),
+    source_file_name: z.string(),
+    processing_status: z.enum(['PENDING', 'PROCESSING', 'READY', 'FAILED']),
+});
+
+export const BatchStatusResponseSchema = z.object({
+    statuses: z.array(BatchStatusItemSchema),
+});
+
+export const OCRUploadResponseSchema = z.object({
     task_id: z.string(),
 });
 

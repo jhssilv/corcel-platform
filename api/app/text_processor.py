@@ -4,7 +4,9 @@ import time
 import re
 import requests
 
-from .tokenizer import Tokenizer
+from hunspell import HunSpell
+from spellchecker import SpellChecker
+
 from .logging_config import get_logger
 
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
@@ -14,12 +16,81 @@ OLLAMA_MAX_CTX = int(os.getenv("OLLAMA_MAX_CTX", "8192"))
 
 logger = get_logger('app.task.text_processor', source='task', task_module='text_task_logic')
 
-class TextProcessor(Tokenizer):
+def _get_resource_path(relative_path):
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(base_dir, relative_path)
+
+def _download_dict():
+    dict_url = "https://www.ime.usp.br/~pf/dicios/br-utf8.txt"
+    txt_file_path = _get_resource_path('dicts/br-utf8.txt')
+    json_file_path = _get_resource_path('dicts/br-utf8.json')
+    data = {}
+
+    if not os.path.exists(txt_file_path):
+        logger.info('Downloading text_processor dictionary')
+        try:
+            r = requests.get(dict_url)
+            with open(txt_file_path, "wb") as f:
+                f.write(r.content)
+            logger.info('Text Processor dictionary download finished')
+        except Exception as e:
+            logger.exception('Error downloading dictionary', extra={'event': {'error': str(e)}})
+            return
+
+    if not os.path.exists(json_file_path):
+        logger.info('Converting text_processor dictionary to JSON')
+        with open(txt_file_path, 'r', encoding='utf-8') as file:
+            for index, line in enumerate(file, start=1):
+                data[line.strip()] = 1 # removes blank spaces
+
+        # conversion to json
+        with open(json_file_path, 'w', encoding='utf-8') as json_file:
+            json.dump(data, json_file, ensure_ascii=False, indent=4)
+        logger.info('Text Processor JSON dictionary created')
+
+
+class TextProcessor:
 
     def __init__(self, model: str = OLLAMA_MODEL, ollama_url: str = OLLAMA_BASE_URL):
-        super().__init__()
+        self._hobj = None
+        self._spell = None
         self.model = model
         self.ollama_url = ollama_url.rstrip("/")
+
+    def _load_resources(self):
+        if self._hobj is not None:
+            return
+
+        logger.info('Loading Hunspell resources')
+        dic_path = os.getenv('HUNSPELL_DIC', '/usr/share/hunspell/pt_BR.dic')
+        aff_path = os.getenv('HUNSPELL_AFF', '/usr/share/hunspell/pt_BR.aff')
+        
+        try:
+            self._hobj = HunSpell(dic_path, aff_path)
+        except Exception as e:
+            logger.exception('Hunspell load error', extra={'event': {'error': str(e)}})
+
+        _download_dict()
+        os.makedirs(_get_resource_path('dicts/'), exist_ok=True)            
+
+        sc_path = os.getenv('SPELLCHECKER_DICT', _get_resource_path('dicts/br-utf8.json'))
+        self._spell = SpellChecker(language=None, local_dictionary=sc_path)
+
+    @property
+    def hobj(self):
+        if self._hobj is None:
+            self._load_resources()
+        return self._hobj
+
+    @property
+    def spell(self):
+        if self._spell is None:
+            self._load_resources()
+        return self._spell
+
+    def _is_valid_pt_word(self, word):
+        if not self.hobj: return False
+        return self.hobj.spell(word) or bool(self.spell.known([word]))
 
     # ------------------------------------------------------------------
     # Ollama helpers
@@ -138,22 +209,18 @@ class TextProcessor(Tokenizer):
         raw = self._ollama_generate(prompt, num_ctx=num_ctx)
         return self._parse_llm_response(raw)
 
-    def tokenize_only(self, text: str):
-        """Tokenizes the text without spell checking (inherited from Tokenizer)."""
-        return super().tokenize_only(text)
-
-    def process_text(self, text: str, llm_assists_detection: bool = True):
+    def process_tokens(self, tokens: list[dict], text: str, llm_assists_detection: bool = True):
         """
         Full processing pipeline:
-          1. Tokenize with Spacy.
-          2. Generate dictionary candidates (Hunspell + SpellChecker).
-          3. Ask the LLM (single call) which tokens are incorrect and
+          1. Generate dictionary candidates (Hunspell + SpellChecker) for valid words.
+          2. Ask the LLM (single call) which tokens are incorrect and
              get its suggestions.
-          4. Merge dictionary candidates with LLM suggestions (LLM first).
-          5. Return token list with to_be_normalized flags and suggestions.
+          3. Merge dictionary candidates with LLM suggestions (LLM first).
+          4. Return token dict with to_be_normalized flags and suggestions.
 
         Args:
-            text: The input text to process.
+            tokens: A list of token dictionaries containing 'idx', 'text', 'is_word', and 'whitespace_after'.
+            text: The full original text string for LLM context.
             llm_assists_detection: If True (default), the LLM helps decide
                 whether a word is incorrect (can override dictionary results).
                 If False, only dictionaries determine correctness; the LLM
@@ -165,30 +232,30 @@ class TextProcessor(Tokenizer):
             extra={
                 'event': {
                     'status': 'started',
-                    'text_length': len(text),
+                    'token_count': len(tokens),
                     'llm_assists_detection': llm_assists_detection,
                 }
             },
         )
 
         try:
-            doc = self.nlp(text)
             results = {}
 
             # --- Phase 1: dictionary candidate generation per token -----------
             token_candidates: dict[int, list[str]] = {}
 
-            for i, token in enumerate(doc):
-                word = token.text
+            for token_data in tokens:
+                i = token_data['idx']
+                word = token_data['text']
 
-                if not word.replace("-", "").isalpha():
+                if not token_data['is_word'] or not word.replace("-", "").isalpha():
                     results[i] = {
                         "idx": i,
                         "text": word,
                         "to_be_normalized": False,
                         "suggestions": [],
                         "is_word": False,
-                        "whitespace_after": token.whitespace_,
+                        "whitespace_after": token_data.get('whitespace_after', ''),
                     }
                     continue
 
@@ -219,18 +286,19 @@ class TextProcessor(Tokenizer):
                     "to_be_normalized": False,  # updated later
                     "suggestions": [],
                     "is_word": True,
-                    "whitespace_after": token.whitespace_,
+                    "whitespace_after": token_data.get('whitespace_after', ''),
                 }
 
             # --- Phase 2: LLM error detection ------------------
             llm_corrections = self._get_llm_corrections(text)
 
             # --- Phase 3 -------------------------------------
-            for i, token in enumerate(doc):
+            for token_data in tokens:
+                i = token_data['idx']
                 if not results[i]["is_word"]:
                     continue
 
-                word = token.text
+                word = token_data['text']
                 word_lower = word.lower()
                 dict_is_correct = self._is_valid_pt_word(word)
                 llm_flagged = word_lower in llm_corrections

@@ -11,7 +11,7 @@ interface OCRUploadModalProps {
 function OCRUploadModal({ isOpen, onClose, onUploadComplete }: OCRUploadModalProps) {
     const {
         uploadFile,
-        uploadError,
+        hasError,
         isValidZip,
         isDragging,
         isValidating,
@@ -95,7 +95,7 @@ function OCRUploadModal({ isOpen, onClose, onUploadComplete }: OCRUploadModalPro
                                         <div className="file-status">
                                             {isValidating && <span className="validating">Validando...</span>}
                                             {!isValidating && isValidZip && <span className="valid-mark">✓ Válido</span>}
-                                            {!isValidating && !isValidZip && uploadError && <span className="invalid-mark">✗ Inválido</span>}
+                                            {!isValidating && !isValidZip && hasError && <span className="invalid-mark">✗ Inválido</span>}
                                         </div>
                                         <button
                                             className="remove-file-btn"
@@ -110,7 +110,7 @@ function OCRUploadModal({ isOpen, onClose, onUploadComplete }: OCRUploadModalPro
                                 )}
                             </div>
 
-                            {uploadError && <div className="error-message">{uploadError}</div>}
+                            {hasError && <div className="error-message">Erro durante upload, confira se o arquivo é válido.</div>}
                         </>
                     ) : (
                         <div className="processing-container">

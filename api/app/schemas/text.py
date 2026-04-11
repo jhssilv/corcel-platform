@@ -15,6 +15,7 @@ class TextMetadata(BaseModel):
     normalized_by_user: bool = Field(alias="normalizedByUser", default=False)
     source_file_name: Optional[str] = Field(alias="sourceFileName", default=None)
     users_assigned: List[str] = Field(alias="usersAssigned", default=[])
+    processing_status: str = Field(alias="processingStatus", default="PENDING")
     model_config = ConfigDict(populate_by_name=True)
 
 class TextsDataResponse(BaseModel):
@@ -63,6 +64,7 @@ class TextDetailResponse(BaseModel):
     normalized_by_user: bool = Field(alias="normalizedByUser")
     source_file_name: Optional[str] = Field(alias="sourceFileName")
     assigned_to_user: bool = Field(alias="assignedToUser")
+    processing_status: str = Field(alias="processingStatus", default="PENDING")
     model_config = ConfigDict(populate_by_name=True)
 
 class OCRTokenUpdateRequest(BaseModel):

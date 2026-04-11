@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type DragEvent, type MouseEvent } from 'react';
 import JSZip from 'jszip';
-import { getTaskStatus, uploadTextArchive } from '../../Api';
+import { Clock, Settings, CheckCircle2, XCircle } from 'lucide-react';
+import { uploadTextArchive, getBatchStatus } from '../../Api/UploadApi';
 import { useSnackbar } from '../../Context/UI/SnackbarContext';
 import styles from '../../styles/upload_modal.module.css';
+import type { BatchStatusItem } from '../../types/api/responses';
 
 interface UploadModalProps {
     isOpen: boolean;
@@ -27,6 +29,23 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
     const [statusMessage, setStatusMessage] = useState('');
     const [failedFiles, setFailedFiles] = useState<string[]>([]);
     const [uploadSuccess, setUploadSuccess] = useState(false);
+    
+    // Tracking States
+    const [trackedTexts, setTrackedTexts] = useState<BatchStatusItem[]>(() => {
+        try {
+            const saved = localStorage.getItem('uploadTrackingTexts');
+            return saved ? JSON.parse(saved) : [];
+        } catch {
+            return [];
+        }
+    });
+    const [isTracking, setIsTracking] = useState<boolean>(() => {
+        return localStorage.getItem('isTrackingUpload') === 'true';
+    });
+
+    useEffect(() => {
+        localStorage.setItem('uploadTrackingTexts', JSON.stringify(trackedTexts));
+    }, [trackedTexts]);
 
     const pollingInterval = useRef<ReturnType<typeof setInterval> | null>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
@@ -45,11 +64,6 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
             abortControllerRef.current.abort();
             abortControllerRef.current = null;
         }
-
-        if (pollingInterval.current) {
-            clearInterval(pollingInterval.current);
-            pollingInterval.current = null;
-        }
     }, []);
 
     const handleClose = useCallback(() => {
@@ -59,82 +73,64 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
         onClose();
     }, [isProcessing, onClose, resetState]);
 
-    const pollStatus = useCallback(async (taskId: string) => {
-        pollingInterval.current = setInterval(async () => {
-            try {
-                const data = await getTaskStatus(taskId);
-
-                if (data.state === 'PROGRESS') {
-                    if (typeof data.total === 'number' && data.total > 0 && typeof data.current === 'number') {
-                        const percent = Math.round((data.current / data.total) * 100);
-                        setProgress(percent);
-                        setStatusMessage(data.status || `Processando ${percent}%... (${data.current}/${data.total})`);
-                    } else {
-                        setStatusMessage(data.status || 'Processando...');
-                    }
-                } else if (data.state === 'SUCCESS') {
-                    if (pollingInterval.current) {
-                        clearInterval(pollingInterval.current);
-                        pollingInterval.current = null;
-                    }
-
-                    localStorage.removeItem('currentTaskId');
-                    setIsProcessing(false);
-                    setProgress(100);
-
-                    const failedList = data.failed_files || [];
-                    setFailedFiles(failedList);
-                    setUploadSuccess(true);
-                    setStagedFiles([]);
-                    setIgnoredFiles([]);
-
-                    if (failedList.length > 0) {
-                         setStatusMessage(`Concluído com ${failedList.length} arquivo(s) com falha.`);
-                         addSnackbar({ text: `Concluído com ${failedList.length} arquivo(s) com falha. Verifique a lista.`, type: 'warning', duration: 6000 });
-                    } else {
-                         setStatusMessage('Processamento concluído com sucesso!');
-                         addSnackbar({ text: 'Todos os textos enviados com sucesso!', type: 'success' });
-                    }
-                } else if (data.state === 'FAILURE') {
-                    if (pollingInterval.current) {
-                        clearInterval(pollingInterval.current);
-                        pollingInterval.current = null;
-                    }
-
-                    localStorage.removeItem('currentTaskId');
-                    setIsProcessing(false);
-                    addSnackbar({
-                        text: 'Erro do Servidor ao processar arquivos.',
-                        type: 'error',
-                        duration: 5000
-                    });
-                }
-            } catch (error) {
-                console.error('Polling error:', error);
-            }
-        }, 2000);
-    }, []);
-
     useEffect(() => {
         if (!isOpen) {
             return;
         }
 
-        const savedTaskId = localStorage.getItem('currentTaskId');
-        if (savedTaskId && !pollingInterval.current) {
-            setIsProcessing(true);
-            void pollStatus(savedTaskId);
-        } else if (!savedTaskId && !isProcessing && !uploadSuccess) {
+        if (!isProcessing && !uploadSuccess) {
             resetState();
         }
-    }, [isOpen, pollStatus, resetState, isProcessing, uploadSuccess]);
+    }, [isOpen, resetState, isProcessing, uploadSuccess]);
 
     useEffect(() => {
         return () => {
-            if (pollingInterval.current) clearInterval(pollingInterval.current);
             if (abortControllerRef.current) abortControllerRef.current.abort();
         };
     }, []);
+
+    useEffect(() => {
+        localStorage.setItem('isTrackingUpload', String(isTracking));
+        if (isTracking && trackedTexts.length > 0 && !pollingInterval.current) {
+            const anyInProgress = trackedTexts.some(t => t.processing_status === 'PENDING' || t.processing_status === 'PROCESSING');
+            if (anyInProgress) {
+                const ids = trackedTexts.map(t => t.id);
+                void pollBatchStatus(ids);
+            } else {
+                setIsTracking(false);
+            }
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isTracking]);
+
+    const pollBatchStatus = async (textIds: number[]) => {
+        setIsTracking(true);
+        let ids = textIds;
+        try {
+            const initial = await getBatchStatus(ids);
+            setTrackedTexts(initial.statuses);
+
+            if (pollingInterval.current) {
+                clearInterval(pollingInterval.current);
+            }
+            pollingInterval.current = setInterval(async () => {
+                try {
+                    const latest = await getBatchStatus(ids);
+                    setTrackedTexts(latest.statuses);
+                    const allDone = latest.statuses.every((s) => s.processing_status === 'READY' || s.processing_status === 'FAILED');
+                    if (allDone && pollingInterval.current) {
+                        clearInterval(pollingInterval.current);
+                        setIsTracking(false);
+                    }
+                } catch (e) {
+                    console.error('Polling tick failed:', e);
+                }
+            }, 3000);
+        } catch (e) {
+            console.error('Initial batch status failed:', e);
+            setIsTracking(false);
+        }
+    };
 
     const processFiles = async (files: FileList | File[]) => {
         setIsValidating(true);
@@ -281,9 +277,17 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
             const response = await uploadTextArchive(uploadFile, controller.signal);
             
             abortControllerRef.current = null; // Clean up
-            localStorage.setItem('currentTaskId', response.task_id);
-            setStatusMessage('Aguardando processamento...');
-            void pollStatus(response.task_id);
+            
+            addSnackbar({ text: `${response.text_ids.length} arquivo(s) enviado(s) para processamento em background.`, type: 'success' });
+            setUploadSuccess(true);
+            setIsProcessing(false);
+            setProgress(100);
+            setStatusMessage('Upload concluído com sucesso!');
+            setStagedFiles([]);
+            setIgnoredFiles([]);
+            setFailedFiles([]);
+            
+            void pollBatchStatus(response.text_ids);
         } catch (error: any) {
             console.error('Erro no upload:', error);
             if (error.name === 'CanceledError' || error.message === 'canceled') {
@@ -325,7 +329,37 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
                             </div>
                         )}
 
-                        {!isProcessing && !uploadSuccess && (
+                        {isTracking || uploadSuccess ? (
+                            <div className="tracking-container" style={{ padding: '20px' }}>
+                                <h3 style={{ marginBottom: '15px' }}>Status de Processamento</h3>
+                                <div style={{ maxHeight: '250px', overflowY: 'auto', border: '1px solid #ddd', borderRadius: '4px' }}>
+                                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                                        <thead>
+                                            <tr style={{ background: '#f5f5f5', borderBottom: '1px solid #ddd', color: '#333' }}>
+                                                <th style={{ padding: '10px' }}>Arquivo</th>
+                                                <th style={{ padding: '10px' }}>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {trackedTexts.map(t => (
+                                                <tr key={t.id} style={{ borderBottom: '1px solid #eee' }}>
+                                                    <td style={{ padding: '8px 10px', fontSize: '0.9rem' }}>{t.source_file_name}</td>
+                                                    <td style={{ padding: '8px 10px', fontSize: '0.9rem' }}>
+                                                        {t.processing_status === 'PENDING' && <span style={{ color: '#856404', background: '#ffeeba', padding: '3px 8px', borderRadius: '12px', display: 'inline-flex', alignItems: 'center', gap: '5px' }}><Clock size={14}/> Na fila</span>}
+                                                        {t.processing_status === 'PROCESSING' && <span style={{ color: '#004085', background: '#cce5ff', padding: '3px 8px', borderRadius: '12px', display: 'inline-flex', alignItems: 'center', gap: '5px' }}><Settings size={14}/> Processando</span>}
+                                                        {t.processing_status === 'READY' && <span style={{ color: '#155724', background: '#d4edda', padding: '3px 8px', borderRadius: '12px', display: 'inline-flex', alignItems: 'center', gap: '5px' }}><CheckCircle2 size={14}/> Finalizado</span>}
+                                                        {t.processing_status === 'FAILED' && <span style={{ color: '#721c24', background: '#f8d7da', padding: '3px 8px', borderRadius: '12px', display: 'inline-flex', alignItems: 'center', gap: '5px' }}><XCircle size={14}/> Falha</span>}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <p style={{ fontSize: '0.85rem', color: '#666', marginTop: '15px' }}>
+                                    A avaliação é executada em segundo plano. Você já pode fechar esta janela caso queira e analisar os textos disponíveis no painel.
+                                </p>
+                            </div>
+                        ) : !isProcessing && (
                             <>
                                 <div
                                     className={[
@@ -429,7 +463,6 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
                             </div>
                         )}
                     </div>
-
                     <div className={styles['modal-footer']}>
                         {isProcessing && progress < 100 ? (
                             <button className={[styles['modal-button'], styles['cancel-button']].join(' ')} onClick={handleCancelRequest}>

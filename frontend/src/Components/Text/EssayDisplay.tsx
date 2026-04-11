@@ -45,8 +45,23 @@ function EssayDisplay({ essay, refreshEssay }: EssayDisplayProps) {
         return <h3>Nenhum texto selecionado.</h3>;
     }
 
+    const textNotFinishedAdvice = "Este texto ainda está sendo processado." +  
+    " Tokens a serem normalizados e sugestões de normalização aparecerão em breve." +
+    " Você pode trabalhar normalmente enquanto isso." 
+    
+
     return (
         <div>
+            {(essay.processingStatus === 'PROCESSING' || essay.processingStatus === 'PENDING') && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#fff3cd', border: '1px solid #ffe69c', color: '#664d03', padding: '12px 16px', borderRadius: '8px', marginBottom: '16px', fontSize: '0.95rem' }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16" style={{ flexShrink: 0 }}>
+                        <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+                    </svg>
+                    <div>
+                        <strong>Aviso:</strong> {textNotFinishedAdvice}
+                    </div>
+                </div>
+            )}
             <div className="essay-legend">
                 <div className="essay-legend-items">
                     <div className="essay-legend-item">

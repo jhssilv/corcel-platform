@@ -13,130 +13,84 @@ from ..text_processor import TextProcessor
 logger = get_logger('app.task.text_task_logic', source='task', task_module='text_task_logic')
 
 
-def run_zip_texts_pipeline(task, zip_path):
+def run_process_texts_pipeline(task, text_ids: list):
     from app.extensions import db
-
-    if not os.path.exists(zip_path):
-        logger.error('Text zip file not found', extra={'event': {'zip_path': zip_path}})
-        raise FileNotFoundError('Temp file not found in server.')
-
+    from app.database import models
+    from app.database.queries import add_suggestion
+    
     processor = TextProcessor()
-    results = {}
+    processed_count = 0
+    total = len(text_ids)
 
-    try:
-        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-            # filters .txt and .docx files
-            file_list = []
-            for f in zip_ref.namelist():
-                base_name = os.path.basename(f)
-                
-                # skip directories, meta-files, and hidden files
-                if not base_name or base_name.startswith('__') or base_name.startswith('.'):
-                    continue
+    logger.info('Background text batch processing started', extra={'event': {'total_texts': total}})
 
-                if base_name.lower().endswith('.txt') or base_name.lower().endswith('.docx'):
-                    file_list.append(f)
+    for index, text_id in enumerate(text_ids):
+        task.update_state(
+            state='PROGRESS',
+            meta={
+                'current': index + 1,
+                'total': total,
+                'status': f'Processando texto {index + 1}/{total}',
+            },
+        )
 
-            total_files = len(file_list)
+        
+        text_obj = db.session.query(models.Text).filter_by(id=text_id).first()
+        if not text_obj:
+            logger.warning(f'Text {text_id} not found during async processing')
+            continue
 
-            if total_files == 0:
-                raise ValueError('The zip file does not contain valid files.')
+        try:
+            text_obj.processing_status = models.ProcessingStatus.PROCESSING
+            db.session.commit()
 
-            for index, filename in enumerate(file_list):
-                # Extract just the filename without directory prefix
-                base_name = os.path.basename(filename)
-                logger.info(
-                    'Text file processing started',
-                    extra={
-                        'event': {
-                            'status': 'started',
-                            'file_name': base_name,
-                            'index': index + 1,
-                            'total_files': total_files,
-                        }
-                    },
-                )
+            tokens = db.session.query(models.Token).filter_by(text_id=text_id).order_by(models.Token.position).all()
+            
+            token_dicts = []
+            for t in tokens:
+                token_dicts.append({
+                    'idx': t.position,
+                    'text': t.token_text,
+                    'is_word': t.is_word,
+                    'whitespace_after': t.whitespace_after
+                })
 
-                task.update_state(
-                    state='PROGRESS',
-                    meta={
-                        'current': index + 1,
-                        'total': total_files,
-                        'status': f'Processando: {base_name} ({index + 1}/{total_files})',
-                    },
-                )
+            full_text = "".join([t['text'] + t['whitespace_after'] for t in token_dicts])
 
-                try:
-                    with zip_ref.open(filename) as f:
-                        if filename.lower().endswith('.docx'):
-                            doc = Document(io.BytesIO(f.read()))
-                            text_content = "\n".join([p.text for p in doc.paragraphs])
-                        else:
-                            text_content = f.read().decode('utf-8', errors='replace')
+            processed_data = processor.process_tokens(token_dicts, full_text)
 
-                    # Process text to get tokens with suggestions
-                    processed_data = processor.process_text(text_content)
+            for position, t_data in processed_data.items():
+                if t_data['to_be_normalized']:
+                    token = next((t for t in tokens if t.position == position), None)
+                    if token:
+                        token.to_be_normalized = True
+                        
+                        cands = t_data.get('suggestions', [])
+                        if cands:
+                            # deduplicate
+                            unique_cands = list(set(cands))
+                            for c in unique_cands:
+                                add_suggestion(text_id, token.id, c, db.session)
+            
+            text_obj.processing_status = models.ProcessingStatus.READY
+            db.session.commit()
+            processed_count += 1
+            
+            logger.info(
+                'Background text processing finished successfully',
+                extra={'event': {'text_id': text_id}}
+            )
+            
+        except Exception as e:
+            db.session.rollback()
+            text_obj = db.session.query(models.Text).filter_by(id=text_id).first()
+            if text_obj:
+                text_obj.processing_status = models.ProcessingStatus.FAILED
+                db.session.commit()
+            logger.exception(f'Failed to process ML pipeline for text {text_id}', extra={'event': {'error': str(e)}})
 
-                    # Create Text object with just the filename (no directory prefix)
-                    text_obj = models.Text(source_file_name=base_name)
-
-                    # Build tokens_with_candidates for add_text
-                    tokens_with_candidates = []
-                    for position, token_data in processed_data.items():
-                        token = models.Token(
-                            token_text=token_data['text'],
-                            is_word=token_data['is_word'],
-                            position=int(position),
-                            to_be_normalized=token_data['to_be_normalized'],
-                            whitespace_after=token_data['whitespace_after']
-                            if token_data['whitespace_after']
-                            else '',
-                        )
-                        candidates = token_data.get('suggestions', [])
-                        tokens_with_candidates.append((token, candidates))
-
-                    # Insert into texts, tokens, suggestions tables
-                    db.session.remove()  # Ensure clean session for worker
-                    text_id = add_text(text_obj, tokens_with_candidates, db.session)
-
-                    results[base_name] = {
-                        'text_id': text_id,
-                        'token_count': len(tokens_with_candidates),
-                    }
-                    logger.info(
-                        'Text file processing finished',
-                        extra={
-                            'event': {
-                                'status': 'success',
-                                'file_name': base_name,
-                                'text_id': text_id,
-                                'token_count': len(tokens_with_candidates),
-                            }
-                        },
-                    )
-                except Exception as e:
-                    logger.exception(
-                        'Text file processing finished with error',
-                        extra={
-                            'event': {
-                                'status': 'error',
-                                'file_name': base_name,
-                                'error': str(e),
-                            }
-                        },
-                    )
-                    raise
-
-        return {
-            'status': 'Concluido',
-            'total': total_files,
-            'result': results,
-            'failed_files': [],
-        }
-
-    except Exception as e:
-        logger.exception('Fatal error in text zip pipeline', extra={'event': {'zip_path': zip_path, 'error': str(e)}})
-        raise RuntimeError(f'Server Internal Error: {str(e)}') from e
-    finally:
-        if os.path.exists(zip_path):
-            os.remove(zip_path)
+    return {
+        'status': 'Concluido',
+        'total': total,
+        'processed': processed_count
+    }

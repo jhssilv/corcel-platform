@@ -109,6 +109,7 @@ def get_text_by_id(db, text_id, user_id):
         'normalized_by_user': assoc.normalized if assoc else False,
         'source_file_name': text_info.source_file_name,
         'assigned_to_user': assoc.assigned if assoc else False,
+        'processing_status': text_info.processing_status.name if hasattr(text_info.processing_status, 'name') else str(text_info.processing_status),
     }
     return response_dict
 

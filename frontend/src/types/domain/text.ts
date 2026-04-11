@@ -9,6 +9,7 @@ export interface TextMetadata {
     normalizedByUser: boolean;
     sourceFileName: Nullable<string>;
     isRaw?: boolean;
+    processingStatus: 'PENDING' | 'PROCESSING' | 'READY' | 'FAILED';
 }
 
 export interface TextDetail {
@@ -21,6 +22,7 @@ export interface TextDetail {
     usersWhoNormalized: string[];
     isRaw?: boolean;
     corrections?: NormalizationMap;
+    processingStatus: 'PENDING' | 'PROCESSING' | 'READY' | 'FAILED';
 }
 
 export interface TextSelection {

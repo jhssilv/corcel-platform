@@ -1,20 +1,20 @@
 import { apiPrivate } from './Client';
 import * as schemas from './Schemas';
 import { unwrapData } from './Utils';
-import type { UploadResponse } from '../types';
+import type { OCRUploadResponse } from '../types';
 
-export async function uploadOCRArchive(file: File): Promise<UploadResponse> {
+export async function uploadOCRArchive(file: File): Promise<OCRUploadResponse> {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = unwrapData(await apiPrivate.post<UploadResponse>('/ocr/upload', formData, {
+    const response = unwrapData(await apiPrivate.post<OCRUploadResponse>('/ocr/upload', formData, {
         headers: {
             'Content-Type': 'multipart/form-data',
         },
         timeout: 300000,
     }));
 
-    return schemas.UploadResponseSchema.parse(response);
+    return schemas.OCRUploadResponseSchema.parse(response);
 }
 
 export async function getTextImage(textId: number): Promise<string | null> {

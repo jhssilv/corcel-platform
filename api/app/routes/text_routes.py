@@ -78,6 +78,38 @@ def get_texts_data(current_user):
     except Exception as e:
         return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
 
+@text_bp.route('/api/texts/status/batch', methods=['POST'])
+@login_required()
+def get_batch_texts_status(current_user):
+    """Retrieves the processing status of a batch of text IDs."""
+    from flask import request
+    from app.database.models import Text
+    
+    try:
+        data = request.get_json()
+        if not data or 'text_ids' not in data:
+            return jsonify({"error": "Missing text_ids"}), 400
+        
+        text_ids = data['text_ids']
+        if not isinstance(text_ids, list):
+            return jsonify({"error": "text_ids must be a list"}), 400
+            
+        texts = session.query(Text.id, Text.source_file_name, Text.processing_status).filter(Text.id.in_(text_ids)).all()
+        
+        result = [
+            {
+                "id": t.id,
+                "source_file_name": t.source_file_name,
+                "processing_status": t.processing_status.name if hasattr(t.processing_status, 'name') else str(t.processing_status)
+            }
+            for t in texts
+        ]
+        
+        return jsonify({"statuses": result}), 200
+    except Exception as e:
+        logger.exception("Failed to fetch batch text statuses")
+        return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
+
 @text_bp.route('/api/texts/filtered', methods=['GET'])
 @login_required()
 def get_filtered_texts_data(current_user):

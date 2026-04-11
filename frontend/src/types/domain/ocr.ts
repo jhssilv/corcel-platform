@@ -12,10 +12,6 @@ export interface RawTextDetail {
     image_path?: string | null;
 }
 
-export interface OCRUploadResponse {
-    task_id: string;
-}
-
 export interface TaskStatusResponse {
     state: string;
     status: string;

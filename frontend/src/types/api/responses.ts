@@ -19,6 +19,21 @@ export type TextDetailResponse = TextDetail;
 export type NormalizationsGetResponse = NormalizationMap;
 
 export interface UploadResponse {
+    message: string;
+    text_ids: number[];
+}
+
+export interface BatchStatusItem {
+    id: number;
+    source_file_name: string;
+    processing_status: 'PENDING' | 'PROCESSING' | 'READY' | 'FAILED';
+}
+
+export interface BatchStatusResponse {
+    statuses: BatchStatusItem[];
+}
+
+export interface OCRUploadResponse {
     task_id: string;
 }
 

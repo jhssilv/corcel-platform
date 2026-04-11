@@ -3,7 +3,7 @@ from celery import signals
 from ..extensions import celery
 from ..logging_config import bind_task_context, clear_task_context, get_logger
 from .ocr_task_logic import run_ocr_zip_pipeline
-from .text_task_logic import run_zip_texts_pipeline
+from .text_task_logic import run_process_texts_pipeline
 
 
 celery_logger = get_logger('app.celery.runtime', source='celery')
@@ -88,10 +88,10 @@ def on_task_retry(request=None, reason=None, sender=None, **_kwargs):
 
 
 @celery.task(bind=True)
-def process_zip_texts(self, zip_path):
+def process_texts_background(self, text_ids: list):
     bind_task_context(self.request.id)
     try:
-        return run_zip_texts_pipeline(self, zip_path)
+        return run_process_texts_pipeline(self, text_ids)
     finally:
         clear_task_context()
 
