@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import TopBar from '../Components/Layout/TopBar';
 import { authenticateUser } from '../Api';
 import { useAuth } from '../Context/Auth/UseAuth';
-import { useSnackbar } from '../Context/UI/SnackbarContext';
+import { useSnackbar } from '../Context/Generic';
 import '../styles/login_page.css';
 
 interface LoginErrorShape {

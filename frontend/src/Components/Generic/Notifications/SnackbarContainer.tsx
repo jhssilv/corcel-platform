@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
-import type { SnackbarMessage, SnackbarPosition } from '../../Context/UI/SnackbarContext';
+import type { SnackbarMessage, SnackbarPosition } from '../../../Context/Generic/Notifications/SnackbarContext';
 import Snackbar from './Snackbar';
-import styles from '../../styles/snackbar.module.css';
+import styles from '../../../styles/snackbar.module.css';
 
 interface SnackbarContainerProps {
     snackbars: SnackbarMessage[];

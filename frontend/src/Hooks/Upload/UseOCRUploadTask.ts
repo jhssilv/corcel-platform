@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type DragEvent } from 'react';
 import { getTaskStatus, uploadOCRArchive } from '../../Api';
 import { validateImageZipFile } from '../../Services/Upload/ZipValidators';
-import { useSnackbar } from '../../Context/UI/SnackbarContext';
+import { useSnackbar } from '../../Context/Generic';
 
 interface UploadErrorShape {
   message?: string;

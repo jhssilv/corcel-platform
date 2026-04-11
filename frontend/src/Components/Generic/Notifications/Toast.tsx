@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import type { ToastMessage } from '../../Context/UI/ToastContext';
-import styles from '../../styles/toast.module.css';
+import type { ToastMessage } from '../../../Context/Generic/Notifications/ToastContext';
+import styles from '../../../styles/toast.module.css';
 
 interface ToastProps {
     toast: ToastMessage;

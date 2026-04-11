@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, type ReactNode, useCallback } from 'react';
-import ToastContainer from '../../Components/UI/ToastContainer';
+import ToastContainer from '../../../Components/Generic/Notifications/ToastContainer';
 
 export type ToastPosition = 'top-right' | 'top-left' | 'top-center' | 'bottom-right' | 'bottom-left' | 'bottom-center';
 export type ToastType = 'success' | 'error' | 'info' | 'warning';

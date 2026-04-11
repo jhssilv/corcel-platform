@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import type { SnackbarMessage } from '../../Context/UI/SnackbarContext';
-import styles from '../../styles/snackbar.module.css';
+import type { SnackbarMessage } from '../../../Context/Generic/Notifications/SnackbarContext';
+import styles from '../../../styles/snackbar.module.css';
 
 interface SnackbarProps {
     snackbar: SnackbarMessage;
@@ -32,8 +32,8 @@ export default function Snackbar({ snackbar, onClose }: SnackbarProps) {
         setIsLeaving(true);
     };
 
-    const typeClass = snackbar.type && snackbar.type !== 'default' 
-        ? styles[`snackbar-${snackbar.type}`] 
+    const typeClass = snackbar.type && snackbar.type !== 'default'
+        ? styles[`snackbar-${snackbar.type}`]
         : '';
 
     return (
@@ -43,7 +43,7 @@ export default function Snackbar({ snackbar, onClose }: SnackbarProps) {
             role="status"
         >
             <div className={styles['snackbar-content']}>{snackbar.text}</div>
-            
+
             <div className={styles['snackbar-actions']}>
                 {snackbar.actionText && (
                     <button className={styles['snackbar-action-button']} onClick={handleActionClick}>

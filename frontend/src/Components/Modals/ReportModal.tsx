@@ -1,6 +1,6 @@
 import { useEffect, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { requestReport } from '../../Api';
-import { useSnackbar } from '../../Context/UI/SnackbarContext';
+import { useSnackbar } from '../../Context/Generic';
 import styles from '../../styles/report_modal.module.css';
 
 interface ReportModalProps {

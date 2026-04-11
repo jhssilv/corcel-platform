@@ -11,8 +11,7 @@ import OCRPage from './Pages/OCRPage';
 import UserManagementDashboard from './Pages/UserManagementDashboard';
 import AssignmentsPanel from './Pages/AssignmentsPanel';
 import { AuthProvider } from './Context/Auth/AuthContext';
-import { ToastProvider } from './Context/UI/ToastContext';
-import { SnackbarProvider } from './Context/UI/SnackbarContext';
+import { SnackbarProvider, ToastProvider } from './Context/Generic';
 import ProtectedRoute from './Components/Layout/ProtectedRoute';
 
 createRoot(document.getElementById('root')!).render(

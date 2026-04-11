@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import TopBar from '../Components/Layout/TopBar';
 import DropdownSelect, { type DropdownValue, type SelectOption } from '../Components/Common/DropdownSelect';
 import { bulkAssignTexts, bulkUnassignTexts, getFilteredTextsData, getUsernames } from '../Api';
-import { useSnackbar } from '../Context/UI/SnackbarContext';
+import { useSnackbar } from '../Context/Generic';
 import type { FilterTextsRequest, TextMetadata } from '../types';
 import '../styles/assignments_panel.css';
 import '../styles/main_page.css';

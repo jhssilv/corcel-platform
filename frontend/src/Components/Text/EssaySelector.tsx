@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import DropdownSelect, { type DropdownValue, type SelectOption } from '../Common/DropdownSelect';
 import { getRawTextsData, getTextsData, getUsernames } from '../../Api';
-import { useSnackbar } from '../../Context/UI/SnackbarContext';
+import { useSnackbar } from '../../Context/Generic';
 import type { RawTextMetadata, TextMetadata } from '../../types';
 import styles from '../../styles/essay_selector.module.css';
 

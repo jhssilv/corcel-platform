@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, type ReactNode, useCallback } from 'react';
-import SnackbarContainer from '../../Components/UI/SnackbarContainer';
+import SnackbarContainer from '../../../Components/Generic/Notifications/SnackbarContainer';
 
 export type SnackbarPosition = 'top-right' | 'top-left' | 'top-center' | 'bottom-right' | 'bottom-left' | 'bottom-center';
 export type SnackbarType = 'success' | 'error' | 'info' | 'warning' | 'default';

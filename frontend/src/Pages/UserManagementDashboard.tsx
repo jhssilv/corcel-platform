@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import TopBar from '../Components/Layout/TopBar';
 import { getUsersData, toggleUserActive, toggleUserAdmin } from '../Api';
 import { useAuth } from '../Context/Auth/UseAuth';
-import { useSnackbar } from '../Context/UI/SnackbarContext';
+import { useSnackbar } from '../Context/Generic';
 import type { UserData } from '../types';
 import '../styles/main_page.css';
 import '../styles/user_management.css';

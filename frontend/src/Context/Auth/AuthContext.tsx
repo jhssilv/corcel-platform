@@ -1,7 +1,7 @@
 import { createContext, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { getCurrentUser, logoutUser } from '../../Api';
 import { STORAGE_KEYS } from '../../types/constants/storageKeys';
-import { useSnackbar } from '../UI/SnackbarContext';
+import { useSnackbar } from '../Generic';
 
 export interface AuthContextValue {
     isAuthenticated: boolean;

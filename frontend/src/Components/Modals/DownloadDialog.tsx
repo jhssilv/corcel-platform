@@ -1,7 +1,7 @@
 import { useEffect, useState, type ChangeEvent, type MouseEvent as ReactMouseEvent } from 'react';
 import '../../styles/download_dialog.css';
 import downloadTexts from '../../Api/DownloadTexts';
-import { useSnackbar } from '../../Context/UI/SnackbarContext';
+import { useSnackbar } from '../../Context/Generic';
 
 interface DownloadDialogProps {
     show: boolean;

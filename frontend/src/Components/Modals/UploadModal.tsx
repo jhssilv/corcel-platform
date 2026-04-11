@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState, type ChangeEvent, type DragEv
 import JSZip from 'jszip';
 import { Clock, Settings, CheckCircle2, XCircle } from 'lucide-react';
 import { uploadTextArchive, getBatchStatus } from '../../Api/UploadApi';
-import { useSnackbar } from '../../Context/UI/SnackbarContext';
+import { useSnackbar } from '../../Context/Generic';
 import styles from '../../styles/upload_modal.module.css';
 import type { BatchStatusItem } from '../../types/api/responses';
 

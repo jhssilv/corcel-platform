@@ -1,6 +1,6 @@
 import { deleteAllNormalizations, toggleNormalizedStatus } from '../../Api';
 import type { TextDetailResponse } from '../../types';
-import { useSnackbar } from '../../Context/UI/SnackbarContext';
+import { useSnackbar } from '../../Context/Generic';
 
 interface UseCorrectionActionsResult {
   handleFinishedToggled: () => Promise<void>;

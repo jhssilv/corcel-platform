@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent, type KeyboardEvent, type MouseEvent as ReactMouseEvent, type WheelEvent as ReactWheelEvent } from 'react';
 import '../../styles/ocr_modal.css';
 import { finalizeRawText, getRawTextImage, updateRawText } from '../../Api';
-import { useSnackbar } from '../../Context/UI/SnackbarContext';
+import { useSnackbar } from '../../Context/Generic';
 import type { RawTextDetail } from '../../types';
 
 interface OCREditModalProps {

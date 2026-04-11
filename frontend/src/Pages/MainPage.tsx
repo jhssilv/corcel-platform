@@ -5,7 +5,7 @@ import TopBar from '../Components/Layout/TopBar';
 import DownloadDialog from '../Components/Modals/DownloadDialog';
 import downloadTexts from '../Api/DownloadTexts';
 import { getNormalizationsByText, getTextById } from '../Api';
-import { useToast } from '../Context/UI/ToastContext';
+import { useToast } from '../Context/Generic';
 import type { Option, TextDetailResponse } from '../types';
 import '../styles/main_page.css';
 

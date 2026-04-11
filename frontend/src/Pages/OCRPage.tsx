@@ -4,7 +4,7 @@ import OCREditModal from '../Components/OCR/OCREditModal';
 import OCRUploadSection from '../Components/OCR/OCRUploadSection';
 import TopBar from '../Components/Layout/TopBar';
 import { getRawTextById } from '../Api';
-import { useToast } from '../Context/UI/ToastContext';
+import { useToast } from '../Context/Generic';
 import type { Option, RawTextDetail } from '../types';
 import '../styles/main_page.css';
 import '../styles/ocr_toolbar.css';
