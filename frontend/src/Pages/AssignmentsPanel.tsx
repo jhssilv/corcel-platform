@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TopBar from '../Components/Layout/TopBar';
+import { Badge } from '../Components/Generic';
 import DropdownSelect, { type DropdownValue, type SelectOption } from '../Components/Common/DropdownSelect';
 import { bulkAssignTexts, bulkUnassignTexts, getFilteredTextsData, getUsernames } from '../Api';
 import { useSnackbar } from '../Context/Generic';
@@ -379,9 +380,12 @@ function AssignmentsPanel() {
                     <div className="assignments-texts-header">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                             <h3 className="assignments-texts-title">Textos Disponíveis</h3>
-                            <span className="selected-count-badge">
-                                {selectedTextIds.size} de {textsData.length} selecionados
-                            </span>
+                            <Badge
+                                text={`${selectedTextIds.size} de ${textsData.length} selecionados`}
+                                variant="secondary"
+                                size="md"
+                                iconPosition="none"
+                            />
                         </div>
                         <div className="assignments-selection-controls">
                             <div className="select-n-control">

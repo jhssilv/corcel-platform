@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type DragEvent, type MouseEvent } from 'react';
 import JSZip from 'jszip';
-import { Clock, Settings, CheckCircle2, XCircle } from 'lucide-react';
 import { uploadTextArchive, getBatchStatus } from '../../Api/UploadApi';
+import { Badge } from '../Generic';
 import { useSnackbar } from '../../Context/Generic';
 import styles from '../../styles/upload_modal.module.css';
 import type { BatchStatusItem } from '../../types/api/responses';
@@ -18,6 +18,37 @@ interface UploadErrorShape {
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
+const renderTrackingBadge = (status: BatchStatusItem['processing_status']) => {
+    if (status === 'PENDING') {
+        return <Badge text="Na fila" iconName="Clock" variant="secondary" size="sm" />;
+    }
+
+    if (status === 'PROCESSING') {
+        return <Badge text="Processando" iconName="Settings" variant="primary" size="sm" />;
+    }
+
+    if (status === 'READY') {
+        return <Badge text="Finalizado" iconName="CheckCircle2" variant="accent" size="sm" />;
+    }
+
+    if (status === 'FAILED') {
+        return (
+            <Badge
+                text="Falha"
+                iconName="XCircle"
+                variant="secondary"
+                size="sm"
+                style={{
+                    backgroundColor: 'var(--color-danger)',
+                    borderColor: 'var(--color-danger-hover)',
+                }}
+            />
+        );
+    }
+
+    return <Badge text={status} variant="secondary" size="sm" iconPosition="none" />;
+};
+
 function UploadModal({ isOpen, onClose }: UploadModalProps) {
     const [stagedFiles, setStagedFiles] = useState<File[]>([]);
     const [ignoredFiles, setIgnoredFiles] = useState<string[]>([]);
@@ -29,7 +60,7 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
     const [statusMessage, setStatusMessage] = useState('');
     const [failedFiles, setFailedFiles] = useState<string[]>([]);
     const [uploadSuccess, setUploadSuccess] = useState(false);
-    
+
     // Tracking States
     const [trackedTexts, setTrackedTexts] = useState<BatchStatusItem[]>(() => {
         try {
@@ -100,7 +131,7 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
                 setIsTracking(false);
             }
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isTracking]);
 
     const pollBatchStatus = async (textIds: number[]) => {
@@ -136,7 +167,7 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
         setIsValidating(true);
         setUploadSuccess(false);
         setFailedFiles([]);
-        
+
         const newStaged: File[] = [];
         const newIgnored: string[] = [];
 
@@ -148,18 +179,18 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
                 if (loweredName.endsWith('.zip')) {
                     const zip = new JSZip();
                     const zipContents = await zip.loadAsync(file);
-                    
+
                     for (const [name, zipObj] of Object.entries(zipContents.files)) {
                         if (zipObj.dir) continue;
-                        
+
                         const fileName = name.split('/').pop() ?? '';
                         const loweredFileName = fileName.toLowerCase();
-                        
+
                         // Ignore system/hidden files silently
                         if (!fileName || fileName.startsWith('.') || fileName.startsWith('__')) {
                             continue;
                         }
-                        
+
                         if (loweredFileName.endsWith('.txt') || loweredFileName.endsWith('.docx')) {
                             const blob = await zipObj.async('blob');
                             if (blob.size > MAX_FILE_SIZE) {
@@ -182,7 +213,7 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
                     newIgnored.push(`${file.name} (Formato inválido)`);
                 }
             }
-            
+
             setStagedFiles((prev) => {
                 // Combine and remove exact name duplicates
                 const combined = [...prev, ...newStaged];
@@ -190,7 +221,7 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
                 return unique;
             });
             setIgnoredFiles((prev) => [...prev, ...newIgnored]);
-            
+
         } catch (error) {
             addSnackbar({
                 text: 'Erro ao ler arquivos. Verifique se o ZIP não está corrompido.',
@@ -266,7 +297,7 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
             stagedFiles.forEach(file => {
                 zip.file(file.name, file);
             });
-            
+
             const zipBlob = await zip.generateAsync({ type: 'blob' });
             const uploadFile = new File([zipBlob], 'upload_batch.zip', { type: 'application/zip' });
 
@@ -275,9 +306,9 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
             abortControllerRef.current = controller;
 
             const response = await uploadTextArchive(uploadFile, controller.signal);
-            
+
             abortControllerRef.current = null; // Clean up
-            
+
             addSnackbar({ text: `${response.text_ids.length} arquivo(s) enviado(s) para processamento em background.`, type: 'success' });
             setUploadSuccess(true);
             setIsProcessing(false);
@@ -286,7 +317,7 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
             setStagedFiles([]);
             setIgnoredFiles([]);
             setFailedFiles([]);
-            
+
             void pollBatchStatus(response.text_ids);
         } catch (error: any) {
             console.error('Erro no upload:', error);
@@ -345,10 +376,7 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
                                                 <tr key={t.id} style={{ borderBottom: '1px solid #eee' }}>
                                                     <td style={{ padding: '8px 10px', fontSize: '0.9rem' }}>{t.source_file_name}</td>
                                                     <td style={{ padding: '8px 10px', fontSize: '0.9rem' }}>
-                                                        {t.processing_status === 'PENDING' && <span style={{ color: '#856404', background: '#ffeeba', padding: '3px 8px', borderRadius: '12px', display: 'inline-flex', alignItems: 'center', gap: '5px' }}><Clock size={14}/> Na fila</span>}
-                                                        {t.processing_status === 'PROCESSING' && <span style={{ color: '#004085', background: '#cce5ff', padding: '3px 8px', borderRadius: '12px', display: 'inline-flex', alignItems: 'center', gap: '5px' }}><Settings size={14}/> Processando</span>}
-                                                        {t.processing_status === 'READY' && <span style={{ color: '#155724', background: '#d4edda', padding: '3px 8px', borderRadius: '12px', display: 'inline-flex', alignItems: 'center', gap: '5px' }}><CheckCircle2 size={14}/> Finalizado</span>}
-                                                        {t.processing_status === 'FAILED' && <span style={{ color: '#721c24', background: '#f8d7da', padding: '3px 8px', borderRadius: '12px', display: 'inline-flex', alignItems: 'center', gap: '5px' }}><XCircle size={14}/> Falha</span>}
+                                                        {renderTrackingBadge(t.processing_status)}
                                                     </td>
                                                 </tr>
                                             ))}
@@ -399,7 +427,7 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
                                         </div>
                                     )}
                                 </div>
-                                
+
                                 {stagedFiles.length > 0 && (
                                     <div>
                                         <h4 style={{ margin: '10px 0 5px 0', fontSize: '0.95rem' }}>Arquivos Válidos ({stagedFiles.length})</h4>
@@ -407,8 +435,8 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
                                             {stagedFiles.map((file, idx) => (
                                                 <div key={idx} className={styles['staged-file-item']}>
                                                     <span className={styles.fileName} title={file.name}>{file.name}</span>
-                                                    <button 
-                                                        className={styles['remove-file-button']} 
+                                                    <button
+                                                        className={styles['remove-file-button']}
                                                         onClick={(e) => { e.stopPropagation(); removeStagedFile(file.name); }}
                                                         title="Remover"
                                                     >×</button>
@@ -432,7 +460,7 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
                                 )}
                             </>
                         )}
-                        
+
                         {isProcessing && (
                             <div className="progress-container" style={{ padding: '20px', textAlign: 'center' }}>
                                 <div
