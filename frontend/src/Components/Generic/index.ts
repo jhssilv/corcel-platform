@@ -14,3 +14,4 @@ export * from './FormField/FormField';
 export * from './Banner/Banner';
 export * from './ProgressInline/ProgressInline';
 export * from './SectionHeader/SectionHeader';
+export * from './IconButton/IconButton';
