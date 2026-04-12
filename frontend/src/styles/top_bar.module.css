@@ -12,29 +12,14 @@
 }
 
 .hamburger-button {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-around;
-  width: 28px;
-  height: 24px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 0;
+  width: 34px;
+  height: 34px;
   z-index: 10;
-  transition: transform 0.2s ease;
+  margin-left: 0;
 }
 
 .hamburger-button:hover {
-  transform: scale(1.1);
-}
-
-.hamburger-line {
-  width: 100%;
-  height: 3px;
-  background-color: var(--color-text-primary);
-  border-radius: 2px;
-  transition: all 0.3s ease;
+  transform: none;
 }
 
 .app-title-container {
@@ -106,18 +91,12 @@
 }
 
 .close-button {
-  background: transparent;
-  border: none;
   color: var(--color-text-on-panel-dim);
-  font-size: 2rem;
-  line-height: 1;
-  cursor: pointer;
-  padding: 0;
-  transition: color 0.2s;
 }
 
 .close-button:hover {
   color: var(--color-text-primary);
+  background-color: transparent;
 }
 
 .panel-content {
@@ -211,25 +190,12 @@
 }
 
 .theme-toggle-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 6px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-sm) !important;
   color: var(--color-text-primary);
-  transition: background-color 0.2s ease, color 0.2s ease;
   margin-left: auto;
   margin-right: 8px;
 }
 
 .theme-toggle-button:hover {
   background-color: var(--color-bg-hover);
-}
-
-.theme-toggle-button svg {
-  width: 22px;
-  height: 22px;
 }

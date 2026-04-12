@@ -8,7 +8,6 @@ import { getRawTextById } from '../Api';
 import { useToast } from '../Context/Generic';
 import type { Option, RawTextDetail } from '../types';
 import '../styles/main_page.css';
-import '../styles/ocr_toolbar.css';
 
 type OCREditableRawText = RawTextDetail & { source_file_name: string };
 

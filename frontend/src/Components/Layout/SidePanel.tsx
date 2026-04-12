@@ -4,7 +4,7 @@ import registerIcon from '../../assets/register.svg';
 import reportIcon from '../../assets/report.svg';
 import uploadIcon from '../../assets/upload.svg';
 import whitelistIcon from '../../assets/whitelist.svg';
-import { Icon, Stack } from '../Generic';
+import { Icon, IconButton, Stack } from '../Generic';
 import styles from '../../styles/top_bar.module.css';
 
 interface SidePanelProps {
@@ -45,9 +45,7 @@ function SidePanel({
             <Stack direction="vertical" className={`${styles['side-panel']} ${isOpen ? styles.open : ''}`} data-testid="side-panel" data-open={isOpen ? 'true' : 'false'}>
                 <Stack alignX="space-between" alignY="center" className={styles['panel-header']}>
                     <span className={styles['username-display']}>Olá, {username}.</span>
-                    <button className={styles['close-button']} onClick={onClose} aria-label="Close menu">
-                        ×
-                    </button>
+                    <IconButton className={styles['close-button']} onClick={onClose} icon="X" label="Fechar menu" variant="neutral" />
                 </Stack>
 
                 <Stack direction="vertical" className={styles['panel-content']} data-testid="side-panel-content">

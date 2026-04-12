@@ -5,7 +5,7 @@ import WhitelistModal from '../Modals/WhiteListModal';
 import RegisterUserModal from '../Modals/RegisterUserModal';
 import ReportModal from '../Modals/ReportModal';
 import DownloadDialog from '../Modals/DownloadDialog';
-import { Icon, Stack } from '../Generic';
+import { IconButton, Stack } from '../Generic';
 import { UseTopBarModals } from '../../Hooks/UI/UseTopBarModals';
 import { initTheme, toggleTheme, getCurrentTheme } from '../../Services/theme';
 import styles from '../../styles/top_bar.module.css';
@@ -36,18 +36,15 @@ function ThemeToggle() {
     };
 
     return (
-        <button
+        <IconButton
             className={styles['theme-toggle-button']}
             onClick={handleToggle}
-            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-            title={theme === 'dark' ? 'Modo claro' : 'Modo escuro'}
-        >
-            {theme === 'dark' ? (
-                <Icon name="Sun" color="black" strokeWidth={1.75} style={{ color: 'currentColor' }} />
-            ) : (
-                <Icon name="Moon" color="black" strokeWidth={1.75} style={{ color: 'currentColor' }} />
-            )}
-        </button>
+            label={theme === 'dark' ? 'Modo claro' : 'Modo escuro'}
+            icon={theme === 'dark' ? 'Sun' : 'Moon'}
+            strokeWidth={1.75}
+            variant="neutral"
+            size="md"
+        />
     );
 }
 
@@ -85,11 +82,14 @@ function TopBar({ onDownloadClick, showSidePanel = true }: TopBarProps) {
     return (
         <>
             <Stack alignY="center" className={styles['top-bar']}>
-                <button className={styles['hamburger-button']} onClick={togglePanel} aria-label="Menu">
-                    <div className={styles['hamburger-line']}></div>
-                    <div className={styles['hamburger-line']}></div>
-                    <div className={styles['hamburger-line']}></div>
-                </button>
+                <IconButton
+                    className={styles['hamburger-button']}
+                    onClick={togglePanel}
+                    icon="Menu"
+                    label="Menu"
+                    size="md"
+                    variant="neutral"
+                />
 
                 <div className={styles['app-title-container']}>
                     <h1 className={styles['app-title']}>CorSpell 🐎</h1>
