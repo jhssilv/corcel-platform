@@ -3,3 +3,7 @@ export type { BadgeIconPosition, BadgeProps, BadgeSize, BadgeVariant } from './B
 export { default as Icon } from './Icon';
 export type { IconColor, IconName, IconProps } from './Icon';
 export * from './Notifications';
+export * from './Card/Card';
+export * from './Card/CardTitle';
+export * from './Dialog/Dialog';
+export * from './Dialog/DialogHeader';
