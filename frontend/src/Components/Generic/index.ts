@@ -16,3 +16,4 @@ export * from './ProgressInline/ProgressInline';
 export * from './SectionHeader/SectionHeader';
 export * from './IconButton/IconButton';
 export * from './Checkbox/Checkbox';
+export * from './MenuActionItem/MenuActionItem';

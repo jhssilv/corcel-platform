@@ -104,89 +104,15 @@
   padding: 1.5rem;
 }
 
-.panel-main-section {
-  flex: 1;
-}
-
-.panel-button {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  width: 100%;
-  padding: 0.8rem 1rem;
-  background-color: var(--color-bg-panel);
-  border: 1px solid var(--color-border-primary);
-  border-radius: 8px;
-  color: var(--color-text-on-panel);
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-align: left;
-}
-
-.panel-button:hover:not(:disabled) {
-  background-color: var(--color-bg-hover);
-  border-color: var(--color-accent);
-  transform: translateX(4px);
-}
-
-.panel-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.button-icon-svg {
-  width: 20px;
-  height: 20px;
-  filter: var(--img-filter);
-}
-
-.button-text {
-  font-size: 1rem;
-}
-
-.panel-logout-section {
-  margin-top: auto;
-  padding-top: 1.5rem;
+.panel-group-separator {
+  padding-top: 0.9rem;
   border-top: 1px solid var(--color-border-primary);
 }
 
-.panel-ocr-section {
+.panel-group-last {
   margin-top: auto;
-  padding-top: 1.5rem;
+  padding-top: 0.9rem;
   border-top: 1px solid var(--color-border-primary);
-}
-
-.ocr-button {
-  background-color: var(--color-warning-bg);
-  border-color: var(--color-warning-border);
-  color: var(--color-warning-text);
-}
-
-.ocr-button:hover {
-  background-color: var(--color-warning-bg-hover);
-  border-color: var(--color-warning-border-hover);
-}
-
-.logout-button {
-  background-color: var(--color-danger-bg-subtle);
-  border-color: var(--color-danger-border);
-  color: var(--color-danger-text);
-}
-
-.logout-button:hover {
-  background-color: rgba(220, 38, 38, 0.2);
-  border-color: var(--color-danger);
-}
-
-.download-button:hover,
-.upload-button:hover,
-.whitelist-button:hover,
-.report-button:hover,
-.register-button:hover,
-.manage-users-button:hover,
-.assignments-button:hover {
-  border-color: var(--color-accent);
 }
 
 .theme-toggle-button {
