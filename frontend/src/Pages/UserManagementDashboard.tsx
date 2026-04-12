@@ -4,7 +4,7 @@ import TopBar from '../Components/Layout/TopBar';
 import { getUsersData, toggleUserActive, toggleUserAdmin } from '../Api';
 import { useAuth } from '../Context/Auth/UseAuth';
 import { useSnackbar } from '../Context/Generic';
-import { Dialog, DialogHeader, Card, Stack, Button } from '../Components/Generic';
+import { Dialog, DialogHeader, Card, Stack, Button, DialogFooter } from '../Components/Generic';
 import type { UserData } from '../types';
 import '../styles/main_page.css';
 import '../styles/user_management.css';
@@ -169,7 +169,7 @@ function UserManagementDashboard() {
                             Tem certeza que deseja alterar o status de administrador para <strong>{confirmAdminToggle}</strong>?
                         </p>
                     </Stack>
-                    <Stack alignX="end" gap={16} className="modal-footer" style={{ padding: '1.5rem', borderTop: '1px solid var(--color-border-subtle)', backgroundColor: 'var(--color-bg-panel)', borderRadius: '0 0 8px 8px' }}>
+                    <DialogFooter>
                         <Button tier="secondary" variant="neutral" onClick={() => setConfirmAdminToggle(null)}>
                             Cancelar
                         </Button>
@@ -182,7 +182,7 @@ function UserManagementDashboard() {
                         >
                             Confirmar
                         </Button>
-                    </Stack>
+                    </DialogFooter>
                 </Dialog>
             )}
         </div>

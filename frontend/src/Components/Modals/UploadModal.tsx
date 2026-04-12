@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type DragEvent, type MouseEvent } from 'react';
 import JSZip from 'jszip';
 import { uploadTextArchive, getBatchStatus } from '../../Api/UploadApi';
-import { Badge, Icon, Dialog, DialogHeader, Stack, Button } from '../Generic';
+import { Badge, Icon, Dialog, DialogHeader, Stack, Button, DialogFooter } from '../Generic';
 import { useSnackbar } from '../../Context/Generic';
 import styles from '../../styles/upload_modal.module.css';
 import type { BatchStatusItem } from '../../types/api/responses';
@@ -498,13 +498,13 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
                     </div>
                 )}
             </Stack>
-            <Stack alignX="end" alignY="center" gap={16} className={styles['modal-footer']}>
+            <DialogFooter>
                 {isProcessing && progress < 100 ? (
                     <Button tier="secondary" variant="danger" onClick={handleCancelRequest}>
                         Cancelar Envio
                     </Button>
                 ) : (
-                    <Button tier="secondary" variant={uploadSuccess ? 'neutral' : 'danger'} onClick={handleClose}>
+                    <Button variant={uploadSuccess ? 'neutral' : 'danger'} onClick={handleClose}>
                         {uploadSuccess ? 'Fechar' : 'Cancelar'}
                     </Button>
                 )}
@@ -519,7 +519,7 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
                         Enviar
                     </Button>
                 )}
-            </Stack>
+            </DialogFooter>
         </Dialog>
     );
 }

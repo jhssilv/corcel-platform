@@ -1,6 +1,6 @@
 import { useEffect, useState, type CSSProperties, type KeyboardEvent, type MouseEvent as ReactMouseEvent } from 'react';
 import { deleteNormalization, postNormalization } from '../../Api';
-import { Stack, Button } from '../Generic';
+import { Stack, Button, DialogFooter } from '../Generic';
 import '../../styles/new_correction_popup.css';
 import type { TextDetailResponse } from '../../types';
 
@@ -107,7 +107,7 @@ const NewCorrectionPopup = ({
             <Stack alignX="center" alignY="center" className="confirmation-overlay" onClick={handleCloseButton}>
                 <div className="confirmation-dialog" style={dialogStyle} data-testid="confirmation-dialog">
                     <p>{username ? <><strong>{username}</strong>, </> : ''}você deseja remover a correção?</p>
-                    <Stack alignX="center" gap={12} className="confirmation-buttons">
+                    <DialogFooter align="center">
                         <Button
                             tier="primary"
                             variant="danger"
@@ -125,7 +125,7 @@ const NewCorrectionPopup = ({
                             Remover
                         </Button>
                         <Button tier="secondary" variant="neutral" onClick={handleCloseButton}>Cancelar</Button>
-                    </Stack>
+                    </DialogFooter>
                 </div>
             </Stack>
         );
@@ -139,7 +139,7 @@ const NewCorrectionPopup = ({
                     você deseja adicionar <i>{candidate}</i> como correção
                     {suggestForAll ? ` para todas as ocorrências de "${tokenText}"? Isso afetará todos os textos` : '?'}
                 </p>
-                <Stack alignX="center" gap={12} className="confirmation-buttons">
+                <DialogFooter align="center">
                     <Button
                         tier="primary"
                         variant="action"
@@ -157,7 +157,7 @@ const NewCorrectionPopup = ({
                         Adicionar
                     </Button>
                     <Button tier="secondary" variant="neutral" onClick={handleCloseButton}>Cancelar</Button>
-                </Stack>
+                </DialogFooter>
             </div>
         </Stack>
     );

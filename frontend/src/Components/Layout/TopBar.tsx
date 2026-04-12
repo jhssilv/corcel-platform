@@ -4,6 +4,7 @@ import UploadModal from '../Modals/UploadModal';
 import WhitelistModal from '../Modals/WhiteListModal';
 import RegisterUserModal from '../Modals/RegisterUserModal';
 import ReportModal from '../Modals/ReportModal';
+import DownloadDialog from '../Modals/DownloadDialog';
 import { Icon, Stack } from '../Generic';
 import { UseTopBarModals } from '../../Hooks/UI/UseTopBarModals';
 import { initTheme, toggleTheme, getCurrentTheme } from '../../Services/theme';
@@ -58,6 +59,7 @@ function TopBar({ onDownloadClick, showSidePanel = true }: TopBarProps) {
         isPanelOpen,
         isWhitelistOpen,
         isUploadOpen,
+        isDownloadOpen,
         isReportOpen,
         isRegisterUserOpen,
         reportTextCount,
@@ -65,6 +67,8 @@ function TopBar({ onDownloadClick, showSidePanel = true }: TopBarProps) {
         closePanel,
         openUpload,
         closeUpload,
+        openDownload,
+        closeDownload,
         openWhitelist,
         closeWhitelist,
         openReport,
@@ -123,6 +127,11 @@ function TopBar({ onDownloadClick, showSidePanel = true }: TopBarProps) {
                 isOpen={isReportOpen}
                 onClose={closeReport}
                 textCount={reportTextCount}
+            />
+
+            <DownloadDialog
+                show={isDownloadOpen}
+                onClose={closeDownload}
             />
 
             <RegisterUserModal

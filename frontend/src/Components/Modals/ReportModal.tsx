@@ -1,7 +1,7 @@
 import { useEffect, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { requestReport } from '../../Api';
 import { useSnackbar } from '../../Context/Generic';
-import { Dialog, DialogHeader, Stack } from '../Generic';
+import { Dialog, DialogHeader, Stack, Button, DialogFooter } from '../Generic';
 import styles from '../../styles/report_modal.module.css';
 
 interface ReportModalProps {
@@ -66,18 +66,19 @@ function ReportModal({ isOpen, onClose, textCount }: ReportModalProps) {
                 </p>
             </Stack>
 
-            <div className={styles['modal-footer']}>
-                <button className={[styles['modal-button'], styles['cancel-button']].join(' ')} onClick={onClose}>Cancelar</button>
-                <button
-                    className={[styles['modal-button'], styles['confirm-button'], styles['report-confirm']].join(' ')}
+            <DialogFooter align="right">
+                <Button variant="action" onClick={onClose}>Cancelar</Button>
+                <Button
+                    variant="action"
+                    tier="primary"
                     onClick={() => {
                         void handleConfirm();
                     }}
                     disabled={!confirmEnabled}
                 >
                     Confirmar
-                </button>
-            </div>
+                </Button>
+            </DialogFooter>
         </Dialog>
     );
 }

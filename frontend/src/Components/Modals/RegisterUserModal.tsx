@@ -1,6 +1,6 @@
 import { useState, type ChangeEvent, type FormEvent, type MouseEvent as ReactMouseEvent } from 'react';
 import { registerUser } from '../../Api';
-import { Dialog, DialogHeader, Stack, Button } from '../Generic';
+import { Dialog, DialogHeader, Stack, Button, DialogFooter } from '../Generic';
 import styles from '../../styles/register_user_modal.module.css';
 
 interface RegisterUserModalProps {
@@ -53,8 +53,8 @@ function RegisterUserModal({ isOpen, onClose }: RegisterUserModalProps) {
         <Dialog isOpen={isOpen} onClose={handleClose} className={styles['register-modal']}>
             <DialogHeader onClose={handleClose}>Registrar Novo Usuário</DialogHeader>
 
-            <Stack direction="vertical" gap={12} className={styles['modal-body']}>
-                <form onSubmit={handleSubmit} className={styles['register-form']}>
+            <form onSubmit={handleSubmit} className={styles['register-form']} style={{ display: 'flex', flexDirection: 'column' }}>
+                <Stack direction="vertical" gap={12} className={styles['modal-body']}>
                     <Stack direction="vertical" gap={20}>
                         <Stack direction="vertical" gap={8} className={styles['form-group']}>
                             <label htmlFor="username">Nome de Usuário</label>
@@ -72,24 +72,24 @@ function RegisterUserModal({ isOpen, onClose }: RegisterUserModalProps) {
                         </p>
 
                         {message.text && <div className={[styles.message, styles[message.type]].join(' ')}>{message.text}</div>}
-
-                        <Stack alignX="end" gap={16} className={styles['modal-footer']} style={{ padding: 0, marginTop: '5px' }}>
-                            <Button type="button" tier="secondary" variant="neutral" onClick={handleClose}>
-                                Cancelar
-                            </Button>
-                            <Button
-                                type="submit"
-                                tier="primary"
-                                variant="action"
-                                disabled={isSubmitting}
-                                isLoading={isSubmitting}
-                            >
-                                Criar Usuário
-                            </Button>
-                        </Stack>
                     </Stack>
-                </form>
-            </Stack>
+                </Stack>
+
+                <DialogFooter align="right">
+                    <Button variant="action" onClick={handleClose}>
+                        Cancelar
+                    </Button>
+                    <Button
+                        type="submit"
+                        tier="primary"
+                        variant="action"
+                        disabled={isSubmitting}
+                        isLoading={isSubmitting}
+                    >
+                        Criar Usuário
+                    </Button>
+                </DialogFooter>
+            </form>
         </Dialog>
     );
 }

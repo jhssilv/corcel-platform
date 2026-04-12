@@ -13,6 +13,7 @@ interface UseTopBarModalsResult {
     isPanelOpen: boolean;
     isWhitelistOpen: boolean;
     isUploadOpen: boolean;
+    isDownloadOpen: boolean;
     isReportOpen: boolean;
     isRegisterUserOpen: boolean;
     reportTextCount: number;
@@ -20,6 +21,8 @@ interface UseTopBarModalsResult {
     closePanel: () => void;
     openUpload: () => void;
     closeUpload: () => void;
+    openDownload: () => void;
+    closeDownload: () => void;
     openWhitelist: () => void;
     closeWhitelist: () => void;
     openReport: () => void;
@@ -40,6 +43,7 @@ export function UseTopBarModals({ onDownloadClick }: UseTopBarModalsOptions = {}
     const [isPanelOpen, setIsPanelOpen] = useState(false);
     const [isWhitelistOpen, setIsWhitelistOpen] = useState(false);
     const [isUploadOpen, setIsUploadOpen] = useState(false);
+    const [isDownloadOpen, setIsDownloadOpen] = useState(false);
     const [isReportOpen, setIsReportOpen] = useState(false);
     const [isRegisterUserOpen, setIsRegisterUserOpen] = useState(false);
     const [reportTextCount, setReportTextCount] = useState(0);
@@ -53,6 +57,13 @@ export function UseTopBarModals({ onDownloadClick }: UseTopBarModalsOptions = {}
     };
 
     const closeUpload = () => setIsUploadOpen(false);
+
+    const openDownload = () => {
+        setIsDownloadOpen(true);
+        closePanel();
+    };
+
+    const closeDownload = () => setIsDownloadOpen(false);
 
     const openWhitelist = () => {
         setIsWhitelistOpen(true);
@@ -95,7 +106,11 @@ export function UseTopBarModals({ onDownloadClick }: UseTopBarModalsOptions = {}
     };
 
     const handleDownload = () => {
-        onDownloadClick?.();
+        if (onDownloadClick) {
+            onDownloadClick();
+        } else {
+            openDownload();
+        }
         closePanel();
     };
 
@@ -110,6 +125,7 @@ export function UseTopBarModals({ onDownloadClick }: UseTopBarModalsOptions = {}
         isPanelOpen,
         isWhitelistOpen,
         isUploadOpen,
+        isDownloadOpen,
         isReportOpen,
         isRegisterUserOpen,
         reportTextCount,
@@ -117,6 +133,8 @@ export function UseTopBarModals({ onDownloadClick }: UseTopBarModalsOptions = {}
         closePanel,
         openUpload,
         closeUpload,
+        openDownload,
+        closeDownload,
         openWhitelist,
         closeWhitelist,
         openReport,

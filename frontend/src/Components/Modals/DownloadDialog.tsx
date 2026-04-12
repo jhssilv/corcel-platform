@@ -2,7 +2,7 @@ import { useEffect, useState, type ChangeEvent, type MouseEvent as ReactMouseEve
 import '../../styles/download_dialog.css';
 import downloadTexts from '../../Api/DownloadTexts';
 import { useSnackbar } from '../../Context/Generic';
-import { Dialog, DialogHeader, Stack, Button } from '../Generic';
+import { Dialog, DialogHeader, Stack, Button, DialogFooter } from '../Generic';
 
 interface DownloadDialogProps {
     show: boolean;
@@ -60,12 +60,12 @@ function DownloadDialog({ show, onClose, onDownload }: DownloadDialogProps) {
     };
 
     return (
-        <Dialog isOpen={show} onClose={onClose} className="confirmation-dialog">
+        <Dialog isOpen={show} onClose={onClose} style={{ maxWidth: '400px' }}>
             <DialogHeader onClose={onClose} icon='Download'>
                 Opções de Download
             </DialogHeader>
 
-            <Stack direction="vertical" gap={16} className="dialog-content">
+            <Stack direction="vertical" gap={16} style={{ padding: '1.5rem', flex: 1, overflowY: 'auto', color: 'var(--color-text-on-panel)' }}>
                 {'Todos os textos selecionados no filtro serão baixados.'}
                 <label className="dialog-checkbox-wrapper" htmlFor="use-brackets-checkbox">
                     <input
@@ -79,8 +79,8 @@ function DownloadDialog({ show, onClose, onDownload }: DownloadDialogProps) {
                 </label>
             </Stack>
 
-            <Stack alignX="center" gap={12} className="confirmation-buttons">
-                <Button tier="secondary" variant="danger" onClick={onClose}>Cancelar</Button>
+            <DialogFooter align="right">
+                <Button variant="action" onClick={onClose}>Cancelar</Button>
                 <Button
                     tier="primary"
                     variant="action"
@@ -91,7 +91,7 @@ function DownloadDialog({ show, onClose, onDownload }: DownloadDialogProps) {
                 >
                     Baixar
                 </Button>
-            </Stack>
+            </DialogFooter>
         </Dialog>
     );
 }

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TopBar from '../Components/Layout/TopBar';
-import { Badge, Icon, Dialog, DialogHeader, Stack, Button } from '../Components/Generic';
+import { Badge, Icon, Dialog, DialogHeader, Stack, Button, DialogFooter } from '../Components/Generic';
 import DropdownSelect, { type DropdownValue, type SelectOption } from '../Components/Common/DropdownSelect';
 import { bulkAssignTexts, bulkUnassignTexts, getFilteredTextsData, getUsernames } from '../Api';
 import { useSnackbar } from '../Context/Generic';
@@ -519,7 +519,7 @@ function AssignmentsPanel() {
                         </div>
                         <p style={{ marginTop: '15px', color: '#888' }}>Deseja continuar?</p>
                     </div>
-                    <div className="modal-footer">
+                    <DialogFooter>
                         <Button tier="secondary" variant="neutral" onClick={() => setShowConfirmModal(false)}>
                             Cancelar
                         </Button>
@@ -532,7 +532,7 @@ function AssignmentsPanel() {
                         >
                             Confirmar
                         </Button>
-                    </div>
+                    </DialogFooter>
                 </Dialog>
             )}
         </div>

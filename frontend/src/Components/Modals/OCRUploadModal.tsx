@@ -1,6 +1,6 @@
 import { type MouseEvent as ReactMouseEvent } from 'react';
 import '../../styles/ocr_upload_modal.css';
-import { Icon, Dialog, DialogHeader, Stack, Button } from '../Generic';
+import { Icon, Dialog, DialogHeader, Stack, Button, DialogFooter } from '../Generic';
 import { UseOCRUploadTask } from '../../Hooks/Upload/UseOCRUploadTask';
 
 interface OCRUploadModalProps {
@@ -121,7 +121,7 @@ function OCRUploadModal({ isOpen, onClose, onUploadComplete }: OCRUploadModalPro
                 )}
             </div>
 
-            <Stack alignX="end" gap={16} className="modal-footer">
+            <DialogFooter>
                 <Button tier="secondary" variant="neutral" onClick={handleClose} disabled={isProcessing}>
                     Cancelar
                 </Button>
@@ -137,7 +137,7 @@ function OCRUploadModal({ isOpen, onClose, onUploadComplete }: OCRUploadModalPro
                         Fazer Upload
                     </Button>
                 )}
-            </Stack>
+            </DialogFooter>
         </Dialog>
     );
 }

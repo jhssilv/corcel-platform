@@ -2,8 +2,6 @@ import { useCallback, useEffect, useState } from 'react';
 import EssayDisplay from '../Components/Text/EssayDisplay';
 import EssaySelector from '../Components/Text/EssaySelector';
 import TopBar from '../Components/Layout/TopBar';
-import DownloadDialog from '../Components/Modals/DownloadDialog';
-import downloadTexts from '../Api/DownloadTexts';
 import { getNormalizationsByText, getTextById } from '../Api';
 import { useToast } from '../Context/Generic';
 import type { Option, TextDetailResponse } from '../types';
@@ -12,7 +10,6 @@ import '../styles/main_page.css';
 function MainPage() {
     const [selectedEssay, setSelectedEssay] = useState<Option<number> | null>(null);
     const [currentText, setCurrentText] = useState<TextDetailResponse | null>(null);
-    const [showDownloadDialog, setShowDownloadDialog] = useState(false);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
     const { addToast } = useToast();
 
@@ -48,7 +45,7 @@ function MainPage() {
 
     return (
         <section className="main-page-section">
-            <TopBar onDownloadClick={() => setShowDownloadDialog(true)} />
+            <TopBar />
 
             <h2 className="main-page-header">Busca de Textos</h2>
 
@@ -61,12 +58,6 @@ function MainPage() {
             </div>
 
             <EssayDisplay essay={currentText} refreshEssay={handleEssayUpdate} />
-
-            <DownloadDialog
-                show={showDownloadDialog}
-                onClose={() => setShowDownloadDialog(false)}
-                onDownload={(useBrackets: boolean) => downloadTexts(useBrackets)}
-            />
         </section>
     );
 }
