@@ -20,13 +20,18 @@ export function Dialog({
     ...props
 }: DialogProps) {
     const dialogRef = useRef<HTMLDivElement>(null);
+    const onCloseRef = useRef(onClose);
+
+    useEffect(() => {
+        onCloseRef.current = onClose;
+    }, [onClose]);
 
     useEffect(() => {
         if (!isOpen) return;
 
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
-                onClose();
+                onCloseRef.current();
             }
 
             if (e.key === 'Tab' && trapFocus && dialogRef.current) {
@@ -72,13 +77,13 @@ export function Dialog({
             document.removeEventListener('keydown', handleKeyDown);
             document.body.style.overflow = 'unset';
         };
-    }, [isOpen, onClose, trapFocus]);
+    }, [isOpen, trapFocus]);
 
     if (!isOpen) return null;
 
     const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
         if (e.target === e.currentTarget && closeOnOverlayClick) {
-            onClose();
+            onCloseRef.current();
         }
     };
 
