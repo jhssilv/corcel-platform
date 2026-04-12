@@ -1,6 +1,6 @@
 import { type MouseEvent as ReactMouseEvent } from 'react';
 import '../../styles/ocr_upload_modal.css';
-import { Icon, Dialog, DialogHeader, Stack, Button, DialogFooter } from '../Generic';
+import { Icon, Dialog, DialogHeader, Stack, Button, DialogFooter, ProgressInline } from '../Generic';
 import { UseOCRUploadTask } from '../../Hooks/Upload/UseOCRUploadTask';
 
 interface OCRUploadModalProps {
@@ -110,14 +110,12 @@ function OCRUploadModal({ isOpen, onClose, onUploadComplete }: OCRUploadModalPro
                         {hasError && <div className="error-message">Erro durante upload, confira se o arquivo é válido.</div>}
                     </>
                 ) : (
-                    <Stack direction="vertical" alignX="center" gap={20} className="processing-container">
-                        <div className="progress-bar-container">
-                            <div className="progress-bar-fill" style={{ width: `${progress}%` }}></div>
-                        </div>
-                        <p className="progress-text">{progress}%</p>
-                        <p className="status-message">{statusMessage}</p>
-                        <div className="processing-spinner"></div>
-                    </Stack>
+                    <ProgressInline
+                        progress={progress}
+                        statusMessage={statusMessage}
+                        showPercent
+                        showSpinner
+                    />
                 )}
             </div>
 

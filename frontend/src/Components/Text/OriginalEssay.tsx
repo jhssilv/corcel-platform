@@ -1,6 +1,7 @@
 import styles from '../../styles/generated_essay.module.css';
 import type { TextDetailResponse } from '../../types';
 import type { MouseEvent as ReactMouseEvent } from 'react';
+import { SectionHeader } from '../Generic';
 
 interface HighlightRange {
     start: number;
@@ -59,9 +60,7 @@ const OriginalEssay = ({ essay, handleSelection, highlightRange, setHoveredIndex
 
     return (
         <div className={`${styles['essay-container']} ${styles['original-essay-container']}`}>
-            <div className={styles['document-header']}>
-                <span className={styles['document-title']}>{essay.sourceFileName} (Original)</span>
-            </div>
+            <SectionHeader heading={`${essay.sourceFileName} (Original)`} />
             <div>{renderTokens()}</div>
         </div>
     );

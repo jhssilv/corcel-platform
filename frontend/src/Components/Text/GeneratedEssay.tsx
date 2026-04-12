@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import buildText from '../../Services/Text/BuildText';
-import { Badge } from '../Generic';
+import { Badge, SectionHeader } from '../Generic';
 import styles from '../../styles/generated_essay.module.css';
 import type { NormalizationMap, TextDetailResponse } from '../../types';
 
@@ -168,12 +168,14 @@ const GeneratedEssay = ({
 
     return (
         <div className={styles['essay-container']} data-testid="essay-container">
-            <div className={styles['document-header']}>
-                <span className={styles['document-title']} data-testid="document-title">{essay.sourceFileName}</span>
-                {essay.grade !== undefined && essay.grade !== null && (
-                    <Badge text={`Nota: ${essay.grade}`} variant="secondary" size="sm" iconPosition="none" />
-                )}
-            </div>
+            <SectionHeader
+                heading={<span data-testid="document-title">{essay.sourceFileName}</span>}
+                actions={
+                    essay.grade !== undefined && essay.grade !== null ? (
+                        <Badge text={`Nota: ${essay.grade}`} variant="secondary" size="sm" iconPosition="none" />
+                    ) : null
+                }
+            />
             <div>{spans}</div>
         </div>
     );

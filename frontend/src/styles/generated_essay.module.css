@@ -13,26 +13,6 @@
     border: 1px solid var(--color-border-primary);
 }
 
-.document-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid var(--color-border-primary);
-    padding-bottom: 1rem;
-    margin-bottom: 1.5rem;
-    color: var(--color-text-muted);
-    font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-}
-
-.document-title {
-    font-weight: 600;
-    font-size: 1.0rem;
-    text-transform: lowercase;
-    letter-spacing: 1px;
-    color: var(--color-text-faint);
-    font-variant-numeric: lining-nums;
-}
-
 .clickable {
     border-radius: 4px;
     padding: 2px 0;

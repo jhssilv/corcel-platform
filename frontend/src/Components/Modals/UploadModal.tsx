@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type DragEvent, type MouseEvent } from 'react';
 import JSZip from 'jszip';
 import { uploadTextArchive, getBatchStatus } from '../../Api/UploadApi';
-import { Badge, Icon, Dialog, DialogHeader, Stack, Button, DialogFooter } from '../Generic';
+import { Badge, Icon, Dialog, DialogHeader, Stack, Button, DialogFooter, ProgressInline } from '../Generic';
 import { useSnackbar } from '../../Context/Generic';
 import styles from '../../styles/upload_modal.module.css';
 import type { BatchStatusItem } from '../../types/api/responses';
@@ -469,33 +469,12 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
                 )}
 
                 {isProcessing && (
-                    <div className="progress-container" style={{ padding: '20px', textAlign: 'center' }}>
-                        <div
-                            className="progress-bar-wrapper"
-                            style={{
-                                width: '100%',
-                                backgroundColor: '#eee',
-                                borderRadius: '4px',
-                                height: '20px',
-                                overflow: 'hidden',
-                                marginBottom: '15px',
-                            }}
-                        >
-                            <div
-                                className="progress-bar-fill"
-                                style={{
-                                    width: `${progress}%`,
-                                    backgroundColor: '#4caf50',
-                                    height: '100%',
-                                    transition: 'width 0.3s ease',
-                                }}
-                            ></div>
-                        </div>
-                        <p className={styles['upload-text']} style={{ fontWeight: 'bold' }}>{statusMessage}</p>
-                        {progress < 100 && (
-                            <p className={styles['upload-subtext']}>Você pode fechar esta janela, o processo continuará em segundo plano.</p>
-                        )}
-                    </div>
+                    <ProgressInline
+                        progress={progress}
+                        statusMessage={statusMessage}
+                        hintText={progress < 100 ? 'Você pode fechar esta janela, o processo continuará em segundo plano.' : undefined}
+                        showPercent={false}
+                    />
                 )}
             </Stack>
             <DialogFooter>

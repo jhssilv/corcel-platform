@@ -1,6 +1,6 @@
 import { type MouseEvent as ReactMouseEvent } from 'react';
 import '../../styles/ocr_upload_modal.css';
-import { Icon, Stack, Card, CardTitle } from '../Generic';
+import { Icon, Stack, Card, CardTitle, ProgressInline } from '../Generic';
 import { UseOCRUploadTask } from '../../Hooks/Upload/UseOCRUploadTask';
 
 interface OCRUploadSectionProps {
@@ -98,14 +98,12 @@ function OCRUploadSection({ onUploadComplete }: OCRUploadSectionProps) {
                     </div>
                 </>
             ) : (
-                <div className="processing-container">
-                    <div className="progress-bar-container">
-                        <div className="progress-bar-fill" style={{ width: `${progress}%` }}></div>
-                    </div>
-                    <p className="progress-text">{progress}%</p>
-                    <p className="status-message">{statusMessage}</p>
-                    <div className="processing-spinner"></div>
-                </div>
+                <ProgressInline
+                    progress={progress}
+                    statusMessage={statusMessage}
+                    showPercent
+                    showSpinner
+                />
             )}
         </Card>
     );
