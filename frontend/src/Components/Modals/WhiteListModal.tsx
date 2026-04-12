@@ -1,7 +1,7 @@
 import { useEffect, useState, type ChangeEvent, type DragEvent, type MouseEvent as ReactMouseEvent } from 'react';
 import { parseTextFile } from '../../Services/Text/FileParsers';
 import { addToWhitelist, getWhitelist, removeFromWhitelist } from '../../Api';
-import { Dialog, DialogHeader, Stack, Button, DialogFooter } from '../Generic';
+import { Dialog, DialogHeader, Stack, Button, DialogFooter, FormField } from '../Generic';
 import { useSnackbar } from '../../Context/Generic';
 import styles from '../../styles/whitelist_modal.module.css';
 
@@ -133,26 +133,25 @@ function WhitelistModal({ isOpen, onClose }: WhitelistModalProps) {
             <DialogHeader onClose={handleCancel}>Gerenciar Whitelist</DialogHeader>
 
             <Stack direction="vertical" gap={12} className={styles['modal-body']}>
-                <label htmlFor="whitelist-textarea" className={styles['textarea-label']}>
-                    Lista de palavras (separadas por vírgula):
-                </label>
-                <Stack direction="vertical" className={[styles['textarea-container'], isDragging ? styles.dragging : ''].filter(Boolean).join(' ')}
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    onDrop={(event: React.DragEvent<HTMLDivElement>) => {
-                        void handleDrop(event);
-                    }}
-                >
-                    <textarea
-                        id="whitelist-textarea"
-                        className={styles['whitelist-textarea']}
-                        value={whitelistText}
-                        onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setWhitelistText(event.target.value)}
-                        placeholder="Digite as palavras separadas por vírgula ou arraste arquivos de texto aqui..."
-                        rows={15}
-                    />
-                    {isDragging && <Stack alignX="center" alignY="center" className={styles['drag-overlay']}>Solte os arquivos aqui</Stack>}
-                </Stack>
+                <FormField label="Lista de palavras (separadas por vírgula):" htmlFor="whitelist-textarea">
+                    <Stack direction="vertical" className={[styles['textarea-container'], isDragging ? styles.dragging : ''].filter(Boolean).join(' ')}
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={(event: React.DragEvent<HTMLDivElement>) => {
+                            void handleDrop(event);
+                        }}
+                    >
+                        <textarea
+                            id="whitelist-textarea"
+                            className={styles['whitelist-textarea']}
+                            value={whitelistText}
+                            onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setWhitelistText(event.target.value)}
+                            placeholder="Digite as palavras separadas por vírgula ou arraste arquivos de texto aqui..."
+                            rows={15}
+                        />
+                        {isDragging && <Stack alignX="center" alignY="center" className={styles['drag-overlay']}>Solte os arquivos aqui</Stack>}
+                    </Stack>
+                </FormField>
             </Stack>
 
             <DialogFooter>

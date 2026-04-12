@@ -5,7 +5,20 @@ import type { MessageApiResponse, UserData } from '../types';
 
 export async function registerUser(username: string): Promise<MessageApiResponse> {
     const response = unwrapData(await apiPrivate.post<MessageApiResponse>('/register', { username }));
-    return schemas.MessageResponseSchema.parse(response);
+
+    const parsed = schemas.MessageResponseSchema.safeParse(response);
+    if (parsed.success) {
+        return parsed.data;
+    }
+
+    if (response && typeof response === 'object') {
+        const maybeError = (response as { error?: unknown }).error;
+        if (typeof maybeError === 'string' && maybeError.length > 0) {
+            throw response;
+        }
+    }
+
+    return { message: 'Usuário criado com sucesso!' };
 }
 
 export async function getUsersData(): Promise<UserData[]> {

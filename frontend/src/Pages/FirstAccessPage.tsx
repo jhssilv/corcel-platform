@@ -1,8 +1,8 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { activateUser } from '../Api';
-import { Card, CardTitle } from '../Components/Generic';
-import '../styles/login_page.css';
+import { Banner, Button, Card, CardTitle, FormField, Stack } from '../Components/Generic';
+import styles from './first_access_page.module.css';
 
 interface MessageState {
     text: string;
@@ -47,64 +47,70 @@ function FirstAccessPage() {
     };
 
     return (
-        <div className="login-container">
-            <Card className="login-box" style={{ maxWidth: '400px', margin: '0 auto', textAlign: 'left' }}>
-                <CardTitle className="login-title">Primeiro Acesso</CardTitle>
-                <div style={{ padding: '20px' }}>
-                    <form onSubmit={handleSubmit} className="login-form">
-                        <div className="form-group" style={{ marginBottom: '15px' }}>
-                            <label htmlFor="username" style={{ display: 'block', marginBottom: '5px' }}>Nome de Usuário</label>
-                            <input
-                                type="text"
-                                id="username"
-                                value={username}
-                                onChange={(event: ChangeEvent<HTMLInputElement>) => setUsername(event.target.value)}
-                                required
-                            />
-                        </div>
-                        <div className="form-group" style={{ marginBottom: '15px' }}>
-                            <label htmlFor="password" style={{ display: 'block', marginBottom: '5px' }}>Nova Senha</label>
-                            <input
-                                type="password"
-                                id="password"
-                                value={password}
-                                onChange={(event: ChangeEvent<HTMLInputElement>) => setPassword(event.target.value)}
-                                required
-                                minLength={6}
-                            />
-                        </div>
-                        <div className="form-group" style={{ marginBottom: '20px' }}>
-                            <label htmlFor="confirmPassword" style={{ display: 'block', marginBottom: '5px' }}>Confirmar Senha</label>
-                            <input
-                                type="password"
-                                id="confirmPassword"
-                                value={confirmPassword}
-                                onChange={(event: ChangeEvent<HTMLInputElement>) => setConfirmPassword(event.target.value)}
-                                required
-                                minLength={6}
-                            />
-                        </div>
+        <div className={styles.container}>
+            <Card className={styles.card}>
+                <CardTitle>Primeiro Acesso</CardTitle>
+                <div className={styles.content}>
+                    <form onSubmit={handleSubmit} className={styles.form}>
+                        <Stack direction="vertical" gap={14}>
+                            <FormField label="Nome de Usuário" htmlFor="username" required>
+                                <input
+                                    type="text"
+                                    id="username"
+                                    value={username}
+                                    onChange={(event: ChangeEvent<HTMLInputElement>) => setUsername(event.target.value)}
+                                    required
+                                />
+                            </FormField>
 
-                        {message.text && (
-                            <div
-                                className={`message ${message.type}`}
-                                data-testid="first-access-message"
-                                data-message-type={message.type}
-                                role="status"
+                            <FormField label="Nova Senha" htmlFor="password" required>
+                                <input
+                                    type="password"
+                                    id="password"
+                                    value={password}
+                                    onChange={(event: ChangeEvent<HTMLInputElement>) => setPassword(event.target.value)}
+                                    required
+                                    minLength={6}
+                                />
+                            </FormField>
+
+                            <FormField label="Confirmar Senha" htmlFor="confirmPassword" required>
+                                <input
+                                    type="password"
+                                    id="confirmPassword"
+                                    value={confirmPassword}
+                                    onChange={(event: ChangeEvent<HTMLInputElement>) => setConfirmPassword(event.target.value)}
+                                    required
+                                    minLength={6}
+                                />
+                            </FormField>
+
+                            {message.text && (
+                                <Banner
+                                    variant={message.type === 'error' ? 'danger' : 'success'}
+                                    data-testid="first-access-message"
+                                    data-message-type={message.type}
+                                >
+                                    {message.text}
+                                </Banner>
+                            )}
+
+                            <Button
+                                type="submit"
+                                tier="primary"
+                                variant="action"
+                                disabled={isSubmitting}
+                                isLoading={isSubmitting}
                             >
-                                {message.text}
+                                {isSubmitting ? 'Ativando...' : 'Ativar Conta'}
+                            </Button>
+
+                            <div className={styles.backLinkContainer}>
+                                <Link to="/" className={styles.backLink}>
+                                    Voltar para Login
+                                </Link>
                             </div>
-                        )}
-
-                        <button type="submit" className="login-button" disabled={isSubmitting} style={{ color: 'white' }}>
-                            {isSubmitting ? 'Ativando...' : 'Ativar Conta'}
-                        </button>
-
-                        <div style={{ marginTop: '15px', textAlign: 'center' }}>
-                            <Link to="/" style={{ color: '#666', textDecoration: 'none', fontSize: '0.9rem' }}>
-                                Voltar para Login
-                            </Link>
-                        </div>
+                        </Stack>
                     </form>
                 </div>
             </Card>

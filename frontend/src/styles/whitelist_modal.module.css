@@ -72,13 +72,6 @@
   overflow-y: auto;
 }
 
-.textarea-label {
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: var(--color-text-secondary);
-  margin-bottom: 0.25rem;
-}
-
 .textarea-container {
   position: relative;
   width: 100%;

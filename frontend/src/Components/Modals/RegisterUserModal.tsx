@@ -1,6 +1,6 @@
-import { useState, type ChangeEvent, type FormEvent, type MouseEvent as ReactMouseEvent } from 'react';
+import { useState, type ChangeEvent, type FormEvent } from 'react';
 import { registerUser } from '../../Api';
-import { Dialog, DialogHeader, Stack, Button, DialogFooter } from '../Generic';
+import { Banner, Dialog, DialogHeader, Stack, Button, DialogFooter, FormField } from '../Generic';
 import styles from '../../styles/register_user_modal.module.css';
 
 interface RegisterUserModalProps {
@@ -11,10 +11,6 @@ interface RegisterUserModalProps {
 interface FormMessage {
     text: string;
     type: 'success' | 'error' | '';
-}
-
-interface ApiErrorShape {
-    error?: string;
 }
 
 function RegisterUserModal({ isOpen, onClose }: RegisterUserModalProps) {
@@ -53,11 +49,10 @@ function RegisterUserModal({ isOpen, onClose }: RegisterUserModalProps) {
         <Dialog isOpen={isOpen} onClose={handleClose} className={styles['register-modal']}>
             <DialogHeader onClose={handleClose}>Registrar Novo Usuário</DialogHeader>
 
-            <form onSubmit={handleSubmit} className={styles['register-form']} style={{ display: 'flex', flexDirection: 'column' }}>
+            <form onSubmit={handleSubmit} className={styles['register-form']}>
                 <Stack direction="vertical" gap={12} className={styles['modal-body']}>
                     <Stack direction="vertical" gap={20}>
-                        <Stack direction="vertical" gap={8} className={styles['form-group']}>
-                            <label htmlFor="username">Nome de Usuário</label>
+                        <FormField label="Nome de Usuário" htmlFor="username" required>
                             <input
                                 type="text"
                                 id="username"
@@ -66,17 +61,22 @@ function RegisterUserModal({ isOpen, onClose }: RegisterUserModalProps) {
                                 required
                                 minLength={3}
                             />
-                        </Stack>
-                        <p style={{ fontSize: '0.9rem', color: '#666', margin: 0 }}>
+                        </FormField>
+
+                        <p className={styles['helper-text']}>
                             O usuário será criado como inativo e escolherá sua senha no primeiro acesso.
                         </p>
 
-                        {message.text && <div className={[styles.message, styles[message.type]].join(' ')}>{message.text}</div>}
+                        {message.text && (
+                            <Banner variant={message.type === 'error' ? 'danger' : 'success'}>
+                                {message.text}
+                            </Banner>
+                        )}
                     </Stack>
                 </Stack>
 
                 <DialogFooter align="right">
-                    <Button variant="action" onClick={handleClose}>
+                    <Button type="button" tier="secondary" variant="neutral" onClick={handleClose}>
                         Cancelar
                     </Button>
                     <Button

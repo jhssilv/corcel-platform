@@ -1,0 +1,34 @@
+.container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.card {
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
+    text-align: left;
+}
+
+.content {
+    padding: 1.25rem;
+}
+
+.form {
+    width: 100%;
+}
+
+.backLinkContainer {
+    text-align: center;
+}
+
+.backLink {
+    color: var(--color-text-muted);
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.backLink:hover {
+    text-decoration: underline;
+}
