@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import EssayDisplay from '../Components/Text/EssayDisplay';
 import EssaySelector from '../Components/Text/EssaySelector';
 import TopBar from '../Components/Layout/TopBar';
+import { SectionHeader } from '../Components/Generic';
 import { getNormalizationsByText, getTextById } from '../Api';
 import { useToast } from '../Context/Generic';
 import type { Option, TextDetailResponse } from '../types';
@@ -47,7 +48,7 @@ function MainPage() {
         <section className="main-page-section">
             <TopBar />
 
-            <h2 className="main-page-header">Busca de Textos</h2>
+            <SectionHeader heading={<span style={{ textTransform: 'none' }}>Busca de Textos</span>} />
 
             <div>
                 <EssaySelector

@@ -4,7 +4,7 @@ import TopBar from '../Components/Layout/TopBar';
 import { getUsersData, toggleUserActive, toggleUserAdmin } from '../Api';
 import { useAuth } from '../Context/Auth/UseAuth';
 import { useSnackbar } from '../Context/Generic';
-import { Dialog, DialogHeader, Card, Stack, Button, DialogFooter } from '../Components/Generic';
+import { Dialog, DialogHeader, Card, Stack, Button, DialogFooter, FormField, SectionHeader } from '../Components/Generic';
 import type { UserData } from '../types';
 import '../styles/main_page.css';
 import '../styles/user_management.css';
@@ -96,22 +96,27 @@ function UserManagementDashboard() {
             <TopBar showSidePanel={true} />
 
             <div className="main-page-section user-management-section">
-                <Stack alignX="space-between" alignY="center" className="user-management-header">
-                    <h2>Gerenciamento de Usuários</h2>
-                    <Button onClick={() => navigate('/main')} tier="secondary" variant="neutral">
-                        Voltar
-                    </Button>
-                </Stack>
+                <SectionHeader
+                    heading={<span style={{ textTransform: 'none' }}>Gerenciamento de Usuários</span>}
+                    actions={(
+                        <Button onClick={() => navigate('/main')} tier="secondary" variant="neutral">
+                            Voltar
+                        </Button>
+                    )}
+                />
 
                 <Card>
-                    <div className="user-management-content">
-                        <input
-                            type="text"
-                            placeholder="Buscar usuário..."
-                            value={searchTerm}
-                            onChange={(event: ChangeEvent<HTMLInputElement>) => setSearchTerm(event.target.value)}
-                            className="user-management-search"
-                        />
+                    <Stack direction="vertical" gap={20} className="user-management-content">
+                        <FormField label="Buscar usuário" htmlFor="user-management-search-input">
+                            <input
+                                id="user-management-search-input"
+                                type="text"
+                                placeholder="Buscar usuário..."
+                                value={searchTerm}
+                                onChange={(event: ChangeEvent<HTMLInputElement>) => setSearchTerm(event.target.value)}
+                                className="user-management-search"
+                            />
+                        </FormField>
 
                         {loading ? (
                             <p>Carregando...</p>
@@ -157,7 +162,7 @@ function UserManagementDashboard() {
                                 </table>
                             </div>
                         )}
-                    </div>
+                    </Stack>
                 </Card>
             </div>
 

@@ -4,7 +4,7 @@ import OriginalEssay from './OriginalEssay';
 import GeneratedCandidates from './GeneratedCandidates';
 import NewCorrectionPopup from '../Modals/NewCorrectionPopup';
 import ResetCorrectionsModal from '../Modals/ResetCorrectionsModal';
-import { Button, Checkbox, Icon, Stack } from '../Generic';
+import { Banner, Button, Checkbox, Icon, Stack } from '../Generic';
 import { UseCorrectionActions } from '../../Hooks/Text/UseCorrectionActions';
 import { UseTextSelection } from '../../Hooks/Text/UseTextSelection';
 import type { TextDetailResponse } from '../../types';
@@ -56,12 +56,12 @@ function EssayDisplay({ essay, refreshEssay }: EssayDisplayProps) {
     return (
         <div>
             {(essay.processingStatus === 'PROCESSING' || essay.processingStatus === 'PENDING') && (
-                <Stack alignY="center" gap={12} style={{ background: '#fff3cd', border: '1px solid #ffe69c', color: '#664d03', padding: '12px 16px', borderRadius: '8px', marginBottom: '16px', fontSize: '0.95rem' }}>
+                <Banner variant="warning" style={{ marginBottom: '16px', fontSize: '0.95rem' }}>
                     <Icon name="Info" color="black" size={20} style={{ color: 'currentColor', flexShrink: 0 }} />
                     <div>
                         <strong>Aviso:</strong> {textNotFinishedAdvice}
                     </div>
-                </Stack>
+                </Banner>
             )}
             <Stack direction="vertical" alignY="center" gap={12} className="essay-legend">
                 <Stack alignX="center" gap={20} className="essay-legend-items" wrap>
@@ -95,7 +95,7 @@ function EssayDisplay({ essay, refreshEssay }: EssayDisplayProps) {
                     />
                 </Stack>
 
-                <Stack alignX="center" gap={12} className="essay-actions-bar" style={{ marginTop: '10px', paddingTop: '10px' }}>
+                <Stack alignX="center" gap={12} style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid var(--color-border-secondary)', width: '100%' }}>
                     <Button
                         tier="secondary"
                         variant="danger"

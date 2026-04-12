@@ -4,10 +4,6 @@
     margin-top: 80px;
 }
 
-.user-management-header {
-    margin-bottom: 20px;
-}
-
 .user-management-search {
     width: 100%;
     margin-bottom: 20px;
@@ -105,11 +101,6 @@
 }
 
 .essay-legend-divider {
-    border-top: 1px solid var(--color-border-secondary);
-    width: 100%;
-}
-
-.essay-actions-bar {
     border-top: 1px solid var(--color-border-secondary);
     width: 100%;
 }

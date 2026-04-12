@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TopBar from '../Components/Layout/TopBar';
-import { Badge, Icon, Dialog, DialogHeader, Stack, Button, DialogFooter, Checkbox } from '../Components/Generic';
+import { Badge, Icon, Dialog, DialogHeader, Stack, Button, DialogFooter, Checkbox, FormField, SectionHeader } from '../Components/Generic';
 import DropdownSelect, { type DropdownValue, type SelectOption } from '../Components/Common/DropdownSelect';
 import { bulkAssignTexts, bulkUnassignTexts, getFilteredTextsData, getUsernames } from '../Api';
 import { useSnackbar } from '../Context/Generic';
@@ -296,12 +296,14 @@ function AssignmentsPanel() {
             <TopBar />
 
             <div className="assignments-panel-container main-page-section">
-                <div className="assignments-panel-header">
-                    <h2 className="assignments-panel-title">Gerenciamento de Atribuições</h2>
-                    <button className="back-btn" onClick={() => navigate('/main')}>
-                        ← Voltar para Busca
-                    </button>
-                </div>
+                <SectionHeader
+                    heading={<span style={{ textTransform: 'none' }}>Gerenciamento de Atribuições</span>}
+                    actions={(
+                        <Button tier="secondary" variant="neutral" leftIcon="ArrowLeft" onClick={() => navigate('/main')}>
+                            Voltar para Busca
+                        </Button>
+                    )}
+                />
 
                 <div className="mode-toggle-container">
                     <button
@@ -327,16 +329,16 @@ function AssignmentsPanel() {
                 <div className="assignments-filters">
                     <div className="assignments-search-row">
                         <div>
-                            <label className="assignments-search-label">
-                                Buscar por nome do arquivo
-                            </label>
-                            <input
-                                type="text"
-                                placeholder="Digite para buscar..."
-                                value={searchText}
-                                onChange={(event: ChangeEvent<HTMLInputElement>) => setSearchText(event.target.value)}
-                                className="assignments-search-input"
-                            />
+                            <FormField label="Buscar por nome do arquivo" htmlFor="assignments-search-input">
+                                <input
+                                    id="assignments-search-input"
+                                    type="text"
+                                    placeholder="Digite para buscar..."
+                                    value={searchText}
+                                    onChange={(event: ChangeEvent<HTMLInputElement>) => setSearchText(event.target.value)}
+                                    className="assignments-search-input"
+                                />
+                            </FormField>
                         </div>
                     </div>
 
@@ -366,39 +368,46 @@ function AssignmentsPanel() {
                 </div>
 
                 <div className="assignments-texts-section">
-                    <div className="assignments-texts-header">
-                        <Stack alignY="center" gap={12}>
-                            <h3 className="assignments-texts-title">Textos Disponíveis</h3>
-                            <Badge
-                                text={`${selectedTextIds.size} de ${textsData.length} selecionados`}
-                                variant="secondary"
-                                size="md"
-                                iconPosition="none"
-                            />
-                        </Stack>
-                        <div className="assignments-selection-controls">
-                            <div className="select-n-control">
-                                <input
-                                    type="number"
-                                    min="1"
-                                    max={textsData.length}
-                                    placeholder="N"
-                                    value={selectNValue}
-                                    onChange={(event: ChangeEvent<HTMLInputElement>) => setSelectNValue(event.target.value)}
-                                    className="select-n-input"
+                    <SectionHeader
+                        className="assignments-texts-header"
+                        heading={(
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '12px', textTransform: 'none' }}>
+                                <span style={{ textTransform: 'none' }}>Textos Disponíveis</span>
+                                <Badge
+                                    text={`${selectedTextIds.size} de ${textsData.length} selecionados`}
+                                    variant="secondary"
+                                    size="md"
+                                    iconPosition="none"
                                 />
-                                <button
-                                    className="selection-btn"
-                                    onClick={handleSelectN}
-                                    disabled={!selectNValue || Number.parseInt(selectNValue, 10) <= 0 || Number.parseInt(selectNValue, 10) > textsData.length}
-                                >
-                                    Selecionar N
-                                </button>
+                            </span>
+                        )}
+                        actions={(
+                            <div className="assignments-selection-controls">
+                                <div className="select-n-control">
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        max={textsData.length}
+                                        placeholder="N"
+                                        value={selectNValue}
+                                        onChange={(event: ChangeEvent<HTMLInputElement>) => setSelectNValue(event.target.value)}
+                                        className="select-n-input"
+                                    />
+                                    <Button
+                                        tier="secondary"
+                                        variant="neutral"
+                                        size="sm"
+                                        onClick={handleSelectN}
+                                        disabled={!selectNValue || Number.parseInt(selectNValue, 10) <= 0 || Number.parseInt(selectNValue, 10) > textsData.length}
+                                    >
+                                        Selecionar N
+                                    </Button>
+                                </div>
+                                <Button tier="secondary" variant="neutral" size="sm" onClick={handleSelectAll}>Selecionar Todos</Button>
+                                <Button tier="secondary" variant="neutral" size="sm" onClick={handleDeselectAll}>Desmarcar Todos</Button>
                             </div>
-                            <button className="selection-btn" onClick={handleSelectAll}>Selecionar Todos</button>
-                            <button className="selection-btn" onClick={handleDeselectAll}>Desmarcar Todos</button>
-                        </div>
-                    </div>
+                        )}
+                    />
 
                     <div className="assignments-texts-list">
                         {loading ? (
@@ -419,14 +428,14 @@ function AssignmentsPanel() {
                                         aria-label={`Selecionar ${text.sourceFileName || `Texto ${text.id}`}`}
                                         size="sm"
                                     />
-                                    <div className="assignments-text-info">
+                                    <Stack direction="vertical" gap={2} style={{ minWidth: 0 }}>
                                         <span className="assignments-text-name">{text.sourceFileName || `Texto ${text.id}`}</span>
                                         <span className="assignments-text-meta">
                                             ID: {text.id} | Nota: {text.grade ?? 'N/A'} |
                                             {text.normalizedByUser ? ' Normalizado' : ' Não normalizado'}
                                             {text.usersAssigned?.length > 0 && ` | Atribuído: ${text.usersAssigned.join(', ')}`}
                                         </span>
-                                    </div>
+                                    </Stack>
                                 </div>
                             ))
                         )}
@@ -434,7 +443,7 @@ function AssignmentsPanel() {
                 </div>
 
                 <div className="assignments-users-section">
-                    <h3 className="assignments-users-title">{mode === 'assign' ? 'Atribuir Para' : 'Remover De'}</h3>
+                    <SectionHeader heading={<span style={{ textTransform: 'none' }}>{mode === 'assign' ? 'Atribuir Para' : 'Remover De'}</span>} />
                     <DropdownSelect
                         title="Selecione os usuários"
                         options={users}
@@ -445,9 +454,13 @@ function AssignmentsPanel() {
                 </div>
 
                 <div className={`assignments-preview ${mode === 'unassign' ? 'unassign-mode' : ''}`}>
-                    <h3 className="assignments-preview-title">
-                        {mode === 'assign' ? 'Prévia da Distribuição' : 'Atribuições a Remover'}
-                    </h3>
+                    <SectionHeader
+                        heading={
+                            <span style={{ textTransform: 'none' }}>
+                                {mode === 'assign' ? 'Prévia da Distribuição' : 'Atribuições a Remover'}
+                            </span>
+                        }
+                    />
                     {activePreview.length === 0 ? (
                         <p className="no-selection-message">
                             {selectedTextIds.size === 0 || selectedTargetUsers.length === 0
@@ -457,25 +470,29 @@ function AssignmentsPanel() {
                                     : 'Nenhuma atribuição será removida (textos não estão atribuídos aos usuários).'}
                         </p>
                     ) : (
-                        <div className="assignments-distribution">
+                        <Stack wrap gap={15}>
                             {activePreview.map((item) => (
-                                <div key={item.username} className={`distribution-item ${mode === 'unassign' ? 'unassign' : ''}`}>
+                                <Stack key={item.username} direction="vertical" gap={4} className={`distribution-item ${mode === 'unassign' ? 'unassign' : ''}`}>
                                     <span className={`distribution-username ${mode === 'unassign' ? 'unassign' : ''}`}>
                                         {item.username}
                                     </span>
                                     <span className="distribution-count">{item.count} textos</span>
-                                </div>
+                                </Stack>
                             ))}
-                        </div>
+                        </Stack>
                     )}
                 </div>
 
-                <div className="assignments-actions">
-                    <button className="back-btn" onClick={() => navigate('/main')}>← Voltar</button>
-                    <button
-                        className={mode === 'assign' ? 'assign-btn' : 'unassign-btn'}
+                <Stack alignX="space-between" gap={15}>
+                    <Button tier="secondary" variant="neutral" onClick={() => navigate('/main')}>
+                        ← Voltar para Busca
+                    </Button>
+                    <Button
+                        tier="primary"
+                        variant={mode === 'assign' ? 'action' : 'danger'}
                         onClick={handleOpenConfirmModal}
                         disabled={selectedTextIds.size === 0 || selectedTargetUsers.length === 0 || processing || activePreview.length === 0}
+                        isLoading={processing}
                     >
                         {processing
                             ? mode === 'assign'
@@ -484,8 +501,8 @@ function AssignmentsPanel() {
                             : mode === 'assign'
                                 ? `Atribuir ${totalAffected} Textos`
                                 : `Remover ${totalAffected} Atribuições`}
-                    </button>
-                </div>
+                    </Button>
+                </Stack>
             </div>
 
             {showConfirmModal && (
@@ -493,7 +510,7 @@ function AssignmentsPanel() {
                     <DialogHeader onClose={() => setShowConfirmModal(false)}>
                         {mode === 'assign' ? 'Confirmar Atribuição' : 'Confirmar Remoção'}
                     </DialogHeader>
-                    <div className="assignments-confirm-body">
+                    <Stack direction="vertical" gap={12} className="assignments-confirm-body">
                         <p>
                             {mode === 'assign'
                                 ? <>
@@ -503,15 +520,15 @@ function AssignmentsPanel() {
                                     Você está prestes a remover <strong>{totalAffected} atribuições</strong> dos seguintes usuários:
                                 </>}
                         </p>
-                        <div className="assignments-confirm-preview">
+                        <Stack direction="vertical" gap={8} className="assignments-confirm-preview">
                             {activePreview.map((item) => (
                                 <p key={item.username} className="assignments-confirm-preview-item">
                                     <span className={mode === 'assign' ? 'assignments-confirm-username' : 'assignments-confirm-username assignments-confirm-username-unassign'}>{item.username}</span>: {item.count} textos
                                 </p>
                             ))}
-                        </div>
+                        </Stack>
                         <p className="assignments-confirm-question">Deseja continuar?</p>
-                    </div>
+                    </Stack>
                     <DialogFooter>
                         <Button tier="secondary" variant="neutral" onClick={() => setShowConfirmModal(false)}>
                             Cancelar
