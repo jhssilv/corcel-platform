@@ -2,7 +2,7 @@ import { useEffect, useState, type ChangeEvent, type MouseEvent as ReactMouseEve
 import '../../styles/download_dialog.css';
 import downloadTexts from '../../Api/DownloadTexts';
 import { useSnackbar } from '../../Context/Generic';
-import { Dialog, DialogHeader, Stack } from '../Generic';
+import { Dialog, DialogHeader, Stack, Button } from '../Generic';
 
 interface DownloadDialogProps {
     show: boolean;
@@ -61,7 +61,9 @@ function DownloadDialog({ show, onClose, onDownload }: DownloadDialogProps) {
 
     return (
         <Dialog isOpen={show} onClose={onClose} className="confirmation-dialog">
-            <DialogHeader onClose={onClose}>Opções de Download</DialogHeader>
+            <DialogHeader onClose={onClose} icon='Download'>
+                Opções de Download
+            </DialogHeader>
 
             <Stack direction="vertical" gap={16} className="dialog-content">
                 {'Todos os textos selecionados no filtro serão baixados.'}
@@ -78,16 +80,17 @@ function DownloadDialog({ show, onClose, onDownload }: DownloadDialogProps) {
             </Stack>
 
             <Stack alignX="center" gap={12} className="confirmation-buttons">
-                <button className="cancel-btn" onClick={onClose}>Cancelar</button>
-                <button
-                    className="confirm-btn"
+                <Button tier="secondary" variant="danger" onClick={onClose}>Cancelar</Button>
+                <Button
+                    tier="primary"
+                    variant="action"
                     onClick={() => {
                         void handleSubmitClick();
                     }}
                     disabled={!confirmEnabled}
                 >
                     Baixar
-                </button>
+                </Button>
             </Stack>
         </Dialog>
     );

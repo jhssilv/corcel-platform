@@ -120,55 +120,12 @@
   border-radius: 0 0 8px 8px;
 }
 
-.modal-button {
-  padding: 0.75rem 1.5rem;
-  border-radius: 4px;
-  font-size: 0.95rem;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border: none;
-}
 
-.cancel-button {
-  background-color: var(--color-btn-danger);
-  color: white;
-  border: none;
-}
 
-.cancel-button:hover:not(:disabled) {
-  background-color: var(--color-btn-danger-hover);
-  color: white;
-}
 
-.confirm-button {
-  background-color: var(--color-disabled-bg);
-  color: var(--color-disabled-text);
-  border: none;
-  cursor: not-allowed;
-  transition: all 0.3s ease;
-}
 
-.confirm-button.valid {
-  background-color: var(--color-btn-success);
-  color: white;
-  cursor: pointer;
-}
 
-.confirm-button.valid:hover {
-  background-color: var(--color-btn-success-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
-}
 
-.confirm-button:disabled {
-  background-color: var(--color-disabled-bg);
-  color: var(--color-disabled-text);
-  cursor: not-allowed;
-  opacity: 0.6;
-  transform: none;
-  box-shadow: none;
-}
 
 @keyframes fadeIn {
   from {
@@ -204,8 +161,4 @@
     font-size: 1.1rem;
   }
 
-  .modal-button {
-    padding: 0.65rem 1.25rem;
-    font-size: 0.9rem;
-  }
 }

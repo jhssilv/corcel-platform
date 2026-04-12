@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type DragEvent, type MouseEvent } from 'react';
 import JSZip from 'jszip';
 import { uploadTextArchive, getBatchStatus } from '../../Api/UploadApi';
-import { Badge, Icon, Dialog, DialogHeader, Stack } from '../Generic';
+import { Badge, Icon, Dialog, DialogHeader, Stack, Button } from '../Generic';
 import { useSnackbar } from '../../Context/Generic';
 import styles from '../../styles/upload_modal.module.css';
 import type { BatchStatusItem } from '../../types/api/responses';
@@ -355,7 +355,9 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 
     return (
         <Dialog isOpen={isOpen || isProcessing} onClose={handleClose} className={styles['upload-modal']}>
-            <DialogHeader onClose={handleClose}>Upload de Textos</DialogHeader>
+            <DialogHeader onClose={handleClose} icon='Upload'>
+                Upload de Textos
+            </DialogHeader>
 
             <Stack direction="vertical" gap={12} className={styles['modal-body']}>
                 {failedFiles.length > 0 && !isProcessing && (
@@ -498,27 +500,24 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
             </Stack>
             <Stack alignX="end" alignY="center" gap={16} className={styles['modal-footer']}>
                 {isProcessing && progress < 100 ? (
-                    <button className={[styles['modal-button'], styles['cancel-button']].join(' ')} onClick={handleCancelRequest}>
+                    <Button tier="secondary" variant="danger" onClick={handleCancelRequest}>
                         Cancelar Envio
-                    </button>
+                    </Button>
                 ) : (
-                    <button className={[styles['modal-button'], styles['cancel-button']].join(' ')} onClick={handleClose}>
+                    <Button tier="secondary" variant={uploadSuccess ? 'neutral' : 'danger'} onClick={handleClose}>
                         {uploadSuccess ? 'Fechar' : 'Cancelar'}
-                    </button>
+                    </Button>
                 )}
 
                 {!isProcessing && !uploadSuccess && (
-                    <button
-                        className={[
-                            styles['modal-button'],
-                            styles['confirm-button'],
-                            stagedFiles.length > 0 ? styles.valid : '',
-                        ].filter(Boolean).join(' ')}
+                    <Button
+                        tier="primary"
+                        variant="action"
                         onClick={handleConfirm}
                         disabled={stagedFiles.length === 0}
                     >
                         Enviar
-                    </button>
+                    </Button>
                 )}
             </Stack>
         </Dialog>

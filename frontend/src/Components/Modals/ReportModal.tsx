@@ -66,7 +66,7 @@ function ReportModal({ isOpen, onClose, textCount }: ReportModalProps) {
                 </p>
             </Stack>
 
-            <Stack alignX="end" gap={16} className={styles['modal-footer']}>
+            <div className={styles['modal-footer']}>
                 <button className={[styles['modal-button'], styles['cancel-button']].join(' ')} onClick={onClose}>Cancelar</button>
                 <button
                     className={[styles['modal-button'], styles['confirm-button'], styles['report-confirm']].join(' ')}
@@ -77,7 +77,7 @@ function ReportModal({ isOpen, onClose, textCount }: ReportModalProps) {
                 >
                     Confirmar
                 </button>
-            </Stack>
+            </div>
         </Dialog>
     );
 }

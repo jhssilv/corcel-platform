@@ -4,7 +4,7 @@ import TopBar from '../Components/Layout/TopBar';
 import { getUsersData, toggleUserActive, toggleUserAdmin } from '../Api';
 import { useAuth } from '../Context/Auth/UseAuth';
 import { useSnackbar } from '../Context/Generic';
-import { Dialog, DialogHeader, Card, Stack } from '../Components/Generic';
+import { Dialog, DialogHeader, Card, Stack, Button } from '../Components/Generic';
 import type { UserData } from '../types';
 import '../styles/main_page.css';
 import '../styles/user_management.css';
@@ -98,9 +98,9 @@ function UserManagementDashboard() {
             <div className="main-page-section user-management-section">
                 <Stack alignX="space-between" alignY="center" className="user-management-header">
                     <h2>Gerenciamento de Usuários</h2>
-                    <button onClick={() => navigate('/main')} className="modal-button cancel-button">
+                    <Button onClick={() => navigate('/main')} tier="secondary" variant="neutral">
                         Voltar
-                    </button>
+                    </Button>
                 </Stack>
 
                 <Card>
@@ -170,17 +170,18 @@ function UserManagementDashboard() {
                         </p>
                     </Stack>
                     <Stack alignX="end" gap={16} className="modal-footer" style={{ padding: '1.5rem', borderTop: '1px solid var(--color-border-subtle)', backgroundColor: 'var(--color-bg-panel)', borderRadius: '0 0 8px 8px' }}>
-                        <button className="modal-button cancel-button" onClick={() => setConfirmAdminToggle(null)}>
+                        <Button tier="secondary" variant="neutral" onClick={() => setConfirmAdminToggle(null)}>
                             Cancelar
-                        </button>
-                        <button
-                            className="modal-button confirm-button valid"
+                        </Button>
+                        <Button
+                            tier="primary"
+                            variant="action"
                             onClick={() => {
                                 void handleToggleAdmin();
                             }}
                         >
                             Confirmar
-                        </button>
+                        </Button>
                     </Stack>
                 </Dialog>
             )}

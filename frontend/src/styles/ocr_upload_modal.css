@@ -234,53 +234,9 @@
     border-radius: 0 0 8px 8px;
 }
 
-.cancel-button {
-    padding: 0.75rem 1.5rem;
-    background-color: var(--color-bg-hover);
-    color: var(--color-text-primary);
-    border: 1px solid var(--color-border-hover);
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.95rem;
-    font-weight: 500;
-    transition: all 0.2s ease;
-}
 
-.cancel-button:hover:not(:disabled) {
-    background-color: var(--color-bg-active);
-    border-color: var(--color-border-hover);
-}
 
-.cancel-button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
 
-.confirm-button {
-    padding: 0.75rem 1.5rem;
-    background-color: var(--color-disabled-bg);
-    color: var(--color-disabled-text);
-    border: 1px solid var(--color-border-hover);
-    border-radius: 6px;
-    cursor: not-allowed;
-    font-size: 0.95rem;
-    font-weight: 500;
-    transition: all 0.2s ease;
-}
 
-.confirm-button.enabled {
-    background-color: var(--color-accent);
-    color: white;
-    border-color: var(--color-accent);
-    cursor: pointer;
-}
 
-.confirm-button.enabled:hover {
-    background-color: var(--color-accent-hover);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(100, 108, 255, 0.3);
-}
 
-.confirm-button:disabled {
-    opacity: 0.6;
-}

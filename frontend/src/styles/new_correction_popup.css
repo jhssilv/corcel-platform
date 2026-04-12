@@ -27,29 +27,7 @@
 
 .confirmation-buttons {}
 
-.confirm-btn,
-.cancel-btn {
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    border: none;
-    font-weight: bold;
-}
 
-.confirm-btn {
-    background-color: var(--color-btn-success);
-    color: white;
-}
 
-.confirm-btn:hover {
-    background-color: var(--color-btn-success-hover);
-}
 
-.cancel-btn {
-    background-color: var(--color-btn-danger);
-    color: white;
-}
 
-.cancel-btn:hover {
-    background-color: var(--color-btn-danger-hover);
-}

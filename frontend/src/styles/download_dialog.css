@@ -56,39 +56,3 @@
   accent-color: var(--color-accent);
 }
 
-.confirm-btn,
-.cancel-btn {
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  border: none;
-  font-weight: bold;
-}
-
-.confirm-btn {
-  background-color: var(--color-btn-success);
-  color: white;
-}
-
-.confirm-btn:hover {
-  background-color: var(--color-btn-success-hover);
-}
-
-.confirm-btn:disabled {
-  background-color: var(--color-disabled-bg);
-  color: var(--color-disabled-text);
-  cursor: not-allowed;
-}
-
-.confirm-btn:disabled:hover {
-  background-color: var(--color-disabled-bg);
-}
-
-.cancel-btn {
-  background-color: var(--color-btn-danger);
-  color: white;
-}
-
-.cancel-btn:hover {
-  background-color: var(--color-btn-danger-hover);
-}

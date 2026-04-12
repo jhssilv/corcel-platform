@@ -1,6 +1,6 @@
 import { useEffect, useState, type CSSProperties, type KeyboardEvent, type MouseEvent as ReactMouseEvent } from 'react';
 import { deleteNormalization, postNormalization } from '../../Api';
-import { Stack } from '../Generic';
+import { Stack, Button } from '../Generic';
 import '../../styles/new_correction_popup.css';
 import type { TextDetailResponse } from '../../types';
 
@@ -108,12 +108,13 @@ const NewCorrectionPopup = ({
                 <div className="confirmation-dialog" style={dialogStyle} data-testid="confirmation-dialog">
                     <p>{username ? <><strong>{username}</strong>, </> : ''}você deseja remover a correção?</p>
                     <Stack alignX="center" gap={12} className="confirmation-buttons">
-                        <button
-                            className="confirm-btn"
-                            onClick={(event) => {
+                        <Button
+                            tier="primary"
+                            variant="danger"
+                            onClick={(event: ReactMouseEvent<HTMLButtonElement>) => {
                                 void handleAddButton(event);
                             }}
-                            onKeyDown={(event) => {
+                            onKeyDown={(event: KeyboardEvent<HTMLButtonElement>) => {
                                 if (event.key === 'Enter') {
                                     void handleAddButton(event);
                                 }
@@ -122,8 +123,8 @@ const NewCorrectionPopup = ({
                             autoFocus
                         >
                             Remover
-                        </button>
-                        <button className="cancel-btn" onClick={handleCloseButton}>Cancelar</button>
+                        </Button>
+                        <Button tier="secondary" variant="neutral" onClick={handleCloseButton}>Cancelar</Button>
                     </Stack>
                 </div>
             </Stack>
@@ -139,12 +140,13 @@ const NewCorrectionPopup = ({
                     {suggestForAll ? ` para todas as ocorrências de "${tokenText}"? Isso afetará todos os textos` : '?'}
                 </p>
                 <Stack alignX="center" gap={12} className="confirmation-buttons">
-                    <button
-                        className="confirm-btn"
-                        onClick={(event) => {
+                    <Button
+                        tier="primary"
+                        variant="action"
+                        onClick={(event: ReactMouseEvent<HTMLButtonElement>) => {
                             void handleAddButton(event);
                         }}
-                        onKeyDown={(event) => {
+                        onKeyDown={(event: KeyboardEvent<HTMLButtonElement>) => {
                             if (event.key === 'Enter') {
                                 void handleAddButton(event);
                             }
@@ -153,8 +155,8 @@ const NewCorrectionPopup = ({
                         autoFocus
                     >
                         Adicionar
-                    </button>
-                    <button className="cancel-btn" onClick={handleCloseButton}>Cancelar</button>
+                    </Button>
+                    <Button tier="secondary" variant="neutral" onClick={handleCloseButton}>Cancelar</Button>
                 </Stack>
             </div>
         </Stack>

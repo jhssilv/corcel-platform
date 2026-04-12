@@ -1,7 +1,7 @@
 import { useEffect, useState, type ChangeEvent, type DragEvent, type MouseEvent as ReactMouseEvent } from 'react';
 import { parseTextFile } from '../../Services/Text/FileParsers';
 import { addToWhitelist, getWhitelist, removeFromWhitelist } from '../../Api';
-import { Dialog, DialogHeader, Stack } from '../Generic';
+import { Dialog, DialogHeader, Stack, Button, DialogFooter } from '../Generic';
 import { useSnackbar } from '../../Context/Generic';
 import styles from '../../styles/whitelist_modal.module.css';
 
@@ -155,20 +155,22 @@ function WhitelistModal({ isOpen, onClose }: WhitelistModalProps) {
                 </Stack>
             </Stack>
 
-            <Stack alignX="end" gap={16} className={styles['modal-footer']}>
-                <button className={[styles['modal-button'], styles['cancel-button']].join(' ')} onClick={handleCancel} disabled={isUpdating}>
+            <DialogFooter>
+                <Button tier="secondary" variant="neutral" onClick={handleCancel} disabled={isUpdating}>
                     Cancelar
-                </button>
-                <button
-                    className={[styles['modal-button'], styles['update-button']].join(' ')}
+                </Button>
+                <Button
+                    tier="primary"
+                    variant="action"
                     onClick={() => {
                         void handleUpdate();
                     }}
                     disabled={!hasTextChanged || isUpdating}
+                    isLoading={isUpdating}
                 >
-                    {isUpdating ? 'Atualizando...' : 'Atualizar'}
-                </button>
-            </Stack>
+                    Atualizar
+                </Button>
+            </DialogFooter>
         </Dialog>
     );
 }

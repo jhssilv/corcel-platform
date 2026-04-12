@@ -1,6 +1,6 @@
 import { useState, type ChangeEvent, type FormEvent, type MouseEvent as ReactMouseEvent } from 'react';
 import { registerUser } from '../../Api';
-import { Dialog, DialogHeader, Stack } from '../Generic';
+import { Dialog, DialogHeader, Stack, Button } from '../Generic';
 import styles from '../../styles/register_user_modal.module.css';
 
 interface RegisterUserModalProps {
@@ -74,16 +74,18 @@ function RegisterUserModal({ isOpen, onClose }: RegisterUserModalProps) {
                         {message.text && <div className={[styles.message, styles[message.type]].join(' ')}>{message.text}</div>}
 
                         <Stack alignX="end" gap={16} className={styles['modal-footer']} style={{ padding: 0, marginTop: '5px' }}>
-                            <button type="button" className={[styles['modal-button'], styles['cancel-button']].join(' ')} onClick={handleClose}>
+                            <Button type="button" tier="secondary" variant="neutral" onClick={handleClose}>
                                 Cancelar
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                                 type="submit"
-                                className={[styles['modal-button'], styles['confirm-button'], styles.valid].join(' ')}
+                                tier="primary"
+                                variant="action"
                                 disabled={isSubmitting}
+                                isLoading={isSubmitting}
                             >
-                                {isSubmitting ? 'Criando...' : 'Criar Usuário'}
-                            </button>
+                                Criar Usuário
+                            </Button>
                         </Stack>
                     </Stack>
                 </form>

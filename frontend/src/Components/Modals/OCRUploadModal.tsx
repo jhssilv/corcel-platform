@@ -1,6 +1,6 @@
 import { type MouseEvent as ReactMouseEvent } from 'react';
 import '../../styles/ocr_upload_modal.css';
-import { Icon, Dialog, DialogHeader, Stack } from '../Generic';
+import { Icon, Dialog, DialogHeader, Stack, Button } from '../Generic';
 import { UseOCRUploadTask } from '../../Hooks/Upload/UseOCRUploadTask';
 
 interface OCRUploadModalProps {
@@ -122,19 +122,20 @@ function OCRUploadModal({ isOpen, onClose, onUploadComplete }: OCRUploadModalPro
             </div>
 
             <Stack alignX="end" gap={16} className="modal-footer">
-                <button className="cancel-button" onClick={handleClose} disabled={isProcessing}>
+                <Button tier="secondary" variant="neutral" onClick={handleClose} disabled={isProcessing}>
                     Cancelar
-                </button>
+                </Button>
                 {!isProcessing && (
-                    <button
-                        className={`confirm-button ${isValidZip && !isValidating ? 'enabled' : ''}`}
+                    <Button
+                        tier="primary"
+                        variant="action"
                         onClick={() => {
                             void handleUpload();
                         }}
                         disabled={!isValidZip || isValidating}
                     >
                         Fazer Upload
-                    </button>
+                    </Button>
                 )}
             </Stack>
         </Dialog>
