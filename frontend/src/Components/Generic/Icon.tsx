@@ -6,7 +6,7 @@ export type IconName = {
     [Key in keyof typeof LucideIcons]: (typeof LucideIcons)[Key] extends LucideIcon ? Key : never;
 }[keyof typeof LucideIcons];
 
-export type IconColor = 'black' | 'white';
+export type IconColor = 'black' | 'white' | 'current';
 
 export interface IconProps {
     name: IconName;
@@ -21,6 +21,7 @@ export interface IconProps {
 const iconColorMap: Record<IconColor, string> = {
     black: 'var(--color-text-on-surface)',
     white: 'var(--color-text-inverse)',
+    current: 'currentColor',
 };
 
 const iconRegistry = LucideIcons as unknown as Record<IconName, LucideIcon>;
