@@ -14,6 +14,10 @@
     padding: 10px;
 }
 
+.user-management-content {
+    padding: 20px;
+}
+
 .user-management-table-container {
     overflow-x: auto;
 }
@@ -40,6 +44,10 @@
 
 .user-management-confirm-modal {
     max-width: 400px;
+}
+
+.user-management-confirm-content {
+    padding: 1.5rem;
 }
 
 /* Status toggle buttons */

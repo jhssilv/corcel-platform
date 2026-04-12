@@ -1,4 +1,4 @@
-import { useEffect, useState, type ChangeEvent, type MouseEvent as ReactMouseEvent } from 'react';
+import { useEffect, useState, type ChangeEvent } from 'react';
 import '../../styles/download_dialog.css';
 import downloadTexts from '../../Api/DownloadTexts';
 import { useSnackbar } from '../../Context/Generic';
@@ -49,23 +49,17 @@ function DownloadDialog({ show, onClose, onDownload }: DownloadDialogProps) {
         }
     };
 
-    const handleOverlayClick = (event: ReactMouseEvent<HTMLDivElement>) => {
-        if (event.target === event.currentTarget) {
-            onClose();
-        }
-    };
-
     const handleCheckboxChange = (event: ChangeEvent<HTMLInputElement>) => {
         setUseBrackets(event.target.checked);
     };
 
     return (
-        <Dialog isOpen={show} onClose={onClose} style={{ maxWidth: '400px' }}>
+        <Dialog isOpen={show} onClose={onClose} className="download-dialog-modal">
             <DialogHeader onClose={onClose} icon='Download'>
                 Opções de Download
             </DialogHeader>
 
-            <Stack direction="vertical" gap={16} style={{ padding: '1.5rem', flex: 1, overflowY: 'auto', color: 'var(--color-text-on-panel)' }}>
+            <Stack direction="vertical" gap={16} className="download-dialog-content">
                 {'Todos os textos selecionados no filtro serão baixados.'}
                 <label className="dialog-checkbox-wrapper" htmlFor="use-brackets-checkbox">
                     <input

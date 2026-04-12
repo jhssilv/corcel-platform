@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ChangeEvent, type DragEvent, type MouseEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type ChangeEvent, type DragEvent } from 'react';
 import JSZip from 'jszip';
 import { uploadTextArchive, getBatchStatus } from '../../Api/UploadApi';
 import { Badge, Icon, Dialog, DialogHeader, Stack, Button, DialogFooter, ProgressInline } from '../Generic';
@@ -345,10 +345,6 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
         }
     };
 
-    const handleOverlayClick = (e: MouseEvent<HTMLDivElement>) => {
-        e.stopPropagation();
-    };
-
     if (!isOpen && !isProcessing) {
         return null;
     }
@@ -363,39 +359,27 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
                 {failedFiles.length > 0 && !isProcessing && (
                     <div className={`${styles['status-banner']} ${styles['status-error']}`}>
                         <p><strong>Os seguintes arquivos falharam:</strong></p>
-                        <ul style={{ textAlign: 'left', marginTop: '10px', fontSize: '0.9rem' }}>
+                        <ul className={styles['failed-files-list']}>
                             {failedFiles.map((f, i) => <li key={i}>{f}</li>)}
                         </ul>
                     </div>
                 )}
 
                 {isTracking || uploadSuccess ? (
-                    <div className="tracking-container" style={{ padding: '20px' }}>
-                        <h3 style={{ marginBottom: '15px' }}>Status de Processamento</h3>
-                        <div style={{ maxHeight: '250px', overflowY: 'auto', border: '1px solid #ddd', borderRadius: '4px' }}>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                                <thead>
-                                    <tr style={{ background: '#f5f5f5', borderBottom: '1px solid #ddd', color: '#333' }}>
-                                        <th style={{ padding: '10px' }}>Arquivo</th>
-                                        <th style={{ padding: '10px' }}>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {trackedTexts.map(t => (
-                                        <tr key={t.id} style={{ borderBottom: '1px solid #eee' }}>
-                                            <td style={{ padding: '8px 10px', fontSize: '0.9rem' }}>{t.source_file_name}</td>
-                                            <td style={{ padding: '8px 10px', fontSize: '0.9rem' }}>
-                                                {renderTrackingBadge(t.processing_status)}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                        <p style={{ fontSize: '0.85rem', color: '#666', marginTop: '15px' }}>
+                    <Stack direction="vertical" gap={12}>
+                        <h3 className={styles['tracking-title']}>Status de Processamento</h3>
+                        <Stack direction="vertical" gap={8} className={styles['staged-files-list']}>
+                            {trackedTexts.map((textItem) => (
+                                <Stack alignX="space-between" alignY="center" key={textItem.id} className={styles['staged-file-item']}>
+                                    <span className={styles.fileName} title={textItem.source_file_name}>{textItem.source_file_name}</span>
+                                    {renderTrackingBadge(textItem.processing_status)}
+                                </Stack>
+                            ))}
+                        </Stack>
+                        <p className={styles['tracking-hint']}>
                             A avaliação é executada em segundo plano. Você já pode fechar esta janela caso queira e analisar os textos disponíveis no painel.
                         </p>
-                    </div>
+                    </Stack>
                 ) : !isProcessing && (
                     <>
                         <div
@@ -418,7 +402,7 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
                                 multiple
                                 accept=".zip,.txt,.docx"
                                 onChange={handleFileSelect}
-                                style={{ display: 'none' }}
+                                hidden
                             />
 
                             {isValidating ? (
@@ -428,7 +412,7 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
                                 </Stack>
                             ) : (
                                 <Stack direction="vertical" alignX="center" gap={12} className={styles['upload-prompt']}>
-                                    <Icon name="Upload" color="black" className={styles['upload-icon-svg']} style={{ color: 'currentColor' }} />
+                                    <Icon name="Upload" color="current" className={styles['upload-icon-svg']} />
                                     <p className={styles['upload-text']}>Arraste arquivos TXT, DOCX ou ZIPs</p>
                                     <p className={styles['upload-subtext']}>ou clique para selecionar (Máx 50MB por arquivo)</p>
                                 </Stack>
@@ -437,7 +421,7 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 
                         {stagedFiles.length > 0 && (
                             <div>
-                                <h4 style={{ margin: '10px 0 5px 0', fontSize: '0.95rem' }}>Arquivos Válidos ({stagedFiles.length})</h4>
+                                <h4 className={styles['file-list-title']}>Arquivos Válidos ({stagedFiles.length})</h4>
                                 <Stack direction="vertical" gap={8} className={styles['staged-files-list']}>
                                     {stagedFiles.map((file, idx) => (
                                         <Stack alignX="space-between" alignY="center" key={idx} className={styles['staged-file-item']}>
@@ -455,7 +439,7 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 
                         {ignoredFiles.length > 0 && (
                             <div>
-                                <h4 style={{ margin: '10px 0 5px 0', fontSize: '0.95rem', color: 'var(--color-danger)' }}>Arquivos Ignorados ({ignoredFiles.length})</h4>
+                                <h4 className={`${styles['file-list-title']} ${styles['file-list-title-danger']}`}>Arquivos Ignorados ({ignoredFiles.length})</h4>
                                 <Stack direction="vertical" gap={8} className={styles['ignored-files-list']}>
                                     {ignoredFiles.map((err, idx) => (
                                         <Stack alignX="space-between" alignY="center" key={idx} className={styles['ignored-file-item']}>

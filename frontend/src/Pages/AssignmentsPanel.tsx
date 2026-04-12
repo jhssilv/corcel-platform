@@ -309,7 +309,7 @@ function AssignmentsPanel() {
                         onClick={() => setMode('assign')}
                     >
                         <Stack alignX="center" alignY="center" gap={8}>
-                            <Icon name="Plus" color="black" size={18} style={{ color: 'currentColor' }} />
+                            <Icon name="Plus" color="current" size={18} />
                             Atribuir Textos
                         </Stack>
                     </button>
@@ -318,7 +318,7 @@ function AssignmentsPanel() {
                         onClick={() => setMode('unassign')}
                     >
                         <Stack alignX="center" alignY="center" gap={8}>
-                            <Icon name="Minus" color="black" size={18} style={{ color: 'currentColor' }} />
+                            <Icon name="Minus" color="current" size={18} />
                             Remover Atribuições
                         </Stack>
                     </button>
@@ -327,7 +327,7 @@ function AssignmentsPanel() {
                 <div className="assignments-filters">
                     <div className="assignments-search-row">
                         <div>
-                            <label style={{ color: '#888', fontSize: '0.85rem', marginBottom: '6px', display: 'block' }}>
+                            <label className="assignments-search-label">
                                 Buscar por nome do arquivo
                             </label>
                             <input
@@ -335,20 +335,12 @@ function AssignmentsPanel() {
                                 placeholder="Digite para buscar..."
                                 value={searchText}
                                 onChange={(event: ChangeEvent<HTMLInputElement>) => setSearchText(event.target.value)}
-                                style={{
-                                    width: '100%',
-                                    padding: '10px 12px',
-                                    backgroundColor: '#252525',
-                                    border: '1px solid #444',
-                                    borderRadius: '6px',
-                                    color: '#e4e4e7',
-                                    fontSize: '0.95rem',
-                                }}
+                                className="assignments-search-input"
                             />
                         </div>
                     </div>
 
-                    <div className="assignments-filters-grid" style={{ marginTop: '15px' }}>
+                    <div className="assignments-filters-grid assignments-filters-grid-spaced">
                         <DropdownSelect
                             title="Notas"
                             options={gradeOptions}
@@ -496,11 +488,11 @@ function AssignmentsPanel() {
             </div>
 
             {showConfirmModal && (
-                <Dialog isOpen={showConfirmModal} onClose={() => setShowConfirmModal(false)} className="upload-modal" style={{ maxWidth: '500px' }}>
+                <Dialog isOpen={showConfirmModal} onClose={() => setShowConfirmModal(false)} className="assignments-confirm-modal">
                     <DialogHeader onClose={() => setShowConfirmModal(false)}>
                         {mode === 'assign' ? 'Confirmar Atribuição' : 'Confirmar Remoção'}
                     </DialogHeader>
-                    <div className="modal-body">
+                    <div className="assignments-confirm-body">
                         <p>
                             {mode === 'assign'
                                 ? <>
@@ -510,14 +502,14 @@ function AssignmentsPanel() {
                                     Você está prestes a remover <strong>{totalAffected} atribuições</strong> dos seguintes usuários:
                                 </>}
                         </p>
-                        <div style={{ marginTop: '15px', padding: '10px', backgroundColor: '#252525', borderRadius: '8px' }}>
+                        <div className="assignments-confirm-preview">
                             {activePreview.map((item) => (
-                                <p key={item.username} style={{ color: '#e4e4e7' }}>
-                                    <span style={{ color: mode === 'assign' ? '#3b82f6' : '#ef4444' }}>{item.username}</span>: {item.count} textos
+                                <p key={item.username} className="assignments-confirm-preview-item">
+                                    <span className={mode === 'assign' ? 'assignments-confirm-username' : 'assignments-confirm-username assignments-confirm-username-unassign'}>{item.username}</span>: {item.count} textos
                                 </p>
                             ))}
                         </div>
-                        <p style={{ marginTop: '15px', color: '#888' }}>Deseja continuar?</p>
+                        <p className="assignments-confirm-question">Deseja continuar?</p>
                     </div>
                     <DialogFooter>
                         <Button tier="secondary" variant="neutral" onClick={() => setShowConfirmModal(false)}>

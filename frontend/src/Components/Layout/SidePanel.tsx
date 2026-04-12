@@ -86,11 +86,11 @@ function SidePanel({
 
                     <div className={styles['panel-ocr-section']}>
                         <button className={`${styles['panel-button']} ${styles['ocr-button']}`} onClick={onOCR}>
-                            <Icon name="Camera" color="black" size={20} style={{ color: 'currentColor' }} />
+                            <Icon name="Camera" color="current" size={20} />
                             <span className={styles['button-text']}>Módulo OCR</span>
                         </button>
                         <button className={`${styles['panel-button']} ${styles['assignments-button']}`} onClick={onAssignments}>
-                            <Icon name="ClipboardList" color="black" size={20} style={{ color: 'currentColor' }} />
+                            <Icon name="ClipboardList" color="current" size={20} />
                             <span className={styles['button-text']}>Atribuir Textos</span>
                         </button>
                     </div>

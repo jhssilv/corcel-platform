@@ -78,6 +78,35 @@
 
 .assignments-search-row>div {
     flex: 1;
+    min-width: 0;
+}
+
+.assignments-search-label {
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+    margin-bottom: 6px;
+    display: block;
+}
+
+.assignments-search-input {
+    width: 100%;
+    max-width: 100%;
+    padding: 10px 12px;
+    box-sizing: border-box;
+    background-color: var(--color-bg-control);
+    border: 1px solid var(--color-border-secondary);
+    border-radius: 6px;
+    color: var(--color-text-on-surface);
+    font-size: 0.95rem;
+}
+
+.assignments-search-input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+}
+
+.assignments-filters-grid-spaced {
+    margin-top: 15px;
 }
 
 /* Texts Table with sticky header */
@@ -309,6 +338,38 @@
     display: flex;
     justify-content: space-between;
     gap: 15px;
+}
+
+.assignments-confirm-modal {
+    max-width: 500px;
+}
+
+.assignments-confirm-body {
+    padding: 1.5rem;
+}
+
+.assignments-confirm-preview {
+    margin-top: 15px;
+    padding: 10px;
+    background-color: var(--color-bg-control);
+    border-radius: 8px;
+}
+
+.assignments-confirm-preview-item {
+    color: var(--color-text-on-surface);
+}
+
+.assignments-confirm-username {
+    color: var(--color-info);
+}
+
+.assignments-confirm-username-unassign {
+    color: var(--color-danger);
+}
+
+.assignments-confirm-question {
+    margin-top: 15px;
+    color: var(--color-text-muted);
 }
 
 .assign-btn {

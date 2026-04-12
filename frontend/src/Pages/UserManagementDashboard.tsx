@@ -104,7 +104,7 @@ function UserManagementDashboard() {
                 </Stack>
 
                 <Card>
-                    <div style={{ padding: '20px' }}>
+                    <div className="user-management-content">
                         <input
                             type="text"
                             placeholder="Buscar usuário..."
@@ -164,7 +164,7 @@ function UserManagementDashboard() {
             {confirmAdminToggle && (
                 <Dialog isOpen={!!confirmAdminToggle} onClose={() => setConfirmAdminToggle(null)} className="upload-modal user-management-confirm-modal">
                     <DialogHeader onClose={() => setConfirmAdminToggle(null)}>Confirmar Alteração</DialogHeader>
-                    <Stack direction="vertical" gap={12} className="modal-body" style={{ padding: '1.5rem' }}>
+                    <Stack direction="vertical" gap={12} className="modal-body user-management-confirm-content">
                         <p>
                             Tem certeza que deseja alterar o status de administrador para <strong>{confirmAdminToggle}</strong>?
                         </p>

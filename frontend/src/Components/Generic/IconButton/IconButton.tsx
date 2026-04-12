@@ -10,7 +10,7 @@ export interface IconButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonEle
     label: string;
     size?: IconButtonSize;
     variant?: IconButtonVariant;
-    iconColor?: 'black' | 'white';
+    iconColor?: 'black' | 'white' | 'current';
     strokeWidth?: number;
 }
 
@@ -19,7 +19,7 @@ export function IconButton({
     label,
     size = 'md',
     variant = 'neutral',
-    iconColor = 'black',
+    iconColor = 'current',
     strokeWidth,
     className = '',
     type = 'button',
@@ -36,7 +36,7 @@ export function IconButton({
 
     return (
         <button type={type} className={classes} aria-label={label} title={label} {...props}>
-            <Icon name={icon} color={iconColor} size={iconSize} strokeWidth={strokeWidth} style={{ color: 'currentColor' }} />
+            <Icon name={icon} color={iconColor} size={iconSize} strokeWidth={strokeWidth} />
         </button>
     );
 }

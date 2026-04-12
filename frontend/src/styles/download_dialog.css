@@ -56,3 +56,28 @@
   accent-color: var(--color-accent);
 }
 
+.download-dialog-modal {
+  max-width: 400px;
+}
+
+.download-dialog-content {
+  padding: 1.5rem;
+  flex: 1;
+  overflow-y: auto;
+  color: var(--color-text-on-panel);
+}
+
+.reset-corrections-modal {
+  max-width: 450px;
+}
+
+.reset-corrections-content {
+  padding: 1.5rem;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.reset-corrections-text {
+  margin: 0;
+  color: var(--color-text-on-panel);
+}
