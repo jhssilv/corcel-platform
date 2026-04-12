@@ -134,6 +134,11 @@
     box-shadow: var(--shadow-xl);
 }
 
+.confirmContent,
+.processingContent {
+    padding: 1.5rem;
+}
+
 .loadingSpinner {
     width: 60px;
     height: 60px;

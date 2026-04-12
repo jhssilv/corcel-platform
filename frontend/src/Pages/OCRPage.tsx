@@ -67,7 +67,7 @@ function OCRPage() {
             <TopBar showSidePanel={true} />
 
             <div className={styles.controlsHeader}>
-                <Stack alignX="space-between" alignY="center" style={{ marginBottom: '15px' }}>
+                <Stack alignX="space-between" alignY="center" className={styles.controlsRow}>
                     <Stack alignY="center" gap={16}>
                         <button
                             className={styles.backButton}
@@ -75,7 +75,7 @@ function OCRPage() {
                                 window.location.href = '/main';
                             }}
                         >
-                            <Icon name="ArrowLeft" color="black" size={16} style={{ color: 'currentColor' }} />
+                            <Icon name="ArrowLeft" color="current" size={16} />
                             Voltar
                         </button>
                         <h2 className={styles.pageTitle}>Buscar Textos Transcritos Com OCR</h2>

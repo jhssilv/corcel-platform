@@ -298,11 +298,11 @@ const OCREditModal = ({ rawText, onClose, onToggleImage, onFinish }: OCREditModa
                     {!processingState && (
                         <>
                             <DialogHeader>Confirmar Finalização</DialogHeader>
-                            <Stack direction="vertical" gap={14} style={{ padding: '1.5rem' }}>
+                            <Stack direction="vertical" gap={14} className={styles.confirmContent}>
                                 <p>
-                                Tem certeza que deseja finalizar este texto?
-                                <br />
-                                O texto será processado e ficará disponível para normalização.
+                                    Tem certeza que deseja finalizar este texto?
+                                    <br />
+                                    O texto será processado e ficará disponível para normalização.
                                 </p>
                                 <Banner variant="danger">
                                     A versão bruta e a imagem associada serão excluídas.
@@ -347,7 +347,7 @@ const OCREditModal = ({ rawText, onClose, onToggleImage, onFinish }: OCREditModa
                     {processingState === 'processing' && (
                         <>
                             <DialogHeader>Processando</DialogHeader>
-                            <Stack direction="vertical" alignX="center" gap={16} style={{ padding: '1.5rem' }}>
+                            <Stack direction="vertical" alignX="center" gap={16} className={styles.processingContent}>
                                 <div className={styles.loadingSpinner}></div>
                                 <Banner variant="info">{processingMessage}</Banner>
                             </Stack>

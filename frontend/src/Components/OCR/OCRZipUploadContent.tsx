@@ -51,7 +51,7 @@ export function OCRZipUploadContent({
             >
                 {!uploadFile ? (
                     <>
-                        <Icon name="Upload" color="black" className={styles.uploadIcon} style={{ color: 'currentColor' }} />
+                        <Icon name="Upload" color="current" className={styles.uploadIcon} />
                         <Stack direction="vertical" alignX="center" gap={12}>
                             <p className={styles.uploadMainText}>
                                 {isDragging ? 'Solte o arquivo aqui' : 'Arraste e solte seu arquivo ZIP aqui'}
@@ -71,7 +71,7 @@ export function OCRZipUploadContent({
                     </>
                 ) : (
                     <Stack direction="vertical" alignX="center" gap={16} className={styles.fileInfoContainer}>
-                        <Icon name="FileText" color="black" className={styles.fileIcon} style={{ color: 'currentColor' }} />
+                        <Icon name="FileText" color="current" className={styles.fileIcon} />
                         <Stack direction="vertical" alignX="center" gap={4}>
                             <span className={styles.fileName}>{uploadFile.name}</span>
                             <span className={styles.fileSize}>{(uploadFile.size / 1024 / 1024).toFixed(2)} MB</span>
