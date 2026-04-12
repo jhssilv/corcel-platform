@@ -8,3 +8,5 @@ export * from './Card/CardTitle';
 export * from './Dialog/Dialog';
 export * from './Dialog/DialogHeader';
 export * from './Stack/Stack';
+export * from './Button/Button';
+export * from './DialogFooter/DialogFooter';
