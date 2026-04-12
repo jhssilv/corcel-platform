@@ -13,13 +13,13 @@ export default function ResetCorrectionsModal({ isOpen, onClose, onConfirm }: Re
     };
 
     return (
-        <Dialog isOpen={isOpen} onClose={onClose} className="reset-corrections-modal">
+        <Dialog isOpen={isOpen} onClose={onClose} style={{ maxWidth: '450px' }}>
             <DialogHeader onClose={onClose} icon="TriangleAlert">
                 Excluir Normalizações
             </DialogHeader>
 
-            <Stack direction="vertical" gap={16} className="reset-corrections-content">
-                <p className="reset-corrections-text">
+            <Stack direction="vertical" gap={16} style={{ padding: '1.5rem' }}>
+                <p style={{ margin: 0, color: 'var(--color-text-on-panel)' }}>
                     Tem certeza de que deseja excluir todas as normalizações para este texto?
                     Esta ação não pode ser desfeita.
                 </p>

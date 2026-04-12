@@ -1,5 +1,4 @@
 import { useEffect, useState, type ChangeEvent } from 'react';
-import '../../styles/download_dialog.css';
 import downloadTexts from '../../Api/DownloadTexts';
 import { useSnackbar } from '../../Context/Generic';
 import { Dialog, DialogHeader, Stack, Button, DialogFooter } from '../Generic';
@@ -54,20 +53,21 @@ function DownloadDialog({ show, onClose, onDownload }: DownloadDialogProps) {
     };
 
     return (
-        <Dialog isOpen={show} onClose={onClose} className="download-dialog-modal">
+        <Dialog isOpen={show} onClose={onClose} style={{ maxWidth: '400px' }}>
             <DialogHeader onClose={onClose} icon='Download'>
                 Opções de Download
             </DialogHeader>
 
-            <Stack direction="vertical" gap={16} className="download-dialog-content">
+            <Stack direction="vertical" gap={16} style={{ padding: '1.5rem', color: 'var(--color-text-on-panel)' }}>
                 {'Todos os textos selecionados no filtro serão baixados.'}
-                <label className="dialog-checkbox-wrapper" htmlFor="use-brackets-checkbox">
+                <label htmlFor="use-brackets-checkbox">
                     <input
                         type="checkbox"
                         id="use-brackets-checkbox"
                         name="use-brackets-checkbox"
                         checked={useBrackets}
                         onChange={handleCheckboxChange}
+                        style={{ marginRight: '0.6rem' }}
                     />
                     <span>Substituições com sintaxe XML.</span>
                 </label>

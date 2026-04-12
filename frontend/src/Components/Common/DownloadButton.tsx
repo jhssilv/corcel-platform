@@ -1,5 +1,4 @@
-import '../../styles/download_button.css';
-import downloadIcon from '../../assets/download_button.svg';
+import { IconButton } from '../Generic';
 
 interface DownloadButtonProps {
     onClick: () => void;
@@ -8,14 +7,14 @@ interface DownloadButtonProps {
 
 function DownloadButton({ onClick, disabled = false }: DownloadButtonProps) {
     return (
-        <button
-            className="download-button"
+        <IconButton
             onClick={onClick}
             disabled={disabled}
-            aria-label="Fazer Download"
-        >
-            <img src={downloadIcon} alt="Ícone de Download" />
-        </button>
+            label="Fazer Download"
+            icon="Download"
+            variant="neutral"
+            size="md"
+        />
     );
 }
 
