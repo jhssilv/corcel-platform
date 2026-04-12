@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import DropdownSelect, { type DropdownValue, type SelectOption } from '../Common/DropdownSelect';
 import { Icon } from '../Generic';
+import { Stack } from '../Generic';
 import { getRawTextsData, getTextsData, getUsernames } from '../../Api';
 import { useSnackbar } from '../../Context/Generic';
 import type { RawTextMetadata, TextMetadata } from '../../types';
@@ -201,26 +202,28 @@ const EssaySelector = ({
     return (
         <form className={styles['essay-selector-container']}>
             <div className={styles['selector-main-search']}>
-                <div className={styles['search-with-info']}>
-                    <DropdownSelect
-                        title="ID do Texto"
-                        options={filteredEssays}
-                        selectedValues={selectedEssay}
-                        onChange={handleEssayChange}
-                        isMulti={false}
-                        filterOption={null}
-                        inputValue={essayInputValue}
-                        onInputChange={handleEssayInputChange}
-                        controlShouldRenderValue={false}
-                        blurInputOnSelect={false}
-                    />
-                    <div className={styles['info-tooltip-container']}>
+                <Stack alignY="center" gap={10} className={styles['search-with-info']} style={{ width: '100%' }}>
+                    <div style={{ flexGrow: 1 }}>
+                        <DropdownSelect
+                            title="ID do Texto"
+                            options={filteredEssays}
+                            selectedValues={selectedEssay}
+                            onChange={handleEssayChange}
+                            isMulti={false}
+                            filterOption={null}
+                            inputValue={essayInputValue}
+                            onInputChange={handleEssayInputChange}
+                            controlShouldRenderValue={false}
+                            blurInputOnSelect={false}
+                        />
+                    </div>
+                    <Stack alignX="center" alignY="center" className={styles['info-tooltip-container']} style={{ position: 'relative', cursor: 'help' }}>
                         <Icon name="CircleHelp" color="black" className={styles['info-icon']} style={{ color: 'currentColor' }} />
                         <div className={styles['tooltip-text']}>
                             Digite o id do texto para buscar. Exemplo: &quot;2015 n4&quot; encontrará &quot;2015_n4_12345.txt&quot;.
                         </div>
-                    </div>
-                </div>
+                    </Stack>
+                </Stack>
             </div>
 
             <div className={styles['selector-filters-grid']}>
@@ -247,7 +250,7 @@ const EssaySelector = ({
                 />
             </div>
 
-            <div className={styles['selector-footer']}>
+            <Stack alignX="space-between" alignY="center" className={styles['selector-footer']}>
                 <div className={styles['corrected-count']} data-testid="corrected-count">
                     Finalizados:{' '}
                     <strong>
@@ -264,7 +267,7 @@ const EssaySelector = ({
                     </strong>{' '}
                     de {filteredEssays.length}
                 </div>
-            </div>
+            </Stack>
         </form>
     );
 };

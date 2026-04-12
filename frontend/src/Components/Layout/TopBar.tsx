@@ -4,7 +4,7 @@ import UploadModal from '../Modals/UploadModal';
 import WhitelistModal from '../Modals/WhiteListModal';
 import RegisterUserModal from '../Modals/RegisterUserModal';
 import ReportModal from '../Modals/ReportModal';
-import { Icon } from '../Generic';
+import { Icon, Stack } from '../Generic';
 import { UseTopBarModals } from '../../Hooks/UI/UseTopBarModals';
 import { initTheme, toggleTheme, getCurrentTheme } from '../../Services/theme';
 import styles from '../../styles/top_bar.module.css';
@@ -80,7 +80,7 @@ function TopBar({ onDownloadClick, showSidePanel = true }: TopBarProps) {
 
     return (
         <>
-            <div className={styles['top-bar']}>
+            <Stack alignY="center" className={styles['top-bar']}>
                 <button className={styles['hamburger-button']} onClick={togglePanel} aria-label="Menu">
                     <div className={styles['hamburger-line']}></div>
                     <div className={styles['hamburger-line']}></div>
@@ -95,7 +95,7 @@ function TopBar({ onDownloadClick, showSidePanel = true }: TopBarProps) {
                 <ThemeToggle />
 
                 <div className={styles['top-bar-spacer']}></div>
-            </div>
+            </Stack>
 
             {showSidePanel ? (
                 <SidePanel

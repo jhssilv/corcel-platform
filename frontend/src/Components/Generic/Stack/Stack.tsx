@@ -1,18 +1,19 @@
-import { HTMLAttributes, ReactNode, CSSProperties } from 'react';
+import { ReactNode, CSSProperties, ElementType, forwardRef } from 'react';
 import styles from '../../../styles/stack.module.css';
 
-type GapSize = 4 | 8 | 12 | 16 | 20 | 32 | 64;
+type GapSize = 2 | 4 | 8 | 12 | 16 | 20 | 32 | 64 | number;
 type Alignment = 'start' | 'center' | 'end' | 'space-between' | 'space-evenly';
 type Direction = 'horizontal' | 'vertical';
 
-export interface StackProps extends HTMLAttributes<HTMLDivElement> {
+export type StackProps<E extends ElementType = 'div'> = {
+    as?: E;
     children?: ReactNode;
     gap?: GapSize;
     direction?: Direction;
     alignX?: Alignment;
     alignY?: Alignment;
     wrap?: boolean;
-}
+} & Omit<React.ComponentPropsWithoutRef<E>, 'as'>;
 
 const mapAlignmentToFlex = (align: Alignment): string => {
     switch (align) {
@@ -25,7 +26,8 @@ const mapAlignmentToFlex = (align: Alignment): string => {
     }
 };
 
-export function Stack({
+export const Stack = forwardRef<HTMLElement, StackProps<any>>(({
+    as: Component = 'div',
     children,
     gap,
     direction = 'horizontal',
@@ -35,7 +37,7 @@ export function Stack({
     className = '',
     style,
     ...props
-}: StackProps) {
+}, ref) => {
     const isHorizontal = direction === 'horizontal';
 
     // X-axis alignment
@@ -70,10 +72,12 @@ export function Stack({
         .join(' ');
 
     return (
-        <div className={classes} style={stackStyles} {...props}>
+        <Component ref={ref} className={classes} style={stackStyles} {...props}>
             {children}
-        </div>
+        </Component>
     );
-}
+});
+
+Stack.displayName = 'Stack';
 
 export default Stack;

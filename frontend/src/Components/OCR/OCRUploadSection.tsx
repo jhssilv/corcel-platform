@@ -1,6 +1,6 @@
 import { type MouseEvent as ReactMouseEvent } from 'react';
 import '../../styles/ocr_upload_modal.css';
-import { Icon, Card, CardTitle } from '../Generic';
+import { Icon, Stack, Card, CardTitle } from '../Generic';
 import { UseOCRUploadTask } from '../../Hooks/Upload/UseOCRUploadTask';
 
 interface OCRUploadSectionProps {
@@ -73,7 +73,7 @@ function OCRUploadSection({ onUploadComplete }: OCRUploadSectionProps) {
                                     {!isValidating && isValidZip && <span className="valid-mark">Válido</span>}
                                     {!isValidating && !isValidZip && hasError && <span className="invalid-mark">Inválido</span>}
                                 </div>
-                                <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
+                                <Stack gap={12} style={{ marginTop: '15px' }}>
                                     <button
                                         className="remove-file-btn"
                                         onClick={(event: ReactMouseEvent<HTMLButtonElement>) => {
@@ -92,7 +92,7 @@ function OCRUploadSection({ onUploadComplete }: OCRUploadSectionProps) {
                                     >
                                         Fazer Upload
                                     </button>
-                                </div>
+                                </Stack>
                             </div>
                         )}
                     </div>

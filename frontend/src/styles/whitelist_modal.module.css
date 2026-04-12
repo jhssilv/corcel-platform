@@ -70,9 +70,6 @@
   padding: 1.5rem;
   flex: 1;
   overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
 }
 
 .textarea-label {
@@ -85,8 +82,6 @@
 .textarea-container {
   position: relative;
   width: 100%;
-  display: flex;
-  flex-direction: column;
 }
 
 .textarea-container.dragging .whitelist-textarea {
@@ -133,9 +128,6 @@
   background-color: rgba(100, 108, 255, 0.2);
   border: 2px dashed var(--color-accent);
   border-radius: 8px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
   color: var(--color-text-primary);
   font-weight: bold;
   font-size: 1.2rem;
@@ -143,9 +135,6 @@
 }
 
 .modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
   padding: 1.5rem;
   border-top: 1px solid var(--color-border-subtle);
   background-color: var(--color-bg-panel);
@@ -199,19 +188,50 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (max-width: 480px) {
-  .whitelist-modal { width: 95%; max-height: 90vh; }
-  .modal-header, .modal-body, .modal-footer { padding: 1rem; }
-  .modal-title { font-size: 1.1rem; }
-  .whitelist-textarea { min-height: 250px; font-size: 0.9rem; }
-  .modal-button { padding: 0.65rem 1.25rem; font-size: 0.9rem; }
+  .whitelist-modal {
+    width: 95%;
+    max-height: 90vh;
+  }
+
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding: 1rem;
+  }
+
+  .modal-title {
+    font-size: 1.1rem;
+  }
+
+  .whitelist-textarea {
+    min-height: 250px;
+    font-size: 0.9rem;
+  }
+
+  .modal-button {
+    padding: 0.65rem 1.25rem;
+    font-size: 0.9rem;
+  }
 }

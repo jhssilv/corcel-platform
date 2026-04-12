@@ -4,7 +4,7 @@ import TopBar from '../Components/Layout/TopBar';
 import { getUsersData, toggleUserActive, toggleUserAdmin } from '../Api';
 import { useAuth } from '../Context/Auth/UseAuth';
 import { useSnackbar } from '../Context/Generic';
-import { Dialog, DialogHeader, Card, CardTitle, Icon } from '../Components/Generic';
+import { Dialog, DialogHeader, Card, Stack } from '../Components/Generic';
 import type { UserData } from '../types';
 import '../styles/main_page.css';
 import '../styles/user_management.css';
@@ -96,12 +96,12 @@ function UserManagementDashboard() {
             <TopBar showSidePanel={true} />
 
             <div className="main-page-section user-management-section">
-                <div className="user-management-header">
+                <Stack alignX="space-between" alignY="center" className="user-management-header">
                     <h2>Gerenciamento de Usuários</h2>
                     <button onClick={() => navigate('/main')} className="modal-button cancel-button">
                         Voltar
                     </button>
-                </div>
+                </Stack>
 
                 <Card>
                     <div style={{ padding: '20px' }}>
@@ -164,12 +164,12 @@ function UserManagementDashboard() {
             {confirmAdminToggle && (
                 <Dialog isOpen={!!confirmAdminToggle} onClose={() => setConfirmAdminToggle(null)} className="upload-modal user-management-confirm-modal">
                     <DialogHeader onClose={() => setConfirmAdminToggle(null)}>Confirmar Alteração</DialogHeader>
-                    <div className="modal-body">
+                    <Stack direction="vertical" gap={12} className="modal-body" style={{ padding: '1.5rem' }}>
                         <p>
                             Tem certeza que deseja alterar o status de administrador para <strong>{confirmAdminToggle}</strong>?
                         </p>
-                    </div>
-                    <div className="modal-footer">
+                    </Stack>
+                    <Stack alignX="end" gap={16} className="modal-footer" style={{ padding: '1.5rem', borderTop: '1px solid var(--color-border-subtle)', backgroundColor: 'var(--color-bg-panel)', borderRadius: '0 0 8px 8px' }}>
                         <button className="modal-button cancel-button" onClick={() => setConfirmAdminToggle(null)}>
                             Cancelar
                         </button>
@@ -181,7 +181,7 @@ function UserManagementDashboard() {
                         >
                             Confirmar
                         </button>
-                    </div>
+                    </Stack>
                 </Dialog>
             )}
         </div>

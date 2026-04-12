@@ -1,5 +1,6 @@
 import { useEffect, useState, type CSSProperties, type KeyboardEvent, type MouseEvent as ReactMouseEvent } from 'react';
 import { deleteNormalization, postNormalization } from '../../Api';
+import { Stack } from '../Generic';
 import '../../styles/new_correction_popup.css';
 import type { TextDetailResponse } from '../../types';
 
@@ -103,10 +104,10 @@ const NewCorrectionPopup = ({
 
     if (!candidate) {
         return (
-            <div className="confirmation-overlay" onClick={handleCloseButton}>
+            <Stack alignX="center" alignY="center" className="confirmation-overlay" onClick={handleCloseButton}>
                 <div className="confirmation-dialog" style={dialogStyle} data-testid="confirmation-dialog">
                     <p>{username ? <><strong>{username}</strong>, </> : ''}você deseja remover a correção?</p>
-                    <div className="confirmation-buttons">
+                    <Stack alignX="center" gap={12} className="confirmation-buttons">
                         <button
                             className="confirm-btn"
                             onClick={(event) => {
@@ -123,21 +124,21 @@ const NewCorrectionPopup = ({
                             Remover
                         </button>
                         <button className="cancel-btn" onClick={handleCloseButton}>Cancelar</button>
-                    </div>
+                    </Stack>
                 </div>
-            </div>
+            </Stack>
         );
     }
 
     return (
-        <div className="confirmation-overlay" onClick={handleCloseButton}>
+        <Stack alignX="center" alignY="center" className="confirmation-overlay" onClick={handleCloseButton}>
             <div className="confirmation-dialog" style={dialogStyle} data-testid="confirmation-dialog">
                 <p>
                     {username ? <><strong>{username}</strong>, </> : ''}
                     você deseja adicionar <i>{candidate}</i> como correção
                     {suggestForAll ? ` para todas as ocorrências de "${tokenText}"? Isso afetará todos os textos` : '?'}
                 </p>
-                <div className="confirmation-buttons">
+                <Stack alignX="center" gap={12} className="confirmation-buttons">
                     <button
                         className="confirm-btn"
                         onClick={(event) => {
@@ -154,9 +155,9 @@ const NewCorrectionPopup = ({
                         Adicionar
                     </button>
                     <button className="cancel-btn" onClick={handleCloseButton}>Cancelar</button>
-                </div>
+                </Stack>
             </div>
-        </div>
+        </Stack>
     );
 };
 

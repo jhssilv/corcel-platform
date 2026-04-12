@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import EssaySelector from '../Components/Text/EssaySelector';
 import OCREditModal from '../Components/OCR/OCREditModal';
 import OCRUploadSection from '../Components/OCR/OCRUploadSection';
-import { Icon } from '../Components/Generic';
+import { Icon, Stack } from '../Components/Generic';
 import TopBar from '../Components/Layout/TopBar';
 import { getRawTextById } from '../Api';
 import { useToast } from '../Context/Generic';
@@ -67,8 +67,8 @@ function OCRPage() {
             <TopBar showSidePanel={true} />
 
             <div className="ocr-controls-header">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                <Stack alignX="space-between" alignY="center" style={{ marginBottom: '15px' }}>
+                    <Stack alignY="center" gap={16}>
                         <button
                             className="ocr-back-button"
                             onClick={() => {
@@ -79,8 +79,8 @@ function OCRPage() {
                             Voltar
                         </button>
                         <h2 style={{ margin: 0, fontSize: '1.2rem', color: '#fff' }}>Buscar Textos Transcritos Com OCR</h2>
-                    </div>
-                </div>
+                    </Stack>
+                </Stack>
 
                 <EssaySelector
                     selectedEssay={selectedEssay}

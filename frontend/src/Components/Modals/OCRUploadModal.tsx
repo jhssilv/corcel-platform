@@ -1,6 +1,6 @@
 import { type MouseEvent as ReactMouseEvent } from 'react';
 import '../../styles/ocr_upload_modal.css';
-import { Icon, Dialog, DialogHeader } from '../Generic';
+import { Icon, Dialog, DialogHeader, Stack } from '../Generic';
 import { UseOCRUploadTask } from '../../Hooks/Upload/UseOCRUploadTask';
 
 interface OCRUploadModalProps {
@@ -52,7 +52,11 @@ function OCRUploadModal({ isOpen, onClose, onUploadComplete }: OCRUploadModalPro
             <div className="modal-body">
                 {!isProcessing ? (
                     <>
-                        <div
+                        <Stack
+                            direction="vertical"
+                            alignX="center"
+                            alignY="center"
+                            gap={16}
                             className={`drop-zone ${isDragging ? 'dragging' : ''} ${uploadFile ? 'has-file' : ''}`}
                             onDragOver={handleDragOver}
                             onDragLeave={handleDragLeave}
@@ -61,7 +65,7 @@ function OCRUploadModal({ isOpen, onClose, onUploadComplete }: OCRUploadModalPro
                             {!uploadFile ? (
                                 <>
                                     <Icon name="Upload" color="black" className="upload-icon-svg" style={{ color: 'currentColor' }} />
-                                    <div className="upload-text-container">
+                                    <Stack direction="vertical" alignX="center" gap={12} className="upload-text-container">
                                         <p className="upload-main-text">
                                             {isDragging ? 'Solte o arquivo aqui' : 'Arraste e solte seu arquivo ZIP aqui'}
                                         </p>
@@ -76,15 +80,15 @@ function OCRUploadModal({ isOpen, onClose, onUploadComplete }: OCRUploadModalPro
                                             />
                                         </label>
                                         <p className="upload-hint-text">Apenas arquivos .zip contendo imagens (PNG, JPG, TIF)</p>
-                                    </div>
+                                    </Stack>
                                 </>
                             ) : (
-                                <div className="file-info-container">
+                                <Stack direction="vertical" alignX="center" gap={16} className="file-info-container">
                                     <Icon name="FileText" color="black" className="file-icon-svg" style={{ color: 'currentColor' }} />
-                                    <div className="file-details">
+                                    <Stack direction="vertical" alignX="center" gap={4} className="file-details">
                                         <span className="file-name">{uploadFile.name}</span>
                                         <span className="file-size">{(uploadFile.size / 1024 / 1024).toFixed(2)} MB</span>
-                                    </div>
+                                    </Stack>
                                     <div className="file-status">
                                         {isValidating && <span className="validating">Validando...</span>}
                                         {!isValidating && isValidZip && <span className="valid-mark">Válido</span>}
@@ -99,25 +103,25 @@ function OCRUploadModal({ isOpen, onClose, onUploadComplete }: OCRUploadModalPro
                                     >
                                         Remover
                                     </button>
-                                </div>
+                                </Stack>
                             )}
-                        </div>
+                        </Stack>
 
                         {hasError && <div className="error-message">Erro durante upload, confira se o arquivo é válido.</div>}
                     </>
                 ) : (
-                    <div className="processing-container">
+                    <Stack direction="vertical" alignX="center" gap={20} className="processing-container">
                         <div className="progress-bar-container">
                             <div className="progress-bar-fill" style={{ width: `${progress}%` }}></div>
                         </div>
                         <p className="progress-text">{progress}%</p>
                         <p className="status-message">{statusMessage}</p>
                         <div className="processing-spinner"></div>
-                    </div>
+                    </Stack>
                 )}
             </div>
 
-            <div className="modal-footer">
+            <Stack alignX="end" gap={16} className="modal-footer">
                 <button className="cancel-button" onClick={handleClose} disabled={isProcessing}>
                     Cancelar
                 </button>
@@ -132,7 +136,7 @@ function OCRUploadModal({ isOpen, onClose, onUploadComplete }: OCRUploadModalPro
                         Fazer Upload
                     </button>
                 )}
-            </div>
+            </Stack>
         </Dialog>
     );
 }

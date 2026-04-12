@@ -4,7 +4,7 @@ import TopBar from '../Components/Layout/TopBar';
 import { authenticateUser } from '../Api';
 import { useAuth } from '../Context/Auth/UseAuth';
 import { useSnackbar } from '../Context/Generic';
-import { Card, CardTitle } from '../Components/Generic';
+import { Card, CardTitle, Stack } from '../Components/Generic';
 import '../styles/login_page.css';
 
 interface LoginErrorShape {
@@ -44,42 +44,42 @@ function LoginPage() {
     };
 
     return (
-        <section style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+        <Stack direction="vertical" alignX="center" style={{ width: '100%' }}>
             <TopBar showSidePanel={false} />
             <Card style={{ width: '100%', maxWidth: '400px', marginTop: '60px' }}>
                 <CardTitle style={{ justifyContent: 'center' }}>
                     Autenticação de usuário
                 </CardTitle>
                 <div style={{ padding: '20px' }}>
-                    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column' }}>
-                        <input
-                            name="username_input"
-                            type="text"
-                            value={username}
-                            onChange={handleUsernameChange}
-                            required
-                            placeholder="Usuário"
-                            style={{ marginBottom: '15px' }}
-                        />
-                        <input
-                            name="password_input"
-                            type="password"
-                            value={password}
-                            onChange={handlePasswordChange}
-                            required
-                            placeholder="Senha"
-                            style={{ marginBottom: '15px' }}
-                        />
-                        <button type="submit" style={{ color: 'white', marginTop: '10px' }}>Entrar</button>
-                        <div style={{ marginTop: '20px', textAlign: 'center' }}>
-                            <Link to="/first-access" style={{ color: '#666', textDecoration: 'none', fontSize: '0.9rem' }}>
-                                Primeiro Acesso? Ative sua conta
-                            </Link>
-                        </div>
+                    <form onSubmit={handleSubmit}>
+                        <Stack direction="vertical" gap={16}>
+                            <input
+                                name="username_input"
+                                type="text"
+                                value={username}
+                                onChange={handleUsernameChange}
+                                required
+                                placeholder="Usuário"
+                            />
+                            <input
+                                name="password_input"
+                                type="password"
+                                value={password}
+                                onChange={handlePasswordChange}
+                                required
+                                placeholder="Senha"
+                            />
+                            <button type="submit" style={{ color: 'white' }}>Entrar</button>
+                            <div style={{ textAlign: 'center' }}>
+                                <Link to="/first-access" style={{ color: '#666', textDecoration: 'none', fontSize: '0.9rem' }}>
+                                    Primeiro Acesso? Ative sua conta
+                                </Link>
+                            </div>
+                        </Stack>
                     </form>
                 </div>
             </Card>
-        </section>
+        </Stack>
     );
 }
 

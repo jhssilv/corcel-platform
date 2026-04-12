@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TopBar from '../Components/Layout/TopBar';
-import { Badge, Icon, Dialog, DialogHeader } from '../Components/Generic';
+import { Badge, Icon, Dialog, DialogHeader, Stack } from '../Components/Generic';
 import DropdownSelect, { type DropdownValue, type SelectOption } from '../Components/Common/DropdownSelect';
 import { bulkAssignTexts, bulkUnassignTexts, getFilteredTextsData, getUsernames } from '../Api';
 import { useSnackbar } from '../Context/Generic';
@@ -307,18 +307,20 @@ function AssignmentsPanel() {
                     <button
                         className={`mode-toggle-btn ${mode === 'assign' ? 'active' : ''}`}
                         onClick={() => setMode('assign')}
-                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                     >
-                        <Icon name="Plus" color="black" size={18} style={{ color: 'currentColor' }} />
-                        Atribuir Textos
+                        <Stack alignX="center" alignY="center" gap={8}>
+                            <Icon name="Plus" color="black" size={18} style={{ color: 'currentColor' }} />
+                            Atribuir Textos
+                        </Stack>
                     </button>
                     <button
                         className={`mode-toggle-btn unassign ${mode === 'unassign' ? 'active' : ''}`}
                         onClick={() => setMode('unassign')}
-                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                     >
-                        <Icon name="Minus" color="black" size={18} style={{ color: 'currentColor' }} />
-                        Remover Atribuições
+                        <Stack alignX="center" alignY="center" gap={8}>
+                            <Icon name="Minus" color="black" size={18} style={{ color: 'currentColor' }} />
+                            Remover Atribuições
+                        </Stack>
                     </button>
                 </div>
 
@@ -373,7 +375,7 @@ function AssignmentsPanel() {
 
                 <div className="assignments-texts-section">
                     <div className="assignments-texts-header">
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <Stack alignY="center" gap={12}>
                             <h3 className="assignments-texts-title">Textos Disponíveis</h3>
                             <Badge
                                 text={`${selectedTextIds.size} de ${textsData.length} selecionados`}
@@ -381,7 +383,7 @@ function AssignmentsPanel() {
                                 size="md"
                                 iconPosition="none"
                             />
-                        </div>
+                        </Stack>
                         <div className="assignments-selection-controls">
                             <div className="select-n-control">
                                 <input

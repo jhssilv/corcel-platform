@@ -1,4 +1,5 @@
 import { HTMLAttributes, ReactNode } from 'react';
+import { Stack } from '..';
 import styles from '../../../styles/dialog.module.css';
 
 export interface DialogHeaderProps extends HTMLAttributes<HTMLDivElement> {
@@ -15,19 +16,19 @@ export function DialogHeader({
     const headerClass = `${styles.header} ${className}`.trim();
 
     return (
-        <div className={headerClass} {...props}>
+        <Stack alignX="space-between" alignY="center" className={headerClass} {...props}>
             <h2 className={styles.title}>{children}</h2>
             {onClose && (
-                <button
+                <Stack alignX="center" alignY="center" as="button"
                     type="button"
                     className={styles.closeButton}
                     onClick={onClose}
                     aria-label="Fechar diálogo"
                 >
                     &times;
-                </button>
+                </Stack>
             )}
-        </div>
+        </Stack>
     );
 }
 

@@ -9,11 +9,6 @@
     transition: all 0.3s ease;
     background-color: var(--color-bg-control);
     min-height: 280px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
 }
 
 .drop-zone:hover {
@@ -57,12 +52,6 @@
     transform: scale(1.1);
 }
 
-.upload-text-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.75rem;
-}
 
 .upload-main-text {
     font-size: 1.1rem;
@@ -113,10 +102,6 @@
 
 /* File Info Display */
 .file-info-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
     width: 100%;
 }
 
@@ -126,12 +111,6 @@
     color: var(--color-accent);
 }
 
-.file-details {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.25rem;
-}
 
 .file-name {
     font-size: 1rem;
@@ -201,10 +180,6 @@
 
 /* Processing State */
 .processing-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1.5rem;
     padding: 2rem;
 }
 
@@ -253,9 +228,6 @@
 
 /* Modal Footer Buttons */
 .modal-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: 1rem;
     padding: 1.5rem;
     border-top: 1px solid var(--color-border-subtle);
     background-color: var(--color-bg-panel);

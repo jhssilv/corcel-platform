@@ -1,7 +1,7 @@
 import { useEffect, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { requestReport } from '../../Api';
 import { useSnackbar } from '../../Context/Generic';
-import { Dialog, DialogHeader } from '../Generic';
+import { Dialog, DialogHeader, Stack } from '../Generic';
 import styles from '../../styles/report_modal.module.css';
 
 interface ReportModalProps {
@@ -60,13 +60,13 @@ function ReportModal({ isOpen, onClose, textCount }: ReportModalProps) {
         <Dialog isOpen={isOpen} onClose={onClose} className={styles['report-modal']}>
             <DialogHeader onClose={onClose}>Gerar Relatório</DialogHeader>
 
-            <div className={styles['modal-body']}>
+            <Stack direction="vertical" gap={12} className={styles['modal-body']}>
                 <p className={styles['report-text']}>
                     Gerar relatório para os <b>{textCount}</b> textos <b>filtrados</b>?
                 </p>
-            </div>
+            </Stack>
 
-            <div className={styles['modal-footer']}>
+            <Stack alignX="end" gap={16} className={styles['modal-footer']}>
                 <button className={[styles['modal-button'], styles['cancel-button']].join(' ')} onClick={onClose}>Cancelar</button>
                 <button
                     className={[styles['modal-button'], styles['confirm-button'], styles['report-confirm']].join(' ')}
@@ -77,7 +77,7 @@ function ReportModal({ isOpen, onClose, textCount }: ReportModalProps) {
                 >
                     Confirmar
                 </button>
-            </div>
+            </Stack>
         </Dialog>
     );
 }

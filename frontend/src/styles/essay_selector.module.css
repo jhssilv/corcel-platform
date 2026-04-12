@@ -19,9 +19,6 @@
 }
 
 .selector-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     padding-top: 15px;
     border-top: 1px solid var(--color-border-primary);
     margin-top: 10px;
@@ -30,25 +27,6 @@
 .corrected-count {
     color: var(--color-text-on-panel-dim);
     font-size: 0.9rem;
-}
-
-.search-with-info {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
-}
-
-.search-with-info> :first-child {
-    flex-grow: 1;
-}
-
-.info-tooltip-container {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: help;
 }
 
 .info-icon {

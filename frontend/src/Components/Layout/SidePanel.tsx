@@ -4,7 +4,7 @@ import registerIcon from '../../assets/register.svg';
 import reportIcon from '../../assets/report.svg';
 import uploadIcon from '../../assets/upload.svg';
 import whitelistIcon from '../../assets/whitelist.svg';
-import { Icon } from '../Generic';
+import { Icon, Stack } from '../Generic';
 import styles from '../../styles/top_bar.module.css';
 
 interface SidePanelProps {
@@ -42,16 +42,16 @@ function SidePanel({
         <>
             {isOpen && <div className={styles['panel-overlay']} onClick={onClose}></div>}
 
-            <div className={`${styles['side-panel']} ${isOpen ? styles.open : ''}`} data-testid="side-panel" data-open={isOpen ? 'true' : 'false'}>
-                <div className={styles['panel-header']}>
+            <Stack direction="vertical" className={`${styles['side-panel']} ${isOpen ? styles.open : ''}`} data-testid="side-panel" data-open={isOpen ? 'true' : 'false'}>
+                <Stack alignX="space-between" alignY="center" className={styles['panel-header']}>
                     <span className={styles['username-display']}>Olá, {username}.</span>
                     <button className={styles['close-button']} onClick={onClose} aria-label="Close menu">
                         ×
                     </button>
-                </div>
+                </Stack>
 
-                <div className={styles['panel-content']} data-testid="side-panel-content">
-                    <div className={styles['panel-main-section']}>
+                <Stack direction="vertical" className={styles['panel-content']} data-testid="side-panel-content">
+                    <Stack direction="vertical" gap={16} className={styles['panel-main-section']}>
                         <button className={`${styles['panel-button']} ${styles['download-button']}`} onClick={onDownload}>
                             <img src={downloadIcon || '/placeholder.svg'} alt="" className={styles['button-icon-svg']} />
                             <span className={styles['button-text']}>Download</span>
@@ -84,7 +84,7 @@ function SidePanel({
                                 </button>
                             </>
                         )}
-                    </div>
+                    </Stack>
 
                     <div className={styles['panel-ocr-section']}>
                         <button className={`${styles['panel-button']} ${styles['ocr-button']}`} onClick={onOCR}>
@@ -103,8 +103,8 @@ function SidePanel({
                             <span className={styles['button-text']}>Sair</span>
                         </button>
                     </div>
-                </div>
-            </div>
+                </Stack>
+            </Stack>
         </>
     );
 }

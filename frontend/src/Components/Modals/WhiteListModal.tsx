@@ -1,7 +1,7 @@
 import { useEffect, useState, type ChangeEvent, type DragEvent, type MouseEvent as ReactMouseEvent } from 'react';
 import { parseTextFile } from '../../Services/Text/FileParsers';
 import { addToWhitelist, getWhitelist, removeFromWhitelist } from '../../Api';
-import { Dialog, DialogHeader } from '../Generic';
+import { Dialog, DialogHeader, Stack } from '../Generic';
 import { useSnackbar } from '../../Context/Generic';
 import styles from '../../styles/whitelist_modal.module.css';
 
@@ -132,15 +132,14 @@ function WhitelistModal({ isOpen, onClose }: WhitelistModalProps) {
         <Dialog isOpen={isOpen} onClose={handleCancel} className={styles['whitelist-modal']}>
             <DialogHeader onClose={handleCancel}>Gerenciar Whitelist</DialogHeader>
 
-            <div className={styles['modal-body']}>
+            <Stack direction="vertical" gap={12} className={styles['modal-body']}>
                 <label htmlFor="whitelist-textarea" className={styles['textarea-label']}>
                     Lista de palavras (separadas por vírgula):
                 </label>
-                <div
-                    className={[styles['textarea-container'], isDragging ? styles.dragging : ''].filter(Boolean).join(' ')}
+                <Stack direction="vertical" className={[styles['textarea-container'], isDragging ? styles.dragging : ''].filter(Boolean).join(' ')}
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
-                    onDrop={(event) => {
+                    onDrop={(event: React.DragEvent<HTMLDivElement>) => {
                         void handleDrop(event);
                     }}
                 >
@@ -152,11 +151,11 @@ function WhitelistModal({ isOpen, onClose }: WhitelistModalProps) {
                         placeholder="Digite as palavras separadas por vírgula ou arraste arquivos de texto aqui..."
                         rows={15}
                     />
-                    {isDragging && <div className={styles['drag-overlay']}>Solte os arquivos aqui</div>}
-                </div>
-            </div>
+                    {isDragging && <Stack alignX="center" alignY="center" className={styles['drag-overlay']}>Solte os arquivos aqui</Stack>}
+                </Stack>
+            </Stack>
 
-            <div className={styles['modal-footer']}>
+            <Stack alignX="end" gap={16} className={styles['modal-footer']}>
                 <button className={[styles['modal-button'], styles['cancel-button']].join(' ')} onClick={handleCancel} disabled={isUpdating}>
                     Cancelar
                 </button>
@@ -169,7 +168,7 @@ function WhitelistModal({ isOpen, onClose }: WhitelistModalProps) {
                 >
                     {isUpdating ? 'Atualizando...' : 'Atualizar'}
                 </button>
-            </div>
+            </Stack>
         </Dialog>
     );
 }

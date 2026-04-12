@@ -1,4 +1,5 @@
 import { HTMLAttributes, ReactNode, useEffect, useRef } from 'react';
+import { Stack } from '..';
 import styles from '../../../styles/dialog.module.css';
 
 export interface DialogProps extends HTMLAttributes<HTMLDivElement> {
@@ -82,8 +83,8 @@ export function Dialog({
     };
 
     return (
-        <div className={styles.overlay} onClick={handleOverlayClick}>
-            <div
+        <Stack alignY="center" alignX="center" className={styles.overlay} onClick={handleOverlayClick}>
+            <Stack direction="vertical"
                 ref={dialogRef}
                 className={`${styles.dialog} ${className}`.trim()}
                 role="dialog"
@@ -92,8 +93,8 @@ export function Dialog({
                 {...props}
             >
                 {children}
-            </div>
-        </div>
+            </Stack>
+        </Stack>
     );
 }
 

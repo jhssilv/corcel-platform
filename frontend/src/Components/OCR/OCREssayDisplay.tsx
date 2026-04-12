@@ -1,6 +1,7 @@
 import { memo, useEffect, useRef, useState, type ChangeEvent, type KeyboardEvent, type MouseEvent as ReactMouseEvent } from 'react';
 import '../../styles/ocr_essay_display.css';
 import { getRawTextImage } from '../../Api';
+import { Stack } from '../Generic';
 import type { RawTextDetail } from '../../types';
 
 interface OCREssayDisplayProps {
@@ -94,9 +95,9 @@ const ImagePanel = memo(({ imageUrl, imageVisible }: ImagePanelProps) => {
                     alt="Essay Source"
                 />
             ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                <Stack direction="vertical" alignX="center" alignY="center" style={{ height: '100%' }}>
                     <p style={{ color: '#666', marginBottom: '10px' }}>Imagem não disponível</p>
-                </div>
+                </Stack>
             )}
         </div>
     );
@@ -182,17 +183,17 @@ function OCREssayDisplay({ essay, imageVisible, text, onTextChange }: OCREssayDi
 
     if (!essay) {
         return (
-            <div
+            <Stack
+                direction="vertical"
+                alignX="center"
+                alignY="center"
                 style={{
                     height: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
                     color: '#666',
                 }}
             >
                 <h3>Selecione um texto no menu acima para começar</h3>
-            </div>
+            </Stack>
         );
     }
 

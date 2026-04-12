@@ -3,7 +3,7 @@ import GeneratedEssay from './GeneratedEssay';
 import OriginalEssay from './OriginalEssay';
 import GeneratedCandidates from './GeneratedCandidates';
 import NewCorrectionPopup from '../Modals/NewCorrectionPopup';
-import { Icon } from '../Generic';
+import { Icon, Stack } from '../Generic';
 import { UseCorrectionActions } from '../../Hooks/Text/UseCorrectionActions';
 import { UseTextSelection } from '../../Hooks/Text/UseTextSelection';
 import type { TextDetailResponse } from '../../types';
@@ -54,35 +54,35 @@ function EssayDisplay({ essay, refreshEssay }: EssayDisplayProps) {
     return (
         <div>
             {(essay.processingStatus === 'PROCESSING' || essay.processingStatus === 'PENDING') && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#fff3cd', border: '1px solid #ffe69c', color: '#664d03', padding: '12px 16px', borderRadius: '8px', marginBottom: '16px', fontSize: '0.95rem' }}>
+                <Stack alignY="center" gap={12} style={{ background: '#fff3cd', border: '1px solid #ffe69c', color: '#664d03', padding: '12px 16px', borderRadius: '8px', marginBottom: '16px', fontSize: '0.95rem' }}>
                     <Icon name="Info" color="black" size={20} style={{ color: 'currentColor', flexShrink: 0 }} />
                     <div>
                         <strong>Aviso:</strong> {textNotFinishedAdvice}
                     </div>
-                </div>
+                </Stack>
             )}
-            <div className="essay-legend">
-                <div className="essay-legend-items">
-                    <div className="essay-legend-item">
+            <Stack direction="vertical" alignY="center" gap={12} className="essay-legend">
+                <Stack alignX="center" gap={20} className="essay-legend-items" wrap>
+                    <Stack alignY="center" className="essay-legend-item">
                         <span className="essay-legend-swatch essay-legend-swatch--danger"></span>
                         <span>Não Normalizado</span>
-                    </div>
-                    <div className="essay-legend-item">
+                    </Stack>
+                    <Stack alignY="center" className="essay-legend-item">
                         <span className="essay-legend-swatch essay-legend-swatch--info"></span>
                         <span>Substituído</span>
-                    </div>
-                    <div className="essay-legend-item">
+                    </Stack>
+                    <Stack alignY="center" className="essay-legend-item">
                         <span className="essay-legend-swatch essay-legend-swatch--neutral"></span>
                         <span>Selecionado</span>
-                    </div>
-                </div>
+                    </Stack>
+                </Stack>
                 <div className="essay-legend-hint">
                     <span>
                         Segure <strong>Ctrl</strong> para selecionar múltiplos tokens.
                     </span>
                 </div>
 
-                <div className={`${styles['finalized-toggle-wrapper']} essay-legend-divider`}>
+                <Stack alignX="center" className={`${styles['finalized-toggle-wrapper']} essay-legend-divider`} style={{ marginTop: '10px', paddingTop: '10px' }}>
                     <label className={styles['finalized-toggle']}>
                         <input
                             data-testid="finalized-toggle-input"
@@ -97,9 +97,9 @@ function EssayDisplay({ essay, refreshEssay }: EssayDisplayProps) {
                             {essay.normalizedByUser ? 'Finalizado! 🐎' : 'Marcar Como Finalizado'}
                         </span>
                     </label>
-                </div>
+                </Stack>
 
-                <div className="essay-actions-bar">
+                <Stack alignX="center" gap={12} className="essay-actions-bar" style={{ marginTop: '10px', paddingTop: '10px' }}>
                     <button
                         data-testid="reset-corrections-btn"
                         className="essay-action-btn--danger"
@@ -115,8 +115,8 @@ function EssayDisplay({ essay, refreshEssay }: EssayDisplayProps) {
                     >
                         {showOriginal ? 'Ocultar Original' : 'Comparar Com Original'}
                     </button>
-                </div>
-            </div>
+                </Stack>
+            </Stack>
 
             <GeneratedCandidates
                 candidates={candidates}
