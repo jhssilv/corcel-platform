@@ -2,6 +2,7 @@ import { useEffect, useState, type ChangeEvent, type MouseEvent as ReactMouseEve
 import '../../styles/download_dialog.css';
 import downloadTexts from '../../Api/DownloadTexts';
 import { useSnackbar } from '../../Context/Generic';
+import { Dialog, DialogHeader } from '../Generic';
 
 interface DownloadDialogProps {
     show: boolean;
@@ -59,38 +60,36 @@ function DownloadDialog({ show, onClose, onDownload }: DownloadDialogProps) {
     };
 
     return (
-        <div className="confirmation-overlay" onClick={handleOverlayClick}>
-            <div className="confirmation-dialog">
-                <h2 className="dialog-title">Opções de Download</h2>
+        <Dialog isOpen={show} onClose={onClose} className="confirmation-dialog">
+            <DialogHeader onClose={onClose}>Opções de Download</DialogHeader>
 
-                <div className="dialog-content">
-                    {'Todos os textos selecionados no filtro serão baixados.'}
-                    <label className="dialog-checkbox-wrapper" htmlFor="use-brackets-checkbox">
-                        <input
-                            type="checkbox"
-                            id="use-brackets-checkbox"
-                            name="use-brackets-checkbox"
-                            checked={useBrackets}
-                            onChange={handleCheckboxChange}
-                        />
-                        <span>Substituições com sintaxe XML.</span>
-                    </label>
-                </div>
-
-                <div className="confirmation-buttons">
-                    <button className="cancel-btn" onClick={onClose}>Cancelar</button>
-                    <button
-                        className="confirm-btn"
-                        onClick={() => {
-                            void handleSubmitClick();
-                        }}
-                        disabled={!confirmEnabled}
-                    >
-                        Baixar
-                    </button>
-                </div>
+            <div className="dialog-content">
+                {'Todos os textos selecionados no filtro serão baixados.'}
+                <label className="dialog-checkbox-wrapper" htmlFor="use-brackets-checkbox">
+                    <input
+                        type="checkbox"
+                        id="use-brackets-checkbox"
+                        name="use-brackets-checkbox"
+                        checked={useBrackets}
+                        onChange={handleCheckboxChange}
+                    />
+                    <span>Substituições com sintaxe XML.</span>
+                </label>
             </div>
-        </div>
+
+            <div className="confirmation-buttons">
+                <button className="cancel-btn" onClick={onClose}>Cancelar</button>
+                <button
+                    className="confirm-btn"
+                    onClick={() => {
+                        void handleSubmitClick();
+                    }}
+                    disabled={!confirmEnabled}
+                >
+                    Baixar
+                </button>
+            </div>
+        </Dialog>
     );
 }
 

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ChangeEvent, type KeyboardEvent, type
 import '../../styles/ocr_modal.css';
 import { finalizeRawText, getRawTextImage, updateRawText } from '../../Api';
 import { useSnackbar } from '../../Context/Generic';
+import { Dialog, DialogHeader } from '../Generic';
 import type { RawTextDetail } from '../../types';
 
 interface OCREditModalProps {
@@ -202,14 +203,11 @@ const OCREditModal = ({ rawText, onClose, onToggleImage, onFinish }: OCREditModa
     }
 
     return (
-        <div className="ocr-modal-overlay" onClick={onClose}>
-            <div className="ocr-modal-content" onClick={(event) => event.stopPropagation()}>
-                <div className="ocr-modal-header">
-                    <h2 className="ocr-modal-title">{rawText.source_file_name}</h2>
-                    <button className="ocr-modal-close" onClick={onClose} aria-label="Close">
-                        ×
-                    </button>
-                </div>
+        <>
+            <Dialog isOpen={!!rawText} onClose={onClose} className="ocr-modal-content">
+                <DialogHeader onClose={onClose}>
+                    {rawText.source_file_name}
+                </DialogHeader>
 
                 <div className="ocr-modal-body">
                     {!imageHidden && (
@@ -283,69 +281,68 @@ const OCREditModal = ({ rawText, onClose, onToggleImage, onFinish }: OCREditModa
                         />
                     </div>
                 </div>
-            </div>
+            </Dialog>
 
             {showConfirmModal && (
-                <div
-                    className="ocr-confirm-modal-overlay"
-                    onClick={processingState ? undefined : handleCancelFinalize}
+                <Dialog
+                    isOpen={showConfirmModal}
+                    onClose={processingState ? () => { } : handleCancelFinalize}
+                    className="ocr-confirm-modal"
                 >
-                    <div className="ocr-confirm-modal" onClick={(event) => event.stopPropagation()}>
-                        {!processingState && (
-                            <>
-                                <h3>Confirmar Finalização</h3>
-                                <p>
-                                    Tem certeza que deseja finalizar este texto?
-                                    <br />
-                                    O texto será processado e ficará disponível para normalização.
-                                    <br />
-                                    <strong>A versão bruta e a imagem associada serão excluídas.</strong>
-                                </p>
-                                <div className="ocr-confirm-filename-group">
-                                    <label htmlFor="finalFileName">Nome do arquivo final:</label>
-                                    <input
-                                        id="finalFileName"
-                                        type="text"
-                                        value={finalFileName}
-                                        onChange={(event) => setFinalFileName(event.target.value)}
-                                        placeholder="Nome do arquivo"
-                                        disabled={isFinalizing}
-                                    />
-                                </div>
-                                <div className="ocr-confirm-modal-actions">
-                                    <button
-                                        className="ocr-action-btn ocr-btn-secondary"
-                                        onClick={handleCancelFinalize}
-                                        disabled={isFinalizing}
-                                    >
-                                        Cancelar
-                                    </button>
-                                    <button
-                                        className="ocr-action-btn ocr-btn-danger"
-                                        onClick={() => {
-                                            void handleConfirmFinalize();
-                                        }}
-                                        disabled={isFinalizing}
-                                    >
-                                        {isFinalizing ? 'Finalizando...' : 'Confirmar'}
-                                    </button>
-                                </div>
-                            </>
-                        )}
+                    {!processingState && (
+                        <>
+                            <h3>Confirmar Finalização</h3>
+                            <p>
+                                Tem certeza que deseja finalizar este texto?
+                                <br />
+                                O texto será processado e ficará disponível para normalização.
+                                <br />
+                                <strong>A versão bruta e a imagem associada serão excluídas.</strong>
+                            </p>
+                            <div className="ocr-confirm-filename-group">
+                                <label htmlFor="finalFileName">Nome do arquivo final:</label>
+                                <input
+                                    id="finalFileName"
+                                    type="text"
+                                    value={finalFileName}
+                                    onChange={(event) => setFinalFileName(event.target.value)}
+                                    placeholder="Nome do arquivo"
+                                    disabled={isFinalizing}
+                                />
+                            </div>
+                            <div className="ocr-confirm-modal-actions">
+                                <button
+                                    className="ocr-action-btn ocr-btn-secondary"
+                                    onClick={handleCancelFinalize}
+                                    disabled={isFinalizing}
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    className="ocr-action-btn ocr-btn-danger"
+                                    onClick={() => {
+                                        void handleConfirmFinalize();
+                                    }}
+                                    disabled={isFinalizing}
+                                >
+                                    {isFinalizing ? 'Finalizando...' : 'Confirmar'}
+                                </button>
+                            </div>
+                        </>
+                    )}
 
-                        {processingState === 'processing' && (
-                            <>
-                                <h3>Processando</h3>
-                                <div className="ocr-loading-container">
-                                    <div className="ocr-loading-spinner"></div>
-                                </div>
-                                <p className="ocr-processing-text">{processingMessage}</p>
-                            </>
-                        )}
-                    </div>
-                </div>
+                    {processingState === 'processing' && (
+                        <>
+                            <h3>Processando</h3>
+                            <div className="ocr-loading-container">
+                                <div className="ocr-loading-spinner"></div>
+                            </div>
+                            <p className="ocr-processing-text">{processingMessage}</p>
+                        </>
+                    )}
+                </Dialog>
             )}
-        </div>
+        </>
     );
 };
 

@@ -1,6 +1,6 @@
 import { type MouseEvent as ReactMouseEvent } from 'react';
 import '../../styles/ocr_upload_modal.css';
-import { Icon } from '../Generic';
+import { Icon, Card, CardTitle } from '../Generic';
 import { UseOCRUploadTask } from '../../Hooks/Upload/UseOCRUploadTask';
 
 interface OCRUploadSectionProps {
@@ -29,8 +29,10 @@ function OCRUploadSection({ onUploadComplete }: OCRUploadSectionProps) {
     });
 
     return (
-        <div className="ocr-upload-section">
-            <h3 className="ocr-upload-title">Upload de Imagens para OCR</h3>
+        <Card className="ocr-upload-section">
+            <CardTitle>
+                Upload de Imagens para OCR
+            </CardTitle>
             {!isProcessing ? (
                 <>
                     <div
@@ -105,7 +107,7 @@ function OCRUploadSection({ onUploadComplete }: OCRUploadSectionProps) {
                     <div className="processing-spinner"></div>
                 </div>
             )}
-        </div>
+        </Card>
     );
 }
 

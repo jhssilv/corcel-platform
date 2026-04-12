@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TopBar from '../Components/Layout/TopBar';
-import { Badge, Icon } from '../Components/Generic';
+import { Badge, Icon, Dialog, DialogHeader } from '../Components/Generic';
 import DropdownSelect, { type DropdownValue, type SelectOption } from '../Components/Common/DropdownSelect';
 import { bulkAssignTexts, bulkUnassignTexts, getFilteredTextsData, getUsernames } from '../Api';
 import { useSnackbar } from '../Context/Generic';
@@ -494,46 +494,43 @@ function AssignmentsPanel() {
             </div>
 
             {showConfirmModal && (
-                <div className="modal-overlay">
-                    <div className="upload-modal" style={{ maxWidth: '500px' }}>
-                        <div className="modal-header">
-                            <h3 className="modal-title">{mode === 'assign' ? 'Confirmar Atribuição' : 'Confirmar Remoção'}</h3>
-                            <button className="modal-close-button" onClick={() => setShowConfirmModal(false)}>×</button>
+                <Dialog isOpen={showConfirmModal} onClose={() => setShowConfirmModal(false)} className="upload-modal" style={{ maxWidth: '500px' }}>
+                    <DialogHeader onClose={() => setShowConfirmModal(false)}>
+                        {mode === 'assign' ? 'Confirmar Atribuição' : 'Confirmar Remoção'}
+                    </DialogHeader>
+                    <div className="modal-body">
+                        <p>
+                            {mode === 'assign'
+                                ? <>
+                                    Você está prestes a atribuir <strong>{totalAffected} textos</strong> para os seguintes usuários:
+                                </>
+                                : <>
+                                    Você está prestes a remover <strong>{totalAffected} atribuições</strong> dos seguintes usuários:
+                                </>}
+                        </p>
+                        <div style={{ marginTop: '15px', padding: '10px', backgroundColor: '#252525', borderRadius: '8px' }}>
+                            {activePreview.map((item) => (
+                                <p key={item.username} style={{ color: '#e4e4e7' }}>
+                                    <span style={{ color: mode === 'assign' ? '#3b82f6' : '#ef4444' }}>{item.username}</span>: {item.count} textos
+                                </p>
+                            ))}
                         </div>
-                        <div className="modal-body">
-                            <p>
-                                {mode === 'assign'
-                                    ? <>
-                                        Você está prestes a atribuir <strong>{totalAffected} textos</strong> para os seguintes usuários:
-                                    </>
-                                    : <>
-                                        Você está prestes a remover <strong>{totalAffected} atribuições</strong> dos seguintes usuários:
-                                    </>}
-                            </p>
-                            <div style={{ marginTop: '15px', padding: '10px', backgroundColor: '#252525', borderRadius: '8px' }}>
-                                {activePreview.map((item) => (
-                                    <p key={item.username} style={{ color: '#e4e4e7' }}>
-                                        <span style={{ color: mode === 'assign' ? '#3b82f6' : '#ef4444' }}>{item.username}</span>: {item.count} textos
-                                    </p>
-                                ))}
-                            </div>
-                            <p style={{ marginTop: '15px', color: '#888' }}>Deseja continuar?</p>
-                        </div>
-                        <div className="modal-footer">
-                            <button className="modal-button cancel-button" onClick={() => setShowConfirmModal(false)}>
-                                Cancelar
-                            </button>
-                            <button
-                                className="modal-button confirm-button valid"
-                                onClick={() => {
-                                    void handleConfirmAction();
-                                }}
-                            >
-                                Confirmar
-                            </button>
-                        </div>
+                        <p style={{ marginTop: '15px', color: '#888' }}>Deseja continuar?</p>
                     </div>
-                </div>
+                    <div className="modal-footer">
+                        <button className="modal-button cancel-button" onClick={() => setShowConfirmModal(false)}>
+                            Cancelar
+                        </button>
+                        <button
+                            className="modal-button confirm-button valid"
+                            onClick={() => {
+                                void handleConfirmAction();
+                            }}
+                        >
+                            Confirmar
+                        </button>
+                    </div>
+                </Dialog>
             )}
         </div>
     );

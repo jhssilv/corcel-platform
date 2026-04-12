@@ -1,5 +1,6 @@
 import { useState, type ChangeEvent, type FormEvent, type MouseEvent as ReactMouseEvent } from 'react';
 import { registerUser } from '../../Api';
+import { Dialog, DialogHeader } from '../Generic';
 import styles from '../../styles/register_user_modal.module.css';
 
 interface RegisterUserModalProps {
@@ -49,50 +50,43 @@ function RegisterUserModal({ isOpen, onClose }: RegisterUserModalProps) {
     }
 
     return (
-        <div className={styles['modal-overlay']} onClick={handleClose}>
-            <div className={styles['register-modal']} onClick={(event: ReactMouseEvent<HTMLDivElement>) => event.stopPropagation()}>
-                <div className={styles['modal-header']}>
-                    <h2 className={styles['modal-title']}>Registrar Novo Usuário</h2>
-                    <button className={styles['modal-close-button']} onClick={handleClose} aria-label="Close">
-                        ×
-                    </button>
-                </div>
+        <Dialog isOpen={isOpen} onClose={handleClose} className={styles['register-modal']}>
+            <DialogHeader onClose={handleClose}>Registrar Novo Usuário</DialogHeader>
 
-                <div className={styles['modal-body']}>
-                    <form onSubmit={handleSubmit} className={styles['register-form']}>
-                        <div className={styles['form-group']}>
-                            <label htmlFor="username">Nome de Usuário</label>
-                            <input
-                                type="text"
-                                id="username"
-                                value={username}
-                                onChange={(event: ChangeEvent<HTMLInputElement>) => setUsername(event.target.value)}
-                                required
-                                minLength={3}
-                            />
-                        </div>
-                        <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '15px' }}>
-                            O usuário será criado como inativo e escolherá sua senha no primeiro acesso.
-                        </p>
+            <div className={styles['modal-body']}>
+                <form onSubmit={handleSubmit} className={styles['register-form']}>
+                    <div className={styles['form-group']}>
+                        <label htmlFor="username">Nome de Usuário</label>
+                        <input
+                            type="text"
+                            id="username"
+                            value={username}
+                            onChange={(event: ChangeEvent<HTMLInputElement>) => setUsername(event.target.value)}
+                            required
+                            minLength={3}
+                        />
+                    </div>
+                    <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '15px' }}>
+                        O usuário será criado como inativo e escolherá sua senha no primeiro acesso.
+                    </p>
 
-                        {message.text && <div className={[styles.message, styles[message.type]].join(' ')}>{message.text}</div>}
+                    {message.text && <div className={[styles.message, styles[message.type]].join(' ')}>{message.text}</div>}
 
-                        <div className={styles['modal-footer']} style={{ padding: 0, marginTop: '20px' }}>
-                            <button type="button" className={[styles['modal-button'], styles['cancel-button']].join(' ')} onClick={handleClose}>
-                                Cancelar
-                            </button>
-                            <button
-                                type="submit"
-                                className={[styles['modal-button'], styles['confirm-button'], styles.valid].join(' ')}
-                                disabled={isSubmitting}
-                            >
-                                {isSubmitting ? 'Criando...' : 'Criar Usuário'}
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                    <div className={styles['modal-footer']} style={{ padding: 0, marginTop: '20px' }}>
+                        <button type="button" className={[styles['modal-button'], styles['cancel-button']].join(' ')} onClick={handleClose}>
+                            Cancelar
+                        </button>
+                        <button
+                            type="submit"
+                            className={[styles['modal-button'], styles['confirm-button'], styles.valid].join(' ')}
+                            disabled={isSubmitting}
+                        >
+                            {isSubmitting ? 'Criando...' : 'Criar Usuário'}
+                        </button>
+                    </div>
+                </form>
             </div>
-        </div>
+        </Dialog>
     );
 }
 

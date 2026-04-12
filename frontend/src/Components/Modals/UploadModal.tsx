@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type DragEvent, type MouseEvent } from 'react';
 import JSZip from 'jszip';
 import { uploadTextArchive, getBatchStatus } from '../../Api/UploadApi';
-import { Badge, Icon } from '../Generic';
+import { Badge, Icon, Dialog, DialogHeader } from '../Generic';
 import { useSnackbar } from '../../Context/Generic';
 import styles from '../../styles/upload_modal.module.css';
 import type { BatchStatusItem } from '../../types/api/responses';
@@ -354,183 +354,174 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
     }
 
     return (
-        <div style={{ display: isOpen ? 'block' : 'none' }}>
-            <div className={styles['modal-overlay']} onClick={handleClose}>
-                <div className={styles['upload-modal']} onClick={handleOverlayClick}>
-                    <div className={styles['modal-header']}>
-                        <h2 className={styles['modal-title']}>Upload de Textos</h2>
-                        <button className={styles['modal-close-button']} onClick={handleClose} aria-label="Close">
-                            ×
-                        </button>
-                    </div>
+        <Dialog isOpen={isOpen || isProcessing} onClose={handleClose} className={styles['upload-modal']}>
+            <DialogHeader onClose={handleClose}>Upload de Textos</DialogHeader>
 
-                    <div className={styles['modal-body']}>
-                        {failedFiles.length > 0 && !isProcessing && (
-                            <div className={`${styles['status-banner']} ${styles['status-error']}`}>
-                                <p><strong>Os seguintes arquivos falharam:</strong></p>
-                                <ul style={{ textAlign: 'left', marginTop: '10px', fontSize: '0.9rem' }}>
-                                    {failedFiles.map((f, i) => <li key={i}>{f}</li>)}
-                                </ul>
+            <div className={styles['modal-body']}>
+                {failedFiles.length > 0 && !isProcessing && (
+                    <div className={`${styles['status-banner']} ${styles['status-error']}`}>
+                        <p><strong>Os seguintes arquivos falharam:</strong></p>
+                        <ul style={{ textAlign: 'left', marginTop: '10px', fontSize: '0.9rem' }}>
+                            {failedFiles.map((f, i) => <li key={i}>{f}</li>)}
+                        </ul>
+                    </div>
+                )}
+
+                {isTracking || uploadSuccess ? (
+                    <div className="tracking-container" style={{ padding: '20px' }}>
+                        <h3 style={{ marginBottom: '15px' }}>Status de Processamento</h3>
+                        <div style={{ maxHeight: '250px', overflowY: 'auto', border: '1px solid #ddd', borderRadius: '4px' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                                <thead>
+                                    <tr style={{ background: '#f5f5f5', borderBottom: '1px solid #ddd', color: '#333' }}>
+                                        <th style={{ padding: '10px' }}>Arquivo</th>
+                                        <th style={{ padding: '10px' }}>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {trackedTexts.map(t => (
+                                        <tr key={t.id} style={{ borderBottom: '1px solid #eee' }}>
+                                            <td style={{ padding: '8px 10px', fontSize: '0.9rem' }}>{t.source_file_name}</td>
+                                            <td style={{ padding: '8px 10px', fontSize: '0.9rem' }}>
+                                                {renderTrackingBadge(t.processing_status)}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                        <p style={{ fontSize: '0.85rem', color: '#666', marginTop: '15px' }}>
+                            A avaliação é executada em segundo plano. Você já pode fechar esta janela caso queira e analisar os textos disponíveis no painel.
+                        </p>
+                    </div>
+                ) : !isProcessing && (
+                    <>
+                        <div
+                            className={[
+                                styles['upload-dropzone'],
+                                isDragging ? styles.dragging : '',
+                            ].filter(Boolean).join(' ')}
+                            onDragEnter={handleDragEnter}
+                            onDragOver={handleDragOver}
+                            onDragLeave={handleDragLeave}
+                            onDrop={handleDrop}
+                            onClick={() => {
+                                const fileInput = document.getElementById('file-input') as HTMLInputElement | null;
+                                fileInput?.click();
+                            }}
+                        >
+                            <input
+                                id="file-input"
+                                type="file"
+                                multiple
+                                accept=".zip,.txt,.docx"
+                                onChange={handleFileSelect}
+                                style={{ display: 'none' }}
+                            />
+
+                            {isValidating ? (
+                                <div className={styles['upload-status']}>
+                                    <div className={styles['upload-spinner']}></div>
+                                    <p className={styles['upload-text']}>Verificando arquivos...</p>
+                                </div>
+                            ) : (
+                                <div className={styles['upload-prompt']}>
+                                    <Icon name="Upload" color="black" className={styles['upload-icon-svg']} style={{ color: 'currentColor' }} />
+                                    <p className={styles['upload-text']}>Arraste arquivos TXT, DOCX ou ZIPs</p>
+                                    <p className={styles['upload-subtext']}>ou clique para selecionar (Máx 50MB por arquivo)</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {stagedFiles.length > 0 && (
+                            <div>
+                                <h4 style={{ margin: '10px 0 5px 0', fontSize: '0.95rem' }}>Arquivos Válidos ({stagedFiles.length})</h4>
+                                <div className={styles['staged-files-list']}>
+                                    {stagedFiles.map((file, idx) => (
+                                        <div key={idx} className={styles['staged-file-item']}>
+                                            <span className={styles.fileName} title={file.name}>{file.name}</span>
+                                            <button
+                                                className={styles['remove-file-button']}
+                                                onClick={(e) => { e.stopPropagation(); removeStagedFile(file.name); }}
+                                                title="Remover"
+                                            >×</button>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         )}
 
-                        {isTracking || uploadSuccess ? (
-                            <div className="tracking-container" style={{ padding: '20px' }}>
-                                <h3 style={{ marginBottom: '15px' }}>Status de Processamento</h3>
-                                <div style={{ maxHeight: '250px', overflowY: 'auto', border: '1px solid #ddd', borderRadius: '4px' }}>
-                                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                                        <thead>
-                                            <tr style={{ background: '#f5f5f5', borderBottom: '1px solid #ddd', color: '#333' }}>
-                                                <th style={{ padding: '10px' }}>Arquivo</th>
-                                                <th style={{ padding: '10px' }}>Status</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {trackedTexts.map(t => (
-                                                <tr key={t.id} style={{ borderBottom: '1px solid #eee' }}>
-                                                    <td style={{ padding: '8px 10px', fontSize: '0.9rem' }}>{t.source_file_name}</td>
-                                                    <td style={{ padding: '8px 10px', fontSize: '0.9rem' }}>
-                                                        {renderTrackingBadge(t.processing_status)}
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
+                        {ignoredFiles.length > 0 && (
+                            <div>
+                                <h4 style={{ margin: '10px 0 5px 0', fontSize: '0.95rem', color: 'var(--color-danger)' }}>Arquivos Ignorados ({ignoredFiles.length})</h4>
+                                <div className={styles['ignored-files-list']}>
+                                    {ignoredFiles.map((err, idx) => (
+                                        <div key={idx} className={styles['ignored-file-item']}>
+                                            <span className={styles.fileName}>{err}</span>
+                                        </div>
+                                    ))}
                                 </div>
-                                <p style={{ fontSize: '0.85rem', color: '#666', marginTop: '15px' }}>
-                                    A avaliação é executada em segundo plano. Você já pode fechar esta janela caso queira e analisar os textos disponíveis no painel.
-                                </p>
-                            </div>
-                        ) : !isProcessing && (
-                            <>
-                                <div
-                                    className={[
-                                        styles['upload-dropzone'],
-                                        isDragging ? styles.dragging : '',
-                                    ].filter(Boolean).join(' ')}
-                                    onDragEnter={handleDragEnter}
-                                    onDragOver={handleDragOver}
-                                    onDragLeave={handleDragLeave}
-                                    onDrop={handleDrop}
-                                    onClick={() => {
-                                        const fileInput = document.getElementById('file-input') as HTMLInputElement | null;
-                                        fileInput?.click();
-                                    }}
-                                >
-                                    <input
-                                        id="file-input"
-                                        type="file"
-                                        multiple
-                                        accept=".zip,.txt,.docx"
-                                        onChange={handleFileSelect}
-                                        style={{ display: 'none' }}
-                                    />
-
-                                    {isValidating ? (
-                                        <div className={styles['upload-status']}>
-                                            <div className={styles['upload-spinner']}></div>
-                                            <p className={styles['upload-text']}>Verificando arquivos...</p>
-                                        </div>
-                                    ) : (
-                                        <div className={styles['upload-prompt']}>
-                                            <Icon name="Upload" color="black" className={styles['upload-icon-svg']} style={{ color: 'currentColor' }} />
-                                            <p className={styles['upload-text']}>Arraste arquivos TXT, DOCX ou ZIPs</p>
-                                            <p className={styles['upload-subtext']}>ou clique para selecionar (Máx 50MB por arquivo)</p>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {stagedFiles.length > 0 && (
-                                    <div>
-                                        <h4 style={{ margin: '10px 0 5px 0', fontSize: '0.95rem' }}>Arquivos Válidos ({stagedFiles.length})</h4>
-                                        <div className={styles['staged-files-list']}>
-                                            {stagedFiles.map((file, idx) => (
-                                                <div key={idx} className={styles['staged-file-item']}>
-                                                    <span className={styles.fileName} title={file.name}>{file.name}</span>
-                                                    <button
-                                                        className={styles['remove-file-button']}
-                                                        onClick={(e) => { e.stopPropagation(); removeStagedFile(file.name); }}
-                                                        title="Remover"
-                                                    >×</button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {ignoredFiles.length > 0 && (
-                                    <div>
-                                        <h4 style={{ margin: '10px 0 5px 0', fontSize: '0.95rem', color: 'var(--color-danger)' }}>Arquivos Ignorados ({ignoredFiles.length})</h4>
-                                        <div className={styles['ignored-files-list']}>
-                                            {ignoredFiles.map((err, idx) => (
-                                                <div key={idx} className={styles['ignored-file-item']}>
-                                                    <span className={styles.fileName}>{err}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                            </>
-                        )}
-
-                        {isProcessing && (
-                            <div className="progress-container" style={{ padding: '20px', textAlign: 'center' }}>
-                                <div
-                                    className="progress-bar-wrapper"
-                                    style={{
-                                        width: '100%',
-                                        backgroundColor: '#eee',
-                                        borderRadius: '4px',
-                                        height: '20px',
-                                        overflow: 'hidden',
-                                        marginBottom: '15px',
-                                    }}
-                                >
-                                    <div
-                                        className="progress-bar-fill"
-                                        style={{
-                                            width: `${progress}%`,
-                                            backgroundColor: '#4caf50',
-                                            height: '100%',
-                                            transition: 'width 0.3s ease',
-                                        }}
-                                    ></div>
-                                </div>
-                                <p className={styles['upload-text']} style={{ fontWeight: 'bold' }}>{statusMessage}</p>
-                                {progress < 100 && (
-                                    <p className={styles['upload-subtext']}>Você pode fechar esta janela, o processo continuará em segundo plano.</p>
-                                )}
                             </div>
                         )}
-                    </div>
-                    <div className={styles['modal-footer']}>
-                        {isProcessing && progress < 100 ? (
-                            <button className={[styles['modal-button'], styles['cancel-button']].join(' ')} onClick={handleCancelRequest}>
-                                Cancelar Envio
-                            </button>
-                        ) : (
-                            <button className={[styles['modal-button'], styles['cancel-button']].join(' ')} onClick={handleClose}>
-                                {uploadSuccess ? 'Fechar' : 'Cancelar'}
-                            </button>
-                        )}
+                    </>
+                )}
 
-                        {!isProcessing && !uploadSuccess && (
-                            <button
-                                className={[
-                                    styles['modal-button'],
-                                    styles['confirm-button'],
-                                    stagedFiles.length > 0 ? styles.valid : '',
-                                ].filter(Boolean).join(' ')}
-                                onClick={handleConfirm}
-                                disabled={stagedFiles.length === 0}
-                            >
-                                Enviar
-                            </button>
+                {isProcessing && (
+                    <div className="progress-container" style={{ padding: '20px', textAlign: 'center' }}>
+                        <div
+                            className="progress-bar-wrapper"
+                            style={{
+                                width: '100%',
+                                backgroundColor: '#eee',
+                                borderRadius: '4px',
+                                height: '20px',
+                                overflow: 'hidden',
+                                marginBottom: '15px',
+                            }}
+                        >
+                            <div
+                                className="progress-bar-fill"
+                                style={{
+                                    width: `${progress}%`,
+                                    backgroundColor: '#4caf50',
+                                    height: '100%',
+                                    transition: 'width 0.3s ease',
+                                }}
+                            ></div>
+                        </div>
+                        <p className={styles['upload-text']} style={{ fontWeight: 'bold' }}>{statusMessage}</p>
+                        {progress < 100 && (
+                            <p className={styles['upload-subtext']}>Você pode fechar esta janela, o processo continuará em segundo plano.</p>
                         )}
                     </div>
-                </div>
+                )}
             </div>
-        </div>
+            <div className={styles['modal-footer']}>
+                {isProcessing && progress < 100 ? (
+                    <button className={[styles['modal-button'], styles['cancel-button']].join(' ')} onClick={handleCancelRequest}>
+                        Cancelar Envio
+                    </button>
+                ) : (
+                    <button className={[styles['modal-button'], styles['cancel-button']].join(' ')} onClick={handleClose}>
+                        {uploadSuccess ? 'Fechar' : 'Cancelar'}
+                    </button>
+                )}
+
+                {!isProcessing && !uploadSuccess && (
+                    <button
+                        className={[
+                            styles['modal-button'],
+                            styles['confirm-button'],
+                            stagedFiles.length > 0 ? styles.valid : '',
+                        ].filter(Boolean).join(' ')}
+                        onClick={handleConfirm}
+                        disabled={stagedFiles.length === 0}
+                    >
+                        Enviar
+                    </button>
+                )}
+            </div>
+        </Dialog>
     );
 }
 

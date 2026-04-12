@@ -46,10 +46,10 @@ function EssayDisplay({ essay, refreshEssay }: EssayDisplayProps) {
         return <h3>Nenhum texto selecionado.</h3>;
     }
 
-    const textNotFinishedAdvice = "Este texto ainda está sendo processado." +  
-    " Tokens a serem normalizados e sugestões de normalização aparecerão em breve." +
-    " Você pode trabalhar normalmente enquanto isso." 
-    
+    const textNotFinishedAdvice = "Este texto ainda está sendo processado." +
+        " Tokens a serem normalizados e sugestões de normalização aparecerão em breve." +
+        " Você pode trabalhar normalmente enquanto isso."
+
 
     return (
         <div>
