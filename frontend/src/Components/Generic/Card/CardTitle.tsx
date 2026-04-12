@@ -1,5 +1,5 @@
 import { HTMLAttributes, ReactNode } from 'react';
-import styles from '../../../styles/card.module.css';
+import styles from './card.module.css';
 
 export interface CardTitleProps extends HTMLAttributes<HTMLDivElement> {
     children: ReactNode;

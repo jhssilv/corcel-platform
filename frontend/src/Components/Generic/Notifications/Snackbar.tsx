@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { SnackbarMessage } from '../../../Context/Generic/Notifications/SnackbarContext';
-import styles from '../../../styles/snackbar.module.css';
+import styles from './snackbar.module.css';
 
 interface SnackbarProps {
     snackbar: SnackbarMessage;

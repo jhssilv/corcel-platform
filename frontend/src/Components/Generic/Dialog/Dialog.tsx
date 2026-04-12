@@ -1,6 +1,6 @@
 import { HTMLAttributes, ReactNode, useEffect, useRef } from 'react';
 import { Stack } from '..';
-import styles from '../../../styles/dialog.module.css';
+import styles from './dialog.module.css';
 
 export interface DialogProps extends HTMLAttributes<HTMLDivElement> {
     isOpen: boolean;

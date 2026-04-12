@@ -1,5 +1,5 @@
 import { ReactNode, CSSProperties, ElementType, forwardRef } from 'react';
-import styles from '../../../styles/stack.module.css';
+import styles from './stack.module.css';
 
 type GapSize = 2 | 4 | 8 | 12 | 16 | 20 | 32 | 64 | number;
 type Alignment = 'start' | 'center' | 'end' | 'space-between' | 'space-evenly';

@@ -1,6 +1,6 @@
 import { HTMLAttributes, ReactNode } from 'react';
 import { Stack, Icon, IconName } from '..';
-import styles from '../../../styles/dialog.module.css';
+import styles from './dialog.module.css';
 
 export interface DialogHeaderProps extends HTMLAttributes<HTMLDivElement> {
     children: ReactNode;

@@ -1,6 +1,6 @@
 import { ReactNode, ElementType, forwardRef } from 'react';
 import { Stack, Icon, IconName } from '..';
-import styles from '../../../styles/button.module.css';
+import styles from './button.module.css';
 
 export type ButtonTier = 'primary' | 'secondary' | 'tertiary';
 export type ButtonVariant = 'action' | 'danger' | 'neutral';

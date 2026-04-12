@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import type { ToastMessage, ToastPosition } from '../../../Context/Generic/Notifications/ToastContext';
 import Toast from './Toast';
-import styles from '../../../styles/toast.module.css';
+import styles from './toast.module.css';
 
 interface ToastContainerProps {
     toasts: ToastMessage[];

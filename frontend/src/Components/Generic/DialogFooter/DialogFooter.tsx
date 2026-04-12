@@ -1,5 +1,5 @@
 import { type ReactNode, type CSSProperties } from 'react';
-import styles from '../../../styles/dialog_footer.module.css';
+import styles from './dialog_footer.module.css';
 
 export interface DialogFooterProps {
     children: ReactNode;
