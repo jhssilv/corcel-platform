@@ -7,3 +7,4 @@ export * from './Card/Card';
 export * from './Card/CardTitle';
 export * from './Dialog/Dialog';
 export * from './Dialog/DialogHeader';
+export * from './Stack/Stack';
