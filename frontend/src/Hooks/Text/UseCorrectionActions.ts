@@ -28,10 +28,6 @@ export function UseCorrectionActions(
       return;
     }
 
-    if (!window.confirm('Tem certeza de que deseja excluir todas as normalizações para este texto?')) {
-      return;
-    }
-
     try {
       await deleteAllNormalizations(essay.id);
       await refreshEssay();

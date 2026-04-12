@@ -106,29 +106,6 @@
     width: 100%;
 }
 
-.essay-action-btn--danger {
-    background: none;
-    border: 1px solid var(--color-danger);
-    color: var(--color-danger);
-    padding: 5px 10px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.85em;
-}
-
-.essay-action-btn--secondary {
-    background: none;
-    border: 1px solid var(--color-border-hover);
-    color: var(--color-text-on-panel-dim);
-    padding: 5px 10px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.85em;
-}
-
-.essay-action-btn--secondary.active {
-    color: var(--color-accent);
-}
 
 /* OCR page inline styles */
 .ocr-page-header {

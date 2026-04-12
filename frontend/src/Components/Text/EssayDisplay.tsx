@@ -3,7 +3,8 @@ import GeneratedEssay from './GeneratedEssay';
 import OriginalEssay from './OriginalEssay';
 import GeneratedCandidates from './GeneratedCandidates';
 import NewCorrectionPopup from '../Modals/NewCorrectionPopup';
-import { Icon, Stack } from '../Generic';
+import ResetCorrectionsModal from '../Modals/ResetCorrectionsModal';
+import { Button, Icon, Stack } from '../Generic';
 import { UseCorrectionActions } from '../../Hooks/Text/UseCorrectionActions';
 import { UseTextSelection } from '../../Hooks/Text/UseTextSelection';
 import type { TextDetailResponse } from '../../types';
@@ -19,6 +20,7 @@ function EssayDisplay({ essay, refreshEssay }: EssayDisplayProps) {
     const [selectedCandidate, setSelectedCandidate] = useState<string | null>(null);
     const [popupIsActive, setPopupIsActive] = useState(false);
     const [showOriginal, setShowOriginal] = useState(false);
+    const [showResetModal, setShowResetModal] = useState(false);
 
     const {
         selectedStartIndex,
@@ -100,23 +102,33 @@ function EssayDisplay({ essay, refreshEssay }: EssayDisplayProps) {
                 </Stack>
 
                 <Stack alignX="center" gap={12} className="essay-actions-bar" style={{ marginTop: '10px', paddingTop: '10px' }}>
-                    <button
+                    <Button
+                        tier="secondary"
+                        variant="danger"
                         data-testid="reset-corrections-btn"
-                        className="essay-action-btn--danger"
-                        onClick={() => {
-                            void handleResetCorrections();
-                        }}
+                        onClick={() => setShowResetModal(true)}
+                        leftIcon="Trash2"
+                        className={styles['action-button']}
                     >
                         Excluir Normalizações
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                        tier="secondary"
+                        variant={showOriginal ? 'action' : 'neutral'}
                         onClick={() => setShowOriginal(!showOriginal)}
-                        className={`essay-action-btn--secondary ${showOriginal ? 'active' : ''}`}
+                        leftIcon={showOriginal ? 'EyeOff' : 'SplitSquareHorizontal'}
+                        className={styles['action-button']}
                     >
                         {showOriginal ? 'Ocultar Original' : 'Comparar Com Original'}
-                    </button>
+                    </Button>
                 </Stack>
             </Stack>
+
+            <ResetCorrectionsModal
+                isOpen={showResetModal}
+                onClose={() => setShowResetModal(false)}
+                onConfirm={handleResetCorrections}
+            />
 
             <GeneratedCandidates
                 candidates={candidates}
