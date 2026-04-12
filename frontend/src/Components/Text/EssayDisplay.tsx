@@ -4,7 +4,7 @@ import OriginalEssay from './OriginalEssay';
 import GeneratedCandidates from './GeneratedCandidates';
 import NewCorrectionPopup from '../Modals/NewCorrectionPopup';
 import ResetCorrectionsModal from '../Modals/ResetCorrectionsModal';
-import { Button, Icon, Stack } from '../Generic';
+import { Button, Checkbox, Icon, Stack } from '../Generic';
 import { UseCorrectionActions } from '../../Hooks/Text/UseCorrectionActions';
 import { UseTextSelection } from '../../Hooks/Text/UseTextSelection';
 import type { TextDetailResponse } from '../../types';
@@ -84,21 +84,15 @@ function EssayDisplay({ essay, refreshEssay }: EssayDisplayProps) {
                     </span>
                 </div>
 
-                <Stack alignX="center" className={`${styles['finalized-toggle-wrapper']} essay-legend-divider`} style={{ marginTop: '10px', paddingTop: '10px' }}>
-                    <label className={styles['finalized-toggle']}>
-                        <input
-                            data-testid="finalized-toggle-input"
-                            type="checkbox"
-                            checked={essay.normalizedByUser || false}
-                            onChange={() => {
-                                void handleFinishedToggled();
-                            }}
-                        />
-                        <span className={styles['toggle-slider']}></span>
-                        <span className={styles['toggle-label']}>
-                            {essay.normalizedByUser ? 'Finalizado! 🐎' : 'Marcar Como Finalizado'}
-                        </span>
-                    </label>
+                <Stack alignX="center" className="essay-legend-divider" style={{ marginTop: '10px', paddingTop: '10px' }}>
+                    <Checkbox
+                        data-testid="finalized-toggle-input"
+                        checked={essay.normalizedByUser || false}
+                        onChange={() => {
+                            void handleFinishedToggled();
+                        }}
+                        label={essay.normalizedByUser ? 'Finalizado! 🐎' : 'Marcar Como Finalizado'}
+                    />
                 </Stack>
 
                 <Stack alignX="center" gap={12} className="essay-actions-bar" style={{ marginTop: '10px', paddingTop: '10px' }}>

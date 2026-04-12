@@ -7,6 +7,7 @@ export interface CheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement
     label?: ReactNode;
     description?: ReactNode;
     size?: CheckboxSize;
+    wrapperTestId?: string;
 }
 
 export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Checkbox({
@@ -14,6 +15,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
     label,
     description,
     size = 'md',
+    wrapperTestId,
     checked,
     defaultChecked,
     onChange,
@@ -25,6 +27,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
     const isControlled = checked !== undefined;
     const [internalChecked, setInternalChecked] = useState(Boolean(defaultChecked));
     const resolvedChecked = isControlled ? Boolean(checked) : internalChecked;
+    const hasTextContent = Boolean(label) || Boolean(description);
 
     const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
         if (!isControlled) {
@@ -35,7 +38,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
     };
 
     return (
-        <label className={[styles.wrapper, styles[`size-${size}`], disabled ? styles.disabled : ''].filter(Boolean).join(' ')} htmlFor={inputId}>
+        <label className={[styles.wrapper, styles[`size-${size}`], disabled ? styles.disabled : ''].filter(Boolean).join(' ')} htmlFor={inputId} data-testid={wrapperTestId}>
             <input
                 ref={ref}
                 id={inputId}
@@ -47,10 +50,12 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
                 {...props}
             />
             <span className={styles.indicator} aria-hidden="true" />
-            <span className={styles.content}>
-                {label ? <span className={styles.label}>{label}</span> : null}
-                {description ? <span className={styles.description}>{description}</span> : null}
-            </span>
+            {hasTextContent ? (
+                <span className={styles.content}>
+                    {label ? <span className={styles.label}>{label}</span> : null}
+                    {description ? <span className={styles.description}>{description}</span> : null}
+                </span>
+            ) : null}
         </label>
     );
 });

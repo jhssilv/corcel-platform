@@ -31,16 +31,16 @@
     margin-top: 1px;
 }
 
-.input:focus-visible + .indicator {
+.input:focus-visible+.indicator {
     box-shadow: 0 0 0 2px var(--color-bg-root), 0 0 0 4px var(--color-accent);
 }
 
-.input:checked + .indicator {
+.input:checked+.indicator {
     border-color: var(--color-accent);
     background-color: var(--color-accent);
 }
 
-.input:checked + .indicator::after {
+.input:checked+.indicator::after {
     content: '';
     position: absolute;
     left: 5px;
@@ -73,7 +73,7 @@
     height: 16px;
 }
 
-.size-sm .input:checked + .indicator::after {
+.size-sm .input:checked+.indicator::after {
     left: 4px;
     top: 1px;
     width: 4px;
@@ -93,7 +93,7 @@
     height: 20px;
 }
 
-.size-lg .input:checked + .indicator::after {
+.size-lg .input:checked+.indicator::after {
     left: 6px;
     top: 1px;
     width: 5px;

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ChangeEvent, type MouseEvent as ReactMouseEvent, type MutableRefObject, type Ref } from 'react';
-import { Icon } from '../Generic';
+import { Checkbox, Icon } from '../Generic';
 import styles from '../../styles/candidates_side_panel.module.css';
 import { toggleToBeNormalized } from '../../Api';
 
@@ -217,14 +217,15 @@ const CandidatesSidePanel = ({
                 </div>
 
                 <div className={styles['global-suggestion-container']}>
-                    <label className={styles['global-suggestion-label']} data-testid="global-suggestion-label">
-                        <input
-                            type="checkbox"
+                    <div data-testid="global-suggestion-label">
+                        <Checkbox
                             checked={suggestForAll}
                             onChange={(event: ChangeEvent<HTMLInputElement>) => setSuggestForAll(event.target.checked)}
+                            label="Sugestão Global"
+                            size="sm"
+                            wrapperTestId="global-suggestion-label"
                         />
-                        Sugestão Global
-                    </label>
+                    </div>
                     <div className={styles['info-tooltip-container']}>
                         <Icon name="CircleHelp" color="black" className={styles['info-icon']} style={{ color: 'currentColor' }} />
                         <div className={styles['tooltip-text']}>

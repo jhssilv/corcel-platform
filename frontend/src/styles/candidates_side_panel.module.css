@@ -263,35 +263,6 @@
     justify-content: space-between;
 }
 
-.global-suggestion-label {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    color: var(--color-text-on-panel);
-    font-size: 1em;
-    font-weight: 500;
-    cursor: pointer;
-    user-select: none;
-    background-color: var(--color-bg-hover);
-    padding: 8px 10px;
-    border-radius: 6px;
-    border: 1px solid var(--color-border-hover);
-    transition: background-color 0.2s;
-    flex: 1;
-    justify-content: center;
-}
-
-.global-suggestion-label:hover {
-    background-color: var(--color-bg-active);
-}
-
-.global-suggestion-label input[type="checkbox"] {
-    cursor: pointer;
-    accent-color: var(--color-accent);
-    width: 18px;
-    height: 18px;
-}
-
 .info-tooltip-container {
     position: relative;
     display: flex;

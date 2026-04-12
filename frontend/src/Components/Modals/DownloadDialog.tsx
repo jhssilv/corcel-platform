@@ -1,7 +1,7 @@
-import { useEffect, useState, type ChangeEvent } from 'react';
+import { useEffect, useState } from 'react';
 import downloadTexts from '../../Api/DownloadTexts';
 import { useSnackbar } from '../../Context/Generic';
-import { Dialog, DialogHeader, Stack, Button, DialogFooter } from '../Generic';
+import { Dialog, DialogHeader, Stack, Button, DialogFooter, Checkbox } from '../Generic';
 
 interface DownloadDialogProps {
     show: boolean;
@@ -48,10 +48,6 @@ function DownloadDialog({ show, onClose, onDownload }: DownloadDialogProps) {
         }
     };
 
-    const handleCheckboxChange = (event: ChangeEvent<HTMLInputElement>) => {
-        setUseBrackets(event.target.checked);
-    };
-
     return (
         <Dialog isOpen={show} onClose={onClose} style={{ maxWidth: '400px' }}>
             <DialogHeader onClose={onClose} icon='Download'>
@@ -60,17 +56,13 @@ function DownloadDialog({ show, onClose, onDownload }: DownloadDialogProps) {
 
             <Stack direction="vertical" gap={16} style={{ padding: '1.5rem', color: 'var(--color-text-on-panel)' }}>
                 {'Todos os textos selecionados no filtro serão baixados.'}
-                <label htmlFor="use-brackets-checkbox">
-                    <input
-                        type="checkbox"
-                        id="use-brackets-checkbox"
-                        name="use-brackets-checkbox"
-                        checked={useBrackets}
-                        onChange={handleCheckboxChange}
-                        style={{ marginRight: '0.6rem' }}
-                    />
-                    <span>Substituições com sintaxe XML.</span>
-                </label>
+                <Checkbox
+                    id="use-brackets-checkbox"
+                    name="use-brackets-checkbox"
+                    checked={useBrackets}
+                    onChange={(event) => setUseBrackets(event.target.checked)}
+                    label="Substituições com sintaxe XML."
+                />
             </Stack>
 
             <DialogFooter align="right">

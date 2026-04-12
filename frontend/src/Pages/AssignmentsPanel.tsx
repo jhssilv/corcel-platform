@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TopBar from '../Components/Layout/TopBar';
-import { Badge, Icon, Dialog, DialogHeader, Stack, Button, DialogFooter } from '../Components/Generic';
+import { Badge, Icon, Dialog, DialogHeader, Stack, Button, DialogFooter, Checkbox } from '../Components/Generic';
 import DropdownSelect, { type DropdownValue, type SelectOption } from '../Components/Common/DropdownSelect';
 import { bulkAssignTexts, bulkUnassignTexts, getFilteredTextsData, getUsernames } from '../Api';
 import { useSnackbar } from '../Context/Generic';
@@ -412,11 +412,12 @@ function AssignmentsPanel() {
                                     className={`assignments-text-item ${selectedTextIds.has(text.id) ? 'selected' : ''}`}
                                     onClick={() => handleToggleText(text.id)}
                                 >
-                                    <input
-                                        type="checkbox"
-                                        className="assignments-text-checkbox"
+                                    <Checkbox
                                         checked={selectedTextIds.has(text.id)}
-                                        onChange={() => undefined}
+                                        onChange={() => handleToggleText(text.id)}
+                                        onClick={(event) => event.stopPropagation()}
+                                        aria-label={`Selecionar ${text.sourceFileName || `Texto ${text.id}`}`}
+                                        size="sm"
                                     />
                                     <div className="assignments-text-info">
                                         <span className="assignments-text-name">{text.sourceFileName || `Texto ${text.id}`}</span>

@@ -228,14 +228,6 @@
     border: 1px solid var(--color-info);
 }
 
-.assignments-text-checkbox {
-    width: 18px;
-    height: 18px;
-    accent-color: var(--color-info);
-    cursor: pointer;
-    flex-shrink: 0;
-}
-
 .assignments-text-info {
     display: flex;
     flex-direction: column;
