@@ -8,6 +8,7 @@ import { getRawTextById } from '../Api';
 import { useToast } from '../Context/Generic';
 import type { Option, RawTextDetail } from '../types';
 import '../styles/main_page.css';
+import styles from './ocr_page.module.css';
 
 type OCREditableRawText = RawTextDetail & { source_file_name: string };
 
@@ -62,14 +63,14 @@ function OCRPage() {
     };
 
     return (
-        <section className="ocr-page-section">
+        <section className={styles.pageSection}>
             <TopBar showSidePanel={true} />
 
-            <div className="ocr-controls-header">
+            <div className={styles.controlsHeader}>
                 <Stack alignX="space-between" alignY="center" style={{ marginBottom: '15px' }}>
                     <Stack alignY="center" gap={16}>
                         <button
-                            className="ocr-back-button"
+                            className={styles.backButton}
                             onClick={() => {
                                 window.location.href = '/main';
                             }}
@@ -77,7 +78,7 @@ function OCRPage() {
                             <Icon name="ArrowLeft" color="black" size={16} style={{ color: 'currentColor' }} />
                             Voltar
                         </button>
-                        <h2 style={{ margin: 0, fontSize: '1.2rem', color: '#fff' }}>Buscar Textos Transcritos Com OCR</h2>
+                        <h2 className={styles.pageTitle}>Buscar Textos Transcritos Com OCR</h2>
                     </Stack>
                 </Stack>
 

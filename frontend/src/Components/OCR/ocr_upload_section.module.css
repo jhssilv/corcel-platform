@@ -1,0 +1,5 @@
+.uploadSection {
+  background-color: var(--color-bg-panel-alt);
+  padding: 20px;
+  border-bottom: 1px solid var(--color-border-primary);
+}

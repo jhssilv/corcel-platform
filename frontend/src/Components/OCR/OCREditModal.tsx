@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState, type ChangeEvent, type KeyboardEvent, type MouseEvent as ReactMouseEvent, type WheelEvent as ReactWheelEvent } from 'react';
-import '../../styles/ocr_modal.css';
 import { finalizeRawText, getRawTextImage, updateRawText } from '../../Api';
 import { useSnackbar } from '../../Context/Generic';
-import { Dialog, DialogHeader } from '../Generic';
+import { Banner, Button, Dialog, DialogFooter, DialogHeader, FormField, Stack } from '../Generic';
 import type { RawTextDetail } from '../../types';
+import styles from './ocr_edit_modal.module.css';
 
 interface OCREditModalProps {
     rawText: (RawTextDetail & { source_file_name: string }) | null;
@@ -204,23 +204,23 @@ const OCREditModal = ({ rawText, onClose, onToggleImage, onFinish }: OCREditModa
 
     return (
         <>
-            <Dialog isOpen={!!rawText} onClose={onClose} className="ocr-modal-content">
+            <Dialog isOpen={!!rawText} onClose={onClose} className={styles.modalContent}>
                 <DialogHeader onClose={onClose}>
                     {rawText.source_file_name}
                 </DialogHeader>
 
-                <div className="ocr-modal-body">
+                <div className={styles.modalBody}>
                     {!imageHidden && (
-                        <div className="ocr-modal-image-panel">
-                            <div className="ocr-image-controls">
-                                <button className="ocr-control-btn" onClick={handleZoomOut}>-</button>
-                                <span className="ocr-control-hint">{zoomLevel}%</span>
-                                <button className="ocr-control-btn" onClick={handleZoomIn}>+</button>
-                                <button className="ocr-control-btn" onClick={handleResetZoom}>Reset</button>
+                        <div className={styles.modalImagePanel}>
+                            <div className={styles.imageControls}>
+                                <Button type="button" tier="secondary" variant="neutral" size="sm" onClick={handleZoomOut}>-</Button>
+                                <span className={styles.controlHint}>{zoomLevel}%</span>
+                                <Button type="button" tier="secondary" variant="neutral" size="sm" onClick={handleZoomIn}>+</Button>
+                                <Button type="button" tier="secondary" variant="neutral" size="sm" onClick={handleResetZoom}>Reset</Button>
                             </div>
 
                             <div
-                                className="ocr-image-container"
+                                className={styles.imageContainer}
                                 onMouseDown={handleMouseDown}
                                 onMouseMove={handleMouseMove}
                                 onMouseUp={handleMouseUp}
@@ -232,47 +232,53 @@ const OCREditModal = ({ rawText, onClose, onToggleImage, onFinish }: OCREditModa
                                         ref={imageRef}
                                         src={imageUrl}
                                         alt="OCR Source"
-                                        className="ocr-modal-image"
+                                        className={styles.modalImage}
                                         draggable={false}
                                         style={{
                                             transform: `translate(${imagePosition.x}px, ${imagePosition.y}px) scale(${zoomLevel / 100})`,
                                         }}
                                     />
                                 ) : (
-                                    <div className="ocr-image-placeholder">Loading image...</div>
+                                    <div className={styles.imagePlaceholder}>Loading image...</div>
                                 )}
                             </div>
                         </div>
                     )}
 
-                    <div className="ocr-modal-text-panel" style={imageHidden ? { gridColumn: '1 / -1' } : {}}>
-                        <div className="ocr-text-toolbar">
-                            <h3 className="ocr-toolbar-title">Texto Transcrito</h3>
-                            <div className="ocr-toolbar-actions">
-                                <button className="ocr-action-btn ocr-btn-secondary" onClick={handleToggleImage}>
+                    <div className={[styles.modalTextPanel, imageHidden ? styles.modalTextPanelExpanded : ''].filter(Boolean).join(' ')}>
+                        <div className={styles.textToolbar}>
+                            <h3 className={styles.toolbarTitle}>Texto Transcrito</h3>
+                            <div className={styles.toolbarActions}>
+                                <Button type="button" tier="secondary" variant="neutral" onClick={handleToggleImage}>
                                     {imageHidden ? 'Mostrar Imagem' : 'Ocultar Imagem'}
-                                </button>
-                                <button
-                                    className="ocr-action-btn ocr-btn-primary"
+                                </Button>
+                                <Button
+                                    type="button"
+                                    tier="primary"
+                                    variant="action"
                                     onClick={() => {
                                         void handleFinish();
                                     }}
                                     disabled={isSaving}
+                                    isLoading={isSaving}
                                 >
                                     {isSaving ? 'Salvando...' : 'Salvar e Fechar'}
-                                </button>
-                                <button
-                                    className="ocr-action-btn ocr-btn-success"
+                                </Button>
+                                <Button
+                                    type="button"
+                                    tier="primary"
+                                    variant="action"
                                     onClick={handleFinalize}
                                     disabled={isSaving || isFinalizing}
+                                    isLoading={isFinalizing}
                                 >
                                     {isFinalizing ? 'Finalizando...' : 'Finalizar'}
-                                </button>
+                                </Button>
                             </div>
                         </div>
 
                         <textarea
-                            className="ocr-modal-textarea"
+                            className={styles.modalTextarea}
                             value={textContent}
                             onChange={handleTextChange}
                             onKeyDown={handleKeyDown}
@@ -287,57 +293,64 @@ const OCREditModal = ({ rawText, onClose, onToggleImage, onFinish }: OCREditModa
                 <Dialog
                     isOpen={showConfirmModal}
                     onClose={processingState ? () => { } : handleCancelFinalize}
-                    className="ocr-confirm-modal"
+                    className={styles.confirmModal}
                 >
                     {!processingState && (
                         <>
-                            <h3>Confirmar Finalização</h3>
-                            <p>
+                            <DialogHeader>Confirmar Finalização</DialogHeader>
+                            <Stack direction="vertical" gap={14} style={{ padding: '1.5rem' }}>
+                                <p>
                                 Tem certeza que deseja finalizar este texto?
                                 <br />
                                 O texto será processado e ficará disponível para normalização.
-                                <br />
-                                <strong>A versão bruta e a imagem associada serão excluídas.</strong>
-                            </p>
-                            <div className="ocr-confirm-filename-group">
-                                <label htmlFor="finalFileName">Nome do arquivo final:</label>
-                                <input
-                                    id="finalFileName"
-                                    type="text"
-                                    value={finalFileName}
-                                    onChange={(event) => setFinalFileName(event.target.value)}
-                                    placeholder="Nome do arquivo"
-                                    disabled={isFinalizing}
-                                />
-                            </div>
-                            <div className="ocr-confirm-modal-actions">
-                                <button
-                                    className="ocr-action-btn ocr-btn-secondary"
+                                </p>
+                                <Banner variant="danger">
+                                    A versão bruta e a imagem associada serão excluídas.
+                                </Banner>
+                                <FormField label="Nome do arquivo final:" htmlFor="finalFileName">
+                                    <input
+                                        id="finalFileName"
+                                        type="text"
+                                        value={finalFileName}
+                                        onChange={(event) => setFinalFileName(event.target.value)}
+                                        placeholder="Nome do arquivo"
+                                        disabled={isFinalizing}
+                                    />
+                                </FormField>
+                            </Stack>
+                            <DialogFooter align="right">
+                                <Button
+                                    type="button"
+                                    tier="secondary"
+                                    variant="neutral"
                                     onClick={handleCancelFinalize}
                                     disabled={isFinalizing}
                                 >
                                     Cancelar
-                                </button>
-                                <button
-                                    className="ocr-action-btn ocr-btn-danger"
+                                </Button>
+                                <Button
+                                    type="button"
+                                    tier="primary"
+                                    variant="danger"
                                     onClick={() => {
                                         void handleConfirmFinalize();
                                     }}
                                     disabled={isFinalizing}
+                                    isLoading={isFinalizing}
                                 >
                                     {isFinalizing ? 'Finalizando...' : 'Confirmar'}
-                                </button>
-                            </div>
+                                </Button>
+                            </DialogFooter>
                         </>
                     )}
 
                     {processingState === 'processing' && (
                         <>
-                            <h3>Processando</h3>
-                            <div className="ocr-loading-container">
-                                <div className="ocr-loading-spinner"></div>
-                            </div>
-                            <p className="ocr-processing-text">{processingMessage}</p>
+                            <DialogHeader>Processando</DialogHeader>
+                            <Stack direction="vertical" alignX="center" gap={16} style={{ padding: '1.5rem' }}>
+                                <div className={styles.loadingSpinner}></div>
+                                <Banner variant="info">{processingMessage}</Banner>
+                            </Stack>
                         </>
                     )}
                 </Dialog>

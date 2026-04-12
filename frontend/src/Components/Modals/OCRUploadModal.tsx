@@ -1,7 +1,6 @@
-import { type MouseEvent as ReactMouseEvent } from 'react';
-import '../../styles/ocr_upload_modal.css';
-import { Icon, Dialog, DialogHeader, Stack, Button, DialogFooter, ProgressInline } from '../Generic';
+import { Dialog, DialogHeader, Button, DialogFooter, ProgressInline } from '../Generic';
 import { UseOCRUploadTask } from '../../Hooks/Upload/UseOCRUploadTask';
+import OCRZipUploadContent from '../OCR/OCRZipUploadContent';
 
 interface OCRUploadModalProps {
     isOpen: boolean;
@@ -49,66 +48,20 @@ function OCRUploadModal({ isOpen, onClose, onUploadComplete }: OCRUploadModalPro
                 Upload de Imagens para OCR
             </DialogHeader>
 
-            <div className="modal-body">
+            <div style={{ padding: '1.5rem' }}>
                 {!isProcessing ? (
-                    <>
-                        <Stack
-                            direction="vertical"
-                            alignX="center"
-                            alignY="center"
-                            gap={16}
-                            className={`drop-zone ${isDragging ? 'dragging' : ''} ${uploadFile ? 'has-file' : ''}`}
-                            onDragOver={handleDragOver}
-                            onDragLeave={handleDragLeave}
-                            onDrop={handleDrop}
-                        >
-                            {!uploadFile ? (
-                                <>
-                                    <Icon name="Upload" color="black" className="upload-icon-svg" style={{ color: 'currentColor' }} />
-                                    <Stack direction="vertical" alignX="center" gap={12} className="upload-text-container">
-                                        <p className="upload-main-text">
-                                            {isDragging ? 'Solte o arquivo aqui' : 'Arraste e solte seu arquivo ZIP aqui'}
-                                        </p>
-                                        <p className="upload-or-text">ou</p>
-                                        <label className="file-input-label">
-                                            <span className="file-input-button">Escolher arquivo</span>
-                                            <input
-                                                type="file"
-                                                accept=".zip"
-                                                onChange={handleFileSelect}
-                                                className="file-input"
-                                            />
-                                        </label>
-                                        <p className="upload-hint-text">Apenas arquivos .zip contendo imagens (PNG, JPG, TIF)</p>
-                                    </Stack>
-                                </>
-                            ) : (
-                                <Stack direction="vertical" alignX="center" gap={16} className="file-info-container">
-                                    <Icon name="FileText" color="black" className="file-icon-svg" style={{ color: 'currentColor' }} />
-                                    <Stack direction="vertical" alignX="center" gap={4} className="file-details">
-                                        <span className="file-name">{uploadFile.name}</span>
-                                        <span className="file-size">{(uploadFile.size / 1024 / 1024).toFixed(2)} MB</span>
-                                    </Stack>
-                                    <div className="file-status">
-                                        {isValidating && <span className="validating">Validando...</span>}
-                                        {!isValidating && isValidZip && <span className="valid-mark">Válido</span>}
-                                        {!isValidating && !isValidZip && hasError && <span className="invalid-mark">Inválido</span>}
-                                    </div>
-                                    <button
-                                        className="remove-file-btn"
-                                        onClick={(event: ReactMouseEvent<HTMLButtonElement>) => {
-                                            event.stopPropagation();
-                                            clearFileSelection();
-                                        }}
-                                    >
-                                        Remover
-                                    </button>
-                                </Stack>
-                            )}
-                        </Stack>
-
-                        {hasError && <div className="error-message">Erro durante upload, confira se o arquivo é válido.</div>}
-                    </>
+                    <OCRZipUploadContent
+                        uploadFile={uploadFile}
+                        hasError={hasError}
+                        isValidZip={isValidZip}
+                        isDragging={isDragging}
+                        isValidating={isValidating}
+                        onFileSelect={handleFileSelect}
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                        onClear={clearFileSelection}
+                    />
                 ) : (
                     <ProgressInline
                         progress={progress}

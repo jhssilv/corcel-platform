@@ -1,6 +1,4 @@
-/* OCR Upload Modal Styles */
-
-.drop-zone {
+.dropZone {
     border: 2px dashed var(--color-border-input);
     border-radius: 8px;
     padding: 3rem 2rem;
@@ -11,12 +9,12 @@
     min-height: 280px;
 }
 
-.drop-zone:hover {
+.dropZone:hover {
     border-color: var(--color-accent);
     background-color: rgba(100, 108, 255, 0.05);
 }
 
-.drop-zone.dragging {
+.dropZoneDragging {
     border-color: var(--color-accent);
     background-color: rgba(100, 108, 255, 0.15);
     border-style: solid;
@@ -24,64 +22,63 @@
     transform: scale(1.02);
 }
 
-.drop-zone.dragging .upload-main-text {
+.dropZoneDragging .uploadMainText {
     color: var(--color-accent);
     font-weight: 600;
 }
 
-.drop-zone.has-file {
+.dropZoneHasFile {
     border-style: solid;
     border-color: var(--color-success);
     background-color: var(--color-success-bg-subtle);
 }
 
-.upload-icon-svg {
+.uploadIcon {
     width: 72px;
     height: 72px;
     color: var(--color-icon-muted);
     transition: all 0.3s ease;
 }
 
-.drop-zone:hover .upload-icon-svg {
+.dropZone:hover .uploadIcon {
     color: var(--color-accent);
     transform: translateY(-5px);
 }
 
-.drop-zone.dragging .upload-icon-svg {
+.dropZoneDragging .uploadIcon {
     color: var(--color-accent);
     transform: scale(1.1);
 }
 
-
-.upload-main-text {
+.uploadMainText {
     font-size: 1.1rem;
     font-weight: 500;
     color: var(--color-text-primary);
     margin: 0;
 }
 
-.upload-or-text {
+.uploadOrText {
     font-size: 0.9rem;
     color: var(--color-icon-muted);
     margin: 0.5rem 0;
 }
 
-.upload-hint-text {
+.uploadHintText {
     font-size: 0.85rem;
     color: var(--color-icon-secondary);
-    margin: 0.5rem 0 0 0;
+    margin: 0.5rem 0 0;
 }
 
-.file-input {
+.fileInput {
     display: none;
 }
 
-.file-input-label {
+.fileInputLabel {
     cursor: pointer;
     margin: 0;
 }
 
-.file-input-button {
+.fileInputButton {
     display: inline-block;
     padding: 0.75rem 2rem;
     background-color: var(--color-bg-hover);
@@ -93,26 +90,24 @@
     transition: all 0.2s ease;
 }
 
-.file-input-button:hover {
+.fileInputButton:hover {
     background-color: var(--color-bg-active);
     border-color: var(--color-accent);
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(100, 108, 255, 0.2);
 }
 
-/* File Info Display */
-.file-info-container {
+.fileInfoContainer {
     width: 100%;
 }
 
-.file-icon-svg {
+.fileIcon {
     width: 64px;
     height: 64px;
     color: var(--color-accent);
 }
 
-
-.file-name {
+.fileName {
     font-size: 1rem;
     font-weight: 500;
     color: var(--color-text-primary);
@@ -121,12 +116,12 @@
     text-align: center;
 }
 
-.file-size {
+.fileSize {
     font-size: 0.85rem;
     color: var(--color-icon-secondary);
 }
 
-.file-status {
+.fileStatus {
     margin-top: 0.5rem;
 }
 
@@ -136,53 +131,23 @@
     font-weight: 500;
 }
 
-.valid-mark {
+.validMark {
     color: var(--color-success);
     font-size: 1rem;
     font-weight: 600;
 }
 
-.invalid-mark {
+.invalidMark {
     color: var(--color-danger);
     font-size: 1rem;
     font-weight: 600;
 }
 
-.remove-file-btn {
+.removeFileButton {
     margin-top: 0.5rem;
     padding: 0.5rem 1.5rem;
-    background-color: var(--color-bg-hover);
-    color: var(--color-text-secondary);
-    border: 1px solid var(--color-border-hover);
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.85rem;
-    transition: all 0.2s ease;
 }
 
-.remove-file-btn:hover {
-    background-color: var(--color-bg-active);
-    color: var(--color-danger);
-    border-color: var(--color-danger);
-}
-
-/* Error Message */
-.error-message {
+.errorMessage {
     margin-top: 1rem;
-    padding: 0.75rem 1rem;
-    background-color: var(--color-danger-bg-subtle);
-    border: 1px solid var(--color-danger-border);
-    border-radius: 6px;
-    color: var(--color-danger);
-    font-size: 0.9rem;
-    text-align: center;
 }
-
-/* Modal Footer Buttons */
-
-
-
-
-
-
-
