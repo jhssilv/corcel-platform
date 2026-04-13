@@ -6,6 +6,7 @@ export interface DialogProps extends HTMLAttributes<HTMLDivElement> {
     isOpen: boolean;
     onClose: () => void;
     children: ReactNode;
+    size?: 'sm' | 'md' | 'lg';
     trapFocus?: boolean;
     closeOnOverlayClick?: boolean;
 }
@@ -14,6 +15,7 @@ export function Dialog({
     isOpen,
     onClose,
     children,
+    size = 'md',
     trapFocus = true,
     closeOnOverlayClick = true,
     className = '',
@@ -91,7 +93,7 @@ export function Dialog({
         <Stack alignY="center" alignX="center" className={styles.overlay} onClick={handleOverlayClick}>
             <Stack direction="vertical"
                 ref={dialogRef}
-                className={`${styles.dialog} ${className}`.trim()}
+                className={[styles.dialog, styles[`size-${size}`], className].filter(Boolean).join(' ')}
                 role="dialog"
                 aria-modal="true"
                 tabIndex={-1}

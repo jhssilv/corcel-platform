@@ -8,6 +8,7 @@ export interface ModalScaffoldProps {
     onClose: () => void;
     title: ReactNode;
     icon?: IconName;
+    size?: 'sm' | 'md' | 'lg';
     children: ReactNode;
     className?: string;
     bodyClassName?: string;
@@ -20,6 +21,7 @@ export function ModalScaffold({
     onClose,
     title,
     icon,
+    size = 'md',
     children,
     className,
     bodyClassName = '',
@@ -27,7 +29,7 @@ export function ModalScaffold({
     footerAlign = 'right',
 }: ModalScaffoldProps) {
     return (
-        <Dialog isOpen={isOpen} onClose={onClose} className={className}>
+        <Dialog isOpen={isOpen} onClose={onClose} size={size} className={className}>
             <DialogHeader onClose={onClose} icon={icon}>{title}</DialogHeader>
             <div className={[styles.body, bodyClassName].filter(Boolean).join(' ')}>{children}</div>
             {footer ? <DialogFooter align={footerAlign}>{footer}</DialogFooter> : null}

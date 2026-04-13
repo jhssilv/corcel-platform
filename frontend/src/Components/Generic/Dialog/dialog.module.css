@@ -19,6 +19,18 @@
     outline: none;
 }
 
+.size-sm {
+    max-width: 400px;
+}
+
+.size-md {
+    max-width: 600px;
+}
+
+.size-lg {
+    max-width: 800px;
+}
+
 .header {
     display: flex;
     justify-content: space-between;
