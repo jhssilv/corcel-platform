@@ -23,6 +23,11 @@
     font-variant-numeric: lining-nums;
 }
 
+.preserveCase {
+    text-transform: none;
+    letter-spacing: normal;
+}
+
 .subtitle {
     margin: 0.35rem 0 0;
     font-size: 0.9rem;
