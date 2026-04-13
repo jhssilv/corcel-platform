@@ -10,8 +10,10 @@ export interface DropZoneProps {
     onFilesDropped: (files: File[]) => void | Promise<void>;
     children: ReactNode | ((state: DropZoneRenderState) => ReactNode);
     variant?: 'unstyled' | 'panel';
+    dragOverlayText?: string;
     className?: string;
     draggingClassName?: string;
+    dragOverlayClassName?: string;
     accept?: string;
     multiple?: boolean;
     disabled?: boolean;
@@ -22,8 +24,10 @@ export function DropZone({
     onFilesDropped,
     children,
     variant = 'unstyled',
+    dragOverlayText,
     className = '',
     draggingClassName = '',
+    dragOverlayClassName = '',
     accept,
     multiple = true,
     disabled = false,
@@ -90,6 +94,9 @@ export function DropZone({
                 />
             ) : null}
             {typeof children === 'function' ? children({ isDragging, openFilePicker }) : children}
+            {isDragging && dragOverlayText ? (
+                <div className={[styles.dragOverlay, dragOverlayClassName].filter(Boolean).join(' ')}>{dragOverlayText}</div>
+            ) : null}
         </div>
     );
 }
