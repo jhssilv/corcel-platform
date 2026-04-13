@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import JSZip from 'jszip';
 import { uploadTextArchive, getBatchStatus } from '../../Api/UploadApi';
-import { Badge, Icon, Dialog, DialogHeader, Stack, Button, DialogFooter, ProgressInline, DropZone } from '../Generic';
+import { Badge, Icon, Stack, Button, ProgressInline, DropZone, ModalScaffold, Banner, IconButton } from '../Generic';
 import { useSnackbar } from '../../Context/Generic';
 import styles from '../../styles/upload_modal.module.css';
 import type { BatchStatusItem } from '../../types/api/responses';
@@ -311,40 +311,65 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
     }
 
     return (
-        <Dialog isOpen={isOpen || isProcessing} onClose={handleClose} className={styles['upload-modal']}>
-            <DialogHeader onClose={handleClose} icon='Upload'>
-                Upload de Textos
-            </DialogHeader>
+        <ModalScaffold
+            isOpen={isOpen || isProcessing}
+            onClose={handleClose}
+            title="Upload de Textos"
+            icon="Upload"
+            footer={(
+                <>
+                    {isProcessing && progress < 100 ? (
+                        <Button tier="secondary" variant="danger" onClick={handleCancelRequest}>
+                            Cancelar Envio
+                        </Button>
+                    ) : (
+                        <Button tier="secondary" variant={uploadSuccess ? 'neutral' : 'danger'} onClick={handleClose}>
+                            {uploadSuccess ? 'Fechar' : 'Cancelar'}
+                        </Button>
+                    )}
 
-            <Stack direction="vertical" gap={12} className={styles['modal-body']}>
+                    {!isProcessing && !uploadSuccess && (
+                        <Button
+                            tier="primary"
+                            variant="action"
+                            onClick={handleConfirm}
+                            disabled={stagedFiles.length === 0}
+                        >
+                            Enviar
+                        </Button>
+                    )}
+                </>
+            )}
+        >
+            <Stack direction="vertical" gap={12}>
                 {failedFiles.length > 0 && !isProcessing && (
-                    <div className={`${styles['status-banner']} ${styles['status-error']}`}>
+                    <Banner variant="danger">
                         <p><strong>Os seguintes arquivos falharam:</strong></p>
-                        <ul className={styles['failed-files-list']}>
+                        <ul className={styles.failedFilesList}>
                             {failedFiles.map((f, i) => <li key={i}>{f}</li>)}
                         </ul>
-                    </div>
+                    </Banner>
                 )}
 
                 {isTracking || uploadSuccess ? (
                     <Stack direction="vertical" gap={12}>
-                        <h3 className={styles['tracking-title']}>Status de Processamento</h3>
-                        <Stack direction="vertical" gap={8} className={styles['staged-files-list']}>
+                        <h3>Status de Processamento</h3>
+                        <Stack direction="vertical" gap={8} className={styles.listBox}>
                             {trackedTexts.map((textItem) => (
-                                <Stack alignX="space-between" alignY="center" key={textItem.id} className={styles['staged-file-item']}>
+                                <Stack alignX="space-between" alignY="center" key={textItem.id} className={styles.listItem}>
                                     <span className={styles.fileName} title={textItem.source_file_name}>{textItem.source_file_name}</span>
                                     {renderTrackingBadge(textItem.processing_status)}
                                 </Stack>
                             ))}
                         </Stack>
-                        <p className={styles['tracking-hint']}>
+                        <p>
                             A avaliação é executada em segundo plano. Você já pode fechar esta janela caso queira e analisar os textos disponíveis no painel.
                         </p>
                     </Stack>
                 ) : !isProcessing && (
                     <>
                         <DropZone
-                            className={styles['upload-dropzone']}
+                            className={styles.dropzone}
                             draggingClassName={styles.dragging}
                             accept=".zip,.txt,.docx"
                             multiple
@@ -354,15 +379,15 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
                         >
                             {() => {
                                 return isValidating ? (
-                                    <Stack direction="vertical" alignX="center" gap={16} className={styles['upload-status']}>
-                                        <div className={styles['upload-spinner']}></div>
-                                        <p className={styles['upload-text']}>Verificando arquivos...</p>
+                                    <Stack direction="vertical" alignX="center" gap={16}>
+                                        <div className={styles.spinner}></div>
+                                        <p>Verificando arquivos...</p>
                                     </Stack>
                                 ) : (
-                                    <Stack direction="vertical" alignX="center" gap={12} className={styles['upload-prompt']}>
-                                        <Icon name="Upload" color="current" className={styles['upload-icon-svg']} />
-                                        <p className={styles['upload-text']}>Arraste arquivos TXT, DOCX ou ZIPs</p>
-                                        <p className={styles['upload-subtext']}>ou clique para selecionar (Máx 50MB por arquivo)</p>
+                                    <Stack direction="vertical" alignX="center" gap={12}>
+                                        <Icon name="Upload" color="current" size={64} />
+                                        <p>Arraste arquivos TXT, DOCX ou ZIPs</p>
+                                        <p>ou clique para selecionar (Máx 50MB por arquivo)</p>
                                     </Stack>
                                 );
                             }}
@@ -370,16 +395,18 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 
                         {stagedFiles.length > 0 && (
                             <div>
-                                <h4 className={styles['file-list-title']}>Arquivos Válidos ({stagedFiles.length})</h4>
-                                <Stack direction="vertical" gap={8} className={styles['staged-files-list']}>
+                                <h4>Arquivos Válidos ({stagedFiles.length})</h4>
+                                <Stack direction="vertical" gap={8} className={styles.listBox}>
                                     {stagedFiles.map((file, idx) => (
-                                        <Stack alignX="space-between" alignY="center" key={idx} className={styles['staged-file-item']}>
+                                        <Stack alignX="space-between" alignY="center" key={idx} className={styles.listItem}>
                                             <span className={styles.fileName} title={file.name}>{file.name}</span>
-                                            <button
-                                                className={styles['remove-file-button']}
+                                            <IconButton
+                                                icon="X"
+                                                label="Remover"
+                                                size="sm"
+                                                variant="danger"
                                                 onClick={(e) => { e.stopPropagation(); removeStagedFile(file.name); }}
-                                                title="Remover"
-                                            >×</button>
+                                            />
                                         </Stack>
                                     ))}
                                 </Stack>
@@ -388,11 +415,11 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 
                         {ignoredFiles.length > 0 && (
                             <div>
-                                <h4 className={`${styles['file-list-title']} ${styles['file-list-title-danger']}`}>Arquivos Ignorados ({ignoredFiles.length})</h4>
-                                <Stack direction="vertical" gap={8} className={styles['ignored-files-list']}>
+                                <h4>Arquivos Ignorados ({ignoredFiles.length})</h4>
+                                <Stack direction="vertical" gap={8} className={styles.listBox}>
                                     {ignoredFiles.map((err, idx) => (
-                                        <Stack alignX="space-between" alignY="center" key={idx} className={styles['ignored-file-item']}>
-                                            <span className={styles.fileName}>{err}</span>
+                                        <Stack alignX="space-between" alignY="center" key={idx} className={styles.listItem}>
+                                            <span className={`${styles.fileName} ${styles.dangerText}`}>{err}</span>
                                         </Stack>
                                     ))}
                                 </Stack>
@@ -410,29 +437,7 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
                     />
                 )}
             </Stack>
-            <DialogFooter>
-                {isProcessing && progress < 100 ? (
-                    <Button tier="secondary" variant="danger" onClick={handleCancelRequest}>
-                        Cancelar Envio
-                    </Button>
-                ) : (
-                    <Button variant={uploadSuccess ? 'neutral' : 'danger'} onClick={handleClose}>
-                        {uploadSuccess ? 'Fechar' : 'Cancelar'}
-                    </Button>
-                )}
-
-                {!isProcessing && !uploadSuccess && (
-                    <Button
-                        tier="primary"
-                        variant="action"
-                        onClick={handleConfirm}
-                        disabled={stagedFiles.length === 0}
-                    >
-                        Enviar
-                    </Button>
-                )}
-            </DialogFooter>
-        </Dialog>
+        </ModalScaffold>
     );
 }
 
