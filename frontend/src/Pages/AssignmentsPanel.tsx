@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TopBar from '../Components/Layout/TopBar';
-import { Badge, Icon, Dialog, DialogHeader, Stack, Button, DialogFooter, Checkbox, FormField, SectionHeader } from '../Components/Generic';
+import { Badge, Icon, Dialog, DialogHeader, Stack, Button, DialogFooter, Checkbox, FormField, SectionHeader, FilterGrid, ListState } from '../Components/Generic';
 import DropdownSelect, { type DropdownValue, type SelectOption } from '../Components/Common/DropdownSelect';
 import { bulkAssignTexts, bulkUnassignTexts, getFilteredTextsData, getUsernames } from '../Api';
 import { useSnackbar } from '../Context/Generic';
@@ -344,7 +344,7 @@ function AssignmentsPanel() {
                         </div>
                     </div>
 
-                    <div className={cx('assignments-filters-grid', 'assignments-filters-grid-spaced')}>
+                    <FilterGrid className={styles['assignments-filters-grid-spaced']} minColumnWidth={200} gap={15}>
                         <DropdownSelect
                             title="Notas"
                             options={gradeOptions}
@@ -366,7 +366,7 @@ function AssignmentsPanel() {
                             onChange={handleNormalizedFilterChange}
                             isMulti={true}
                         />
-                    </div>
+                    </FilterGrid>
                 </div>
 
                 <div className={styles['assignments-texts-section']}>
@@ -412,12 +412,13 @@ function AssignmentsPanel() {
                     />
 
                     <div className={styles['assignments-texts-list']}>
-                        {loading ? (
-                            <p className={styles['no-selection-message']}>Carregando...</p>
-                        ) : textsData.length === 0 ? (
-                            <p className={styles['no-selection-message']}>Nenhum texto encontrado com os filtros atuais.</p>
-                        ) : (
-                            textsData.map((text) => (
+                        <ListState
+                            items={textsData}
+                            isLoading={loading}
+                            loadingContent={<p className={styles['no-selection-message']}>Carregando...</p>}
+                            emptyContent={<p className={styles['no-selection-message']}>Nenhum texto encontrado com os filtros atuais.</p>}
+                        >
+                            {(items) => items.map((text) => (
                                 <div
                                     key={text.id}
                                     className={cx('assignments-text-item', selectedTextIds.has(text.id) && 'selected')}
@@ -439,8 +440,8 @@ function AssignmentsPanel() {
                                         </span>
                                     </Stack>
                                 </div>
-                            ))
-                        )}
+                            ))}
+                        </ListState>
                     </div>
                 </div>
 

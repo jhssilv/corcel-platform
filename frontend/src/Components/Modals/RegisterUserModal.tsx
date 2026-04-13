@@ -1,6 +1,6 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react';
 import { registerUser } from '../../Api';
-import { Banner, Dialog, DialogHeader, Stack, Button, DialogFooter, FormField } from '../Generic';
+import { Banner, Stack, Button, FormField, ModalScaffold } from '../Generic';
 import styles from '../../styles/register_user_modal.module.css';
 
 interface RegisterUserModalProps {
@@ -46,11 +46,32 @@ function RegisterUserModal({ isOpen, onClose }: RegisterUserModalProps) {
     }
 
     return (
-        <Dialog isOpen={isOpen} onClose={handleClose} className={styles['register-modal']}>
-            <DialogHeader onClose={handleClose}>Registrar Novo Usuário</DialogHeader>
-
-            <form onSubmit={handleSubmit} className={styles['register-form']}>
-                <Stack direction="vertical" gap={12} className={styles['modal-body']}>
+        <ModalScaffold
+            isOpen={isOpen}
+            onClose={handleClose}
+            title="Registrar Novo Usuário"
+            className={styles['register-modal']}
+            bodyClassName={styles['modal-body']}
+            footer={(
+                <>
+                    <Button type="button" tier="secondary" variant="neutral" onClick={handleClose}>
+                        Cancelar
+                    </Button>
+                    <Button
+                        type="submit"
+                        tier="primary"
+                        variant="action"
+                        disabled={isSubmitting}
+                        isLoading={isSubmitting}
+                        form="register-user-form"
+                    >
+                        Criar Usuário
+                    </Button>
+                </>
+            )}
+        >
+            <form id="register-user-form" onSubmit={handleSubmit} className={styles['register-form']}>
+                <Stack direction="vertical" gap={12}>
                     <Stack direction="vertical" gap={20}>
                         <FormField label="Nome de Usuário" htmlFor="username" required>
                             <input
@@ -74,23 +95,8 @@ function RegisterUserModal({ isOpen, onClose }: RegisterUserModalProps) {
                         )}
                     </Stack>
                 </Stack>
-
-                <DialogFooter align="right">
-                    <Button type="button" tier="secondary" variant="neutral" onClick={handleClose}>
-                        Cancelar
-                    </Button>
-                    <Button
-                        type="submit"
-                        tier="primary"
-                        variant="action"
-                        disabled={isSubmitting}
-                        isLoading={isSubmitting}
-                    >
-                        Criar Usuário
-                    </Button>
-                </DialogFooter>
             </form>
-        </Dialog>
+        </ModalScaffold>
     );
 }
 

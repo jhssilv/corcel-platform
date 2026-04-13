@@ -1,7 +1,7 @@
 import { useEffect, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { requestReport } from '../../Api';
 import { useSnackbar } from '../../Context/Generic';
-import { Dialog, DialogHeader, Stack, Button, DialogFooter } from '../Generic';
+import { Stack, Button, ModalScaffold } from '../Generic';
 import styles from '../../styles/report_modal.module.css';
 
 interface ReportModalProps {
@@ -57,29 +57,34 @@ function ReportModal({ isOpen, onClose, textCount }: ReportModalProps) {
     }
 
     return (
-        <Dialog isOpen={isOpen} onClose={onClose} className={styles['report-modal']}>
-            <DialogHeader onClose={onClose}>Gerar Relatório</DialogHeader>
-
-            <Stack direction="vertical" gap={12} className={styles['modal-body']}>
+        <ModalScaffold
+            isOpen={isOpen}
+            onClose={onClose}
+            title="Gerar Relatório"
+            className={styles['report-modal']}
+            bodyClassName={styles['modal-body']}
+            footer={(
+                <>
+                    <Button tier="secondary" variant="neutral" onClick={onClose}>Cancelar</Button>
+                    <Button
+                        tier="primary"
+                        variant="action"
+                        onClick={() => {
+                            void handleConfirm();
+                        }}
+                        disabled={!confirmEnabled}
+                    >
+                        Confirmar
+                    </Button>
+                </>
+            )}
+        >
+            <Stack direction="vertical" gap={12}>
                 <p className={styles['report-text']}>
                     Gerar relatório para os <b>{textCount}</b> textos <b>filtrados</b>?
                 </p>
             </Stack>
-
-            <DialogFooter align="right">
-                <Button variant="action" onClick={onClose}>Cancelar</Button>
-                <Button
-                    variant="action"
-                    tier="primary"
-                    onClick={() => {
-                        void handleConfirm();
-                    }}
-                    disabled={!confirmEnabled}
-                >
-                    Confirmar
-                </Button>
-            </DialogFooter>
-        </Dialog>
+        </ModalScaffold>
     );
 }
 

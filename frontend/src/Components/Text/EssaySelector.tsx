@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import DropdownSelect, { type DropdownValue, type SelectOption } from '../Common/DropdownSelect';
 import { Icon } from '../Generic';
 import { Stack } from '../Generic';
+import { FilterGrid } from '../Generic';
 import { getRawTextsData, getTextsData, getUsernames } from '../../Api';
 import { useSnackbar } from '../../Context/Generic';
 import type { RawTextMetadata, TextMetadata } from '../../types';
@@ -226,7 +227,7 @@ const EssaySelector = ({
                 </Stack>
             </div>
 
-            <div className={styles['selector-filters-grid']}>
+            <FilterGrid className={styles['selector-filters-grid']} minColumnWidth={250} gap={15} marginBottom={20}>
                 <DropdownSelect
                     title="Notas"
                     options={gradeOptions}
@@ -248,7 +249,7 @@ const EssaySelector = ({
                     onChange={handleOtherFiltersChange}
                     isMulti={true}
                 />
-            </div>
+            </FilterGrid>
 
             <Stack alignX="space-between" alignY="center" className={styles['selector-footer']}>
                 <div className={styles['corrected-count']} data-testid="corrected-count">

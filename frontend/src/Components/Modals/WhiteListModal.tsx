@@ -1,7 +1,7 @@
-import { useEffect, useState, type ChangeEvent, type DragEvent, type MouseEvent as ReactMouseEvent } from 'react';
+import { useEffect, useState, type ChangeEvent } from 'react';
 import { parseTextFile } from '../../Services/Text/FileParsers';
 import { addToWhitelist, getWhitelist, removeFromWhitelist } from '../../Api';
-import { Dialog, DialogHeader, Stack, Button, DialogFooter, FormField } from '../Generic';
+import { Dialog, DialogHeader, Stack, Button, DialogFooter, FormField, DropZone } from '../Generic';
 import { useSnackbar } from '../../Context/Generic';
 import styles from '../../styles/whitelist_modal.module.css';
 
@@ -14,7 +14,6 @@ function WhitelistModal({ isOpen, onClose }: WhitelistModalProps) {
     const [whitelistText, setWhitelistText] = useState('');
     const [originalWhitelistText, setOriginalWhitelistText] = useState('');
     const [isUpdating, setIsUpdating] = useState(false);
-    const [isDragging, setIsDragging] = useState(false);
     const { addSnackbar } = useSnackbar();
 
     useEffect(() => {
@@ -78,21 +77,7 @@ function WhitelistModal({ isOpen, onClose }: WhitelistModalProps) {
         onClose();
     };
 
-    const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
-        event.preventDefault();
-        setIsDragging(true);
-    };
-
-    const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
-        event.preventDefault();
-        setIsDragging(false);
-    };
-
-    const handleDrop = async (event: DragEvent<HTMLDivElement>) => {
-        event.preventDefault();
-        setIsDragging(false);
-
-        const files = Array.from(event.dataTransfer.files);
+    const handleDropFiles = async (files: File[]) => {
         const textFiles = files.filter((file) => file.type === 'text/plain' || file.name.endsWith('.txt'));
 
         if (textFiles.length === 0) {
@@ -134,23 +119,30 @@ function WhitelistModal({ isOpen, onClose }: WhitelistModalProps) {
 
             <Stack direction="vertical" gap={12} className={styles['modal-body']}>
                 <FormField label="Lista de palavras (separadas por vírgula):" htmlFor="whitelist-textarea">
-                    <Stack direction="vertical" className={[styles['textarea-container'], isDragging ? styles.dragging : ''].filter(Boolean).join(' ')}
-                        onDragOver={handleDragOver}
-                        onDragLeave={handleDragLeave}
-                        onDrop={(event: React.DragEvent<HTMLDivElement>) => {
-                            void handleDrop(event);
+                    <DropZone
+                        className={styles['textarea-container']}
+                        draggingClassName={styles.dragging}
+                        enableClickSelect={false}
+                        onFilesDropped={(files) => {
+                            void handleDropFiles(files);
                         }}
                     >
-                        <textarea
-                            id="whitelist-textarea"
-                            className={styles['whitelist-textarea']}
-                            value={whitelistText}
-                            onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setWhitelistText(event.target.value)}
-                            placeholder="Digite as palavras separadas por vírgula ou arraste arquivos de texto aqui..."
-                            rows={15}
-                        />
-                        {isDragging && <Stack alignX="center" alignY="center" className={styles['drag-overlay']}>Solte os arquivos aqui</Stack>}
-                    </Stack>
+                        {({ isDragging }) => {
+                            return (
+                                <Stack direction="vertical">
+                                    <textarea
+                                        id="whitelist-textarea"
+                                        className={styles['whitelist-textarea']}
+                                        value={whitelistText}
+                                        onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setWhitelistText(event.target.value)}
+                                        placeholder="Digite as palavras separadas por vírgula ou arraste arquivos de texto aqui..."
+                                        rows={15}
+                                    />
+                                    {isDragging && <Stack alignX="center" alignY="center" className={styles['drag-overlay']}>Solte os arquivos aqui</Stack>}
+                                </Stack>
+                            );
+                        }}
+                    </DropZone>
                 </FormField>
             </Stack>
 

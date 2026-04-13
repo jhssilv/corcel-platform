@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useRef, useState, type ChangeEvent, type DragEvent } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import JSZip from 'jszip';
 import { uploadTextArchive, getBatchStatus } from '../../Api/UploadApi';
-import { Badge, Icon, Dialog, DialogHeader, Stack, Button, DialogFooter, ProgressInline } from '../Generic';
+import { Badge, Icon, Dialog, DialogHeader, Stack, Button, DialogFooter, ProgressInline, DropZone } from '../Generic';
 import { useSnackbar } from '../../Context/Generic';
 import styles from '../../styles/upload_modal.module.css';
 import type { BatchStatusItem } from '../../types/api/responses';
@@ -67,7 +67,6 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
     const [stagedFiles, setStagedFiles] = useState<File[]>([]);
     const [ignoredFiles, setIgnoredFiles] = useState<string[]>([]);
     const { addSnackbar } = useSnackbar();
-    const [isDragging, setIsDragging] = useState(false);
     const [isValidating, setIsValidating] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const [progress, setProgress] = useState(0);
@@ -98,7 +97,6 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
     const resetState = useCallback(() => {
         setStagedFiles([]);
         setIgnoredFiles([]);
-        setIsDragging(false);
         setIsProcessing(false);
         setProgress(0);
         setStatusMessage('');
@@ -247,43 +245,6 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
         }
     };
 
-    const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        e.stopPropagation();
-        e.dataTransfer.dropEffect = 'copy';
-        setIsDragging(true);
-    };
-
-    const handleDragEnter = (e: DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsDragging(true);
-    };
-
-    const handleDragLeave = (e: DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (e.currentTarget.contains(e.relatedTarget as Node)) return;
-        setIsDragging(false);
-    };
-
-    const handleDrop = (e: DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsDragging(false);
-
-        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            void processFiles(e.dataTransfer.files);
-        }
-    };
-
-    const handleFileSelect = (e: ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files.length > 0) {
-            void processFiles(e.target.files);
-            e.target.value = ''; // Reset input to allow re-selecting same files
-        }
-    };
-
     const removeStagedFile = (nameToRemove: string) => {
         setStagedFiles((prev) => prev.filter(f => f.name !== nameToRemove));
     };
@@ -382,42 +343,30 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
                     </Stack>
                 ) : !isProcessing && (
                     <>
-                        <div
-                            className={[
-                                styles['upload-dropzone'],
-                                isDragging ? styles.dragging : '',
-                            ].filter(Boolean).join(' ')}
-                            onDragEnter={handleDragEnter}
-                            onDragOver={handleDragOver}
-                            onDragLeave={handleDragLeave}
-                            onDrop={handleDrop}
-                            onClick={() => {
-                                const fileInput = document.getElementById('file-input') as HTMLInputElement | null;
-                                fileInput?.click();
+                        <DropZone
+                            className={styles['upload-dropzone']}
+                            draggingClassName={styles.dragging}
+                            accept=".zip,.txt,.docx"
+                            multiple
+                            onFilesDropped={(files) => {
+                                void processFiles(files);
                             }}
                         >
-                            <input
-                                id="file-input"
-                                type="file"
-                                multiple
-                                accept=".zip,.txt,.docx"
-                                onChange={handleFileSelect}
-                                hidden
-                            />
-
-                            {isValidating ? (
-                                <Stack direction="vertical" alignX="center" gap={16} className={styles['upload-status']}>
-                                    <div className={styles['upload-spinner']}></div>
-                                    <p className={styles['upload-text']}>Verificando arquivos...</p>
-                                </Stack>
-                            ) : (
-                                <Stack direction="vertical" alignX="center" gap={12} className={styles['upload-prompt']}>
-                                    <Icon name="Upload" color="current" className={styles['upload-icon-svg']} />
-                                    <p className={styles['upload-text']}>Arraste arquivos TXT, DOCX ou ZIPs</p>
-                                    <p className={styles['upload-subtext']}>ou clique para selecionar (Máx 50MB por arquivo)</p>
-                                </Stack>
-                            )}
-                        </div>
+                            {() => {
+                                return isValidating ? (
+                                    <Stack direction="vertical" alignX="center" gap={16} className={styles['upload-status']}>
+                                        <div className={styles['upload-spinner']}></div>
+                                        <p className={styles['upload-text']}>Verificando arquivos...</p>
+                                    </Stack>
+                                ) : (
+                                    <Stack direction="vertical" alignX="center" gap={12} className={styles['upload-prompt']}>
+                                        <Icon name="Upload" color="current" className={styles['upload-icon-svg']} />
+                                        <p className={styles['upload-text']}>Arraste arquivos TXT, DOCX ou ZIPs</p>
+                                        <p className={styles['upload-subtext']}>ou clique para selecionar (Máx 50MB por arquivo)</p>
+                                    </Stack>
+                                );
+                            }}
+                        </DropZone>
 
                         {stagedFiles.length > 0 && (
                             <div>

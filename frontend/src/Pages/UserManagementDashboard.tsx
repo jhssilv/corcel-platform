@@ -4,7 +4,7 @@ import TopBar from '../Components/Layout/TopBar';
 import { getUsersData, toggleUserActive, toggleUserAdmin } from '../Api';
 import { useAuth } from '../Context/Auth/UseAuth';
 import { useSnackbar } from '../Context/Generic';
-import { Dialog, DialogHeader, Card, Stack, Button, DialogFooter, FormField, SectionHeader } from '../Components/Generic';
+import { Dialog, DialogHeader, Card, Stack, Button, DialogFooter, FormField, SectionHeader, ListState } from '../Components/Generic';
 import type { UserData } from '../types';
 import styles from './user_management_dashboard.module.css';
 import layoutStyles from './page_layout.module.css';
@@ -120,50 +120,55 @@ function UserManagementDashboard() {
                             />
                         </FormField>
 
-                        {loading ? (
-                            <p>Carregando...</p>
-                        ) : (
-                            <div className={styles['user-management-table-container']}>
-                                <table className={styles['user-management-table']}>
-                                    <thead>
-                                        <tr>
-                                            <th>Usuário</th>
-                                            <th>Último Login</th>
-                                            <th>Admin</th>
-                                            <th>Ativo</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {filteredUsers.map((user) => (
-                                            <tr key={user.username}>
-                                                <td>{user.username}</td>
-                                                <td>{user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Nunca'}</td>
-                                                <td>
-                                                    <button
-                                                        onClick={() => setConfirmAdminToggle(user.username)}
-                                                        disabled={user.username === currentUsername}
-                                                        className={cx(user.isAdmin ? 'status-btn-active' : 'status-btn-inactive', user.username === currentUsername && 'status-btn-disabled')}
-                                                    >
-                                                        {user.isAdmin ? 'Sim' : 'Não'}
-                                                    </button>
-                                                </td>
-                                                <td>
-                                                    <button
-                                                        onClick={() => {
-                                                            void handleToggleActive(user.username);
-                                                        }}
-                                                        disabled={user.username === currentUsername}
-                                                        className={cx(user.isActive ? 'status-btn-active' : 'status-btn-danger', user.username === currentUsername && 'status-btn-disabled')}
-                                                    >
-                                                        {user.isActive ? 'Ativo' : 'Inativo'}
-                                                    </button>
-                                                </td>
+                        <ListState
+                            items={filteredUsers}
+                            isLoading={loading}
+                            loadingContent={<p>Carregando...</p>}
+                            emptyContent={<p>Nenhum usuário encontrado.</p>}
+                        >
+                            {() => (
+                                <div className={styles['user-management-table-container']}>
+                                    <table className={styles['user-management-table']}>
+                                        <thead>
+                                            <tr>
+                                                <th>Usuário</th>
+                                                <th>Último Login</th>
+                                                <th>Admin</th>
+                                                <th>Ativo</th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
+                                        </thead>
+                                        <tbody>
+                                            {filteredUsers.map((user) => (
+                                                <tr key={user.username}>
+                                                    <td>{user.username}</td>
+                                                    <td>{user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Nunca'}</td>
+                                                    <td>
+                                                        <button
+                                                            onClick={() => setConfirmAdminToggle(user.username)}
+                                                            disabled={user.username === currentUsername}
+                                                            className={cx(user.isAdmin ? 'status-btn-active' : 'status-btn-inactive', user.username === currentUsername && 'status-btn-disabled')}
+                                                        >
+                                                            {user.isAdmin ? 'Sim' : 'Não'}
+                                                        </button>
+                                                    </td>
+                                                    <td>
+                                                        <button
+                                                            onClick={() => {
+                                                                void handleToggleActive(user.username);
+                                                            }}
+                                                            disabled={user.username === currentUsername}
+                                                            className={cx(user.isActive ? 'status-btn-active' : 'status-btn-danger', user.username === currentUsername && 'status-btn-disabled')}
+                                                        >
+                                                            {user.isActive ? 'Ativo' : 'Inativo'}
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </ListState>
                     </Stack>
                 </Card>
             </div>
