@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import downloadTexts from '../../Api/DownloadTexts';
 import { useSnackbar } from '../../Context/Generic';
-import { Dialog, DialogHeader, Stack, Button, DialogFooter, Checkbox } from '../Generic';
+import { Stack, Button, Checkbox, ModalScaffold } from '../Generic';
 
 interface DownloadDialogProps {
     show: boolean;
@@ -49,12 +49,29 @@ function DownloadDialog({ show, onClose, onDownload }: DownloadDialogProps) {
     };
 
     return (
-        <Dialog isOpen={show} onClose={onClose} style={{ maxWidth: '400px' }}>
-            <DialogHeader onClose={onClose} icon='Download'>
-                Opções de Download
-            </DialogHeader>
-
-            <Stack direction="vertical" gap={16} style={{ padding: '1.5rem', color: 'var(--color-text-on-panel)' }}>
+        <ModalScaffold
+            isOpen={show}
+            onClose={onClose}
+            title="Opções de Download"
+            icon="Download"
+            size="sm"
+            footer={(
+                <>
+                    <Button variant="action" onClick={onClose}>Cancelar</Button>
+                    <Button
+                        tier="primary"
+                        variant="action"
+                        onClick={() => {
+                            void handleSubmitClick();
+                        }}
+                        disabled={!confirmEnabled}
+                    >
+                        Baixar
+                    </Button>
+                </>
+            )}
+        >
+            <Stack direction="vertical" gap={16}>
                 {'Todos os textos selecionados no filtro serão baixados.'}
                 <Checkbox
                     id="use-brackets-checkbox"
@@ -64,21 +81,7 @@ function DownloadDialog({ show, onClose, onDownload }: DownloadDialogProps) {
                     label="Substituições com sintaxe XML."
                 />
             </Stack>
-
-            <DialogFooter align="right">
-                <Button variant="action" onClick={onClose}>Cancelar</Button>
-                <Button
-                    tier="primary"
-                    variant="action"
-                    onClick={() => {
-                        void handleSubmitClick();
-                    }}
-                    disabled={!confirmEnabled}
-                >
-                    Baixar
-                </Button>
-            </DialogFooter>
-        </Dialog>
+        </ModalScaffold>
     );
 }
 
