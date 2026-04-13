@@ -7,7 +7,6 @@ import TopBar from '../Components/Layout/TopBar';
 import { getRawTextById } from '../Api';
 import { useToast } from '../Context/Generic';
 import type { Option, RawTextDetail } from '../types';
-import '../styles/main_page.css';
 import styles from './ocr_page.module.css';
 
 type OCREditableRawText = RawTextDetail & { source_file_name: string };

@@ -6,8 +6,8 @@ import DropdownSelect, { type DropdownValue, type SelectOption } from '../Compon
 import { bulkAssignTexts, bulkUnassignTexts, getFilteredTextsData, getUsernames } from '../Api';
 import { useSnackbar } from '../Context/Generic';
 import type { FilterTextsRequest, TextMetadata } from '../types';
-import '../styles/assignments_panel.css';
-import '../styles/main_page.css';
+import styles from './assignments_panel.module.css';
+import layoutStyles from './page_layout.module.css';
 
 const gradeOptions: SelectOption<number>[] = [
     { value: 0, label: 'Nota 0' },
@@ -38,6 +38,8 @@ interface AssignmentResult {
 interface ErrorLike {
     message?: string;
 }
+
+const cx = (...classNames: Array<string | false | undefined>) => classNames.filter(Boolean).map((name) => styles[name as keyof typeof styles]).join(' ');
 
 function AssignmentsPanel() {
     const navigate = useNavigate();
@@ -292,10 +294,10 @@ function AssignmentsPanel() {
     };
 
     return (
-        <div className="main-page-container">
+        <div className={layoutStyles.mainPageContainer}>
             <TopBar />
 
-            <div className="assignments-panel-container main-page-section">
+            <div className={`${styles['assignments-panel-container']} ${layoutStyles.mainPageSection}`}>
                 <SectionHeader
                     heading={<span style={{ textTransform: 'none' }}>Gerenciamento de Atribuições</span>}
                     actions={(
@@ -305,9 +307,9 @@ function AssignmentsPanel() {
                     )}
                 />
 
-                <div className="mode-toggle-container">
+                <div className={styles['mode-toggle-container']}>
                     <button
-                        className={`mode-toggle-btn ${mode === 'assign' ? 'active' : ''}`}
+                        className={cx('mode-toggle-btn', mode === 'assign' && 'active')}
                         onClick={() => setMode('assign')}
                     >
                         <Stack alignX="center" alignY="center" gap={8}>
@@ -316,7 +318,7 @@ function AssignmentsPanel() {
                         </Stack>
                     </button>
                     <button
-                        className={`mode-toggle-btn unassign ${mode === 'unassign' ? 'active' : ''}`}
+                        className={cx('mode-toggle-btn', 'unassign', mode === 'unassign' && 'active')}
                         onClick={() => setMode('unassign')}
                     >
                         <Stack alignX="center" alignY="center" gap={8}>
@@ -326,8 +328,8 @@ function AssignmentsPanel() {
                     </button>
                 </div>
 
-                <div className="assignments-filters">
-                    <div className="assignments-search-row">
+                <div className={styles['assignments-filters']}>
+                    <div className={styles['assignments-search-row']}>
                         <div>
                             <FormField label="Buscar por nome do arquivo" htmlFor="assignments-search-input">
                                 <input
@@ -336,13 +338,13 @@ function AssignmentsPanel() {
                                     placeholder="Digite para buscar..."
                                     value={searchText}
                                     onChange={(event: ChangeEvent<HTMLInputElement>) => setSearchText(event.target.value)}
-                                    className="assignments-search-input"
+                                    className={styles['assignments-search-input']}
                                 />
                             </FormField>
                         </div>
                     </div>
 
-                    <div className="assignments-filters-grid assignments-filters-grid-spaced">
+                    <div className={cx('assignments-filters-grid', 'assignments-filters-grid-spaced')}>
                         <DropdownSelect
                             title="Notas"
                             options={gradeOptions}
@@ -367,9 +369,9 @@ function AssignmentsPanel() {
                     </div>
                 </div>
 
-                <div className="assignments-texts-section">
+                <div className={styles['assignments-texts-section']}>
                     <SectionHeader
-                        className="assignments-texts-header"
+                        className={styles['assignments-texts-header']}
                         heading={(
                             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '12px', textTransform: 'none' }}>
                                 <span style={{ textTransform: 'none' }}>Textos Disponíveis</span>
@@ -382,8 +384,8 @@ function AssignmentsPanel() {
                             </span>
                         )}
                         actions={(
-                            <div className="assignments-selection-controls">
-                                <div className="select-n-control">
+                            <div className={styles['assignments-selection-controls']}>
+                                <div className={styles['select-n-control']}>
                                     <input
                                         type="number"
                                         min="1"
@@ -391,7 +393,7 @@ function AssignmentsPanel() {
                                         placeholder="N"
                                         value={selectNValue}
                                         onChange={(event: ChangeEvent<HTMLInputElement>) => setSelectNValue(event.target.value)}
-                                        className="select-n-input"
+                                        className={styles['select-n-input']}
                                     />
                                     <Button
                                         tier="secondary"
@@ -409,16 +411,16 @@ function AssignmentsPanel() {
                         )}
                     />
 
-                    <div className="assignments-texts-list">
+                    <div className={styles['assignments-texts-list']}>
                         {loading ? (
-                            <p className="no-selection-message">Carregando...</p>
+                            <p className={styles['no-selection-message']}>Carregando...</p>
                         ) : textsData.length === 0 ? (
-                            <p className="no-selection-message">Nenhum texto encontrado com os filtros atuais.</p>
+                            <p className={styles['no-selection-message']}>Nenhum texto encontrado com os filtros atuais.</p>
                         ) : (
                             textsData.map((text) => (
                                 <div
                                     key={text.id}
-                                    className={`assignments-text-item ${selectedTextIds.has(text.id) ? 'selected' : ''}`}
+                                    className={cx('assignments-text-item', selectedTextIds.has(text.id) && 'selected')}
                                     onClick={() => handleToggleText(text.id)}
                                 >
                                     <Checkbox
@@ -429,8 +431,8 @@ function AssignmentsPanel() {
                                         size="sm"
                                     />
                                     <Stack direction="vertical" gap={2} style={{ minWidth: 0 }}>
-                                        <span className="assignments-text-name">{text.sourceFileName || `Texto ${text.id}`}</span>
-                                        <span className="assignments-text-meta">
+                                        <span className={styles['assignments-text-name']}>{text.sourceFileName || `Texto ${text.id}`}</span>
+                                        <span className={styles['assignments-text-meta']}>
                                             ID: {text.id} | Nota: {text.grade ?? 'N/A'} |
                                             {text.normalizedByUser ? ' Normalizado' : ' Não normalizado'}
                                             {text.usersAssigned?.length > 0 && ` | Atribuído: ${text.usersAssigned.join(', ')}`}
@@ -442,7 +444,7 @@ function AssignmentsPanel() {
                     </div>
                 </div>
 
-                <div className="assignments-users-section">
+                <div className={styles['assignments-users-section']}>
                     <SectionHeader heading={<span style={{ textTransform: 'none' }}>{mode === 'assign' ? 'Atribuir Para' : 'Remover De'}</span>} />
                     <DropdownSelect
                         title="Selecione os usuários"
@@ -453,7 +455,7 @@ function AssignmentsPanel() {
                     />
                 </div>
 
-                <div className={`assignments-preview ${mode === 'unassign' ? 'unassign-mode' : ''}`}>
+                <div className={cx('assignments-preview', mode === 'unassign' && 'unassign-mode')}>
                     <SectionHeader
                         heading={
                             <span style={{ textTransform: 'none' }}>
@@ -462,7 +464,7 @@ function AssignmentsPanel() {
                         }
                     />
                     {activePreview.length === 0 ? (
-                        <p className="no-selection-message">
+                        <p className={styles['no-selection-message']}>
                             {selectedTextIds.size === 0 || selectedTargetUsers.length === 0
                                 ? 'Selecione textos e usuários para ver a prévia.'
                                 : mode === 'assign'
@@ -472,11 +474,11 @@ function AssignmentsPanel() {
                     ) : (
                         <Stack wrap gap={15}>
                             {activePreview.map((item) => (
-                                <Stack key={item.username} direction="vertical" gap={4} className={`distribution-item ${mode === 'unassign' ? 'unassign' : ''}`}>
-                                    <span className={`distribution-username ${mode === 'unassign' ? 'unassign' : ''}`}>
+                                <Stack key={item.username} direction="vertical" gap={4} className={cx('distribution-item', mode === 'unassign' && 'unassign')}>
+                                    <span className={cx('distribution-username', mode === 'unassign' && 'unassign')}>
                                         {item.username}
                                     </span>
-                                    <span className="distribution-count">{item.count} textos</span>
+                                    <span className={styles['distribution-count']}>{item.count} textos</span>
                                 </Stack>
                             ))}
                         </Stack>
@@ -506,11 +508,11 @@ function AssignmentsPanel() {
             </div>
 
             {showConfirmModal && (
-                <Dialog isOpen={showConfirmModal} onClose={() => setShowConfirmModal(false)} className="assignments-confirm-modal">
+                <Dialog isOpen={showConfirmModal} onClose={() => setShowConfirmModal(false)} className={styles['assignments-confirm-modal']}>
                     <DialogHeader onClose={() => setShowConfirmModal(false)}>
                         {mode === 'assign' ? 'Confirmar Atribuição' : 'Confirmar Remoção'}
                     </DialogHeader>
-                    <Stack direction="vertical" gap={12} className="assignments-confirm-body">
+                    <Stack direction="vertical" gap={12} className={styles['assignments-confirm-body']}>
                         <p>
                             {mode === 'assign'
                                 ? <>
@@ -520,14 +522,14 @@ function AssignmentsPanel() {
                                     Você está prestes a remover <strong>{totalAffected} atribuições</strong> dos seguintes usuários:
                                 </>}
                         </p>
-                        <Stack direction="vertical" gap={8} className="assignments-confirm-preview">
+                        <Stack direction="vertical" gap={8} className={styles['assignments-confirm-preview']}>
                             {activePreview.map((item) => (
-                                <p key={item.username} className="assignments-confirm-preview-item">
-                                    <span className={mode === 'assign' ? 'assignments-confirm-username' : 'assignments-confirm-username assignments-confirm-username-unassign'}>{item.username}</span>: {item.count} textos
+                                <p key={item.username} className={styles['assignments-confirm-preview-item']}>
+                                    <span className={cx('assignments-confirm-username', mode !== 'assign' && 'assignments-confirm-username-unassign')}>{item.username}</span>: {item.count} textos
                                 </p>
                             ))}
                         </Stack>
-                        <p className="assignments-confirm-question">Deseja continuar?</p>
+                        <p className={styles['assignments-confirm-question']}>Deseja continuar?</p>
                     </Stack>
                     <DialogFooter>
                         <Button tier="secondary" variant="neutral" onClick={() => setShowConfirmModal(false)}>

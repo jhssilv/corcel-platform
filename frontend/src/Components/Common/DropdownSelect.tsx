@@ -4,7 +4,7 @@ import Select, {
     type PropsValue,
     type SingleValue,
 } from 'react-select';
-import '../../styles/dropdown_select.css';
+import './dropdown_select.css';
 
 export interface SelectOption<TValue = string | number | boolean> {
     value: TValue;

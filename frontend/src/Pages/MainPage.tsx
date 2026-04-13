@@ -6,7 +6,7 @@ import { SectionHeader } from '../Components/Generic';
 import { getNormalizationsByText, getTextById } from '../Api';
 import { useToast } from '../Context/Generic';
 import type { Option, TextDetailResponse } from '../types';
-import '../styles/main_page.css';
+import layoutStyles from './page_layout.module.css';
 
 function MainPage() {
     const [selectedEssay, setSelectedEssay] = useState<Option<number> | null>(null);
@@ -45,7 +45,7 @@ function MainPage() {
     }, [selectedEssay, fetchEssay]);
 
     return (
-        <section className="main-page-section">
+        <section className={layoutStyles.mainPageSection}>
             <TopBar />
 
             <SectionHeader heading={<span style={{ textTransform: 'none' }}>Busca de Textos</span>} />

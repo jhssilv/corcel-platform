@@ -1,5 +1,5 @@
 import { useState, type Ref } from 'react';
-import '../../styles/floating_candidates_list.css';
+import styles from './floating_candidates_list.module.css';
 
 interface TokenPosition {
     top: number;
@@ -42,19 +42,19 @@ const FloatingCandidatesList = ({ candidates, tokenPosition, onSelect, onClose, 
     return (
         <div
             ref={forwardRef}
-            className="floating-candidates-list"
+            className={styles.floatingCandidatesList}
             style={{
                 top: tokenPosition.top - 10,
                 left: tokenPosition.left,
             }}
         >
-            <div className="candidates-content">
+            <div className={styles.candidatesContent}>
                 {chunkedCandidates.map((row, rowIndex) => (
-                    <div key={rowIndex} className="candidate-row">
+                    <div key={rowIndex} className={styles.candidateRow}>
                         {row.map((candidate, index) => (
                             <button
                                 key={`${rowIndex}-${index}`}
-                                className={`candidate-button ${selectedCandidate === candidate ? 'selected' : ''}`}
+                                className={`${styles.candidateButton} ${selectedCandidate === candidate ? styles.selected : ''}`.trim()}
                                 onClick={() => handleCandidateClick(candidate)}
                             >
                                 {candidate}

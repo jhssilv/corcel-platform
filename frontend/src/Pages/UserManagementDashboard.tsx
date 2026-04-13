@@ -6,8 +6,10 @@ import { useAuth } from '../Context/Auth/UseAuth';
 import { useSnackbar } from '../Context/Generic';
 import { Dialog, DialogHeader, Card, Stack, Button, DialogFooter, FormField, SectionHeader } from '../Components/Generic';
 import type { UserData } from '../types';
-import '../styles/main_page.css';
-import '../styles/user_management.css';
+import styles from './user_management_dashboard.module.css';
+import layoutStyles from './page_layout.module.css';
+
+const cx = (...classNames: Array<string | false | undefined>) => classNames.filter(Boolean).map((name) => styles[name as keyof typeof styles]).join(' ');
 
 function UserManagementDashboard() {
     const [users, setUsers] = useState<UserData[]>([]);
@@ -92,10 +94,10 @@ function UserManagementDashboard() {
     };
 
     return (
-        <div className="main-page-container">
+        <div className={layoutStyles.mainPageContainer}>
             <TopBar showSidePanel={true} />
 
-            <div className="main-page-section user-management-section">
+            <div className={`${layoutStyles.mainPageSection} ${styles['user-management-section']}`}>
                 <SectionHeader
                     heading={<span style={{ textTransform: 'none' }}>Gerenciamento de Usuários</span>}
                     actions={(
@@ -106,7 +108,7 @@ function UserManagementDashboard() {
                 />
 
                 <Card>
-                    <Stack direction="vertical" gap={20} className="user-management-content">
+                    <Stack direction="vertical" gap={20} className={styles['user-management-content']}>
                         <FormField label="Buscar usuário" htmlFor="user-management-search-input">
                             <input
                                 id="user-management-search-input"
@@ -114,15 +116,15 @@ function UserManagementDashboard() {
                                 placeholder="Buscar usuário..."
                                 value={searchTerm}
                                 onChange={(event: ChangeEvent<HTMLInputElement>) => setSearchTerm(event.target.value)}
-                                className="user-management-search"
+                                className={styles['user-management-search']}
                             />
                         </FormField>
 
                         {loading ? (
                             <p>Carregando...</p>
                         ) : (
-                            <div className="user-management-table-container">
-                                <table className="user-management-table">
+                            <div className={styles['user-management-table-container']}>
+                                <table className={styles['user-management-table']}>
                                     <thead>
                                         <tr>
                                             <th>Usuário</th>
@@ -140,7 +142,7 @@ function UserManagementDashboard() {
                                                     <button
                                                         onClick={() => setConfirmAdminToggle(user.username)}
                                                         disabled={user.username === currentUsername}
-                                                        className={`${user.isAdmin ? 'status-btn-active' : 'status-btn-inactive'} ${user.username === currentUsername ? 'status-btn-disabled' : ''}`}
+                                                        className={cx(user.isAdmin ? 'status-btn-active' : 'status-btn-inactive', user.username === currentUsername && 'status-btn-disabled')}
                                                     >
                                                         {user.isAdmin ? 'Sim' : 'Não'}
                                                     </button>
@@ -151,7 +153,7 @@ function UserManagementDashboard() {
                                                             void handleToggleActive(user.username);
                                                         }}
                                                         disabled={user.username === currentUsername}
-                                                        className={`${user.isActive ? 'status-btn-active' : 'status-btn-danger'} ${user.username === currentUsername ? 'status-btn-disabled' : ''}`}
+                                                        className={cx(user.isActive ? 'status-btn-active' : 'status-btn-danger', user.username === currentUsername && 'status-btn-disabled')}
                                                     >
                                                         {user.isActive ? 'Ativo' : 'Inativo'}
                                                     </button>
@@ -167,9 +169,9 @@ function UserManagementDashboard() {
             </div>
 
             {confirmAdminToggle && (
-                <Dialog isOpen={!!confirmAdminToggle} onClose={() => setConfirmAdminToggle(null)} className="upload-modal user-management-confirm-modal">
+                <Dialog isOpen={!!confirmAdminToggle} onClose={() => setConfirmAdminToggle(null)} className={styles['user-management-confirm-modal']}>
                     <DialogHeader onClose={() => setConfirmAdminToggle(null)}>Confirmar Alteração</DialogHeader>
-                    <Stack direction="vertical" gap={12} className="modal-body user-management-confirm-content">
+                    <Stack direction="vertical" gap={12} className={styles['user-management-confirm-content']}>
                         <p>
                             Tem certeza que deseja alterar o status de administrador para <strong>{confirmAdminToggle}</strong>?
                         </p>

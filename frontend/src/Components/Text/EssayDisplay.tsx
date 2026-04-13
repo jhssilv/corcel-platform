@@ -9,7 +9,7 @@ import { UseCorrectionActions } from '../../Hooks/Text/UseCorrectionActions';
 import { UseTextSelection } from '../../Hooks/Text/UseTextSelection';
 import type { TextDetailResponse } from '../../types';
 import styles from '../../styles/generated_essay.module.css';
-import '../../styles/user_management.css';
+import legendStyles from './essay_legend.module.css';
 
 interface EssayDisplayProps {
     essay: TextDetailResponse | null;
@@ -63,28 +63,28 @@ function EssayDisplay({ essay, refreshEssay }: EssayDisplayProps) {
                     </div>
                 </Banner>
             )}
-            <Stack direction="vertical" alignY="center" gap={12} className="essay-legend">
-                <Stack alignX="center" gap={20} className="essay-legend-items" wrap>
-                    <Stack alignY="center" className="essay-legend-item">
-                        <span className="essay-legend-swatch essay-legend-swatch--danger"></span>
+            <Stack direction="vertical" alignY="center" gap={12} className={legendStyles.essayLegend}>
+                <Stack alignX="center" gap={20} wrap>
+                    <Stack alignY="center">
+                        <span className={`${legendStyles.essayLegendSwatch} ${legendStyles.essayLegendSwatchDanger}`}></span>
                         <span>Não Normalizado</span>
                     </Stack>
-                    <Stack alignY="center" className="essay-legend-item">
-                        <span className="essay-legend-swatch essay-legend-swatch--info"></span>
+                    <Stack alignY="center">
+                        <span className={`${legendStyles.essayLegendSwatch} ${legendStyles.essayLegendSwatchInfo}`}></span>
                         <span>Substituído</span>
                     </Stack>
-                    <Stack alignY="center" className="essay-legend-item">
-                        <span className="essay-legend-swatch essay-legend-swatch--neutral"></span>
+                    <Stack alignY="center">
+                        <span className={`${legendStyles.essayLegendSwatch} ${legendStyles.essayLegendSwatchNeutral}`}></span>
                         <span>Selecionado</span>
                     </Stack>
                 </Stack>
-                <div className="essay-legend-hint">
+                <div className={legendStyles.essayLegendHint}>
                     <span>
                         Segure <strong>Ctrl</strong> para selecionar múltiplos tokens.
                     </span>
                 </div>
 
-                <Stack alignX="center" className="essay-legend-divider" style={{ marginTop: '10px', paddingTop: '10px' }}>
+                <Stack alignX="center" className={legendStyles.essayLegendDivider} style={{ marginTop: '10px', paddingTop: '10px' }}>
                     <Checkbox
                         data-testid="finalized-toggle-input"
                         checked={essay.normalizedByUser || false}
