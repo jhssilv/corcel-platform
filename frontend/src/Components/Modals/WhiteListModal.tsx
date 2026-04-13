@@ -1,9 +1,8 @@
-import { useEffect, useState, type ChangeEvent } from 'react';
+import { useEffect, useState } from 'react';
 import { parseTextFile } from '../../Services/Text/FileParsers';
 import { addToWhitelist, getWhitelist, removeFromWhitelist } from '../../Api';
-import { Dialog, DialogHeader, Stack, Button, DialogFooter, FormField, DropZone } from '../Generic';
+import { Stack, Button, FormField, DropZone, ModalScaffold, TextArea } from '../Generic';
 import { useSnackbar } from '../../Context/Generic';
-import styles from '../../styles/whitelist_modal.module.css';
 
 interface WhitelistModalProps {
     isOpen: boolean;
@@ -109,60 +108,52 @@ function WhitelistModal({ isOpen, onClose }: WhitelistModalProps) {
 
     const hasTextChanged = whitelistText !== originalWhitelistText;
 
-    if (!isOpen) {
-        return null;
-    }
-
     return (
-        <Dialog isOpen={isOpen} onClose={handleCancel} className={styles['whitelist-modal']}>
-            <DialogHeader onClose={handleCancel}>Gerenciar Whitelist</DialogHeader>
-
-            <Stack direction="vertical" gap={12} className={styles['modal-body']}>
+        <ModalScaffold
+            isOpen={isOpen}
+            onClose={handleCancel}
+            title="Gerenciar Whitelist"
+            footer={(
+                <>
+                    <Button tier="secondary" variant="neutral" onClick={handleCancel} disabled={isUpdating}>
+                        Cancelar
+                    </Button>
+                    <Button
+                        tier="primary"
+                        variant="action"
+                        onClick={() => {
+                            void handleUpdate();
+                        }}
+                        disabled={!hasTextChanged || isUpdating}
+                        isLoading={isUpdating}
+                    >
+                        Atualizar
+                    </Button>
+                </>
+            )}
+        >
+            <Stack direction="vertical" gap={12}>
                 <FormField label="Lista de palavras (separadas por vírgula):" htmlFor="whitelist-textarea">
                     <DropZone
-                        className={styles['textarea-container']}
-                        draggingClassName={styles.dragging}
+                        dragOverlayText="Solte os arquivos aqui"
                         enableClickSelect={false}
+                        accept=".txt,text/plain"
                         onFilesDropped={(files) => {
                             void handleDropFiles(files);
                         }}
                     >
-                        {({ isDragging }) => {
-                            return (
-                                <Stack direction="vertical">
-                                    <textarea
-                                        id="whitelist-textarea"
-                                        className={styles['whitelist-textarea']}
-                                        value={whitelistText}
-                                        onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setWhitelistText(event.target.value)}
-                                        placeholder="Digite as palavras separadas por vírgula ou arraste arquivos de texto aqui..."
-                                        rows={15}
-                                    />
-                                    {isDragging && <Stack alignX="center" alignY="center" className={styles['drag-overlay']}>Solte os arquivos aqui</Stack>}
-                                </Stack>
-                            );
-                        }}
+                        <TextArea
+                            id="whitelist-textarea"
+                            variant="editor"
+                            value={whitelistText}
+                            onChange={(event) => setWhitelistText(event.target.value)}
+                            placeholder="Digite as palavras separadas por vírgula ou arraste arquivos de texto aqui..."
+                            rows={15}
+                        />
                     </DropZone>
                 </FormField>
             </Stack>
-
-            <DialogFooter>
-                <Button tier="secondary" variant="neutral" onClick={handleCancel} disabled={isUpdating}>
-                    Cancelar
-                </Button>
-                <Button
-                    tier="primary"
-                    variant="action"
-                    onClick={() => {
-                        void handleUpdate();
-                    }}
-                    disabled={!hasTextChanged || isUpdating}
-                    isLoading={isUpdating}
-                >
-                    Atualizar
-                </Button>
-            </DialogFooter>
-        </Dialog>
+        </ModalScaffold>
     );
 }
 
