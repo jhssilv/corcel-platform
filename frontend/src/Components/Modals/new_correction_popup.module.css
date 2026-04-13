@@ -1,4 +1,4 @@
-.confirmation-overlay {
+.overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -9,7 +9,7 @@
     backdrop-filter: blur(3px);
 }
 
-.confirmation-dialog {
+.dialog {
     background-color: var(--color-bg-panel);
     padding: 20px;
     border-radius: 8px;
@@ -20,14 +20,7 @@
     margin: 0;
 }
 
-.confirmation-dialog p {
+.dialogText {
     color: var(--color-text-on-panel);
     margin-bottom: 20px;
 }
-
-.confirmation-buttons {}
-
-
-
-
-

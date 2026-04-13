@@ -1,7 +1,7 @@
 import { useEffect, useState, type CSSProperties, type KeyboardEvent, type MouseEvent as ReactMouseEvent } from 'react';
 import { deleteNormalization, postNormalization } from '../../Api';
 import { Stack, Button, DialogFooter } from '../Generic';
-import '../../styles/new_correction_popup.css';
+import styles from './new_correction_popup.module.css';
 import type { TextDetailResponse } from '../../types';
 
 interface TokenPosition {
@@ -104,9 +104,9 @@ const NewCorrectionPopup = ({
 
     if (!candidate) {
         return (
-            <Stack alignX="center" alignY="center" className="confirmation-overlay" onClick={handleCloseButton}>
-                <div className="confirmation-dialog" style={dialogStyle} data-testid="confirmation-dialog">
-                    <p>{username ? <><strong>{username}</strong>, </> : ''}você deseja remover a correção?</p>
+            <Stack alignX="center" alignY="center" className={styles.overlay} onClick={handleCloseButton}>
+                <div className={styles.dialog} style={dialogStyle} data-testid="confirmation-dialog">
+                    <p className={styles.dialogText}>{username ? <><strong>{username}</strong>, </> : ''}você deseja remover a correção?</p>
                     <DialogFooter align="center">
                         <Button
                             tier="primary"
@@ -132,9 +132,9 @@ const NewCorrectionPopup = ({
     }
 
     return (
-        <Stack alignX="center" alignY="center" className="confirmation-overlay" onClick={handleCloseButton}>
-            <div className="confirmation-dialog" style={dialogStyle} data-testid="confirmation-dialog">
-                <p>
+        <Stack alignX="center" alignY="center" className={styles.overlay} onClick={handleCloseButton}>
+            <div className={styles.dialog} style={dialogStyle} data-testid="confirmation-dialog">
+                <p className={styles.dialogText}>
                     {username ? <><strong>{username}</strong>, </> : ''}
                     você deseja adicionar <i>{candidate}</i> como correção
                     {suggestForAll ? ` para todas as ocorrências de "${tokenText}"? Isso afetará todos os textos` : '?'}
