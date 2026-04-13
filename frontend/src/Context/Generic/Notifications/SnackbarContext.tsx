@@ -1,51 +1,68 @@
-import { createContext, useContext, useState, type ReactNode, useCallback } from 'react';
-import SnackbarContainer from '../../../Components/Generic/Notifications/SnackbarContainer';
+import {
+	createContext,
+	useContext,
+	useState,
+	type ReactNode,
+	useCallback,
+} from "react";
+import SnackbarContainer from "../../../Components/Generic/Notifications/SnackbarContainer";
 
-export type SnackbarPosition = 'top-right' | 'top-left' | 'top-center' | 'bottom-right' | 'bottom-left' | 'bottom-center';
-export type SnackbarType = 'success' | 'error' | 'info' | 'warning' | 'default';
+export type SnackbarPosition =
+	| "top-right"
+	| "top-left"
+	| "top-center"
+	| "bottom-right"
+	| "bottom-left"
+	| "bottom-center";
+export type SnackbarType = "success" | "error" | "info" | "warning" | "default";
 
 export interface SnackbarMessage {
-    id: string;
-    text: string;
-    type?: SnackbarType;
-    position?: SnackbarPosition;
-    duration?: number;
-    actionText?: string;
-    onAction?: () => void;
+	id: string;
+	text: string;
+	type?: SnackbarType;
+	position?: SnackbarPosition;
+	duration?: number;
+	actionText?: string;
+	onAction?: () => void;
 }
 
 interface SnackbarContextType {
-    addSnackbar: (snackbar: Omit<SnackbarMessage, 'id'>) => void;
-    removeSnackbar: (id: string) => void;
+	addSnackbar: (snackbar: Omit<SnackbarMessage, "id">) => void;
+	removeSnackbar: (id: string) => void;
 }
 
-const SnackbarContext = createContext<SnackbarContextType | undefined>(undefined);
+const SnackbarContext = createContext<SnackbarContextType | undefined>(
+	undefined,
+);
 
 export const SnackbarProvider = ({ children }: { children: ReactNode }) => {
-    const [snackbars, setSnackbars] = useState<SnackbarMessage[]>([]);
+	const [snackbars, setSnackbars] = useState<SnackbarMessage[]>([]);
 
-    const addSnackbar = useCallback((snackbar: Omit<SnackbarMessage, 'id'>) => {
-        const id = Math.random().toString(36).substring(2, 9);
-        setSnackbars((prev) => [...prev, { ...snackbar, id }]);
-    }, []);
+	const addSnackbar = useCallback((snackbar: Omit<SnackbarMessage, "id">) => {
+		const id = Math.random().toString(36).substring(2, 9);
+		setSnackbars((prev) => [...prev, { ...snackbar, id }]);
+	}, []);
 
-    const removeSnackbar = useCallback((id: string) => {
-        setSnackbars((prev) => prev.filter((s) => s.id !== id));
-    }, []);
+	const removeSnackbar = useCallback((id: string) => {
+		setSnackbars((prev) => prev.filter((s) => s.id !== id));
+	}, []);
 
-    return (
-        <SnackbarContext.Provider value={{ addSnackbar, removeSnackbar }}>
-            {children}
-            <SnackbarContainer snackbars={snackbars} removeSnackbar={removeSnackbar} />
-        </SnackbarContext.Provider>
-    );
+	return (
+		<SnackbarContext.Provider value={{ addSnackbar, removeSnackbar }}>
+			{children}
+			<SnackbarContainer
+				snackbars={snackbars}
+				removeSnackbar={removeSnackbar}
+			/>
+		</SnackbarContext.Provider>
+	);
 };
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const useSnackbar = () => {
-    const context = useContext(SnackbarContext);
-    if (!context) {
-        throw new Error('useSnackbar must be used within a SnackbarProvider');
-    }
-    return context;
+	const context = useContext(SnackbarContext);
+	if (!context) {
+		throw new Error("useSnackbar must be used within a SnackbarProvider");
+	}
+	return context;
 };

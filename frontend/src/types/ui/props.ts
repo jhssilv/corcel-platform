@@ -1,23 +1,23 @@
-import type { ReactNode } from 'react';
+import type { ReactNode } from "react";
 
 export interface ProtectedRouteProps {
-    children: ReactNode;
-    requireAdmin?: boolean;
+	children: ReactNode;
+	requireAdmin?: boolean;
 }
 
 export interface TopBarProps {
-    onDownloadClick?: () => void;
-    showSidePanel?: boolean;
+	onDownloadClick?: () => void;
+	showSidePanel?: boolean;
 }
 
 export interface SidePanelActionProps {
-    onDownload: () => void;
-    onUpload: () => void;
-    onWhitelist: () => void;
-    onReport: () => void;
-    onLogout: () => void;
-    onRegisterUser?: () => void;
-    onManageUsers?: () => void;
-    onOCR?: () => void;
-    onAssignments?: () => void;
+	onDownload: () => void;
+	onUpload: () => void;
+	onWhitelist: () => void;
+	onReport: () => void;
+	onLogout: () => void;
+	onRegisterUser?: () => void;
+	onManageUsers?: () => void;
+	onOCR?: () => void;
+	onAssignments?: () => void;
 }

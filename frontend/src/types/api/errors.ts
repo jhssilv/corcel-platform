@@ -1,13 +1,13 @@
 export interface ApiErrorDetail {
-    field: string;
-    message: string;
+	field: string;
+	message: string;
 }
 
 export interface ApiError {
-    error: string;
-    details?: ApiErrorDetail[];
+	error: string;
+	details?: ApiErrorDetail[];
 }
 
 export interface ValidationError {
-    error: string;
+	error: string;
 }

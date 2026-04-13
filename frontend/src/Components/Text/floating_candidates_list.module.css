@@ -1,78 +1,78 @@
 .floatingCandidatesList {
-    position: absolute;
-    transform: translateY(-100%);
-    z-index: 1000;
-    display: flex;
-    flex-direction: row;
-    gap: 10px;
-    background-color: var(--color-bg-panel);
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid var(--color-border-secondary);
-    box-shadow: var(--shadow-md);
-    white-space: nowrap;
+	position: absolute;
+	transform: translateY(-100%);
+	z-index: 1000;
+	display: flex;
+	flex-direction: row;
+	gap: 10px;
+	background-color: var(--color-bg-panel);
+	padding: 10px;
+	border-radius: 8px;
+	border: 1px solid var(--color-border-secondary);
+	box-shadow: var(--shadow-md);
+	white-space: nowrap;
 }
 
 .candidatesContent {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
 }
 
 .closeButtonContainer {
-    display: flex;
-    align-items: flex-start;
-    padding-left: 5px;
-    border-left: 1px solid var(--color-border-secondary);
+	display: flex;
+	align-items: flex-start;
+	padding-left: 5px;
+	border-left: 1px solid var(--color-border-secondary);
 }
 
 .closeFloatingButton {
-    background: var(--color-bg-panel);
-    border: 1px solid var(--color-border-hover);
-    border-radius: 4px;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: var(--color-text-secondary);
-    font-size: 14px;
-    transition: all 0.2s;
+	background: var(--color-bg-panel);
+	border: 1px solid var(--color-border-hover);
+	border-radius: 4px;
+	width: 24px;
+	height: 24px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	color: var(--color-text-secondary);
+	font-size: 14px;
+	transition: all 0.2s;
 }
 
 .closeFloatingButton:hover {
-    background-color: var(--color-bg-hover);
-    color: var(--color-text-primary);
-    border-color: var(--color-border-hover);
+	background-color: var(--color-bg-hover);
+	color: var(--color-text-primary);
+	border-color: var(--color-border-hover);
 }
 
 .candidateRow {
-    display: flex;
-    gap: 5px;
+	display: flex;
+	gap: 5px;
 }
 
 .candidateButton {
-    background-color: var(--color-bg-hover);
-    border: 1px solid var(--color-border-hover);
-    color: var(--color-text-on-panel);
-    padding: 6px 10px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.2s;
-    width: auto;
-    text-align: left;
-    font-size: 0.9em;
+	background-color: var(--color-bg-hover);
+	border: 1px solid var(--color-border-hover);
+	color: var(--color-text-on-panel);
+	padding: 6px 10px;
+	border-radius: 4px;
+	cursor: pointer;
+	transition: all 0.2s;
+	width: auto;
+	text-align: left;
+	font-size: 0.9em;
 }
 
 .candidateButton:hover {
-    background-color: var(--color-bg-active);
-    border-color: var(--color-accent);
+	background-color: var(--color-bg-active);
+	border-color: var(--color-accent);
 }
 
 .candidateButton.selected,
 .selected {
-    background-color: var(--color-accent);
-    border-color: var(--color-accent);
-    color: white;
+	background-color: var(--color-accent);
+	border-color: var(--color-accent);
+	color: white;
 }

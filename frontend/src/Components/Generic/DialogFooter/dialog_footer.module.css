@@ -1,22 +1,22 @@
 .dialog-footer {
-    display: flex;
-    gap: 16px;
-    padding: 1.5rem;
-    border-top: 1px solid var(--color-border-subtle);
-    background-color: var(--color-bg-panel);
-    border-radius: 0 0 8px 8px;
-    width: 100%;
-    box-sizing: border-box;
+	display: flex;
+	gap: 16px;
+	padding: 1.5rem;
+	border-top: 1px solid var(--color-border-subtle);
+	background-color: var(--color-bg-panel);
+	border-radius: 0 0 8px 8px;
+	width: 100%;
+	box-sizing: border-box;
 }
 
 .align-left {
-    justify-content: flex-start;
+	justify-content: flex-start;
 }
 
 .align-center {
-    justify-content: center;
+	justify-content: center;
 }
 
 .align-right {
-    justify-content: flex-end;
+	justify-content: flex-end;
 }

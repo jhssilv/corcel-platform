@@ -1,106 +1,196 @@
 .snackbar-container {
-    position: fixed;
-    z-index: 9999;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 24px;
-    pointer-events: none;
+	position: fixed;
+	z-index: 9999;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 24px;
+	pointer-events: none;
 }
 
-.top-right { top: 0; right: 0; }
-.top-left { top: 0; left: 0; }
-.top-center { top: 0; left: 50%; transform: translateX(-50%); }
-.bottom-right { bottom: 0; right: 0; flex-direction: column-reverse; }
-.bottom-left { bottom: 0; left: 0; flex-direction: column-reverse; }
-.bottom-center { bottom: 0; left: 50%; transform: translateX(-50%); flex-direction: column-reverse; }
+.top-right {
+	top: 0;
+	right: 0;
+}
+.top-left {
+	top: 0;
+	left: 0;
+}
+.top-center {
+	top: 0;
+	left: 50%;
+	transform: translateX(-50%);
+}
+.bottom-right {
+	bottom: 0;
+	right: 0;
+	flex-direction: column-reverse;
+}
+.bottom-left {
+	bottom: 0;
+	left: 0;
+	flex-direction: column-reverse;
+}
+.bottom-center {
+	bottom: 0;
+	left: 50%;
+	transform: translateX(-50%);
+	flex-direction: column-reverse;
+}
 
 .snackbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    min-width: 300px;
-    max-width: 500px;
-    padding: 14px 20px;
-    border-radius: 8px;
-    background-color: #323232; /* Slightly distinct from standard background */
-    color: #e4e4e7;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
-    pointer-events: auto;
-    will-change: transform, opacity;
-    font-size: 0.95rem;
-    font-family: inherit;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	min-width: 300px;
+	max-width: 500px;
+	padding: 14px 20px;
+	border-radius: 8px;
+	background-color: #323232; /* Slightly distinct from standard background */
+	color: #e4e4e7;
+	box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+	pointer-events: auto;
+	will-change: transform, opacity;
+	font-size: 0.95rem;
+	font-family: inherit;
 }
 
-.snackbar-success { background-color: var(--color-success, #065f46); color: #fff; }
-.snackbar-error { background-color: var(--color-error, #991b1b); color: #fff; }
-.snackbar-warning { background-color: var(--color-warning, #92400e); color: #fff; }
-.snackbar-info { background-color: var(--color-info, #1e3a8a); color: #fff; }
+.snackbar-success {
+	background-color: var(--color-success, #065f46);
+	color: #fff;
+}
+.snackbar-error {
+	background-color: var(--color-error, #991b1b);
+	color: #fff;
+}
+.snackbar-warning {
+	background-color: var(--color-warning, #92400e);
+	color: #fff;
+}
+.snackbar-info {
+	background-color: var(--color-info, #1e3a8a);
+	color: #fff;
+}
 
 .snackbar-content {
-    flex-grow: 1;
-    margin-right: 16px;
+	flex-grow: 1;
+	margin-right: 16px;
 }
 
 .snackbar-actions {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+	display: flex;
+	align-items: center;
+	gap: 12px;
 }
 
 .snackbar-action-button {
-    background: transparent;
-    border: none;
-    color: var(--color-primary, #60a5fa);
-    font-weight: 600;
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    cursor: pointer;
-    padding: 4px 8px;
-    border-radius: 4px;
-    transition: background-color 0.2s;
+	background: transparent;
+	border: none;
+	color: var(--color-primary, #60a5fa);
+	font-weight: 600;
+	font-size: 0.9rem;
+	text-transform: uppercase;
+	cursor: pointer;
+	padding: 4px 8px;
+	border-radius: 4px;
+	transition: background-color 0.2s;
 }
 
 .snackbar-action-button:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+	background-color: rgba(255, 255, 255, 0.1);
 }
 
 .snackbar-success .snackbar-action-button,
 .snackbar-error .snackbar-action-button,
 .snackbar-warning .snackbar-action-button,
 .snackbar-info .snackbar-action-button {
-    color: #fff;
-    opacity: 0.9;
+	color: #fff;
+	opacity: 0.9;
 }
 
 .snackbar-close {
-    background: transparent;
-    border: none;
-    color: inherit;
-    font-size: 1.35rem;
-    cursor: pointer;
-    padding: 0;
-    line-height: 1;
-    opacity: 0.6;
-    transition: opacity 0.2s;
+	background: transparent;
+	border: none;
+	color: inherit;
+	font-size: 1.35rem;
+	cursor: pointer;
+	padding: 0;
+	line-height: 1;
+	opacity: 0.6;
+	transition: opacity 0.2s;
 }
 
 .snackbar-close:hover {
-    opacity: 1;
+	opacity: 1;
 }
 
-@keyframes snackbarSlideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-@keyframes snackbarSlideInLeft { from { transform: translateX(-100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-@keyframes snackbarSlideInTop { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-@keyframes snackbarSlideInBottom { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes snackbarSlideInRight {
+	from {
+		transform: translateX(100%);
+		opacity: 0;
+	}
+	to {
+		transform: translateX(0);
+		opacity: 1;
+	}
+}
+@keyframes snackbarSlideInLeft {
+	from {
+		transform: translateX(-100%);
+		opacity: 0;
+	}
+	to {
+		transform: translateX(0);
+		opacity: 1;
+	}
+}
+@keyframes snackbarSlideInTop {
+	from {
+		transform: translateY(-100%);
+		opacity: 0;
+	}
+	to {
+		transform: translateY(0);
+		opacity: 1;
+	}
+}
+@keyframes snackbarSlideInBottom {
+	from {
+		transform: translateY(100%);
+		opacity: 0;
+	}
+	to {
+		transform: translateY(0);
+		opacity: 1;
+	}
+}
 
-@keyframes snackbarFadeOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.95); } }
+@keyframes snackbarFadeOut {
+	from {
+		opacity: 1;
+		transform: scale(1);
+	}
+	to {
+		opacity: 0;
+		transform: scale(0.95);
+	}
+}
 
-.top-right .entering, .bottom-right .entering { animation: snackbarSlideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-.top-left .entering, .bottom-left .entering { animation: snackbarSlideInLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-.top-center .entering { animation: snackbarSlideInTop 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-.bottom-center .entering { animation: snackbarSlideInBottom 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.top-right .entering,
+.bottom-right .entering {
+	animation: snackbarSlideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.top-left .entering,
+.bottom-left .entering {
+	animation: snackbarSlideInLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.top-center .entering {
+	animation: snackbarSlideInTop 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.bottom-center .entering {
+	animation: snackbarSlideInBottom 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
 
 .leaving {
-    animation: snackbarFadeOut 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+	animation: snackbarFadeOut 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }

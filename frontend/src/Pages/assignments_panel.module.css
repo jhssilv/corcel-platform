@@ -1,275 +1,275 @@
 .assignments-panel-container {
-    padding: 20px;
-    padding-top: 80px;
+	padding: 20px;
+	padding-top: 80px;
 }
 
 /* Mode Toggle */
 .mode-toggle-container {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
+	display: flex;
+	gap: 10px;
+	margin-bottom: 20px;
 }
 
 .mode-toggle-btn {
-    flex: 1;
-    padding: 14px 20px;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-    border: 2px solid var(--color-border-secondary);
-    background-color: var(--color-bg-surface);
-    color: var(--color-text-muted);
+	flex: 1;
+	padding: 14px 20px;
+	border-radius: 8px;
+	font-size: 1rem;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.2s;
+	border: 2px solid var(--color-border-secondary);
+	background-color: var(--color-bg-surface);
+	color: var(--color-text-muted);
 }
 
 .mode-toggle-btn:hover {
-    background-color: var(--color-bg-hover);
-    border-color: var(--color-border-hover);
+	background-color: var(--color-bg-hover);
+	border-color: var(--color-border-hover);
 }
 
 .mode-toggle-btn.active {
-    background-color: var(--color-info-bg);
-    border-color: var(--color-info);
-    color: var(--color-info);
+	background-color: var(--color-info-bg);
+	border-color: var(--color-info);
+	color: var(--color-info);
 }
 
 .mode-toggle-btn.unassign.active {
-    background-color: var(--color-danger-bg);
-    border-color: var(--color-danger);
-    color: var(--color-danger);
+	background-color: var(--color-danger-bg);
+	border-color: var(--color-danger);
+	color: var(--color-danger);
 }
 
 /* Filters Section */
 .assignments-filters {
-    background-color: var(--color-bg-panel-alt);
-    padding: 20px;
-    border-radius: 12px;
-    border: 1px solid var(--color-border-primary);
-    margin-bottom: 20px;
-    box-shadow: var(--shadow-lg);
+	background-color: var(--color-bg-panel-alt);
+	padding: 20px;
+	border-radius: 12px;
+	border: 1px solid var(--color-border-primary);
+	margin-bottom: 20px;
+	box-shadow: var(--shadow-lg);
 }
 
 .assignments-filters-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 15px;
-    margin-bottom: 15px;
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: 15px;
+	margin-bottom: 15px;
 }
 
 .assignments-search-row {
-    display: flex;
-    gap: 15px;
-    align-items: flex-end;
+	display: flex;
+	gap: 15px;
+	align-items: flex-end;
 }
 
-.assignments-search-row>div {
-    flex: 1;
-    min-width: 0;
+.assignments-search-row > div {
+	flex: 1;
+	min-width: 0;
 }
 
 .assignments-search-input {
-    width: 100%;
-    max-width: 100%;
-    padding: 10px 12px;
-    box-sizing: border-box;
-    background-color: var(--color-bg-control);
-    border: 1px solid var(--color-border-secondary);
-    border-radius: 6px;
-    color: var(--color-text-on-surface);
-    font-size: 0.95rem;
+	width: 100%;
+	max-width: 100%;
+	padding: 10px 12px;
+	box-sizing: border-box;
+	background-color: var(--color-bg-control);
+	border: 1px solid var(--color-border-secondary);
+	border-radius: 6px;
+	color: var(--color-text-on-surface);
+	font-size: 0.95rem;
 }
 
 .assignments-search-input:focus {
-    outline: none;
-    border-color: var(--color-accent);
+	outline: none;
+	border-color: var(--color-accent);
 }
 
 .assignments-filters-grid-spaced {
-    margin-top: 15px;
+	margin-top: 15px;
 }
 
 /* Texts Table with sticky header */
 .assignments-texts-section {
-    background-color: var(--color-bg-panel-alt);
-    border-radius: 12px;
-    border: 1px solid var(--color-border-primary);
-    margin-bottom: 20px;
-    display: flex;
-    flex-direction: column;
-    max-height: 450px;
+	background-color: var(--color-bg-panel-alt);
+	border-radius: 12px;
+	border: 1px solid var(--color-border-primary);
+	margin-bottom: 20px;
+	display: flex;
+	flex-direction: column;
+	max-height: 450px;
 }
 
 .assignments-texts-header {
-    padding: 15px 20px;
-    background-color: var(--color-bg-panel-alt);
-    border-bottom: 1px solid var(--color-border-primary);
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    flex-shrink: 0;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 0;
+	padding: 15px 20px;
+	background-color: var(--color-bg-panel-alt);
+	border-bottom: 1px solid var(--color-border-primary);
+	position: sticky;
+	top: 0;
+	z-index: 10;
+	flex-shrink: 0;
+	flex-wrap: wrap;
+	gap: 10px;
+	margin-bottom: 0;
 }
 
 .assignments-selection-controls {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    flex-wrap: wrap;
+	display: flex;
+	gap: 10px;
+	align-items: center;
+	flex-wrap: wrap;
 }
 
 /* Select N control */
 .select-n-control {
-    display: flex;
-    gap: 6px;
-    align-items: center;
+	display: flex;
+	gap: 6px;
+	align-items: center;
 }
 
 .select-n-input {
-    width: 70px;
-    padding: 6px 10px;
-    background-color: var(--color-bg-surface);
-    border: 1px solid var(--color-border-secondary);
-    border-radius: 6px;
-    color: var(--color-text-on-panel);
-    font-size: 0.85rem;
-    text-align: center;
+	width: 70px;
+	padding: 6px 10px;
+	background-color: var(--color-bg-surface);
+	border: 1px solid var(--color-border-secondary);
+	border-radius: 6px;
+	color: var(--color-text-on-panel);
+	font-size: 0.85rem;
+	text-align: center;
 }
 
 .select-n-input:focus {
-    outline: none;
-    border-color: var(--color-info);
+	outline: none;
+	border-color: var(--color-info);
 }
 
 .select-n-input::placeholder {
-    color: var(--color-text-faint);
+	color: var(--color-text-faint);
 }
 
 /* Scrollable Texts List */
 .assignments-texts-list {
-    padding: 15px 20px;
-    overflow-y: auto;
-    flex: 1;
+	padding: 15px 20px;
+	overflow-y: auto;
+	flex: 1;
 }
 
 /* Users Selection */
 .assignments-users-section {
-    background-color: var(--color-bg-panel-alt);
-    padding: 20px;
-    border-radius: 12px;
-    border: 1px solid var(--color-border-primary);
-    margin-bottom: 20px;
+	background-color: var(--color-bg-panel-alt);
+	padding: 20px;
+	border-radius: 12px;
+	border: 1px solid var(--color-border-primary);
+	margin-bottom: 20px;
 }
 
 /* Assignment Preview */
 .assignments-preview {
-    background-color: var(--color-bg-panel-alt);
-    padding: 20px;
-    border-radius: 12px;
-    border: 1px solid var(--color-border-primary);
-    margin-bottom: 20px;
+	background-color: var(--color-bg-panel-alt);
+	padding: 20px;
+	border-radius: 12px;
+	border: 1px solid var(--color-border-primary);
+	margin-bottom: 20px;
 }
 
 .distribution-item {
-    background-color: var(--color-bg-surface);
-    padding: 12px 16px;
-    border-radius: 8px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    min-width: 120px;
+	background-color: var(--color-bg-surface);
+	padding: 12px 16px;
+	border-radius: 8px;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	min-width: 120px;
 }
 
 .distribution-username {
-    color: var(--color-info);
-    font-weight: 500;
+	color: var(--color-info);
+	font-weight: 500;
 }
 
 .distribution-count {
-    color: var(--color-text-on-panel);
-    font-size: 1.2rem;
+	color: var(--color-text-on-panel);
+	font-size: 1.2rem;
 }
 
 /* Unassign mode variants */
 .distribution-item.unassign {
-    border-left: 3px solid var(--color-danger);
+	border-left: 3px solid var(--color-danger);
 }
 
 .distribution-username.unassign {
-    color: var(--color-danger);
+	color: var(--color-danger);
 }
 
 .assignments-preview.unassign-mode {
-    border-color: rgba(239, 68, 68, 0.3);
+	border-color: rgba(239, 68, 68, 0.3);
 }
 
 .no-selection-message {
-    color: var(--color-text-muted);
-    font-style: italic;
+	color: var(--color-text-muted);
+	font-style: italic;
 }
 
 /* Action Buttons */
 .assignments-confirm-modal {
-    max-width: 500px;
+	max-width: 500px;
 }
 
 .assignments-confirm-body {
-    padding: 1.5rem;
+	padding: 1.5rem;
 }
 
 .assignments-confirm-preview {
-    margin-top: 15px;
-    padding: 10px;
-    background-color: var(--color-bg-control);
-    border-radius: 8px;
+	margin-top: 15px;
+	padding: 10px;
+	background-color: var(--color-bg-control);
+	border-radius: 8px;
 }
 
 .assignments-confirm-preview-item {
-    color: var(--color-text-on-surface);
+	color: var(--color-text-on-surface);
 }
 
 .assignments-confirm-username {
-    color: var(--color-info);
+	color: var(--color-info);
 }
 
 .assignments-confirm-username-unassign {
-    color: var(--color-danger);
+	color: var(--color-danger);
 }
 
 .assignments-confirm-question {
-    margin-top: 15px;
-    color: var(--color-text-muted);
+	margin-top: 15px;
+	color: var(--color-text-muted);
 }
 
 /* Loading state */
 .assignments-loading {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 40px;
-    color: var(--color-text-muted);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding: 40px;
+	color: var(--color-text-muted);
 }
 
 /* Success message */
 .assignments-success {
-    background-color: var(--color-success-bg);
-    border: 1px solid var(--color-success-border);
-    color: var(--color-success-border);
-    padding: 15px 20px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
+	background-color: var(--color-success-bg);
+	border: 1px solid var(--color-success-border);
+	color: var(--color-success-border);
+	padding: 15px 20px;
+	border-radius: 8px;
+	margin-bottom: 20px;
+	display: flex;
+	align-items: center;
+	gap: 10px;
 }
 
 .assignments-error {
-    background-color: var(--color-danger-bg);
-    border: 1px solid var(--color-danger);
-    color: var(--color-danger);
-    padding: 15px 20px;
-    border-radius: 8px;
-    margin-bottom: 20px;
+	background-color: var(--color-danger-bg);
+	border: 1px solid var(--color-danger);
+	color: var(--color-danger);
+	padding: 15px 20px;
+	border-radius: 8px;
+	margin-bottom: 20px;
 }

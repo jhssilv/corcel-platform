@@ -1,105 +1,109 @@
 .wrapper {
-    display: inline-flex;
-    align-items: flex-start;
-    gap: 0.6rem;
-    cursor: pointer;
-    color: var(--color-text-on-panel);
+	display: inline-flex;
+	align-items: flex-start;
+	gap: 0.6rem;
+	cursor: pointer;
+	color: var(--color-text-on-panel);
 }
 
 .disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+	opacity: 0.6;
+	cursor: not-allowed;
 }
 
 .input {
-    position: absolute;
-    opacity: 0;
-    width: 1px;
-    height: 1px;
-    pointer-events: none;
+	position: absolute;
+	opacity: 0;
+	width: 1px;
+	height: 1px;
+	pointer-events: none;
 }
 
 .indicator {
-    width: 18px;
-    height: 18px;
-    border: 1px solid var(--color-border-input);
-    border-radius: 4px;
-    background-color: var(--color-bg-control);
-    position: relative;
-    transition: border-color 0.2s ease, background-color 0.2s ease;
-    flex-shrink: 0;
-    margin-top: 1px;
+	width: 18px;
+	height: 18px;
+	border: 1px solid var(--color-border-input);
+	border-radius: 4px;
+	background-color: var(--color-bg-control);
+	position: relative;
+	transition:
+		border-color 0.2s ease,
+		background-color 0.2s ease;
+	flex-shrink: 0;
+	margin-top: 1px;
 }
 
-.input:focus-visible+.indicator {
-    box-shadow: 0 0 0 2px var(--color-bg-root), 0 0 0 4px var(--color-accent);
+.input:focus-visible + .indicator {
+	box-shadow:
+		0 0 0 2px var(--color-bg-root),
+		0 0 0 4px var(--color-accent);
 }
 
-.input:checked+.indicator {
-    border-color: var(--color-accent);
-    background-color: var(--color-accent);
+.input:checked + .indicator {
+	border-color: var(--color-accent);
+	background-color: var(--color-accent);
 }
 
-.input:checked+.indicator::after {
-    content: '';
-    position: absolute;
-    left: 5px;
-    top: 1px;
-    width: 5px;
-    height: 10px;
-    border: solid var(--color-text-inverse);
-    border-width: 0 2px 2px 0;
-    transform: rotate(45deg);
+.input:checked + .indicator::after {
+	content: "";
+	position: absolute;
+	left: 5px;
+	top: 1px;
+	width: 5px;
+	height: 10px;
+	border: solid var(--color-text-inverse);
+	border-width: 0 2px 2px 0;
+	transform: rotate(45deg);
 }
 
 .content {
-    display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.15rem;
 }
 
 .label {
-    line-height: 1.25;
+	line-height: 1.25;
 }
 
 .description {
-    font-size: 0.85rem;
-    color: var(--color-text-muted);
-    line-height: 1.3;
+	font-size: 0.85rem;
+	color: var(--color-text-muted);
+	line-height: 1.3;
 }
 
 .size-sm .indicator {
-    width: 16px;
-    height: 16px;
+	width: 16px;
+	height: 16px;
 }
 
-.size-sm .input:checked+.indicator::after {
-    left: 4px;
-    top: 1px;
-    width: 4px;
-    height: 8px;
+.size-sm .input:checked + .indicator::after {
+	left: 4px;
+	top: 1px;
+	width: 4px;
+	height: 8px;
 }
 
 .size-sm .label {
-    font-size: 0.88rem;
+	font-size: 0.88rem;
 }
 
 .size-md .label {
-    font-size: 0.95rem;
+	font-size: 0.95rem;
 }
 
 .size-lg .indicator {
-    width: 20px;
-    height: 20px;
+	width: 20px;
+	height: 20px;
 }
 
-.size-lg .input:checked+.indicator::after {
-    left: 6px;
-    top: 1px;
-    width: 5px;
-    height: 11px;
+.size-lg .input:checked + .indicator::after {
+	left: 6px;
+	top: 1px;
+	width: 5px;
+	height: 11px;
 }
 
 .size-lg .label {
-    font-size: 1rem;
+	font-size: 1rem;
 }

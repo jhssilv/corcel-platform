@@ -1,46 +1,46 @@
 .root {
-    position: relative;
+	position: relative;
 }
 
 .panel {
-    border: 2px dashed var(--color-border-input);
-    border-radius: 8px;
-    padding: 3rem 2rem;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    background-color: var(--color-bg-root);
-    min-height: 250px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+	border: 2px dashed var(--color-border-input);
+	border-radius: 8px;
+	padding: 3rem 2rem;
+	text-align: center;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	background-color: var(--color-bg-root);
+	min-height: 250px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 .panel:hover {
-    border-color: var(--color-accent);
-    background-color: rgba(100, 108, 255, 0.05);
+	border-color: var(--color-accent);
+	background-color: rgba(100, 108, 255, 0.05);
 }
 
 .panelDragging {
-    border-color: var(--color-accent);
-    background-color: rgba(100, 108, 255, 0.1);
-    border-style: solid;
+	border-color: var(--color-accent);
+	background-color: rgba(100, 108, 255, 0.1);
+	border-style: solid;
 }
 
 .dragOverlay {
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    background-color: rgba(100, 108, 255, 0.2);
-    border: 2px dashed var(--color-accent);
-    border-radius: 8px;
-    color: var(--color-text-primary);
-    font-size: 1.2rem;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none;
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	background-color: rgba(100, 108, 255, 0.2);
+	border: 2px dashed var(--color-accent);
+	border-radius: 8px;
+	color: var(--color-text-primary);
+	font-size: 1.2rem;
+	font-weight: 700;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	pointer-events: none;
 }

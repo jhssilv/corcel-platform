@@ -1,82 +1,82 @@
 :root {
-  font-family: var(--font-family-base);
-  line-height: 1.5;
-  font-weight: 400;
+	font-family: var(--font-family-base);
+	line-height: 1.5;
+	font-weight: 400;
 
-  color: var(--color-text-primary);
-  background-color: var(--color-bg-root);
+	color: var(--color-text-primary);
+	background-color: var(--color-bg-root);
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+	font-synthesis: none;
+	text-rendering: optimizeLegibility;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
 }
 
 a {
-  font-weight: 500;
-  color: var(--color-link-primary);
-  text-decoration: inherit;
+	font-weight: 500;
+	color: var(--color-link-primary);
+	text-decoration: inherit;
 }
 
 a:hover {
-  color: var(--color-link-hover);
+	color: var(--color-link-hover);
 }
 
 body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
+	margin: 0;
+	display: flex;
+	place-items: center;
+	min-width: 320px;
+	min-height: 100vh;
 }
 
 h1 {
-  font-size: 2em;
-  line-height: 1.1;
+	font-size: 2em;
+	line-height: 1.1;
 }
 
 button {
-  border-radius: var(--radius-md);
-  border: 1px solid transparent;
-  padding: var(--space-sm) var(--space-md);
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: var(--color-bg-control);
-  color: var(--color-text-primary);
-  cursor: pointer;
-  transition: border-color 0.25s;
-  margin: var(--space-xxs);
+	border-radius: var(--radius-md);
+	border: 1px solid transparent;
+	padding: var(--space-sm) var(--space-md);
+	font-size: 1em;
+	font-weight: 500;
+	font-family: inherit;
+	background-color: var(--color-bg-control);
+	color: var(--color-text-primary);
+	cursor: pointer;
+	transition: border-color 0.25s;
+	margin: var(--space-xxs);
 }
 
 button:hover {
-  border-color: var(--color-accent);
+	border-color: var(--color-accent);
 }
 
 button:focus,
 button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+	outline: 4px auto -webkit-focus-ring-color;
 }
 
 input {
-  padding: var(--space-sm);
-  font-size: 1em;
-  font-family: inherit;
-  background-color: var(--color-bg-control);
-  color: var(--color-text-primary);
-  border: 1px solid transparent;
-  border-radius: var(--radius-md);
-  margin: var(--space-xxs);
+	padding: var(--space-sm);
+	font-size: 1em;
+	font-family: inherit;
+	background-color: var(--color-bg-control);
+	color: var(--color-text-primary);
+	border: 1px solid transparent;
+	border-radius: var(--radius-md);
+	margin: var(--space-xxs);
 }
 
 input:focus {
-  outline: 4px auto -webkit-focus-ring-color;
+	outline: 4px auto -webkit-focus-ring-color;
 }
 
 #root {
-  width: 100%;
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+	width: 100%;
+	max-width: 1280px;
+	margin: 0 auto;
+	padding: 2rem;
+	text-align: center;
 }

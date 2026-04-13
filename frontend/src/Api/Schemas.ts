@@ -1,11 +1,11 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 /**
  * Schema for successful responses with a message.
  * Ex: { "message": "Operation successful" }
  */
 export const MessageResponseSchema = z.object({
-    message: z.string(),
+	message: z.string(),
 });
 
 // --- Schemas for /api/users ---
@@ -15,7 +15,7 @@ export const MessageResponseSchema = z.object({
  * Expects an array of strings with the usernames.
  */
 export const UsernamesResponseSchema = z.object({
-    usernames: z.array(z.string())
+	usernames: z.array(z.string()),
 });
 
 // --- Schemas for /api/login ---
@@ -24,23 +24,22 @@ export const UsernamesResponseSchema = z.object({
  * Validates the request body for POST /api/login.
  */
 export const LoginRequestSchema = z.object({
-    username: z.string().min(1, 'O nome de usuário é obrigatório.'),
-    password: z.string().min(1, 'A senha é obrigatória.'),
+	username: z.string().min(1, "O nome de usuário é obrigatório."),
+	password: z.string().min(1, "A senha é obrigatória."),
 });
 
 /**
  * Validates the successful response from the POST /api/login route.
  */
 export const LoginResponseSchema = z.object({
-    message: z.string(),
-    isAdmin: z.boolean(),
+	message: z.string(),
+	isAdmin: z.boolean(),
 });
 
 export const CurrentUserResponseSchema = z.object({
-    username: z.string(),
-    isAdmin: z.boolean(),
+	username: z.string(),
+	isAdmin: z.boolean(),
 });
-
 
 // --- Schemas for /api/texts ---
 
@@ -48,13 +47,15 @@ export const CurrentUserResponseSchema = z.object({
  * Validates the metadata object of a single text in the list of texts.
  */
 const TextMetadataSchema = z.object({
-    id: z.number(),
-    grade: z.number().nullable(),
-    usersAssigned: z.array(z.string()),
-    normalizedByUser: z.boolean(),
-    sourceFileName: z.string().nullable(),
-    isRaw: z.boolean().optional().default(false),
-    processingStatus: z.enum(['PENDING', 'PROCESSING', 'READY', 'FAILED']).default('PENDING'),
+	id: z.number(),
+	grade: z.number().nullable(),
+	usersAssigned: z.array(z.string()),
+	normalizedByUser: z.boolean(),
+	sourceFileName: z.string().nullable(),
+	isRaw: z.boolean().optional().default(false),
+	processingStatus: z
+		.enum(["PENDING", "PROCESSING", "READY", "FAILED"])
+		.default("PENDING"),
 });
 
 /**
@@ -63,8 +64,8 @@ const TextMetadataSchema = z.object({
 export const TextsDataResponseSchema = z.array(TextMetadataSchema);
 
 const RawTextMetadataSchema = z.object({
-    id: z.number(),
-    sourceFileName: z.string().nullable(),
+	id: z.number(),
+	sourceFileName: z.string().nullable(),
 });
 
 export const RawTextsDataResponseSchema = z.array(RawTextMetadataSchema);
@@ -73,39 +74,39 @@ export const RawTextsDataResponseSchema = z.array(RawTextMetadataSchema);
  * Validates each token object in the detailed text view.
  */
 const TokenDetailSchema = z.object({
-    id: z.number(),
-    text: z.string(),
-    isWord: z.boolean(),
-    position: z.number(),
-    toBeNormalized: z.boolean(),
-    candidates: z.array(z.string()).default([]),
-    whitespaceAfter: z.string().optional().default(''),
-    whitelisted: z.boolean().optional().default(false),
+	id: z.number(),
+	text: z.string(),
+	isWord: z.boolean(),
+	position: z.number(),
+	toBeNormalized: z.boolean(),
+	candidates: z.array(z.string()).default([]),
+	whitespaceAfter: z.string().optional().default(""),
+	whitelisted: z.boolean().optional().default(false),
 });
-
 
 /**
  * Validates the response from the GET /api/texts/<user_id>/<text_id> route.
  */
 export const TextDetailResponseSchema = z.object({
-    id: z.number(),
-    grade: z.number().nullable(),
-    tokens: z.array(TokenDetailSchema),
-    normalizedByUser: z.boolean(),
-    sourceFileName: z.string().nullable(),
-    assignedToUser: z.boolean(),
-    usersWhoNormalized: z.array(z.string()).optional().default([]),
-    isRaw: z.boolean().optional().default(false),
-    processingStatus: z.enum(['PENDING', 'PROCESSING', 'READY', 'FAILED']).default('PENDING'),
+	id: z.number(),
+	grade: z.number().nullable(),
+	tokens: z.array(TokenDetailSchema),
+	normalizedByUser: z.boolean(),
+	sourceFileName: z.string().nullable(),
+	assignedToUser: z.boolean(),
+	usersWhoNormalized: z.array(z.string()).optional().default([]),
+	isRaw: z.boolean().optional().default(false),
+	processingStatus: z
+		.enum(["PENDING", "PROCESSING", "READY", "FAILED"])
+		.default("PENDING"),
 });
 
 export const RawTextDetailResponseSchema = z.object({
-    id: z.number(),
-    source_file_name: z.string().nullable(),
-    text_content: z.string(),
-    image_path: z.string().nullable().optional(),
+	id: z.number(),
+	source_file_name: z.string().nullable(),
+	text_content: z.string(),
+	image_path: z.string().nullable().optional(),
 });
-
 
 // --- Schemas for /api/texts/.../normalizations ---
 
@@ -115,84 +116,85 @@ export const RawTextDetailResponseSchema = z.object({
  * {3: {last_index: 5, new_token: "correction"}, ...}
  */
 const NormalizationItemSchema = z.object({
-    last_index: z.number(),
-    new_token: z.string()
+	last_index: z.number(),
+	new_token: z.string(),
 });
 
 export const NormalizationsGetResponseSchema = z.record(
-    z.string(),
-    NormalizationItemSchema
+	z.string(),
+	NormalizationItemSchema,
 );
-
 
 /**
  * Valida o corpo da requisição para POST /api/texts/.../normalizations.
  */
 export const NormalizationCreateRequestSchema = z.object({
-    first_index: z.number(),
-    last_index: z.number(),
-    new_token: z.string(),
-    suggest_for_all: z.boolean().optional(),
+	first_index: z.number(),
+	last_index: z.number(),
+	new_token: z.string(),
+	suggest_for_all: z.boolean().optional(),
 });
 
 /**
  * Valida o corpo da requisição para DELETE /api/texts/.../normalizations.
  */
 export const NormalizationDeleteRequestSchema = z.object({
-    word_index: z.number(),
+	word_index: z.number(),
 });
 
 export const DownloadRequestSchema = z.object({
-    text_ids: z.array(z.number()).min(1, 'At least one text ID must be provided.'),
-    use_tags: z.boolean().optional(),
+	text_ids: z
+		.array(z.number())
+		.min(1, "At least one text ID must be provided."),
+	use_tags: z.boolean().optional(),
 });
 
 export const UploadResponseSchema = z.object({
-    message: z.string(),
-    text_ids: z.array(z.number()),
+	message: z.string(),
+	text_ids: z.array(z.number()),
 });
 
 export const BatchStatusItemSchema = z.object({
-    id: z.number(),
-    source_file_name: z.string(),
-    processing_status: z.enum(['PENDING', 'PROCESSING', 'READY', 'FAILED']),
+	id: z.number(),
+	source_file_name: z.string(),
+	processing_status: z.enum(["PENDING", "PROCESSING", "READY", "FAILED"]),
 });
 
 export const BatchStatusResponseSchema = z.object({
-    statuses: z.array(BatchStatusItemSchema),
+	statuses: z.array(BatchStatusItemSchema),
 });
 
 export const OCRUploadResponseSchema = z.object({
-    task_id: z.string(),
+	task_id: z.string(),
 });
 
 export const TaskStatusResponseSchema = z.object({
-    state: z.string(),
-    status: z.string(),
-    current: z.number().optional(),
-    total: z.number().optional(),
-    result: z.any().optional(),
-    error: z.string().optional(),
-    failed_files: z.array(z.string()).optional(),
+	state: z.string(),
+	status: z.string(),
+	current: z.number().optional(),
+	total: z.number().optional(),
+	result: z.any().optional(),
+	error: z.string().optional(),
+	failed_files: z.array(z.string()).optional(),
 });
 
 export const WhitelistTokensResponseSchema = z.object({
-    tokens: z.array(z.string()),
+	tokens: z.array(z.string()),
 });
 
 export const WhitelistTokenAddRequestSchema = z.object({
-    token_text: z.string().min(1, 'Token text cannot be empty.'),
+	token_text: z.string().min(1, "Token text cannot be empty."),
 });
 
 export const WhitelistTokenRemoveRequestSchema = z.object({
-    token_text: z.string().min(1, 'Token text cannot be empty.'),
+	token_text: z.string().min(1, "Token text cannot be empty."),
 });
 
 const UsersData = z.object({
-    username: z.string(),
-    isAdmin: z.boolean(),
-    isActive: z.boolean(),
-    lastLogin: z.string().nullable(),
+	username: z.string(),
+	isAdmin: z.boolean(),
+	isActive: z.boolean(),
+	lastLogin: z.string().nullable(),
 });
 
 export const UsersDataResponseSchema = z.array(UsersData);

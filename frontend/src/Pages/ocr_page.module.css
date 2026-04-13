@@ -1,55 +1,55 @@
 .pageSection {
-    display: flex;
-    flex-direction: column;
-    width: 100vw;
-    max-width: 100%;
-    margin: 0;
-    padding: 0;
-    padding-top: 60px;
-    box-sizing: border-box;
-    background-color: var(--color-bg-focus);
+	display: flex;
+	flex-direction: column;
+	width: 100vw;
+	max-width: 100%;
+	margin: 0;
+	padding: 0;
+	padding-top: 60px;
+	box-sizing: border-box;
+	background-color: var(--color-bg-focus);
 }
 
 .controlsHeader {
-    flex: 0 0 auto;
-    background-color: var(--color-bg-panel-alt);
-    border-bottom: 1px solid var(--color-border-primary);
-    padding: 10px 20px;
-    z-index: 10;
-    transition: all 0.3s ease;
+	flex: 0 0 auto;
+	background-color: var(--color-bg-panel-alt);
+	border-bottom: 1px solid var(--color-border-primary);
+	padding: 10px 20px;
+	z-index: 10;
+	transition: all 0.3s ease;
 }
 
 .controlsRow {
-    margin-bottom: 15px;
+	margin-bottom: 15px;
 }
 
 .backButton {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    background-color: var(--color-bg-hover);
-    color: var(--color-text-on-surface);
-    border: 1px solid var(--color-border-hover);
-    border-radius: 6px;
-    font-size: 0.95rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 16px;
+	background-color: var(--color-bg-hover);
+	color: var(--color-text-on-surface);
+	border: 1px solid var(--color-border-hover);
+	border-radius: 6px;
+	font-size: 0.95rem;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.2s ease;
 }
 
 .backButton:hover {
-    background-color: var(--color-bg-active);
-    border-color: var(--color-accent);
-    transform: translateX(-2px);
+	background-color: var(--color-bg-active);
+	border-color: var(--color-accent);
+	transform: translateX(-2px);
 }
 
 .backButton svg {
-    flex-shrink: 0;
+	flex-shrink: 0;
 }
 
 .pageTitle {
-    margin: 0;
-    font-size: 1.2rem;
-    color: var(--color-text-primary);
+	margin: 0;
+	font-size: 1.2rem;
+	color: var(--color-text-primary);
 }

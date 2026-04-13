@@ -1,158 +1,160 @@
 .button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid transparent;
-    border-radius: 4px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    outline: none;
-    text-decoration: none;
-    user-select: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border: 1px solid transparent;
+	border-radius: 4px;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	outline: none;
+	text-decoration: none;
+	user-select: none;
 }
 
 .button:disabled,
 .button.disabled {
-    cursor: not-allowed;
-    opacity: 0.5;
-    pointer-events: none;
-    filter: saturate(0.5);
+	cursor: not-allowed;
+	opacity: 0.5;
+	pointer-events: none;
+	filter: saturate(0.5);
 }
 
 .button.loading {
-    cursor: wait;
+	cursor: wait;
 }
 
 .spinner {
-    animation: spin 1s linear infinite;
+	animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-    from {
-        transform: rotate(0deg);
-    }
+	from {
+		transform: rotate(0deg);
+	}
 
-    to {
-        transform: rotate(360deg);
-    }
+	to {
+		transform: rotate(360deg);
+	}
 }
 
 /* Base states for active/focus */
 .button:focus-visible {
-    box-shadow: 0 0 0 2px var(--color-bg-root), 0 0 0 4px var(--color-accent);
+	box-shadow:
+		0 0 0 2px var(--color-bg-root),
+		0 0 0 4px var(--color-accent);
 }
 
 .button:active:not(:disabled):not(.disabled) {
-    transform: translateY(1px);
+	transform: translateY(1px);
 }
 
 /* SIZES */
 .size-sm {
-    padding: 4px 8px;
-    font-size: 0.85rem;
+	padding: 4px 8px;
+	font-size: 0.85rem;
 }
 
 .size-md {
-    padding: 8px 16px;
-    font-size: 0.95rem;
+	padding: 8px 16px;
+	font-size: 0.95rem;
 }
 
 .size-lg {
-    padding: 12px 24px;
-    font-size: 1.1rem;
+	padding: 12px 24px;
+	font-size: 1.1rem;
 }
 
 /* TIERS & VARIANTS COMBINED */
 
 /* PRIMARY (Solid) */
 .tier-primary.variant-action {
-    background-color: var(--color-btn-success, #28a745);
-    color: white;
+	background-color: var(--color-btn-success, #28a745);
+	color: white;
 }
 
 .tier-primary.variant-action:hover:not(:disabled):not(.disabled) {
-    background-color: var(--color-btn-success-hover, #218838);
-    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+	background-color: var(--color-btn-success-hover, #218838);
+	box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
 }
 
 .tier-primary.variant-danger {
-    background-color: var(--color-btn-danger, #dc3545);
-    color: white;
+	background-color: var(--color-btn-danger, #dc3545);
+	color: white;
 }
 
 .tier-primary.variant-danger:hover:not(:disabled):not(.disabled) {
-    background-color: var(--color-btn-danger-hover, #c82333);
+	background-color: var(--color-btn-danger-hover, #c82333);
 }
 
 .tier-primary.variant-neutral {
-    background-color: var(--color-bg-panel-alt, #444);
-    color: var(--color-text-primary, white);
-    border-color: var(--color-border-secondary, #555);
+	background-color: var(--color-bg-panel-alt, #444);
+	color: var(--color-text-primary, white);
+	border-color: var(--color-border-secondary, #555);
 }
 
 .tier-primary.variant-neutral:hover:not(:disabled):not(.disabled) {
-    background-color: var(--color-bg-hover, #555);
+	background-color: var(--color-bg-hover, #555);
 }
 
 /* SECONDARY (Outlined) */
 .tier-secondary.variant-action {
-    background-color: transparent;
-    color: var(--color-success, #28a745);
-    border-color: var(--color-success, #28a745);
+	background-color: transparent;
+	color: var(--color-success, #28a745);
+	border-color: var(--color-success, #28a745);
 }
 
 .tier-secondary.variant-action:hover:not(:disabled):not(.disabled) {
-    background-color: var(--color-success-bg-subtle, rgba(40, 167, 69, 0.1));
+	background-color: var(--color-success-bg-subtle, rgba(40, 167, 69, 0.1));
 }
 
 .tier-secondary.variant-danger {
-    background-color: transparent;
-    color: var(--color-danger, #dc3545);
-    border-color: var(--color-danger, #dc3545);
+	background-color: transparent;
+	color: var(--color-danger, #dc3545);
+	border-color: var(--color-danger, #dc3545);
 }
 
 .tier-secondary.variant-danger:hover:not(:disabled):not(.disabled) {
-    background-color: var(--color-danger-bg-subtle, rgba(220, 53, 69, 0.1));
+	background-color: var(--color-danger-bg-subtle, rgba(220, 53, 69, 0.1));
 }
 
 .tier-secondary.variant-neutral {
-    background-color: transparent;
-    color: var(--color-text-secondary, #aaa);
-    border-color: var(--color-border-secondary, #555);
+	background-color: transparent;
+	color: var(--color-text-secondary, #aaa);
+	border-color: var(--color-border-secondary, #555);
 }
 
 .tier-secondary.variant-neutral:hover:not(:disabled):not(.disabled) {
-    background-color: var(--color-bg-hover, #333);
-    color: var(--color-text-primary, white);
-    border-color: var(--color-text-secondary, #aaa);
+	background-color: var(--color-bg-hover, #333);
+	color: var(--color-text-primary, white);
+	border-color: var(--color-text-secondary, #aaa);
 }
 
 /* TERTIARY (Ghost / Transparent) */
 .tier-tertiary.variant-action {
-    background-color: transparent;
-    color: var(--color-success, #28a745);
+	background-color: transparent;
+	color: var(--color-success, #28a745);
 }
 
 .tier-tertiary.variant-action:hover:not(:disabled):not(.disabled) {
-    background-color: var(--color-success-bg-subtle, rgba(40, 167, 69, 0.1));
+	background-color: var(--color-success-bg-subtle, rgba(40, 167, 69, 0.1));
 }
 
 .tier-tertiary.variant-danger {
-    background-color: transparent;
-    color: var(--color-danger, #dc3545);
+	background-color: transparent;
+	color: var(--color-danger, #dc3545);
 }
 
 .tier-tertiary.variant-danger:hover:not(:disabled):not(.disabled) {
-    background-color: var(--color-danger-bg-subtle, rgba(220, 53, 69, 0.1));
+	background-color: var(--color-danger-bg-subtle, rgba(220, 53, 69, 0.1));
 }
 
 .tier-tertiary.variant-neutral {
-    background-color: transparent;
-    color: var(--color-text-secondary, #aaa);
+	background-color: transparent;
+	color: var(--color-text-secondary, #aaa);
 }
 
 .tier-tertiary.variant-neutral:hover:not(:disabled):not(.disabled) {
-    background-color: var(--color-bg-hover, #333);
-    color: var(--color-text-primary, white);
+	background-color: var(--color-bg-hover, #333);
+	color: var(--color-text-primary, white);
 }

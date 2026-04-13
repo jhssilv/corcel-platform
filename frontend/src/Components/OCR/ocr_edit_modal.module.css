@@ -1,155 +1,155 @@
 .modalContent {
-    background-color: var(--color-bg-panel-alt);
-    width: 95vw;
-    height: 92vh;
-    border-radius: 8px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    box-shadow: var(--shadow-xl);
+	background-color: var(--color-bg-panel-alt);
+	width: 95vw;
+	height: 92vh;
+	border-radius: 8px;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+	box-shadow: var(--shadow-xl);
 }
 
 .modalBody {
-    flex: 1;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0;
-    overflow: hidden;
+	flex: 1;
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 0;
+	overflow: hidden;
 }
 
 .modalImagePanel {
-    background-color: var(--color-bg-image);
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-right: 1px solid var(--color-border-primary);
+	background-color: var(--color-bg-image);
+	position: relative;
+	overflow: hidden;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-right: 1px solid var(--color-border-primary);
 }
 
 .imageContainer {
-    width: 100%;
-    height: 100%;
-    position: relative;
-    overflow: hidden;
-    cursor: grab;
+	width: 100%;
+	height: 100%;
+	position: relative;
+	overflow: hidden;
+	cursor: grab;
 }
 
 .imageContainer:active {
-    cursor: grabbing;
+	cursor: grabbing;
 }
 
 .modalImage {
-    max-width: 90%;
-    max-height: 90%;
-    transition: transform 0.1s linear;
-    box-shadow: var(--shadow-xl);
-    transform-origin: center center;
+	max-width: 90%;
+	max-height: 90%;
+	transition: transform 0.1s linear;
+	box-shadow: var(--shadow-xl);
+	transform-origin: center center;
 }
 
 .imagePlaceholder {
-    color: var(--color-text-faint);
-    font-size: 1.1rem;
+	color: var(--color-text-faint);
+	font-size: 1.1rem;
 }
 
 .imageControls {
-    position: absolute;
-    top: 15px;
-    left: 15px;
-    background: var(--color-bg-panel-alt);
-    padding: 10px 15px;
-    border-radius: 6px;
-    border: 1px solid var(--color-border-secondary);
-    z-index: 10;
-    display: flex;
-    gap: 10px;
-    align-items: center;
+	position: absolute;
+	top: 15px;
+	left: 15px;
+	background: var(--color-bg-panel-alt);
+	padding: 10px 15px;
+	border-radius: 6px;
+	border: 1px solid var(--color-border-secondary);
+	z-index: 10;
+	display: flex;
+	gap: 10px;
+	align-items: center;
 }
 
 .controlHint {
-    font-size: 0.75rem;
-    color: var(--color-text-muted);
+	font-size: 0.75rem;
+	color: var(--color-text-muted);
 }
 
 .modalTextPanel {
-    background-color: var(--color-bg-panel-alt);
-    display: flex;
-    flex-direction: column;
-    padding: 20px;
+	background-color: var(--color-bg-panel-alt);
+	display: flex;
+	flex-direction: column;
+	padding: 20px;
 }
 
 .modalTextPanelExpanded {
-    grid-column: 1 / -1;
+	grid-column: 1 / -1;
 }
 
 .textToolbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 15px;
 }
 
 .toolbarTitle {
-    font-size: 1rem;
-    font-weight: 500;
-    color: var(--color-text-on-surface);
-    margin: 0;
+	font-size: 1rem;
+	font-weight: 500;
+	color: var(--color-text-on-surface);
+	margin: 0;
 }
 
 .toolbarActions {
-    display: flex;
-    gap: 10px;
+	display: flex;
+	gap: 10px;
 }
 
 .modalTextarea {
-    flex-grow: 1;
-    width: 100%;
-    resize: none;
-    padding: 15px;
-    font-size: 1.05rem;
-    line-height: 1.8;
-    border: 1px solid var(--color-border-primary);
-    border-radius: 4px;
-    font-family: 'Merriweather', serif;
-    background-color: var(--color-bg-control);
-    color: var(--color-text-on-surface);
-    outline: none;
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+	flex-grow: 1;
+	width: 100%;
+	resize: none;
+	padding: 15px;
+	font-size: 1.05rem;
+	line-height: 1.8;
+	border: 1px solid var(--color-border-primary);
+	border-radius: 4px;
+	font-family: "Merriweather", serif;
+	background-color: var(--color-bg-control);
+	color: var(--color-text-on-surface);
+	outline: none;
+	-ms-overflow-style: none;
+	scrollbar-width: none;
 }
 
 .modalTextarea::-webkit-scrollbar {
-    display: none;
+	display: none;
 }
 
 .modalTextarea:focus {
-    border-color: var(--color-accent);
+	border-color: var(--color-accent);
 }
 
 .confirmModal {
-    background-color: var(--color-bg-panel-alt);
-    border-radius: 8px;
-    max-width: 500px;
-    width: 90%;
-    box-shadow: var(--shadow-xl);
+	background-color: var(--color-bg-panel-alt);
+	border-radius: 8px;
+	max-width: 500px;
+	width: 90%;
+	box-shadow: var(--shadow-xl);
 }
 
 .confirmContent,
 .processingContent {
-    padding: 1.5rem;
+	padding: 1.5rem;
 }
 
 .loadingSpinner {
-    width: 60px;
-    height: 60px;
-    border: 6px solid var(--color-border-primary);
-    border-top-color: var(--color-accent);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
+	width: 60px;
+	height: 60px;
+	border: 6px solid var(--color-border-primary);
+	border-top-color: var(--color-accent);
+	border-radius: 50%;
+	animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
+	to {
+		transform: rotate(360deg);
+	}
 }

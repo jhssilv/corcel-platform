@@ -1,15 +1,15 @@
 .stack {
-    display: flex;
+	display: flex;
 }
 
 .horizontal {
-    flex-direction: row;
+	flex-direction: row;
 }
 
 .vertical {
-    flex-direction: column;
+	flex-direction: column;
 }
 
 .wrap {
-    flex-wrap: wrap;
+	flex-wrap: wrap;
 }

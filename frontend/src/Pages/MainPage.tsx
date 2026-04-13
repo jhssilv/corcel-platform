@@ -1,66 +1,72 @@
-import { useCallback, useEffect, useState } from 'react';
-import EssayDisplay from '../Components/Text/EssayDisplay';
-import EssaySelector from '../Components/Text/EssaySelector';
-import TopBar from '../Components/Layout/TopBar';
-import { SectionHeader } from '../Components/Generic';
-import { getNormalizationsByText, getTextById } from '../Api';
-import { useToast } from '../Context/Generic';
-import type { Option, TextDetailResponse } from '../types';
-import layoutStyles from './page_layout.module.css';
+import { useCallback, useEffect, useState } from "react";
+import EssayDisplay from "../Components/Text/EssayDisplay";
+import EssaySelector from "../Components/Text/EssaySelector";
+import TopBar from "../Components/Layout/TopBar";
+import { SectionHeader } from "../Components/Generic";
+import { getNormalizationsByText, getTextById } from "../Api";
+import { useToast } from "../Context/Generic";
+import type { Option, TextDetailResponse } from "../types";
+import layoutStyles from "./page_layout.module.css";
 
 function MainPage() {
-    const [selectedEssay, setSelectedEssay] = useState<Option<number> | null>(null);
-    const [currentText, setCurrentText] = useState<TextDetailResponse | null>(null);
-    const [refreshTrigger, setRefreshTrigger] = useState(0);
-    const { addToast } = useToast();
+	const [selectedEssay, setSelectedEssay] = useState<Option<number> | null>(
+		null,
+	);
+	const [currentText, setCurrentText] = useState<TextDetailResponse | null>(
+		null,
+	);
+	const [refreshTrigger, setRefreshTrigger] = useState(0);
+	const { addToast } = useToast();
 
-    const fetchEssay = useCallback(async () => {
-        if (!selectedEssay) {
-            return;
-        }
+	const fetchEssay = useCallback(async () => {
+		if (!selectedEssay) {
+			return;
+		}
 
-        try {
-            const text = await getTextById(selectedEssay.value);
-            const normalizations = await getNormalizationsByText(selectedEssay.value);
-            setCurrentText({ ...text, corrections: normalizations });
-        } catch (err) {
-            console.error('Failed to fetch essay details:', err);
-            addToast({
-                text: 'Erro ao carregar detalhes do texto.',
-                type: 'error',
-                duration: 5000,
-            });
-        }
-    }, [selectedEssay, addToast]);
+		try {
+			const text = await getTextById(selectedEssay.value);
+			const normalizations = await getNormalizationsByText(selectedEssay.value);
+			setCurrentText({ ...text, corrections: normalizations });
+		} catch (err) {
+			console.error("Failed to fetch essay details:", err);
+			addToast({
+				text: "Erro ao carregar detalhes do texto.",
+				type: "error",
+				duration: 5000,
+			});
+		}
+	}, [selectedEssay, addToast]);
 
-    const handleEssayUpdate = async () => {
-        await fetchEssay();
-        setRefreshTrigger((prev) => prev + 1);
-    };
+	const handleEssayUpdate = async () => {
+		await fetchEssay();
+		setRefreshTrigger((prev) => prev + 1);
+	};
 
-    useEffect(() => {
-        if (selectedEssay) {
-            void fetchEssay();
-        }
-    }, [selectedEssay, fetchEssay]);
+	useEffect(() => {
+		if (selectedEssay) {
+			void fetchEssay();
+		}
+	}, [selectedEssay, fetchEssay]);
 
-    return (
-        <section className={layoutStyles.mainPageSection}>
-            <TopBar />
+	return (
+		<section className={layoutStyles.mainPageSection}>
+			<TopBar />
 
-            <SectionHeader heading={<span style={{ textTransform: 'none' }}>Busca de Textos</span>} />
+			<SectionHeader
+				heading={<span style={{ textTransform: "none" }}>Busca de Textos</span>}
+			/>
 
-            <div>
-                <EssaySelector
-                    selectedEssay={selectedEssay}
-                    setSelectedEssay={setSelectedEssay}
-                    refreshTrigger={refreshTrigger}
-                />
-            </div>
+			<div>
+				<EssaySelector
+					selectedEssay={selectedEssay}
+					setSelectedEssay={setSelectedEssay}
+					refreshTrigger={refreshTrigger}
+				/>
+			</div>
 
-            <EssayDisplay essay={currentText} refreshEssay={handleEssayUpdate} />
-        </section>
-    );
+			<EssayDisplay essay={currentText} refreshEssay={handleEssayUpdate} />
+		</section>
+	);
 }
 
 export default MainPage;
