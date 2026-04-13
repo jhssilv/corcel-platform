@@ -1,4 +1,5 @@
 import { useRef, useState, type DragEvent, type ReactNode } from 'react';
+import styles from './drop_zone.module.css';
 
 interface DropZoneRenderState {
     isDragging: boolean;
@@ -8,6 +9,7 @@ interface DropZoneRenderState {
 export interface DropZoneProps {
     onFilesDropped: (files: File[]) => void | Promise<void>;
     children: ReactNode | ((state: DropZoneRenderState) => ReactNode);
+    variant?: 'unstyled' | 'panel';
     className?: string;
     draggingClassName?: string;
     accept?: string;
@@ -19,6 +21,7 @@ export interface DropZoneProps {
 export function DropZone({
     onFilesDropped,
     children,
+    variant = 'unstyled',
     className = '',
     draggingClassName = '',
     accept,
@@ -61,6 +64,9 @@ export function DropZone({
     };
 
     const classes = [
+        styles.root,
+        variant === 'panel' ? styles.panel : '',
+        variant === 'panel' && isDragging ? styles.panelDragging : '',
         className,
         isDragging ? draggingClassName : '',
     ].filter(Boolean).join(' ');

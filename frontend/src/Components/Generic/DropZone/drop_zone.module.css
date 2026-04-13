@@ -1,0 +1,28 @@
+.root {
+    position: relative;
+}
+
+.panel {
+    border: 2px dashed var(--color-border-input);
+    border-radius: 8px;
+    padding: 3rem 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background-color: var(--color-bg-root);
+    min-height: 250px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.panel:hover {
+    border-color: var(--color-accent);
+    background-color: rgba(100, 108, 255, 0.05);
+}
+
+.panelDragging {
+    border-color: var(--color-accent);
+    background-color: rgba(100, 108, 255, 0.1);
+    border-style: solid;
+}
