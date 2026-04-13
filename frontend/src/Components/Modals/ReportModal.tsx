@@ -1,8 +1,7 @@
-import { useEffect, useState, type MouseEvent as ReactMouseEvent } from 'react';
+import { useEffect, useState } from 'react';
 import { requestReport } from '../../Api';
 import { useSnackbar } from '../../Context/Generic';
 import { Stack, Button, ModalScaffold } from '../Generic';
-import styles from '../../styles/report_modal.module.css';
 
 interface ReportModalProps {
     isOpen: boolean;
@@ -61,8 +60,7 @@ function ReportModal({ isOpen, onClose, textCount }: ReportModalProps) {
             isOpen={isOpen}
             onClose={onClose}
             title="Gerar Relatório"
-            className={styles['report-modal']}
-            bodyClassName={styles['modal-body']}
+            size="sm"
             footer={(
                 <>
                     <Button tier="secondary" variant="neutral" onClick={onClose}>Cancelar</Button>
@@ -79,8 +77,8 @@ function ReportModal({ isOpen, onClose, textCount }: ReportModalProps) {
                 </>
             )}
         >
-            <Stack direction="vertical" gap={12}>
-                <p className={styles['report-text']}>
+            <Stack direction="vertical" gap={12} alignX="center">
+                <p>
                     Gerar relatório para os <b>{textCount}</b> textos <b>filtrados</b>?
                 </p>
             </Stack>
