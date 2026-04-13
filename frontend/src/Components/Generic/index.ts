@@ -23,3 +23,4 @@ export * from './FilterGrid/FilterGrid';
 export * from './ListState/ListState';
 export * from './ListSurface/ListSurface';
 export * from './TextArea/TextArea';
+export * from './GenericTable/GenericTable';
