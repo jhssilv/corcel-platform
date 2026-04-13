@@ -1,9 +1,21 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import JSZip from 'jszip';
 import { uploadTextArchive, getBatchStatus } from '../../Api/UploadApi';
-import { Badge, Icon, Stack, Button, ProgressInline, DropZone, ModalScaffold, Banner, IconButton } from '../Generic';
+import {
+    Badge,
+    Icon,
+    Stack,
+    Button,
+    ProgressInline,
+    DropZone,
+    ModalScaffold,
+    Banner,
+    IconButton,
+    ListSurface,
+    ListSurfaceItem,
+    ListSurfaceText,
+} from '../Generic';
 import { useSnackbar } from '../../Context/Generic';
-import styles from '../../styles/upload_modal.module.css';
 import type { BatchStatusItem } from '../../types/api/responses';
 
 interface UploadModalProps {
@@ -50,12 +62,8 @@ const renderTrackingBadge = (status: BatchStatusItem['processing_status']) => {
             <Badge
                 text="Falha"
                 iconName="XCircle"
-                variant="secondary"
+                variant="danger"
                 size="sm"
-                style={{
-                    backgroundColor: 'var(--color-danger)',
-                    borderColor: 'var(--color-danger-hover)',
-                }}
             />
         );
     }
@@ -345,7 +353,7 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
                 {failedFiles.length > 0 && !isProcessing && (
                     <Banner variant="danger">
                         <p><strong>Os seguintes arquivos falharam:</strong></p>
-                        <ul className={styles.failedFilesList}>
+                        <ul>
                             {failedFiles.map((f, i) => <li key={i}>{f}</li>)}
                         </ul>
                     </Banner>
@@ -354,14 +362,16 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
                 {isTracking || uploadSuccess ? (
                     <Stack direction="vertical" gap={12}>
                         <h3>Status de Processamento</h3>
-                        <Stack direction="vertical" gap={8} className={styles.listBox}>
+                        <ListSurface>
                             {trackedTexts.map((textItem) => (
-                                <Stack alignX="space-between" alignY="center" key={textItem.id} className={styles.listItem}>
-                                    <span className={styles.fileName} title={textItem.source_file_name}>{textItem.source_file_name}</span>
-                                    {renderTrackingBadge(textItem.processing_status)}
-                                </Stack>
+                                <ListSurfaceItem key={textItem.id}>
+                                    <Stack alignX="space-between" alignY="center">
+                                        <ListSurfaceText title={textItem.source_file_name}>{textItem.source_file_name}</ListSurfaceText>
+                                        {renderTrackingBadge(textItem.processing_status)}
+                                    </Stack>
+                                </ListSurfaceItem>
                             ))}
-                        </Stack>
+                        </ListSurface>
                         <p>
                             A avaliação é executada em segundo plano. Você já pode fechar esta janela caso queira e analisar os textos disponíveis no painel.
                         </p>
@@ -369,8 +379,7 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
                 ) : !isProcessing && (
                     <>
                         <DropZone
-                            className={styles.dropzone}
-                            draggingClassName={styles.dragging}
+                            variant="panel"
                             accept=".zip,.txt,.docx"
                             multiple
                             onFilesDropped={(files) => {
@@ -379,10 +388,12 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
                         >
                             {() => {
                                 return isValidating ? (
-                                    <Stack direction="vertical" alignX="center" gap={16}>
-                                        <div className={styles.spinner}></div>
-                                        <p>Verificando arquivos...</p>
-                                    </Stack>
+                                    <ProgressInline
+                                        progress={0}
+                                        statusMessage="Verificando arquivos..."
+                                        showPercent={false}
+                                        mode="spinner"
+                                    />
                                 ) : (
                                     <Stack direction="vertical" alignX="center" gap={12}>
                                         <Icon name="Upload" color="current" size={64} />
@@ -396,33 +407,37 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
                         {stagedFiles.length > 0 && (
                             <div>
                                 <h4>Arquivos Válidos ({stagedFiles.length})</h4>
-                                <Stack direction="vertical" gap={8} className={styles.listBox}>
+                                <ListSurface>
                                     {stagedFiles.map((file, idx) => (
-                                        <Stack alignX="space-between" alignY="center" key={idx} className={styles.listItem}>
-                                            <span className={styles.fileName} title={file.name}>{file.name}</span>
-                                            <IconButton
-                                                icon="X"
-                                                label="Remover"
-                                                size="sm"
-                                                variant="danger"
-                                                onClick={(e) => { e.stopPropagation(); removeStagedFile(file.name); }}
-                                            />
-                                        </Stack>
+                                        <ListSurfaceItem key={idx}>
+                                            <Stack alignX="space-between" alignY="center">
+                                                <ListSurfaceText title={file.name}>{file.name}</ListSurfaceText>
+                                                <IconButton
+                                                    icon="X"
+                                                    label="Remover"
+                                                    size="sm"
+                                                    variant="danger"
+                                                    onClick={(e) => { e.stopPropagation(); removeStagedFile(file.name); }}
+                                                />
+                                            </Stack>
+                                        </ListSurfaceItem>
                                     ))}
-                                </Stack>
+                                </ListSurface>
                             </div>
                         )}
 
                         {ignoredFiles.length > 0 && (
                             <div>
                                 <h4>Arquivos Ignorados ({ignoredFiles.length})</h4>
-                                <Stack direction="vertical" gap={8} className={styles.listBox}>
+                                <ListSurface>
                                     {ignoredFiles.map((err, idx) => (
-                                        <Stack alignX="space-between" alignY="center" key={idx} className={styles.listItem}>
-                                            <span className={`${styles.fileName} ${styles.dangerText}`}>{err}</span>
-                                        </Stack>
+                                        <ListSurfaceItem key={idx}>
+                                            <Stack alignX="space-between" alignY="center">
+                                                <ListSurfaceText tone="danger" truncate={false}>{err}</ListSurfaceText>
+                                            </Stack>
+                                        </ListSurfaceItem>
                                     ))}
-                                </Stack>
+                                </ListSurface>
                             </div>
                         )}
                     </>
