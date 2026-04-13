@@ -50,13 +50,6 @@
 	box-shadow: var(--shadow-lg);
 }
 
-.assignments-filters-grid {
-	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-	gap: 15px;
-	margin-bottom: 15px;
-}
-
 .assignments-search-row {
 	display: flex;
 	gap: 15px;
@@ -210,66 +203,3 @@
 	font-style: italic;
 }
 
-/* Action Buttons */
-.assignments-confirm-modal {
-	max-width: 500px;
-}
-
-.assignments-confirm-body {
-	padding: 1.5rem;
-}
-
-.assignments-confirm-preview {
-	margin-top: 15px;
-	padding: 10px;
-	background-color: var(--color-bg-control);
-	border-radius: 8px;
-}
-
-.assignments-confirm-preview-item {
-	color: var(--color-text-on-surface);
-}
-
-.assignments-confirm-username {
-	color: var(--color-info);
-}
-
-.assignments-confirm-username-unassign {
-	color: var(--color-danger);
-}
-
-.assignments-confirm-question {
-	margin-top: 15px;
-	color: var(--color-text-muted);
-}
-
-/* Loading state */
-.assignments-loading {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	padding: 40px;
-	color: var(--color-text-muted);
-}
-
-/* Success message */
-.assignments-success {
-	background-color: var(--color-success-bg);
-	border: 1px solid var(--color-success-border);
-	color: var(--color-success-border);
-	padding: 15px 20px;
-	border-radius: 8px;
-	margin-bottom: 20px;
-	display: flex;
-	align-items: center;
-	gap: 10px;
-}
-
-.assignments-error {
-	background-color: var(--color-danger-bg);
-	border: 1px solid var(--color-danger);
-	color: var(--color-danger);
-	padding: 15px 20px;
-	border-radius: 8px;
-	margin-bottom: 20px;
-}

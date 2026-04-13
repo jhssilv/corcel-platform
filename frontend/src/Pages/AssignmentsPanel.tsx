@@ -13,16 +13,16 @@ import TopBar from "../Components/Layout/TopBar";
 import {
 	Badge,
 	Icon,
-	Dialog,
-	DialogHeader,
 	Stack,
 	Button,
-	DialogFooter,
 	Checkbox,
 	FormField,
 	SectionHeader,
 	FilterGrid,
 	ListState,
+	ListSurface,
+	ListSurfaceItem,
+	ModalScaffold,
 	GenericTable,
 	type GenericTableColumn,
 } from "../Components/Generic";
@@ -471,11 +471,8 @@ function AssignmentsPanel() {
 				className={`${styles["assignments-panel-container"]} ${layoutStyles.mainPageSection}`}
 			>
 				<SectionHeader
-					heading={
-						<span style={{ textTransform: "none" }}>
-							Gerenciamento de Atribuições
-						</span>
-					}
+					preserveCase
+					heading="Gerenciamento de Atribuições"
 					actions={
 						<Button
 							tier="secondary"
@@ -566,25 +563,17 @@ function AssignmentsPanel() {
 				<div className={styles["assignments-texts-section"]}>
 					<SectionHeader
 						className={styles["assignments-texts-header"]}
+						preserveCase
 						heading={
-							<span
-								style={{
-									display: "inline-flex",
-									alignItems: "center",
-									gap: "12px",
-									textTransform: "none",
-								}}
-							>
-								<span style={{ textTransform: "none" }}>
-									Textos Disponíveis
-								</span>
+							<Stack as="span" alignY="center" gap={12}>
+								<span>Textos Disponíveis</span>
 								<Badge
 									text={`${selectedTextIds.size} de ${textsData.length} selecionados`}
 									variant="secondary"
 									size="md"
 									iconPosition="none"
 								/>
-							</span>
+							</Stack>
 						}
 						actions={
 							<div className={styles["assignments-selection-controls"]}>
@@ -664,11 +653,8 @@ function AssignmentsPanel() {
 
 				<div className={styles["assignments-users-section"]}>
 					<SectionHeader
-						heading={
-							<span style={{ textTransform: "none" }}>
-								{mode === "assign" ? "Atribuir Para" : "Remover De"}
-							</span>
-						}
+						preserveCase
+						heading={mode === "assign" ? "Atribuir Para" : "Remover De"}
 					/>
 					<DropdownSelect
 						title="Selecione os usuários"
@@ -686,12 +672,11 @@ function AssignmentsPanel() {
 					)}
 				>
 					<SectionHeader
+						preserveCase
 						heading={
-							<span style={{ textTransform: "none" }}>
-								{mode === "assign"
-									? "Prévia da Distribuição"
-									: "Atribuições a Remover"}
-							</span>
+							mode === "assign"
+								? "Prévia da Distribuição"
+								: "Atribuições a Remover"
 						}
 					/>
 					{activePreview.length === 0 ? (
@@ -763,19 +748,33 @@ function AssignmentsPanel() {
 			</div>
 
 			{showConfirmModal && (
-				<Dialog
+				<ModalScaffold
 					isOpen={showConfirmModal}
 					onClose={() => setShowConfirmModal(false)}
-					className={styles["assignments-confirm-modal"]}
+					title={mode === "assign" ? "Confirmar Atribuição" : "Confirmar Remoção"}
+					size="sm"
+					footer={
+						<>
+							<Button
+								tier="secondary"
+								variant="neutral"
+								onClick={() => setShowConfirmModal(false)}
+							>
+								Cancelar
+							</Button>
+							<Button
+								tier="primary"
+								variant="action"
+								onClick={() => {
+									void handleConfirmAction();
+								}}
+							>
+								Confirmar
+							</Button>
+						</>
+					}
 				>
-					<DialogHeader onClose={() => setShowConfirmModal(false)}>
-						{mode === "assign" ? "Confirmar Atribuição" : "Confirmar Remoção"}
-					</DialogHeader>
-					<Stack
-						direction="vertical"
-						gap={12}
-						className={styles["assignments-confirm-body"]}
-					>
+					<Stack direction="vertical" gap={12}>
 						<p>
 							{mode === "assign" ? (
 								<>
@@ -791,52 +790,26 @@ function AssignmentsPanel() {
 								</>
 							)}
 						</p>
-						<Stack
-							direction="vertical"
-							gap={8}
-							className={styles["assignments-confirm-preview"]}
-						>
-							{activePreview.map((item) => (
-								<p
-									key={item.username}
-									className={styles["assignments-confirm-preview-item"]}
-								>
-									<span
-										className={cx(
-											"assignments-confirm-username",
-											mode !== "assign" &&
-												"assignments-confirm-username-unassign",
-										)}
-									>
-										{item.username}
-									</span>
-									: {item.count} textos
-								</p>
-							))}
-						</Stack>
-						<p className={styles["assignments-confirm-question"]}>
-							Deseja continuar?
-						</p>
+						<ListSurface>
+							<Stack direction="vertical" gap={8}>
+								{activePreview.map((item) => (
+									<ListSurfaceItem key={item.username}>
+										<Stack alignY="center" gap={8}>
+											<Badge
+												text={item.username}
+												variant={mode === "assign" ? "secondary" : "danger"}
+												size="sm"
+												iconPosition="none"
+											/>
+											<span>{item.count} textos</span>
+										</Stack>
+									</ListSurfaceItem>
+								))}
+							</Stack>
+						</ListSurface>
+						<p>Deseja continuar?</p>
 					</Stack>
-					<DialogFooter>
-						<Button
-							tier="secondary"
-							variant="neutral"
-							onClick={() => setShowConfirmModal(false)}
-						>
-							Cancelar
-						</Button>
-						<Button
-							tier="primary"
-							variant="action"
-							onClick={() => {
-								void handleConfirmAction();
-							}}
-						>
-							Confirmar
-						</Button>
-					</DialogFooter>
-				</Dialog>
+				</ModalScaffold>
 			)}
 		</div>
 	);
