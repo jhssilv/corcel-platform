@@ -149,49 +149,9 @@
 
 /* Scrollable Texts List */
 .assignments-texts-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
     padding: 15px 20px;
     overflow-y: auto;
     flex: 1;
-}
-
-.assignments-text-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 12px;
-    background-color: var(--color-bg-surface);
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    flex-shrink: 0;
-}
-
-.assignments-text-item:hover {
-    background-color: var(--color-bg-hover);
-}
-
-.assignments-text-item.selected {
-    background-color: var(--color-info-bg);
-    border: 1px solid var(--color-info);
-}
-
-.assignments-text-name {
-    color: var(--color-text-on-panel);
-    font-size: 0.95rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.assignments-text-meta {
-    color: var(--color-text-muted);
-    font-size: 0.8rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 /* Users Selection */

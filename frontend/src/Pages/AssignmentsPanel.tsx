@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from 'react';
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, useTransition, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TopBar from '../Components/Layout/TopBar';
-import { Badge, Icon, Dialog, DialogHeader, Stack, Button, DialogFooter, Checkbox, FormField, SectionHeader, FilterGrid, ListState } from '../Components/Generic';
+import { Badge, Icon, Dialog, DialogHeader, Stack, Button, DialogFooter, Checkbox, FormField, SectionHeader, FilterGrid, ListState, GenericTable, type GenericTableColumn } from '../Components/Generic';
 import DropdownSelect, { type DropdownValue, type SelectOption } from '../Components/Common/DropdownSelect';
 import { bulkAssignTexts, bulkUnassignTexts, getFilteredTextsData, getUsernames } from '../Api';
 import { useSnackbar } from '../Context/Generic';
@@ -55,12 +55,14 @@ function AssignmentsPanel() {
     const [selectedAssignedUsers, setSelectedAssignedUsers] = useState<SelectOption<string>[]>([]);
     const [selectedNormalized, setSelectedNormalized] = useState<SelectOption<boolean>[]>([]);
     const [searchText, setSearchText] = useState('');
+    const deferredSearchText = useDeferredValue(searchText);
 
     const [selectedTextIds, setSelectedTextIds] = useState<Set<number>>(new Set());
     const [selectedTargetUsers, setSelectedTargetUsers] = useState<SelectOption<string>[]>([]);
 
     const [selectNValue, setSelectNValue] = useState('');
     const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [, startSelectionTransition] = useTransition();
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -98,8 +100,8 @@ function AssignmentsPanel() {
                 filters.normalized = selectedNormalized[0].value;
             }
 
-            if (searchText.trim()) {
-                filters.fileName = searchText.trim();
+            if (deferredSearchText.trim()) {
+                filters.fileName = deferredSearchText.trim();
             }
 
             const data = await getFilteredTextsData(filters);
@@ -114,82 +116,173 @@ function AssignmentsPanel() {
         } finally {
             setLoading(false);
         }
-    }, [selectedGrades, selectedAssignedUsers, selectedNormalized, searchText, addSnackbar]);
+    }, [selectedGrades, selectedAssignedUsers, selectedNormalized, deferredSearchText, addSnackbar]);
 
     useEffect(() => {
         const timeoutId = setTimeout(() => {
             void fetchFilteredTexts();
-        }, searchText ? 300 : 0);
+        }, deferredSearchText ? 300 : 0);
 
         return () => clearTimeout(timeoutId);
-    }, [fetchFilteredTexts, searchText]);
+    }, [fetchFilteredTexts, deferredSearchText]);
 
-    const selectedTexts = useMemo(() => {
-        return textsData.filter((text) => selectedTextIds.has(text.id));
-    }, [textsData, selectedTextIds]);
+    const selectedTargetUsernames = useMemo(() => {
+        return selectedTargetUsers.map((user) => user.value);
+    }, [selectedTargetUsers]);
 
-    const assignPreview = useMemo<PreviewItem[]>(() => {
-        if (selectedTextIds.size === 0 || selectedTargetUsers.length === 0) {
-            return [];
+    const assignmentTargetsByTextId = useMemo(() => {
+        const map = new Map<number, string[]>();
+
+        if (selectedTextIds.size === 0 || selectedTargetUsernames.length === 0) {
+            return map;
         }
 
-        const targetUsernames = selectedTargetUsers.map((user) => user.value);
-        const userCounts: Record<string, number> = {};
-        targetUsernames.forEach((username) => {
-            userCounts[username] = 0;
-        });
-
-        let userIndex = 0;
-        for (const text of selectedTexts) {
-            const targetUser = targetUsernames[userIndex % targetUsernames.length];
-            const currentAssignees = text.usersAssigned || [];
-
-            if (!currentAssignees.includes(targetUser)) {
-                userCounts[targetUser] += 1;
-            }
-
-            userIndex += 1;
-        }
-
-        return Object.entries(userCounts)
-            .filter(([, count]) => count > 0)
-            .map(([username, count]) => ({ username, count }));
-    }, [selectedTextIds.size, selectedTargetUsers, selectedTexts]);
-
-    const unassignPreview = useMemo<PreviewItem[]>(() => {
-        if (selectedTextIds.size === 0 || selectedTargetUsers.length === 0) {
-            return [];
-        }
-
-        const targetUsernames = selectedTargetUsers.map((user) => user.value);
-        const userCounts: Record<string, number> = {};
-        targetUsernames.forEach((username) => {
-            userCounts[username] = 0;
-        });
-
-        for (const text of selectedTexts) {
-            const currentAssignees = text.usersAssigned || [];
-            for (const targetUser of targetUsernames) {
-                if (currentAssignees.includes(targetUser)) {
-                    userCounts[targetUser] += 1;
+        if (mode === 'assign') {
+            let userIndex = 0;
+            for (const text of textsData) {
+                if (!selectedTextIds.has(text.id)) {
+                    continue;
                 }
+
+                const targetUser = selectedTargetUsernames[userIndex % selectedTargetUsernames.length];
+                const currentAssignees = text.usersAssigned || [];
+                map.set(text.id, currentAssignees.includes(targetUser) ? [] : [targetUser]);
+                userIndex += 1;
+            }
+
+            return map;
+        }
+
+        const targetSet = new Set(selectedTargetUsernames);
+        for (const text of textsData) {
+            if (!selectedTextIds.has(text.id)) {
+                continue;
+            }
+
+            const currentAssignees = text.usersAssigned || [];
+            const targets = currentAssignees.filter((username) => targetSet.has(username));
+            map.set(text.id, targets);
+        }
+
+        return map;
+    }, [mode, textsData, selectedTextIds, selectedTargetUsernames]);
+
+    const activePreview = useMemo<PreviewItem[]>(() => {
+        if (selectedTextIds.size === 0 || selectedTargetUsernames.length === 0) {
+            return [];
+        }
+
+        const userCounts: Record<string, number> = {};
+        selectedTargetUsernames.forEach((username) => {
+            userCounts[username] = 0;
+        });
+
+        for (const targets of assignmentTargetsByTextId.values()) {
+            for (const username of targets) {
+                userCounts[username] = (userCounts[username] || 0) + 1;
             }
         }
 
         return Object.entries(userCounts)
             .filter(([, count]) => count > 0)
             .map(([username, count]) => ({ username, count }));
-    }, [selectedTextIds.size, selectedTargetUsers, selectedTexts]);
+    }, [selectedTextIds.size, selectedTargetUsernames, assignmentTargetsByTextId]);
 
-    const activePreview = mode === 'assign' ? assignPreview : unassignPreview;
     const totalAffected = activePreview.reduce((sum, item) => sum + item.count, 0);
 
+    const assignmentTargetsByTextIdRef = useRef(assignmentTargetsByTextId);
+    assignmentTargetsByTextIdRef.current = assignmentTargetsByTextId;
+
+    const handleToggleText = useCallback((textId: number) => {
+        startSelectionTransition(() => {
+            setSelectedTextIds((previous) => {
+                const nextSet = new Set(previous);
+                if (nextSet.has(textId)) {
+                    nextSet.delete(textId);
+                } else {
+                    nextSet.add(textId);
+                }
+
+                return nextSet;
+            });
+        });
+    }, []);
+
+    const handleTextRowClick = useCallback((text: TextMetadata) => {
+        handleToggleText(text.id);
+    }, [handleToggleText]);
+
+    const textColumns: GenericTableColumn<TextMetadata>[] = useMemo(() => [
+        {
+            key: 'selected',
+            header: '',
+            width: '40px',
+            align: 'center',
+            render: (text, _rowIndex, context) => (
+                <Checkbox
+                    checked={context.isSelected}
+                    onChange={() => handleToggleText(text.id)}
+                    onClick={(event) => event.stopPropagation()}
+                    aria-label={`Selecionar ${text.sourceFileName || `Texto ${text.id}`}`}
+                    size="sm"
+                />
+            ),
+        },
+        {
+            key: 'sourceFileName',
+            header: 'Arquivo',
+            render: (text) => text.sourceFileName || `Texto ${text.id}`,
+            truncate: true,
+        },
+        {
+            key: 'grade',
+            header: 'Nota',
+            width: '90px',
+            render: (text) => text.grade ?? 'N/A',
+            align: 'center',
+        },
+        {
+            key: 'normalized',
+            header: 'Status',
+            width: '150px',
+            render: (text) => (text.normalizedByUser ? 'Normalizado' : 'Não normalizado'),
+            truncate: true,
+        },
+        {
+            key: 'usersAssigned',
+            header: 'Atribuído',
+            render: (text) => (text.usersAssigned?.length ? text.usersAssigned.join(', ') : 'Sem atribuição'),
+            truncate: true,
+        },
+        {
+            key: 'targets',
+            header: mode === 'assign' ? 'Destino' : 'Remover de',
+            render: (text, _rowIndex, context) => {
+                if (!context.isSelected || selectedTargetUsernames.length === 0) {
+                    return '-';
+                }
+
+                const targets = assignmentTargetsByTextIdRef.current.get(text.id) || [];
+                if (targets.length === 0) {
+                    return mode === 'assign' ? 'Sem nova atribuição' : 'Nada a remover';
+                }
+
+                return targets.join(', ');
+            },
+            truncate: true,
+        },
+    ], [mode, selectedTargetUsernames.length, handleToggleText]);
+
     const handleSelectAll = () => {
-        setSelectedTextIds(new Set(textsData.map((text) => text.id)));
+        startSelectionTransition(() => {
+            setSelectedTextIds(new Set(textsData.map((text) => text.id)));
+        });
     };
 
     const handleDeselectAll = () => {
-        setSelectedTextIds(new Set());
+        startSelectionTransition(() => {
+            setSelectedTextIds(new Set());
+        });
     };
 
     const handleSelectN = () => {
@@ -205,21 +298,10 @@ function AssignmentsPanel() {
             newSet.add(textsData[i].id);
         }
 
-        setSelectedTextIds(newSet);
-        setSelectNValue('');
-    };
-
-    const handleToggleText = (textId: number) => {
-        setSelectedTextIds((previous) => {
-            const nextSet = new Set(previous);
-            if (nextSet.has(textId)) {
-                nextSet.delete(textId);
-            } else {
-                nextSet.add(textId);
-            }
-
-            return nextSet;
+        startSelectionTransition(() => {
+            setSelectedTextIds(newSet);
         });
+        setSelectNValue('');
     };
 
     const handleOpenConfirmModal = () => {
@@ -418,29 +500,17 @@ function AssignmentsPanel() {
                             loadingContent={<p className={styles['no-selection-message']}>Carregando...</p>}
                             emptyContent={<p className={styles['no-selection-message']}>Nenhum texto encontrado com os filtros atuais.</p>}
                         >
-                            {(items) => items.map((text) => (
-                                <div
-                                    key={text.id}
-                                    className={cx('assignments-text-item', selectedTextIds.has(text.id) && 'selected')}
-                                    onClick={() => handleToggleText(text.id)}
-                                >
-                                    <Checkbox
-                                        checked={selectedTextIds.has(text.id)}
-                                        onChange={() => handleToggleText(text.id)}
-                                        onClick={(event) => event.stopPropagation()}
-                                        aria-label={`Selecionar ${text.sourceFileName || `Texto ${text.id}`}`}
-                                        size="sm"
-                                    />
-                                    <Stack direction="vertical" gap={2} style={{ minWidth: 0 }}>
-                                        <span className={styles['assignments-text-name']}>{text.sourceFileName || `Texto ${text.id}`}</span>
-                                        <span className={styles['assignments-text-meta']}>
-                                            ID: {text.id} | Nota: {text.grade ?? 'N/A'} |
-                                            {text.normalizedByUser ? ' Normalizado' : ' Não normalizado'}
-                                            {text.usersAssigned?.length > 0 && ` | Atribuído: ${text.usersAssigned.join(', ')}`}
-                                        </span>
-                                    </Stack>
-                                </div>
-                            ))}
+                            {(items) => (
+                                <GenericTable
+                                    mode="grid"
+                                    mobileMode="stack"
+                                    columns={textColumns}
+                                    data={items}
+                                    getRowId={(text) => text.id}
+                                    onRowClick={handleTextRowClick}
+                                    isRowSelected={(text) => selectedTextIds.has(text.id)}
+                                />
+                            )}
                         </ListState>
                     </div>
                 </div>

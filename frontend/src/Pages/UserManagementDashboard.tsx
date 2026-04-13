@@ -4,12 +4,8 @@ import TopBar from '../Components/Layout/TopBar';
 import { getUsersData, toggleUserActive, toggleUserAdmin } from '../Api';
 import { useAuth } from '../Context/Auth/UseAuth';
 import { useSnackbar } from '../Context/Generic';
-import { Dialog, DialogHeader, Card, Stack, Button, DialogFooter, FormField, SectionHeader, ListState } from '../Components/Generic';
+import { Card, Stack, Button, FormField, SectionHeader, ListState, GenericTable, type GenericTableColumn, ModalScaffold } from '../Components/Generic';
 import type { UserData } from '../types';
-import styles from './user_management_dashboard.module.css';
-import layoutStyles from './page_layout.module.css';
-
-const cx = (...classNames: Array<string | false | undefined>) => classNames.filter(Boolean).map((name) => styles[name as keyof typeof styles]).join(' ');
 
 function UserManagementDashboard() {
     const [users, setUsers] = useState<UserData[]>([]);
@@ -21,6 +17,64 @@ function UserManagementDashboard() {
     const { username: currentUsername } = useAuth();
     const navigate = useNavigate();
     const { addSnackbar } = useSnackbar();
+
+    const userColumns: GenericTableColumn<UserData>[] = [
+        {
+            key: 'username',
+            header: 'Usuário',
+            render: (user) => user.username,
+            truncate: true,
+        },
+        {
+            key: 'lastLogin',
+            header: 'Último Login',
+            render: (user) => (user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Nunca'),
+            truncate: true,
+        },
+        {
+            key: 'status',
+            header: 'Status',
+            render: (user) => (
+                <Stack gap={8} wrap>
+                    <Button size="sm" tier="secondary" variant={user.isAdmin ? 'action' : 'neutral'} disabled>
+                        Admin: {user.isAdmin ? 'Sim' : 'Não'}
+                    </Button>
+                    <Button size="sm" tier="secondary" variant={user.isActive ? 'action' : 'danger'} disabled>
+                        {user.isActive ? 'Ativo' : 'Inativo'}
+                    </Button>
+                </Stack>
+            ),
+        },
+        {
+            key: 'actions',
+            header: 'Ações',
+            render: (user) => (
+                <Stack gap={8} alignX="end" wrap>
+                    <Button
+                        size="sm"
+                        tier="secondary"
+                        variant={user.isAdmin ? 'action' : 'neutral'}
+                        onClick={() => setConfirmAdminToggle(user.username)}
+                        disabled={user.username === currentUsername}
+                    >
+                        {user.isAdmin ? 'Remover Admin' : 'Tornar Admin'}
+                    </Button>
+                    <Button
+                        size="sm"
+                        tier="secondary"
+                        variant={user.isActive ? 'danger' : 'action'}
+                        onClick={() => {
+                            void handleToggleActive(user.username);
+                        }}
+                        disabled={user.username === currentUsername}
+                    >
+                        {user.isActive ? 'Desativar' : 'Ativar'}
+                    </Button>
+                </Stack>
+            ),
+            align: 'right',
+        },
+    ];
 
     const fetchUsers = useCallback(async () => {
         try {
@@ -94,12 +148,13 @@ function UserManagementDashboard() {
     };
 
     return (
-        <div className={layoutStyles.mainPageContainer}>
+        <div>
             <TopBar showSidePanel={true} />
 
-            <div className={`${layoutStyles.mainPageSection} ${styles['user-management-section']}`}>
+            <div>
                 <SectionHeader
-                    heading={<span style={{ textTransform: 'none' }}>Gerenciamento de Usuários</span>}
+                    heading="Gerenciamento de Usuários"
+                    preserveCase
                     actions={(
                         <Button onClick={() => navigate('/main')} tier="secondary" variant="neutral">
                             Voltar
@@ -108,7 +163,7 @@ function UserManagementDashboard() {
                 />
 
                 <Card>
-                    <Stack direction="vertical" gap={20} className={styles['user-management-content']}>
+                    <Stack direction="vertical" gap={20}>
                         <FormField label="Buscar usuário" htmlFor="user-management-search-input">
                             <input
                                 id="user-management-search-input"
@@ -116,7 +171,6 @@ function UserManagementDashboard() {
                                 placeholder="Buscar usuário..."
                                 value={searchTerm}
                                 onChange={(event: ChangeEvent<HTMLInputElement>) => setSearchTerm(event.target.value)}
-                                className={styles['user-management-search']}
                             />
                         </FormField>
 
@@ -127,46 +181,13 @@ function UserManagementDashboard() {
                             emptyContent={<p>Nenhum usuário encontrado.</p>}
                         >
                             {() => (
-                                <div className={styles['user-management-table-container']}>
-                                    <table className={styles['user-management-table']}>
-                                        <thead>
-                                            <tr>
-                                                <th>Usuário</th>
-                                                <th>Último Login</th>
-                                                <th>Admin</th>
-                                                <th>Ativo</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {filteredUsers.map((user) => (
-                                                <tr key={user.username}>
-                                                    <td>{user.username}</td>
-                                                    <td>{user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Nunca'}</td>
-                                                    <td>
-                                                        <button
-                                                            onClick={() => setConfirmAdminToggle(user.username)}
-                                                            disabled={user.username === currentUsername}
-                                                            className={cx(user.isAdmin ? 'status-btn-active' : 'status-btn-inactive', user.username === currentUsername && 'status-btn-disabled')}
-                                                        >
-                                                            {user.isAdmin ? 'Sim' : 'Não'}
-                                                        </button>
-                                                    </td>
-                                                    <td>
-                                                        <button
-                                                            onClick={() => {
-                                                                void handleToggleActive(user.username);
-                                                            }}
-                                                            disabled={user.username === currentUsername}
-                                                            className={cx(user.isActive ? 'status-btn-active' : 'status-btn-danger', user.username === currentUsername && 'status-btn-disabled')}
-                                                        >
-                                                            {user.isActive ? 'Ativo' : 'Inativo'}
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
+                                <GenericTable
+                                    mode="semantic"
+                                    mobileMode="scroll"
+                                    columns={userColumns}
+                                    data={filteredUsers}
+                                    getRowId={(user) => user.username}
+                                />
                             )}
                         </ListState>
                     </Stack>
@@ -174,28 +195,34 @@ function UserManagementDashboard() {
             </div>
 
             {confirmAdminToggle && (
-                <Dialog isOpen={!!confirmAdminToggle} onClose={() => setConfirmAdminToggle(null)} className={styles['user-management-confirm-modal']}>
-                    <DialogHeader onClose={() => setConfirmAdminToggle(null)}>Confirmar Alteração</DialogHeader>
-                    <Stack direction="vertical" gap={12} className={styles['user-management-confirm-content']}>
+                <ModalScaffold
+                    isOpen={!!confirmAdminToggle}
+                    onClose={() => setConfirmAdminToggle(null)}
+                    title="Confirmar Alteração"
+                    size="sm"
+                    footer={(
+                        <>
+                            <Button tier="secondary" variant="neutral" onClick={() => setConfirmAdminToggle(null)}>
+                                Cancelar
+                            </Button>
+                            <Button
+                                tier="primary"
+                                variant="action"
+                                onClick={() => {
+                                    void handleToggleAdmin();
+                                }}
+                            >
+                                Confirmar
+                            </Button>
+                        </>
+                    )}
+                >
+                    <Stack direction="vertical" gap={12}>
                         <p>
                             Tem certeza que deseja alterar o status de administrador para <strong>{confirmAdminToggle}</strong>?
                         </p>
                     </Stack>
-                    <DialogFooter>
-                        <Button tier="secondary" variant="neutral" onClick={() => setConfirmAdminToggle(null)}>
-                            Cancelar
-                        </Button>
-                        <Button
-                            tier="primary"
-                            variant="action"
-                            onClick={() => {
-                                void handleToggleAdmin();
-                            }}
-                        >
-                            Confirmar
-                        </Button>
-                    </DialogFooter>
-                </Dialog>
+                </ModalScaffold>
             )}
         </div>
     );
