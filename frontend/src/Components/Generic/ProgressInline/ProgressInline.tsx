@@ -7,6 +7,7 @@ export interface ProgressInlineProps extends HTMLAttributes<HTMLDivElement> {
     hintText?: string;
     showPercent?: boolean;
     showSpinner?: boolean;
+    mode?: 'bar' | 'spinner';
 }
 
 export function ProgressInline({
@@ -15,21 +16,28 @@ export function ProgressInline({
     hintText,
     showPercent = true,
     showSpinner = false,
+    mode = 'bar',
     className = '',
     ...props
 }: ProgressInlineProps) {
     const safeProgress = Math.max(0, Math.min(100, progress));
     const classes = [styles.root, className].filter(Boolean).join(' ');
+    const showProgressBar = mode === 'bar';
+    const spinnerVisible = showSpinner || mode === 'spinner';
 
     return (
         <div className={classes} {...props}>
-            <div className={styles.track}>
-                <div className={styles.fill} style={{ width: `${safeProgress}%` }} />
-            </div>
-            {showPercent ? <p className={styles.percent}>{Math.round(safeProgress)}%</p> : null}
+            {showProgressBar ? (
+                <>
+                    <div className={styles.track}>
+                        <div className={styles.fill} style={{ width: `${safeProgress}%` }} />
+                    </div>
+                    {showPercent ? <p className={styles.percent}>{Math.round(safeProgress)}%</p> : null}
+                </>
+            ) : null}
             {statusMessage ? <p className={styles.status}>{statusMessage}</p> : null}
             {hintText ? <p className={styles.hint}>{hintText}</p> : null}
-            {showSpinner ? <div className={styles.spinner} /> : null}
+            {spinnerVisible ? <div className={styles.spinner} /> : null}
         </div>
     );
 }
