@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react';
 import Icon, { type IconName } from './Icon';
 
-export type BadgeVariant = 'primary' | 'secondary' | 'accent';
+export type BadgeVariant = 'primary' | 'secondary' | 'accent' | 'danger';
 export type BadgeSize = 'sm' | 'md' | 'lg';
 export type BadgeIconPosition = 'right' | 'left' | 'none';
 
@@ -44,6 +44,11 @@ const variantColors: Record<BadgeVariant, BadgeColorSet> = {
     accent: {
         backgroundColor: 'var(--color-success)',
         borderColor: 'var(--color-success-border)',
+        textColor: 'var(--color-text-inverse)',
+    },
+    danger: {
+        backgroundColor: 'var(--color-danger)',
+        borderColor: 'var(--color-danger-hover)',
         textColor: 'var(--color-text-inverse)',
     },
 };
