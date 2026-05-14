@@ -8,7 +8,7 @@ from werkzeug.utils import secure_filename
 
 from app.tasks.celery_tasks import process_texts_background
 from app.tasks.constants import TEMP_UPLOADS_FOLDER
-from app.utils.decorators import admin_required
+from app.utils.decorators import admin_required, login_required
 from app.extensions import limiter, db
 from app.logging_config import get_logger
 from app.tokenizer import Tokenizer
@@ -18,6 +18,7 @@ from app.extensions import limiter
 from app.logging_config import get_logger
 
 from app.schemas import generic as generic_schemas
+from app.schemas import upload as upload_schemas
 
 
 upload_bp = Blueprint('upload', __name__)
@@ -121,11 +122,13 @@ def upload_file(current_user):
         if os.path.exists(save_path):
             os.remove(save_path)
     
-    return jsonify({'message': 'Texts uploaded and pending processing successfully', 'text_ids': text_ids}), 200
+    response = upload_schemas.UploadResponse(message='Texts uploaded and pending processing successfully', text_ids=text_ids)
+    return jsonify(response.model_dump()), 200
 
 @upload_bp.route('/api/status/<task_id>', methods=['GET'])
 @limiter.limit("120 per minute")
-def task_status(task_id):
+@login_required()
+def task_status(current_user, task_id):
     """Gets the status of a background text processing task.
 
     Args:
@@ -165,4 +168,5 @@ def task_status(task_id):
             },
         )
         
-    return jsonify(response)
+    response_schema = upload_schemas.TaskStatusResponse(**response)
+    return jsonify(response_schema.model_dump()), 200
