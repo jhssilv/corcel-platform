@@ -76,8 +76,21 @@ def test_upload_file_success(client, app, mocker):
     # Mock Celery task
     mock_task = mocker.patch('app.routes.upload_routes.process_texts_background.delay')
     
-    # Mock file save
+    # Mock file save so the file isn't actually written to disk
     mocker.patch('werkzeug.datastructures.FileStorage.save')
+
+    # Mock zipfile.ZipFile so the route doesn't try to open the (unsaved) file
+    mock_zip = MagicMock()
+    mock_zip.__enter__ = MagicMock(return_value=mock_zip)
+    mock_zip.__exit__ = MagicMock(return_value=False)
+    mock_zip.namelist.return_value = ['doc.txt']
+    mock_zip.open.return_value.__enter__ = MagicMock(return_value=io.BytesIO(b'hello world'))
+    mock_zip.open.return_value.__exit__ = MagicMock(return_value=False)
+    mocker.patch('app.routes.upload_routes.zipfile.ZipFile', return_value=mock_zip)
+
+    # Mock tokenizer and DB insertion so no real processing happens
+    mocker.patch('app.routes.upload_routes.Tokenizer')
+    mocker.patch('app.routes.upload_routes.add_text', return_value=42)
     
     data = {
         'file': (io.BytesIO(b"fake zip content"), 'test.zip')
@@ -89,16 +102,16 @@ def test_upload_file_success(client, app, mocker):
     assert "text_ids" in response.json
     mock_task.assert_called_once()
 
-def test_task_status(client, mocker):
+def test_task_status(auth_client, mocker):
     """Test checking task status."""
     # Mock AsyncResult
     mock_result = mocker.patch('app.routes.upload_routes.process_texts_background.AsyncResult')
     mock_instance = mock_result.return_value
     mock_instance.state = 'SUCCESS'
-    mock_instance.info = {'result': 'Done'}
+    mock_instance.info = {'result': {'summary': 'Done'}}
     
-    response = client.get('/api/status/task-123')
+    response = auth_client.get('/api/status/task-123')
     
     assert response.status_code == 200
     assert response.json['status'] == 'Finished'
-    assert response.json['result'] == 'Done'
+    assert response.json['result'] == {'summary': 'Done'}

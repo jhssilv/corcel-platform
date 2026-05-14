@@ -126,8 +126,7 @@ def get_filtered_texts_data(current_user, query: text_schemas.FilteredTextsQuery
         
         normalized_filter, normalized_error = _parse_normalized_filter(query.normalized or '')
         if normalized_error:
-            response = generic_schemas.ErrorResponse(error="Validation failed: normalized must be 'true' or 'false'")
-            return jsonify(response.model_dump()), 400
+            return jsonify(normalized_error), 400
         
         # Use existing get_filtered_texts query
         texts_data_from_db = queries.get_filtered_texts(

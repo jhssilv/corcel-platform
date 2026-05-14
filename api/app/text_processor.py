@@ -8,6 +8,7 @@ from hunspell import HunSpell
 from spellchecker import SpellChecker
 
 from .logging_config import get_logger
+from .tokenizer import Tokenizer
 
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 OLLAMA_MODEL = "gemma3:4b"
@@ -208,6 +209,21 @@ class TextProcessor:
         )
         raw = self._ollama_generate(prompt, num_ctx=num_ctx)
         return self._parse_llm_response(raw)
+
+    def process_text(self, text: str, llm_assists_detection: bool = True):
+        """Convenience wrapper: tokenises *text* and runs the full processing pipeline.
+
+        Args:
+            text: Raw text string to process.
+            llm_assists_detection: Passed through to process_tokens.
+
+        Returns:
+            dict[int, dict]: Token results keyed by position index.
+        """
+        tokenizer = Tokenizer()
+        tokenized = tokenizer.tokenize_only(text)
+        tokens = list(tokenized.values())
+        return self.process_tokens(tokens, text, llm_assists_detection=llm_assists_detection)
 
     def process_tokens(self, tokens: list[dict], text: str, llm_assists_detection: bool = True):
         """
