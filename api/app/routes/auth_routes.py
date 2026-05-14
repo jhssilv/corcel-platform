@@ -46,11 +46,15 @@ def get_usernames(current_user):
 @login_required()
 def get_current_user(current_user):
     """Returns current authenticated user basic profile."""
-    response_data = user_schemas.CurrentUserResponse(
-        username=current_user.username,
-        isAdmin=current_user.is_admin,
-    )
-    return jsonify(response_data.model_dump(by_alias=True)), 200
+    try:
+        response_data = user_schemas.CurrentUserResponse(
+            username=current_user.username,
+            isAdmin=current_user.is_admin,
+        )
+        return jsonify(response_data.model_dump(by_alias=True)), 200
+    except Exception as e:
+        error_response = generic_schemas.ErrorResponse(error=str(e))
+        return jsonify(error_response.model_dump()), 500
 
 
 @auth_bp.route('/api/register', methods=['POST'])
@@ -86,7 +90,8 @@ def register(body: auth_schemas.UserRegisterRequest, current_user=None):
     session.add(new_user)
     session.commit()
     
-    return jsonify({"msg": "User created successfully"}), 201
+    response = generic_schemas.MessageResponse(message="User created successfully")
+    return jsonify(response.model_dump()), 201
 
 @auth_bp.route('/api/activate', methods=['POST'])
 @limiter.limit("5 per hour")
@@ -100,25 +105,30 @@ def activate_account(body: auth_schemas.UserActivationRequest):
     Returns: JSON response indicating success or failure.
 
     """
-    username = body.username
-    password = body.password
-    
-    user = queries.get_user_by_username(session, username)
-    
-    if user is None:
-        response = generic_schemas.ErrorResponse(error="Usuário não existe.")        
-        return jsonify(response.model_dump()), 404
+    try:
+        username = body.username
+        password = body.password
         
-    if user.is_active:
-        response = generic_schemas.ErrorResponse(error="Usuário já está ativo.")
-        return jsonify(response.model_dump()), 400
+        user = queries.get_user_by_username(session, username)
         
-    user.set_password(password)
-    user.is_active = True
-    
-    session.commit()
-    
-    return jsonify({"message": "Account activated successfully."}), 200
+        if user is None:
+            response = generic_schemas.ErrorResponse(error="Usuário não existe.")        
+            return jsonify(response.model_dump()), 404
+            
+        if user.is_active:
+            response = generic_schemas.ErrorResponse(error="Usuário já está ativo.")
+            return jsonify(response.model_dump()), 400
+            
+        user.set_password(password)
+        user.is_active = True
+        
+        session.commit()
+        
+        response = generic_schemas.MessageResponse(message="Account activated successfully.")
+        return jsonify(response.model_dump()), 200
+    except Exception as e:
+        error_response = generic_schemas.ErrorResponse(error=str(e))
+        return jsonify(error_response.model_dump()), 500
 
 @auth_bp.route('/api/login', methods=['POST'])
 @limiter.limit("10 per minute; 20 per hour")
@@ -133,47 +143,61 @@ def login(body: auth_schemas.UserCredentials):
     If successful, sets a JWT token in the response cookies.
 
     """
-    username = body.username
-    password = body.password
-    
-    user = queries.get_user_by_username(session, username)
-    
-    if user is None:
-        return jsonify({"error": "User does not exist."}), 401
-    
-    elif not user.check_password(password):
-        return jsonify({"error": "Invalid password."}), 403
+    try:
+        username = body.username
+        password = body.password
         
-    if not user.is_active:
-        return jsonify({"error": "Account is not active."}), 403
-    
-    user_is_admin = user.is_admin
-    
-    access_token = create_access_token(identity=str(user.id))
-    response = jsonify({"message": "Login successful", "isAdmin": user_is_admin})
-    set_access_cookies(response, access_token)
-    
-    return response, 200
+        user = queries.get_user_by_username(session, username)
+        
+        if user is None:
+            response = generic_schemas.ErrorResponse(error="User does not exist.")
+            return jsonify(response.model_dump()), 401
+        
+        elif not user.check_password(password):
+            response = generic_schemas.ErrorResponse(error="Invalid password.")
+            return jsonify(response.model_dump()), 403
+            
+        if not user.is_active:
+            response = generic_schemas.ErrorResponse(error="Account is not active.")
+            return jsonify(response.model_dump()), 403
+        
+        user_is_admin = user.is_admin
+        
+        access_token = create_access_token(identity=str(user.id))
+        success_response = auth_schemas.LoginResponse(message="Login successful", isAdmin=user_is_admin)
+        response = jsonify(success_response.model_dump(by_alias=True))
+        set_access_cookies(response, access_token)
+        
+        return response, 200
+    except Exception as e:
+        error_response = generic_schemas.ErrorResponse(error=str(e))
+        return jsonify(error_response.model_dump()), 500
     
 @auth_bp.route('/api/logout', methods=['GET'])
-def logout():
+@login_required()
+def logout(current_user):
     """Logs out a user by clearing the JWT cookies.
 
     Returns: JSON response indicating successful logout.
     """
-    response = jsonify({"message": "Logout successful"})
-    unset_jwt_cookies(response)
-    return response, 200
+    try:
+        success_response = generic_schemas.MessageResponse(message="Logout successful")
+        response = jsonify(success_response.model_dump())
+        unset_jwt_cookies(response)
+        return response, 200
+    except Exception as e:
+        error_response = generic_schemas.ErrorResponse(error=str(e))
+        return jsonify(error_response.model_dump()), 500
 
 @auth_bp.route('/api/users/toggleActive', methods=['PATCH'])
 @limiter.limit("10 per minute")
 @validate()
 @admin_required()
-def deactivate_user(body: auth_schemas.UserRegisterRequest, current_user):
+def deactivate_user(body: auth_schemas.ToggleUserRequest, current_user):
     """Toggles the active status of a user.
 
     Args:
-        body (UserRegisterRequest): Username of the user to toggle.
+        body (ToggleUserRequest): Username of the user to toggle.
         current_user (User): The currently logged-in user.
 
     Returns: JSON response indicating success or failure.
@@ -182,32 +206,37 @@ def deactivate_user(body: auth_schemas.UserRegisterRequest, current_user):
         Admin privileges.
         
     """
-    username = body.username
-    
-    user = queries.get_user_by_username(session, username)
-    
-    if user is None:
-        return jsonify({"error": "User does not exist."}), 404
+    try:
+        username = body.username
         
-    user.is_active = not user.is_active
-    session.commit()
-    
-    if not user.is_active:
-        response = generic_schemas.MessageResponse(message="User deactivated successfully.")
-        return jsonify(response.model_dump()), 200
-    else:
-        response = generic_schemas.MessageResponse(message="User activated successfully.")
-        return jsonify(response.model_dump()), 200
+        user = queries.get_user_by_username(session, username)
+        
+        if user is None:
+            response = generic_schemas.ErrorResponse(error="User does not exist.")
+            return jsonify(response.model_dump()), 404
+            
+        user.is_active = not user.is_active
+        session.commit()
+        
+        if not user.is_active:
+            response = generic_schemas.MessageResponse(message="User deactivated successfully.")
+            return jsonify(response.model_dump()), 200
+        else:
+            response = generic_schemas.MessageResponse(message="User activated successfully.")
+            return jsonify(response.model_dump()), 200
+    except Exception as e:
+        error_response = generic_schemas.ErrorResponse(error=str(e))
+        return jsonify(error_response.model_dump()), 500
     
 @auth_bp.route('/api/users/toggleAdmin', methods=['PATCH'])
 @limiter.limit("10 per minute")
 @validate()
 @admin_required()
-def toggle_user_is_admin(body: auth_schemas.UserRegisterRequest, current_user):
+def toggle_user_is_admin(body: auth_schemas.ToggleUserRequest, current_user):
     """Toggles the admin status of a user.
 
     Args:
-        body (UserRegisterRequest): Username of the user to toggle.
+        body (ToggleUserRequest): Username of the user to toggle.
         current_user (User): The currently logged-in user.
 
     Returns:
@@ -220,28 +249,32 @@ def toggle_user_is_admin(body: auth_schemas.UserRegisterRequest, current_user):
         User's admin status is toggled unless they are the last admin.
         
     """
-    username = body.username
-    
-    user = queries.get_user_by_username(session, username)
-    
-    if user is None:
-        response = generic_schemas.ErrorResponse(error="Usuário não existe.")
-        return jsonify(response.model_dump()), 404
+    try:
+        username = body.username
         
-    number_of_admins = queries.count_admin_users(session)
-    if number_of_admins <= 1 and user.is_admin:
-        response = generic_schemas.ErrorResponse(error="Cannot revoke admin privileges from the last admin user.")
-        return jsonify(response.model_dump()), 400
+        user = queries.get_user_by_username(session, username)
         
-    user.is_admin = not user.is_admin
-    session.commit()
-    
-    if user.is_admin:
-        response = generic_schemas.MessageResponse(message="User granted admin privileges.")
-        return jsonify(response.model_dump()), 200
-    else:
-        response = generic_schemas.MessageResponse(message="User admin privileges revoked.")
-        return jsonify(response.model_dump()), 200
+        if user is None:
+            response = generic_schemas.ErrorResponse(error="Usuário não existe.")
+            return jsonify(response.model_dump()), 404
+            
+        number_of_admins = queries.count_admin_users(session)
+        if number_of_admins <= 1 and user.is_admin:
+            response = generic_schemas.ErrorResponse(error="Cannot revoke admin privileges from the last admin user.")
+            return jsonify(response.model_dump()), 400
+            
+        user.is_admin = not user.is_admin
+        session.commit()
+        
+        if user.is_admin:
+            response = generic_schemas.MessageResponse(message="User granted admin privileges.")
+            return jsonify(response.model_dump()), 200
+        else:
+            response = generic_schemas.MessageResponse(message="User admin privileges revoked.")
+            return jsonify(response.model_dump()), 200
+    except Exception as e:
+        error_response = generic_schemas.ErrorResponse(error=str(e))
+        return jsonify(error_response.model_dump()), 500
     
 @auth_bp.route('/api/users/data', methods=['GET'])
 @admin_required()
