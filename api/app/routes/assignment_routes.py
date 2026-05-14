@@ -6,6 +6,7 @@ from typing import List
 from app.utils.decorators import login_required
 import app.database.queries as queries
 from app.schemas import generic as generic_schemas
+from app.schemas import assignment as assignment_schemas
 from app.extensions import db
 from app.logging_config import get_logger
 
@@ -15,16 +16,11 @@ assignment_bp = Blueprint('assignment', __name__)
 logger = get_logger('app.route.assignment', source='route', blueprint='assignment')
 
 
-class BulkAssignRequest(BaseModel):
-    """Request schema for bulk text assignment."""
-    text_ids: List[int]
-    usernames: List[str]
-
 
 @assignment_bp.route('/api/assignments/', methods=['POST'])
 @login_required()
 @validate()
-def bulk_assign_texts(current_user, body: BulkAssignRequest):
+def bulk_assign_texts(current_user, body: assignment_schemas.BulkAssignRequest):
     """Bulk assigns texts to users with round-robin distribution.
 
     Args:
@@ -58,12 +54,13 @@ def bulk_assign_texts(current_user, body: BulkAssignRequest):
             if username:
                 username_counts[username] = count
         
-        return jsonify({
-            "message": "Texts assigned successfully",
-            "assignments": username_counts,
-            "totalTexts": len(body.text_ids),
-            "totalUsers": len(user_ids)
-        }), 200
+        response = assignment_schemas.BulkAssignmentResponse(
+            message="Texts assigned successfully",
+            assignments=username_counts,
+            totalTexts=len(body.text_ids),
+            totalUsers=len(user_ids)
+        )
+        return jsonify(response.model_dump()), 200
         
     except Exception as e:
         logger.exception(
@@ -76,7 +73,7 @@ def bulk_assign_texts(current_user, body: BulkAssignRequest):
 @assignment_bp.route('/api/assignments/', methods=['DELETE'])
 @login_required()
 @validate()
-def bulk_unassign_texts(current_user, body: BulkAssignRequest):
+def bulk_unassign_texts(current_user, body: assignment_schemas.BulkAssignRequest):
     """Removes text assignments from specified users.
 
     Args:
@@ -103,12 +100,13 @@ def bulk_unassign_texts(current_user, body: BulkAssignRequest):
             if username:
                 username_counts[username] = count
         
-        return jsonify({
-            "message": "Assignments removed successfully",
-            "unassignments": username_counts,
-            "totalTexts": len(body.text_ids),
-            "totalUsers": len(user_ids)
-        }), 200
+        response = assignment_schemas.BulkUnassignmentResponse(
+            message="Assignments removed successfully",
+            unassignments=username_counts,
+            totalTexts=len(body.text_ids),
+            totalUsers=len(user_ids)
+        )
+        return jsonify(response.model_dump()), 200
         
     except Exception as e:
         logger.exception(
