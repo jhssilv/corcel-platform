@@ -8,7 +8,7 @@ def test_register_user(admin_client, app):
         "username": "newuser"
     })
     assert response.status_code == 201
-    assert response.json["msg"] == "User created successfully"
+    assert response.json["message"] == "User created successfully"
 
     with app.app_context():
         user = db.session.query(User).filter_by(username="newuser").first()
