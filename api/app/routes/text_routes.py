@@ -80,20 +80,13 @@ def get_texts_data(current_user):
 
 @text_bp.route('/api/texts/status/batch', methods=['POST'])
 @login_required()
-def get_batch_texts_status(current_user):
+@validate()
+def get_batch_texts_status(current_user, body: text_schemas.BatchTextsStatusRequest):
     """Retrieves the processing status of a batch of text IDs."""
-    from flask import request
     from app.database.models import Text
     
     try:
-        data = request.get_json()
-        if not data or 'text_ids' not in data:
-            return jsonify({"error": "Missing text_ids"}), 400
-        
-        text_ids = data['text_ids']
-        if not isinstance(text_ids, list):
-            return jsonify({"error": "text_ids must be a list"}), 400
-            
+        text_ids = body.text_ids
         texts = session.query(Text.id, Text.source_file_name, Text.processing_status).filter(Text.id.in_(text_ids)).all()
         
         result = [
@@ -105,47 +98,36 @@ def get_batch_texts_status(current_user):
             for t in texts
         ]
         
-        return jsonify({"statuses": result}), 200
+        response = text_schemas.BatchTextsStatusResponse(statuses=result)
+        return jsonify(response.model_dump()), 200
     except Exception as e:
         logger.exception("Failed to fetch batch text statuses")
         return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
 
 @text_bp.route('/api/texts/filtered', methods=['GET'])
 @login_required()
-def get_filtered_texts_data(current_user):
+@validate()
+def get_filtered_texts_data(current_user, query: text_schemas.FilteredTextsQuery):
     """Retrieves filtered texts based on query parameters.
-
-    Query Parameters:
-        grades: Comma-separated list of grade values (e.g., "0,1,2")
-        assigned_users: Comma-separated list of usernames
-        normalized: Boolean filter for normalized status ("true" or "false")
-        file_name: Fuzzy search on source file name
 
     Returns:
         TextsDataResponse: The response containing the filtered list of texts.
     """
-    from flask import request
-    
     try:
-        # Parse query parameters
-        grades_param = request.args.get('grades', '')
-        assigned_users_param = request.args.get('assigned_users', '')
-        normalized_param = request.args.get('normalized', '')
-        file_name = request.args.get('file_name', '') or None
-        
         # Parse grades
         grades = None
-        if grades_param:
-            grades = [int(g.strip()) for g in grades_param.split(',') if g.strip()]
+        if query.grades:
+            grades = [int(g.strip()) for g in query.grades.split(',') if g.strip()]
         
         # Parse assigned users
         assigned_users = None
-        if assigned_users_param:
-            assigned_users = [u.strip() for u in assigned_users_param.split(',') if u.strip()]
+        if query.assigned_users:
+            assigned_users = [u.strip() for u in query.assigned_users.split(',') if u.strip()]
         
-        normalized_filter, normalized_error = _parse_normalized_filter(normalized_param)
+        normalized_filter, normalized_error = _parse_normalized_filter(query.normalized or '')
         if normalized_error:
-            return jsonify(normalized_error), 400
+            response = generic_schemas.ErrorResponse(error="Validation failed: normalized must be 'true' or 'false'")
+            return jsonify(response.model_dump()), 400
         
         # Use existing get_filtered_texts query
         texts_data_from_db = queries.get_filtered_texts(
@@ -154,7 +136,7 @@ def get_filtered_texts_data(current_user):
             assigned_users=assigned_users,
             user_id=current_user.id,
             normalized=normalized_filter,
-            file_name=file_name
+            file_name=query.file_name
         )
         
         texts_list = [
@@ -193,7 +175,8 @@ def get_text_detail(current_user, text_id: int):
     try:
         text_data_dict = queries.get_text_by_id(session, text_id, current_user.id)
         if not text_data_dict:
-            return jsonify({"error": "Text not found"}), 404
+            response = generic_schemas.ErrorResponse(error="Text not found")
+            return jsonify(response.model_dump()), 404
     
         response_schema = text_schemas.TextDetailResponse(**text_data_dict)
         return jsonify(response_schema.model_dump(by_alias=True)), 200
@@ -226,7 +209,8 @@ def get_raw_texts_data(current_user):
             for row in raw_texts_data
         ]
 
-        return jsonify({"textsData": texts_list}), 200
+        response = text_schemas.RawTextsDataResponse(textsData=texts_list)
+        return jsonify(response.model_dump(by_alias=True)), 200
     except Exception as e:
         return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
 
@@ -250,16 +234,18 @@ def get_raw_text_detail(current_user, text_id: int):
     try:
         raw_text_data = queries.get_raw_text_by_id(session, text_id)
         if not raw_text_data:
-            return jsonify({"error": "Raw text not found"}), 404
+            response = generic_schemas.ErrorResponse(error="Raw text not found")
+            return jsonify(response.model_dump()), 404
     
-        return jsonify(raw_text_data), 200
+        response = text_schemas.RawTextDetailResponse(**raw_text_data)
+        return jsonify(response.model_dump()), 200
     except Exception as e:
         return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
 
 @text_bp.route('/api/raw-texts/<int:text_id>', methods=['PUT'])
 @login_required()
 @validate()
-def update_raw_text(current_user, text_id: int):
+def update_raw_text(current_user, text_id: int, body: text_schemas.UpdateRawTextRequest):
     """Updates the text content of a specific raw text.
 
     Args:
@@ -274,20 +260,16 @@ def update_raw_text(current_user, text_id: int):
         Request body must contain 'text_content' field.
         
     """
-    from flask import request
-    
     try:
-        data = request.get_json()
-        if not data or 'text_content' not in data:
-            return jsonify({"error": "Missing text_content in request body"}), 400
-        
-        new_content = data['text_content']
+        new_content = body.text_content
         
         success = queries.update_raw_text_content(session, text_id, new_content)
         if not success:
-            return jsonify({"error": "Raw text not found"}), 404
+            response = generic_schemas.ErrorResponse(error="Raw text not found")
+            return jsonify(response.model_dump()), 404
     
-        return jsonify({"message": "Text updated successfully"}), 200
+        response = generic_schemas.MessageResponse(message="Text updated successfully")
+        return jsonify(response.model_dump()), 200
     except Exception as e:
         return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
 
@@ -295,7 +277,7 @@ def update_raw_text(current_user, text_id: int):
 @limiter.limit("20 per minute")
 @login_required()
 @validate()
-def finalize_raw_text(current_user, text_id: int):
+def finalize_raw_text(current_user, text_id: int, body: text_schemas.FinalizeRawTextRequest):
     """Finalizes a raw text by processing it into tokens/suggestions and deleting the raw text.
 
     Args:
@@ -312,7 +294,6 @@ def finalize_raw_text(current_user, text_id: int):
         
     """
     import os
-    from flask import request
     from app.text_processor import TextProcessor
     from app.database.models import Text, Token, RawText
     
@@ -320,16 +301,17 @@ def finalize_raw_text(current_user, text_id: int):
         # Get raw text
         raw_text_data = queries.get_raw_text_by_id(session, text_id)
         if not raw_text_data:
-            return jsonify({"error": "Raw text not found"}), 404
+            response = generic_schemas.ErrorResponse(error="Raw text not found")
+            return jsonify(response.model_dump()), 404
         
         # Get the actual RawText object for deletion
         raw_text = session.query(RawText).filter(RawText.id == text_id).first()
         if not raw_text:
-            return jsonify({"error": "Raw text not found"}), 404
+            response = generic_schemas.ErrorResponse(error="Raw text not found")
+            return jsonify(response.model_dump()), 404
         
         # Get optional source_file_name from request body
-        data = request.get_json() or {}
-        source_file_name = data.get('source_file_name', raw_text_data['source_file_name'])
+        source_file_name = body.source_file_name if body.source_file_name is not None else raw_text_data['source_file_name']
         
         text_content = raw_text_data['text_content']
         image_path = raw_text_data['image_path']
@@ -372,7 +354,8 @@ def finalize_raw_text(current_user, text_id: int):
                     extra={'event': {'source': 'route', 'blueprint': 'text', 'image_path': image_full_path}},
                 )
         
-        return jsonify({"message": "Text finalized successfully", "text_id": new_text_id}), 200
+        response = text_schemas.FinalizeRawTextResponse(message="Text finalized successfully", text_id=new_text_id)
+        return jsonify(response.model_dump()), 200
     except Exception as e:
         session.rollback()
         logger.exception(
@@ -521,7 +504,7 @@ def toggle_normalization_status(current_user, text_id: int):
 @text_bp.route('/api/tokens/<int:token_id>/suggestions/toggle', methods=['PATCH'])
 @login_required()
 @validate()
-def toggle_token_suggestions(current_user, token_id: int, body: normalization_schemas.toggleToBeNormalizedRequest):
+def toggle_token_suggestions(current_user, token_id: int, body: normalization_schemas.ToggleToBeNormalizedRequest):
     """Toggles the to_be_normalized flag for a specific token for ALL users.
 
     Args:
@@ -559,7 +542,7 @@ def get_whitelist_tokens(current_user):
         response = whitelist_schemas.WhitelistTokensResponse(tokens=whitelist_tokens)
         return jsonify(response.model_dump()), 200
     except Exception as e:
-        return jsonify(whitelist_schemas.ErrorResponse(error=str(e)).model_dump()), 500
+        return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
 
 @text_bp.route('/api/whitelist/', methods=['POST', 'DELETE'])
 @login_required()
