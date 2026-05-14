@@ -77,3 +77,45 @@ class RawTextUploadRequest(BaseModel):
         text (str): The raw text content.
     """
     text: str
+
+class BatchTextsStatusRequest(BaseModel):
+    text_ids: List[int]
+
+class BatchTextsStatusItem(BaseModel):
+    id: int
+    source_file_name: Optional[str] = None
+    processing_status: str
+
+class BatchTextsStatusResponse(BaseModel):
+    statuses: List[BatchTextsStatusItem]
+
+class FilteredTextsQuery(BaseModel):
+    grades: Optional[str] = None
+    assigned_users: Optional[str] = None
+    normalized: Optional[str] = None
+    file_name: Optional[str] = None
+
+class RawTextItem(BaseModel):
+    id: int
+    source_file_name: Optional[str] = Field(alias="sourceFileName", default=None)
+    model_config = ConfigDict(populate_by_name=True)
+
+class RawTextsDataResponse(BaseModel):
+    texts_data: List[RawTextItem] = Field(alias="textsData")
+    model_config = ConfigDict(populate_by_name=True)
+
+class RawTextDetailResponse(BaseModel):
+    id: int
+    text_content: str
+    source_file_name: Optional[str] = None
+    image_path: Optional[str] = None
+
+class UpdateRawTextRequest(BaseModel):
+    text_content: str
+
+class FinalizeRawTextRequest(BaseModel):
+    source_file_name: Optional[str] = None
+
+class FinalizeRawTextResponse(BaseModel):
+    message: str
+    text_id: int
