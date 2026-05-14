@@ -10,6 +10,7 @@ from app.utils.decorators import admin_required
 from app.database.models import Token, Text, RawText
 from app.extensions import db, limiter
 from app.schemas import generic as generic_schemas
+from app.schemas import ocr as ocr_schemas
 from app.logging_config import get_logger
 
 ocr_bp = Blueprint('ocr', __name__)
@@ -66,7 +67,8 @@ def upload_ocr_zip(current_user):
     
     task = process_ocr_zip.delay(save_path)
     
-    return jsonify({'task_id': task.id}), 202
+    response = ocr_schemas.OCRUploadResponse(task_id=task.id)
+    return jsonify(response.model_dump()), 202
 
 @ocr_bp.route('/api/ocr/raw-texts/<int:text_id>/image', methods=['GET'])
 @admin_required()
@@ -78,7 +80,7 @@ def get_raw_text_image(current_user, text_id):
         raw_text = db.session.query(RawText).filter(RawText.id == text_id).one()
         
         if not raw_text.image_path:
-            return jsonify({'error': 'This text does not have an associated image.'}), 404
+            return jsonify(generic_schemas.ErrorResponse(error='This text does not have an associated image.').model_dump()), 404
         
         return send_from_directory(IMAGES_FOLDER, raw_text.image_path)
         
@@ -87,5 +89,5 @@ def get_raw_text_image(current_user, text_id):
             'Raw text image requested for nonexistent record',
             extra={'event': {'source': 'route', 'blueprint': 'ocr', 'text_id': text_id}},
         )
-        return jsonify({'error': 'Raw text not found.'}), 404
+        return jsonify(generic_schemas.ErrorResponse(error='Raw text not found.').model_dump()), 404
 
