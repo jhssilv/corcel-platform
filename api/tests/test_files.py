@@ -74,8 +74,7 @@ def test_upload_file_success(client, app, mocker):
     client.post('/api/login', json={"username": "admin", "password": "adminpass"})
     
     # Mock Celery task
-    mock_task = mocker.patch('app.routes.upload_routes.process_zip_texts.delay')
-    mock_task.return_value.id = "task-123"
+    mock_task = mocker.patch('app.routes.upload_routes.process_texts_background.delay')
     
     # Mock file save
     mocker.patch('werkzeug.datastructures.FileStorage.save')
@@ -86,14 +85,14 @@ def test_upload_file_success(client, app, mocker):
     
     response = client.post('/api/upload', data=data, content_type='multipart/form-data')
     
-    assert response.status_code == 202
-    assert response.json['task_id'] == "task-123"
+    assert response.status_code == 200
+    assert "text_ids" in response.json
     mock_task.assert_called_once()
 
 def test_task_status(client, mocker):
     """Test checking task status."""
     # Mock AsyncResult
-    mock_result = mocker.patch('app.routes.upload_routes.process_zip_texts.AsyncResult')
+    mock_result = mocker.patch('app.routes.upload_routes.process_texts_background.AsyncResult')
     mock_instance = mock_result.return_value
     mock_instance.state = 'SUCCESS'
     mock_instance.info = {'result': 'Done'}
