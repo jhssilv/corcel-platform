@@ -32,12 +32,16 @@ def request_report(current_user, body: download_schemas.ReportRequest):
         User must be logged in.
         
     """
-    report = generate_report(current_user.id, body.text_ids)
-    
-    response = make_response(report)
-    response.headers["Content-Disposition"] = "attachment; filename=report.csv"
-    response.headers["Content-type"] = "text/csv"
-    return response
+    try:
+        report = generate_report(current_user.id, body.text_ids)
+        
+        response = make_response(report)
+        response.headers["Content-Disposition"] = "attachment; filename=report.csv"
+        response.headers["Content-type"] = "text/csv"
+        return response
+    except Exception as e:
+        logger.exception("Failed to generate report")
+        return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
 
 @download_bp.route('/api/download/', methods=['POST'])
 @limiter.limit("5 per minute")
@@ -68,7 +72,7 @@ def download_normalized_texts(current_user, body: download_schemas.DownloadReque
         use_tags = body.use_tags
 
         if not text_ids:
-            return jsonify({"error": "'text_ids' must be a non-empty list"}), 400
+            return jsonify(generic_schemas.ErrorResponse(error="'text_ids' must be a non-empty list").model_dump()), 400
 
         zip_abs_path = save_modified_texts(current_user.id, text_ids, use_tags)
 
