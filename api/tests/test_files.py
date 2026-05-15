@@ -89,7 +89,7 @@ def test_upload_file_success(client, app, mocker):
     mocker.patch('app.routes.upload_routes.zipfile.ZipFile', return_value=mock_zip)
 
     # Mock tokenizer and DB insertion so no real processing happens
-    mocker.patch('app.routes.upload_routes.Tokenizer')
+    mocker.patch('app.routes.upload_routes.get_tokenizer')
     mocker.patch('app.routes.upload_routes.add_text', return_value=42)
     
     data = {
