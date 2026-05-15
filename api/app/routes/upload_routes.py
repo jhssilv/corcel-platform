@@ -11,7 +11,7 @@ from app.tasks.constants import TEMP_UPLOADS_FOLDER
 from app.utils.decorators import admin_required, login_required
 from app.extensions import limiter, db
 from app.logging_config import get_logger
-from app.tokenizer import Tokenizer
+from app.text_pipeline import get_tokenizer
 from app.database import models
 from app.database.queries import add_text
 from app.extensions import limiter
@@ -80,7 +80,7 @@ def upload_file(current_user):
                 logger.warning('Upload rejected due to > 200 files batch limit')
                 return jsonify(generic_schemas.ErrorResponse(error='Maximum of 200 files allowed per upload.').model_dump()), 400
 
-            tokenizer = Tokenizer()
+            tokenizer = get_tokenizer()
             text_ids = []
 
             for filename in file_list:
@@ -93,17 +93,18 @@ def upload_file(current_user):
                     else:
                         text_content = f_in.read().decode('utf-8', errors='replace')
                 
-                tokenized_data = tokenizer.tokenize_only(text_content)
+                tokenized_tokens = tokenizer.tokenize(text_content)
+                tokenized_data = {t.idx: t for t in tokenized_tokens}
                 text_obj = models.Text(source_file_name=base_name)
 
                 tokens_with_candidates = []
                 for position, token_data in tokenized_data.items():
                     token = models.Token(
-                        token_text=token_data['text'],
-                        is_word=token_data['is_word'],
+                        token_text=token_data.text,
+                        is_word=token_data.is_word,
                         position=int(position),
                         to_be_normalized=False,
-                        whitespace_after=token_data.get('whitespace_after', '')
+                        whitespace_after=token_data.whitespace_after,
                     )
                     tokens_with_candidates.append((token, []))
                 

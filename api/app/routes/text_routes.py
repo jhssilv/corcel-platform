@@ -1,9 +1,13 @@
+import os
+
 from flask import Blueprint, jsonify
 from flask_pydantic import validate
 
 from app.utils.decorators import login_required
 import app.database.queries as queries
 from app.extensions import db, limiter
+from app.database.models import Text, Token, RawText
+from app.text_pipeline import TextProcessingPipeline
 
 from app.schemas import text as text_schemas
 from app.schemas import generic as generic_schemas
@@ -292,10 +296,6 @@ def finalize_raw_text(current_user, text_id: int, body: text_schemas.FinalizeRaw
         Request body may optionally contain 'source_file_name' to override the default.
         
     """
-    import os
-    from app.text_processor import TextProcessor
-    from app.database.models import Text, Token, RawText
-    
     try:
         # Get raw text
         raw_text_data = queries.get_raw_text_by_id(session, text_id)
@@ -315,9 +315,9 @@ def finalize_raw_text(current_user, text_id: int, body: text_schemas.FinalizeRaw
         text_content = raw_text_data['text_content']
         image_path = raw_text_data['image_path']
         
-        # Process text with TextProcessor to get tokens and suggestions
-        processor = TextProcessor()
-        processed_data = processor.process_text(text_content)
+        # Process text with TextProcessingPipeline to get tokens and suggestions
+        pipeline = TextProcessingPipeline()
+        processed_data = pipeline.process_text(text_content)
         
         # Create Text object
         text_obj = Text(source_file_name=source_file_name)
