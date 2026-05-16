@@ -8,22 +8,13 @@ RUN apt-get update && apt-get install -y \
     redis-server \
     && apt-get clean
 
-WORKDIR /backend
+WORKDIR /app/api
 
-COPY requirements.txt .
+COPY api/requirements.txt .
 
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
 RUN python -c "import spacy_udpipe; spacy_udpipe.download('pt')"
 
-COPY . .
-
-# Copia o script de inicialização e dá permissão de execução
-COPY backend/start.sh .
-RUN chmod +x start.sh
-
 EXPOSE 5000
-
-# Executa o script que gerencia os dois processos
-CMD ["./backend/start.sh"]

@@ -25,3 +25,5 @@ LICENSE
 
 docker-compose.yml
 Dockerfile*
+!/.dockerfiles/
+!/.dockerfiles/**

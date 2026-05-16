@@ -16,7 +16,7 @@ services:
   frontend:
     build:
       context: .
-      dockerfile: Dockerfile.frontend
+      dockerfile: .dockerfiles/prod/frontend.Dockerfile
     container_name: corcel_frontend
     ports:
       - "8081:80"
@@ -32,7 +32,7 @@ services:
   backend:
     build:
       context: .
-      dockerfile: Dockerfile.backend
+      dockerfile: .dockerfiles/prod/backend.Dockerfile
     container_name: corcel_backend
     ports:
       - "5000:5000"
@@ -59,7 +59,7 @@ services:
   ollama:
     build:
       context: .
-      dockerfile: Dockerfile.ollama
+      dockerfile: .dockerfiles/prod/ollama.Dockerfile
     container_name: corcel_ollama
     ports:
       - "11435:11434"
@@ -68,14 +68,6 @@ services:
     networks:
       - app_network
     restart: unless-stopped
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities:
-                - gpu
 
   ollama-pull:
     image: ollama/ollama:latest
@@ -101,7 +93,7 @@ services:
   backups:
     build:
       context: .
-      dockerfile: Dockerfile.backups
+      dockerfile: .dockerfiles/prod/backups.Dockerfile
     container_name: corcel_backups
     depends_on:
       - db
