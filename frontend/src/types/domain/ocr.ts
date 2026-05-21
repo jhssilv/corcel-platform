@@ -17,7 +17,14 @@ export interface TaskStatusResponse {
 	status: string;
 	current?: number;
 	total?: number;
-	result?: unknown;
+	result?: TextUploadTaskResult | Record<string, unknown> | unknown[];
 	error?: string;
 	failed_files?: string[];
+}
+
+export interface TextUploadTaskResult {
+	kind: "text_upload";
+	text_ids: ID[];
+	processed: number;
+	failed_files: string[];
 }

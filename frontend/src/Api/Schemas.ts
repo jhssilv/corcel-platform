@@ -150,8 +150,7 @@ export const DownloadRequestSchema = z.object({
 });
 
 export const UploadResponseSchema = z.object({
-	message: z.string(),
-	text_ids: z.array(z.number()),
+	task_id: z.string(),
 });
 
 export const BatchStatusItemSchema = z.object({
@@ -168,12 +167,25 @@ export const OCRUploadResponseSchema = z.object({
 	task_id: z.string(),
 });
 
+export const TextUploadTaskResultSchema = z.object({
+	kind: z.literal("text_upload"),
+	text_ids: z.array(z.number()),
+	processed: z.number(),
+	failed_files: z.array(z.string()),
+});
+
 export const TaskStatusResponseSchema = z.object({
 	state: z.string(),
 	status: z.string(),
 	current: z.number().optional(),
 	total: z.number().optional(),
-	result: z.any().optional(),
+	result: z
+		.union([
+			TextUploadTaskResultSchema,
+			z.array(z.unknown()),
+			z.record(z.string(), z.unknown()),
+		])
+		.optional(),
 	error: z.string().optional(),
 	failed_files: z.array(z.string()).optional(),
 });

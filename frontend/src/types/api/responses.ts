@@ -19,8 +19,7 @@ export type TextDetailResponse = TextDetail;
 export type NormalizationsGetResponse = NormalizationMap;
 
 export interface UploadResponse {
-	message: string;
-	text_ids: number[];
+	task_id: string;
 }
 
 export interface BatchStatusItem {

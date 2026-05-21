@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import JSZip from "jszip";
-import { uploadTextArchive, getBatchStatus } from "../../Api/UploadApi";
+import {
+	getBatchStatus,
+	getTaskStatus,
+	uploadTextArchive,
+} from "../../Api/UploadApi";
 import {
 	Badge,
 	Icon,
@@ -17,6 +21,7 @@ import {
 } from "../Generic";
 import { useSnackbar } from "../../Context/Generic";
 import type { BatchStatusItem } from "../../types/api/responses";
+import type { TextUploadTaskResult } from "../../types";
 
 interface UploadModalProps {
 	isOpen: boolean;
@@ -30,6 +35,7 @@ interface UploadErrorShape {
 }
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+const TEXT_UPLOAD_TASK_STORAGE_KEY = "currentTextUploadTaskId";
 
 const isCanceledUpload = (error: unknown): boolean => {
 	if (error instanceof Error) {
@@ -81,6 +87,22 @@ const renderTrackingBadge = (status: BatchStatusItem["processing_status"]) => {
 
 	return (
 		<Badge text={status} variant="secondary" size="sm" iconPosition="none" />
+	);
+};
+
+const isTextUploadTaskResult = (
+	result: unknown,
+): result is TextUploadTaskResult => {
+	if (!result || typeof result !== "object") {
+		return false;
+	}
+
+	const maybeResult = result as Partial<TextUploadTaskResult>;
+	return (
+		maybeResult.kind === "text_upload" &&
+		Array.isArray(maybeResult.text_ids) &&
+		typeof maybeResult.processed === "number" &&
+		Array.isArray(maybeResult.failed_files)
 	);
 };
 
@@ -139,7 +161,6 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 
 	useEffect(() => {
 		if (!isOpen) {
-			return;
 		}
 
 		if (!isProcessing && !uploadSuccess) {
@@ -152,6 +173,99 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 			if (abortControllerRef.current) abortControllerRef.current.abort();
 		};
 	}, []);
+
+	const pollTaskStatus = useCallback(
+		(taskId: string) => {
+			setIsProcessing(true);
+			setStatusMessage("Aguardando início do processamento...");
+
+			if (pollingInterval.current) {
+				clearInterval(pollingInterval.current);
+			}
+
+			pollingInterval.current = setInterval(async () => {
+				try {
+					const data = await getTaskStatus(taskId);
+
+					if (data.state === "PROGRESS") {
+						if (
+							typeof data.total === "number" &&
+							data.total > 0 &&
+							typeof data.current === "number"
+						) {
+							const percent = Math.round((data.current / data.total) * 100);
+							setProgress(percent);
+						}
+						setStatusMessage(data.status || "Processando upload...");
+						return;
+					}
+
+					if (data.state === "SUCCESS") {
+						if (pollingInterval.current) {
+							clearInterval(pollingInterval.current);
+							pollingInterval.current = null;
+						}
+
+						localStorage.removeItem(TEXT_UPLOAD_TASK_STORAGE_KEY);
+
+						const result = data.result;
+						if (!isTextUploadTaskResult(result)) {
+							addSnackbar({
+								text: "O servidor concluiu a tarefa sem retornar os textos criados.",
+								type: "error",
+								duration: 5000,
+							});
+							setIsProcessing(false);
+							return;
+						}
+
+						setFailedFiles(result.failed_files);
+						addSnackbar({
+							text: `${result.text_ids.length} arquivo(s) enviado(s) para processamento em background.`,
+							type: "success",
+						});
+						setUploadSuccess(true);
+						setIsProcessing(false);
+						setProgress(100);
+						setStatusMessage("Upload concluído com sucesso!");
+						setStagedFiles([]);
+						setIgnoredFiles([]);
+
+						if (result.text_ids.length > 0) {
+							void pollBatchStatus(result.text_ids);
+						}
+						return;
+					}
+
+					if (data.state === "FAILURE") {
+						if (pollingInterval.current) {
+							clearInterval(pollingInterval.current);
+							pollingInterval.current = null;
+						}
+
+						localStorage.removeItem(TEXT_UPLOAD_TASK_STORAGE_KEY);
+						setFailedFiles(data.failed_files ?? []);
+						setIsProcessing(false);
+						addSnackbar({
+							text: data.error || "Falha no processamento do upload.",
+							type: "error",
+							duration: 5000,
+						});
+					}
+				} catch (error) {
+					console.error("Task polling failed:", error);
+				}
+			}, 2000);
+		},
+		[addSnackbar],
+	);
+
+	useEffect(() => {
+		const savedTaskId = localStorage.getItem(TEXT_UPLOAD_TASK_STORAGE_KEY);
+		if (savedTaskId && !pollingInterval.current) {
+			void pollTaskStatus(savedTaskId);
+		}
+	}, [pollTaskStatus]);
 
 	useEffect(() => {
 		localStorage.setItem("isTrackingUpload", String(isTracking));
@@ -168,7 +282,6 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 				setIsTracking(false);
 			}
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isTracking]);
 
 	const pollBatchStatus = async (textIds: number[]) => {
@@ -299,6 +412,7 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 		if (abortControllerRef.current) {
 			abortControllerRef.current.abort();
 			abortControllerRef.current = null;
+			return;
 		}
 		setIsProcessing(false);
 		setStatusMessage("Upload cancelado.");
@@ -331,20 +445,12 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 			const response = await uploadTextArchive(uploadFile, controller.signal);
 
 			abortControllerRef.current = null; // Clean up
-
-			addSnackbar({
-				text: `${response.text_ids.length} arquivo(s) enviado(s) para processamento em background.`,
-				type: "success",
-			});
-			setUploadSuccess(true);
-			setIsProcessing(false);
-			setProgress(100);
-			setStatusMessage("Upload concluído com sucesso!");
-			setStagedFiles([]);
-			setIgnoredFiles([]);
+			localStorage.setItem(TEXT_UPLOAD_TASK_STORAGE_KEY, response.task_id);
+			setStatusMessage("Upload enviado. Aguardando processamento...");
 			setFailedFiles([]);
+			void pollTaskStatus(response.task_id);
+			return;
 
-			void pollBatchStatus(response.text_ids);
 		} catch (error: unknown) {
 			console.error("Erro no upload:", error);
 			if (isCanceledUpload(error)) {
