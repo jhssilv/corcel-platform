@@ -48,8 +48,21 @@ If this command outputs the standard `nvidia-smi` table showing your GPU details
 
 ## Running the Application
 
-The `docker-compose.yml` is already configured to request GPU deployment for the `ollama` service. Once the toolkit is installed and Docker is restarted, simply start your project:
+The base compose files are vendor-neutral and do not force an NVIDIA runtime. On NVIDIA hosts, add the NVIDIA override file so the `ollama` service explicitly requests GPU access. Once the toolkit is installed and Docker is restarted, start your project with the override:
 
 ```bash
-docker compose up --build -d
+docker compose -f docker-compose.yml -f docker-compose.nvidia.yml up --build -d
+```
+
+For the local containerized development stack, use:
+
+```bash
+docker compose -f docker-compose.dev.yml -f docker-compose.nvidia.yml up --build -d
+```
+
+For the local AMD development path that uses native Windows Ollama on the host instead of a containerized `ollama` service, use:
+
+```bash
+ollama serve
+docker compose -f docker-compose.dev.local-host-ollama.yml up --build -d
 ```
