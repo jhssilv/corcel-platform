@@ -72,7 +72,8 @@ def get_texts_data(current_user):
                 "grade": row.grade,
                 "normalized_by_user": row.normalized_by_user or False,
                 "source_file_name": row.source_file_name,
-                "users_assigned": row.users_assigned or []
+                "users_assigned": row.users_assigned or [],
+                "processing_status": row.processing_status.name if hasattr(row.processing_status, 'name') else str(row.processing_status),
             }
             for row in texts_data_from_db
         ]
@@ -148,7 +149,8 @@ def get_filtered_texts_data(current_user, query: text_schemas.FilteredTextsQuery
                 "grade": row.grade,
                 "normalized_by_user": row.normalized_by_user or False,
                 "source_file_name": row.source_file_name,
-                "users_assigned": row.users_assigned or []
+                "users_assigned": row.users_assigned or [],
+                "processing_status": row.processing_status.name if hasattr(row.processing_status, 'name') else str(row.processing_status),
             }
             for row in texts_data_from_db
         ]
@@ -574,4 +576,3 @@ def manage_whitelist_token(current_user, body: whitelist_schemas.WhitelistManage
         return jsonify(response.model_dump()), 200
     except Exception as e:
         return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
-

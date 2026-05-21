@@ -15,7 +15,14 @@ def test_get_texts_list(auth_client, mocker):
     """Test retrieving list of assigned texts."""
     mock_get = mocker.patch('app.database.queries.get_texts_data')
     mock_get.return_value = [
-        MagicMock(id=1, grade=10, normalized_by_user=False, source_file_name="test.txt", users_assigned=["testuser"])
+        MagicMock(
+            id=1,
+            grade=10,
+            normalized_by_user=False,
+            source_file_name="test.txt",
+            users_assigned=["testuser"],
+            processing_status="READY",
+        )
     ]
 
     response = auth_client.get('/api/texts/')
@@ -24,19 +31,28 @@ def test_get_texts_list(auth_client, mocker):
     assert "textsData" in data
     assert len(data["textsData"]) == 1
     assert data["textsData"][0]["id"] == 1
+    assert data["textsData"][0]["processingStatus"] == "READY"
 
 
 def test_get_filtered_texts_normalized_true(auth_client, mocker):
     """Test filtered texts with normalized=true."""
     mock_get = mocker.patch('app.database.queries.get_filtered_texts')
     mock_get.return_value = [
-        MagicMock(id=1, grade=10, normalized_by_user=True, source_file_name="test.txt", users_assigned=["testuser"])
+        MagicMock(
+            id=1,
+            grade=10,
+            normalized_by_user=True,
+            source_file_name="test.txt",
+            users_assigned=["testuser"],
+            processing_status="PROCESSING",
+        )
     ]
 
     response = auth_client.get('/api/texts/filtered?normalized=true')
 
     assert response.status_code == 200
     assert response.json["textsData"][0]["normalizedByUser"] is True
+    assert response.json["textsData"][0]["processingStatus"] == "PROCESSING"
 
     call_args = mock_get.call_args.kwargs
     assert call_args["normalized"] is True
@@ -47,13 +63,21 @@ def test_get_filtered_texts_normalized_false(auth_client, mocker):
     """Test filtered texts with normalized=false."""
     mock_get = mocker.patch('app.database.queries.get_filtered_texts')
     mock_get.return_value = [
-        MagicMock(id=2, grade=8, normalized_by_user=False, source_file_name="essay.txt", users_assigned=[])
+        MagicMock(
+            id=2,
+            grade=8,
+            normalized_by_user=False,
+            source_file_name="essay.txt",
+            users_assigned=[],
+            processing_status="FAILED",
+        )
     ]
 
     response = auth_client.get('/api/texts/filtered?normalized=false')
 
     assert response.status_code == 200
     assert response.json["textsData"][0]["normalizedByUser"] is False
+    assert response.json["textsData"][0]["processingStatus"] == "FAILED"
 
     call_args = mock_get.call_args.kwargs
     assert call_args["normalized"] is False

@@ -54,7 +54,8 @@ def get_texts_data(db, user_id):
         users_agg_subquery.label("users_assigned"),
         Text.id.label("id"),
         Text.grade.label("grade"),
-        Text.source_file_name.label("source_file_name")
+        Text.source_file_name.label("source_file_name"),
+        Text.processing_status.label("processing_status"),
     ).all()
 
     return result
@@ -486,6 +487,7 @@ def get_filtered_texts(db, grades:list[int]=None, assigned_users:list[str]=None,
         Text.id.label("id"),
         Text.grade.label("grade"),
         Text.source_file_name.label("source_file_name"),
+        Text.processing_status.label("processing_status"),
         users_agg_subquery.label("users_assigned"),
         func.coalesce(normalized_subquery, False).label("normalized_by_user")
     )
