@@ -9,7 +9,7 @@ This HOWTO provides step-by-step instructions for setting up, running, and exten
 - [Docker](https://docs.docker.com/get-docker/)
 - [Docker Compose](https://docs.docker.com/compose/)
 - (Optional) [Git](https://git-scm.com/)
-- (Optional for development) Node.js, Python 3.9+, pip
+- (Optional for development) Node.js, Python 3.12, [uv](https://docs.astral.sh/uv/)
 
 ---
 
@@ -66,8 +66,8 @@ docker-compose up --build
 - **Backend:**  
   ```bash
   cd api
-  pip install -r requirements.txt
-  flask run
+  uv sync --group dev
+  uv run flask run
   ```
 - **Frontend:**  
   ```bash
@@ -75,6 +75,11 @@ docker-compose up --build
   npm install
   npm start
   ```
+
+Backend dependency management is now handled by `uv` through `api/pyproject.toml` and `api/uv.lock`.
+
+> [!IMPORTANT]
+> Switching from `pip` to `uv` does not remove the backend's native Hunspell dependency. On Windows, the recommended backend development path remains Docker or WSL unless you already have a working native Hunspell toolchain and dictionaries installed.
 
 ---
 

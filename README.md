@@ -19,6 +19,20 @@ This application currently supports OCR processing via the Gemini API. Though co
 ## Documentation (WIP)
 The documentation for Corspell is available [here](api/docs/README.md). It includes detailed information about the architecture, design decisions, and implementation of the application, as well as instructions for installation and usage. 
 
+## Backend Development Setup
+
+The backend now uses [`uv`](https://docs.astral.sh/uv/) as its Python dependency manager. From `api/`, use:
+
+```bash
+uv sync --group dev
+uv run flask run
+```
+
+The source of truth for backend dependencies is `api/pyproject.toml` plus `api/uv.lock`.
+
+> [!IMPORTANT]
+> This packaging change does not solve native Hunspell builds on Windows. If you cannot install Hunspell locally on Windows, use the backend through Docker or WSL.
+
 ## Docker Runtime Modes
 
 For local development, the default Docker stack is defined in `docker-compose.local.yml`.

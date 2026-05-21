@@ -168,10 +168,11 @@ api/
 │   ├── test_processor_integration.py
 │   ├── test_texts.py
 │   └── test_user_management.py
+├── pyproject.toml              # Backend dependencies managed by uv
+├── uv.lock                     # Locked backend dependency set
 ├── run_api.py                  # Flask entry point
 ├── run_worker.py               # Celery worker entry point
 ├── start.sh                    # Entrypoint script (Redis + Celery + Flask)
-└── requirements.txt            # Python dependencies
 ```
 
 ---
