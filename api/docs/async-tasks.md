@@ -12,7 +12,7 @@ Two operations are too expensive to run in a request-response cycle and are offl
 
 | Task | Trigger | What It Does |
 |---|---|---|
-| `process_zip_texts` | `POST /api/upload` | Extracts `.txt`/`.docx` files from a ZIP, runs full NLP (tokenization + spell check + suggestions), and inserts processed texts into the database |
+| `process_text_upload_zip` | `POST /api/upload` | Reads a saved `.zip`, imports `.txt`/`.docx` files into the database, then runs the background NLP pipeline for the created texts |
 | `process_ocr_zip` | `POST /api/ocr/upload` | Extracts images from a ZIP, runs OCR via Google Gemini, and stores the results as raw texts for manual review |
 
 Both tasks report progress that can be polled via `GET /api/status/<task_id>`.
@@ -52,9 +52,9 @@ flask run --host=0.0.0.0 --port=5000
 
 ---
 
-## Task 1: `process_zip_texts`
+## Task 1: `process_text_upload_zip`
 
-Processes uploaded text documents through the full NLP pipeline and inserts them directly into the `texts` and `tokens` tables.
+Processes uploaded text documents asynchronously after the API route has already accepted the upload and returned a `task_id`.
 
 ### Pipeline
 
@@ -248,7 +248,7 @@ This is applied **only once**, during initial insertion. It normalizes paragraph
 
 ## Progress Reporting
 
-Both tasks report progress via Celery's `update_state()` mechanism. The frontend polls `GET /api/status/<task_id>` to get the current state:
+Both tasks report progress via Celery's `update_state()` mechanism. The authenticated frontend polls `GET /api/status/<task_id>` to get the current state:
 
 | State | Meaning | Meta Fields |
 |---|---|---|

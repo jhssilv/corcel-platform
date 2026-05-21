@@ -654,7 +654,7 @@ Source: [upload_routes.py](../app/routes/upload_routes.py)
 
 ### `POST /api/upload` 🔑
 
-Uploads a ZIP file containing `.txt` and/or `.docx` files for batch text processing. The processing runs asynchronously via Celery. The processing status can be polled using the `/api/status/<task_id>` endpoint.
+Uploads a ZIP file containing `.txt` and/or `.docx` files for batch text processing. The request only persists the archive temporarily and enqueues a Celery job. The processing status can be polled using the `/api/status/<task_id>` endpoint.
 
 | | |
 |---|---|
@@ -680,13 +680,13 @@ Uploads a ZIP file containing `.txt` and/or `.docx` files for batch text process
 
 ---
 
-### `GET /api/status/<task_id>`
+### `GET /api/status/<task_id>` 🔒
 
 Polls the status of an asynchronous processing task.
 
 | | |
 |---|---|
-| **Auth** | None |
+| **Auth** | Login required |
 
 **Responses by task state:**
 
@@ -702,7 +702,17 @@ Polls the status of an asynchronous processing task.
 
 **Success:**
 ```json
-{ "state": "SUCCESS", "status": "Finished", "result": { ... }, "failed_files": [] }
+{
+  "state": "SUCCESS",
+  "status": "Finished",
+  "result": {
+    "kind": "text_upload",
+    "text_ids": [1, 2, 3],
+    "processed": 3,
+    "failed_files": []
+  },
+  "failed_files": []
+}
 ```
 
 **Failure:**
