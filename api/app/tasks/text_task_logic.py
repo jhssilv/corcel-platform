@@ -22,6 +22,7 @@ def run_process_texts_pipeline(task, text_ids: list):
     pipeline = TextProcessingPipeline()
     processed_count = 0
     total = len(text_ids)
+    failed_files: list[str] = []
 
     logger.info('Background text batch processing started', extra={'event': {'total_texts': total}})
 
@@ -38,6 +39,7 @@ def run_process_texts_pipeline(task, text_ids: list):
         text_obj = db.session.query(models.Text).filter_by(id=text_id).first()
         if not text_obj:
             logger.warning(f'Text {text_id} not found during async processing')
+            failed_files.append(f'text:{text_id}')
             continue
 
         try:
@@ -92,6 +94,9 @@ def run_process_texts_pipeline(task, text_ids: list):
             if text_obj:
                 text_obj.processing_status = models.ProcessingStatus.FAILED
                 db.session.commit()
+                failed_files.append(text_obj.source_file_name or f'text:{text_id}')
+            else:
+                failed_files.append(f'text:{text_id}')
             logger.exception(
                 f'Failed to process ML pipeline for text {text_id}',
                 extra={'event': {'error': str(e)}},
@@ -101,4 +106,5 @@ def run_process_texts_pipeline(task, text_ids: list):
         'status': 'Concluido',
         'total': total,
         'processed': processed_count,
+        'failed_files': failed_files,
     }

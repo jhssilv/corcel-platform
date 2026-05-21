@@ -1,5 +1,4 @@
 import pytest
-from unittest.mock import MagicMock
 import io
 from app.database.models import User
 from app.extensions import db
@@ -74,23 +73,11 @@ def test_upload_file_success(client, app, mocker):
     client.post('/api/login', json={"username": "admin", "password": "adminpass"})
     
     # Mock Celery task
-    mock_task = mocker.patch('app.routes.upload_routes.process_texts_background.delay')
+    mock_task = mocker.patch('app.routes.upload_routes.process_text_upload_zip.delay')
+    mock_task.return_value.id = "text-upload-task-123"
     
     # Mock file save so the file isn't actually written to disk
-    mocker.patch('werkzeug.datastructures.FileStorage.save')
-
-    # Mock zipfile.ZipFile so the route doesn't try to open the (unsaved) file
-    mock_zip = MagicMock()
-    mock_zip.__enter__ = MagicMock(return_value=mock_zip)
-    mock_zip.__exit__ = MagicMock(return_value=False)
-    mock_zip.namelist.return_value = ['doc.txt']
-    mock_zip.open.return_value.__enter__ = MagicMock(return_value=io.BytesIO(b'hello world'))
-    mock_zip.open.return_value.__exit__ = MagicMock(return_value=False)
-    mocker.patch('app.routes.upload_routes.zipfile.ZipFile', return_value=mock_zip)
-
-    # Mock tokenizer and DB insertion so no real processing happens
-    mocker.patch('app.routes.upload_routes.get_tokenizer')
-    mocker.patch('app.routes.upload_routes.add_text', return_value=42)
+    mock_save = mocker.patch('werkzeug.datastructures.FileStorage.save')
     
     data = {
         'file': (io.BytesIO(b"fake zip content"), 'test.zip')
@@ -98,20 +85,55 @@ def test_upload_file_success(client, app, mocker):
     
     response = client.post('/api/upload', data=data, content_type='multipart/form-data')
     
-    assert response.status_code == 200
-    assert "text_ids" in response.json
+    assert response.status_code == 202
+    assert response.json == {"task_id": "text-upload-task-123"}
     mock_task.assert_called_once()
+    mock_save.assert_called_once()
 
 def test_task_status(auth_client, mocker):
     """Test checking task status."""
     # Mock AsyncResult
-    mock_result = mocker.patch('app.routes.upload_routes.process_texts_background.AsyncResult')
+    mock_result = mocker.patch('app.routes.upload_routes.celery.AsyncResult')
     mock_instance = mock_result.return_value
     mock_instance.state = 'SUCCESS'
-    mock_instance.info = {'result': {'summary': 'Done'}}
+    mock_instance.info = {
+        'result': {
+            'kind': 'text_upload',
+            'text_ids': [1, 2],
+            'processed': 2,
+            'failed_files': [],
+        }
+    }
     
     response = auth_client.get('/api/status/task-123')
     
     assert response.status_code == 200
     assert response.json['status'] == 'Finished'
-    assert response.json['result'] == {'summary': 'Done'}
+    assert response.json['result']['kind'] == 'text_upload'
+    assert response.json['result']['text_ids'] == [1, 2]
+
+def test_task_status_progress(auth_client, mocker):
+    """Test checking task progress details."""
+    mock_result = mocker.patch('app.routes.upload_routes.celery.AsyncResult')
+    mock_instance = mock_result.return_value
+    mock_instance.state = 'PROGRESS'
+    mock_instance.info = {
+        'current': 2,
+        'total': 5,
+        'status': 'Importando arquivo 2/5',
+    }
+
+    response = auth_client.get('/api/status/task-123')
+
+    assert response.status_code == 200
+    assert response.json['state'] == 'PROGRESS'
+    assert response.json['current'] == 2
+    assert response.json['total'] == 5
+    assert response.json['status'] == 'Importando arquivo 2/5'
+
+
+def test_task_status_requires_auth(client):
+    """Task status polling should require authentication."""
+    response = client.get('/api/status/task-123')
+
+    assert response.status_code == 401

@@ -4,6 +4,7 @@ from ..extensions import celery
 from ..logging_config import bind_task_context, clear_task_context, get_logger
 from .ocr_task_logic import run_ocr_zip_pipeline
 from .text_task_logic import run_process_texts_pipeline
+from .text_upload_task_logic import run_text_upload_zip_pipeline
 
 
 celery_logger = get_logger('app.celery.runtime', source='celery')
@@ -101,5 +102,14 @@ def process_ocr_zip(self, zip_path):
     bind_task_context(self.request.id)
     try:
         return run_ocr_zip_pipeline(self, zip_path)
+    finally:
+        clear_task_context()
+
+
+@celery.task(bind=True)
+def process_text_upload_zip(self, zip_path):
+    bind_task_context(self.request.id)
+    try:
+        return run_text_upload_zip_pipeline(self, zip_path)
     finally:
         clear_task_context()
