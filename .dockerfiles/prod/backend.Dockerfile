@@ -1,5 +1,7 @@
 FROM python:3.12-slim
 
+COPY --from=ghcr.io/astral-sh/uv:0.11.15 /uv /uvx /bin/
+
 # Installs system dependencies, including Redis
 RUN apt-get update && apt-get install -y \
     build-essential \
@@ -11,13 +13,12 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app/api
 
-# Copies requirements from the 'api' folder (assuming context is root)
-COPY api/requirements.txt .
+# Copy backend dependency manifests first for a stable cache key
+COPY api/pyproject.toml api/uv.lock ./
 
-RUN pip install --upgrade pip
-RUN pip install --no-cache-dir -r requirements.txt
+RUN uv sync --frozen --no-dev
 
-RUN python -c "import spacy_udpipe; spacy_udpipe.download('pt')"
+RUN uv run python -c "import spacy_udpipe; spacy_udpipe.download('pt')"
 
 # Copies the rest of the backend code
 COPY api/ /app/api

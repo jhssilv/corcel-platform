@@ -1,5 +1,7 @@
 FROM python:3.12-slim
 
+COPY --from=ghcr.io/astral-sh/uv:0.11.15 /uv /uvx /bin/
+
 RUN apt-get update && apt-get install -y \
     build-essential \
     libhunspell-dev \
@@ -10,11 +12,10 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app/api
 
-COPY api/requirements.txt .
+COPY api/pyproject.toml api/uv.lock ./
 
-RUN pip install --upgrade pip
-RUN pip install --no-cache-dir -r requirements.txt
+RUN uv sync --frozen --no-dev
 
-RUN python -c "import spacy_udpipe; spacy_udpipe.download('pt')"
+RUN uv run python -c "import spacy_udpipe; spacy_udpipe.download('pt')"
 
 EXPOSE 5000

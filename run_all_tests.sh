@@ -8,23 +8,15 @@ trap 'echo "An error occurred. Exiting..."' ERR
 
 # Get the project root directory (where this script resides)
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-VENV_DIR="$PROJECT_ROOT/.venv"
+API_ROOT="$PROJECT_ROOT/api"
 
 echo "========================================"
 echo "Setting up Environment"
 echo "========================================"
 
-# 1. Python Environment Setup
-if [ ! -d "$VENV_DIR" ]; then
-    echo "Creating Python virtual environment in $VENV_DIR..."
-    python3 -m venv "$VENV_DIR"
-fi
-
-# Activate the virtual environment
-source "$VENV_DIR/bin/activate"
-
 echo "Installing/Updating Python dependencies..."
-pip install -r "$PROJECT_ROOT/api/requirements.txt" --quiet
+cd "$API_ROOT"
+uv sync --group dev --frozen --quiet
 
 # 2. Node Environment Setup
 echo "Installing/Updating Node dependencies..."
@@ -42,10 +34,9 @@ echo "========================================"
 echo "Running Backend Tests (Pytest)"
 echo "========================================"
 
-cd "$PROJECT_ROOT/api"
-export PYTHONPATH="$PROJECT_ROOT/api"
-# Run pytest
-pytest tests/
+cd "$API_ROOT"
+export PYTHONPATH="$API_ROOT"
+uv run pytest tests/
 
 echo "Backend tests passed!"
 echo ""
