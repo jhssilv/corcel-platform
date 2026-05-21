@@ -8,6 +8,7 @@ temp_uploads/
 playwright-report/
 test-results/
 api/images/
+local_files/
 
 .vscode/
 
