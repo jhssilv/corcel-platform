@@ -1,11 +1,11 @@
 from functools import wraps
-from flask import jsonify
 from flask_jwt_extended import verify_jwt_in_request, current_user
-
-
-def _error_response(message: str, code: str, status_code: int):
-    """Builds a standardized error payload (Option C)."""
-    return jsonify({"error": message, "code": code}), status_code
+from .api_errors import (
+    AUTH_FORBIDDEN,
+    AUTH_INVALID_USER,
+    AUTH_NOT_AUTHENTICATED,
+    error_response,
+)
 
 
 def login_required():
@@ -23,18 +23,10 @@ def login_required():
             try:
                 verify_jwt_in_request()
             except Exception:
-                return _error_response(
-                    message="Not authenticated",
-                    code="AUTH_NOT_AUTHENTICATED",
-                    status_code=401,
-                )
+                return error_response(error="Not authenticated", code=AUTH_NOT_AUTHENTICATED, status_code=401)
 
             if not current_user:
-                return _error_response(
-                    message="User not found or invalid token",
-                    code="AUTH_INVALID_USER",
-                    status_code=401,
-                )
+                return error_response(error="User not found or invalid token", code=AUTH_INVALID_USER, status_code=401)
 
             return fn(*args, current_user=current_user, **kwargs)
         return decorator
@@ -50,28 +42,26 @@ def admin_required():
             try:
                 verify_jwt_in_request()
             except Exception:
-                return _error_response(
-                    message="Not authenticated",
-                    code="AUTH_NOT_AUTHENTICATED",
+                return error_response(
+                    error="Not authenticated",
+                    code=AUTH_NOT_AUTHENTICATED,
                     status_code=401,
                 )
 
             if not current_user:
-                return _error_response(
-                    message="User not found or invalid token",
-                    code="AUTH_INVALID_USER",
+                return error_response(
+                    error="User not found or invalid token",
+                    code=AUTH_INVALID_USER,
                     status_code=401,
                 )
             
             if not current_user.is_admin:
-                return _error_response(
-                    message="Access forbidden: Admins only",
-                    code="AUTH_FORBIDDEN",
+                return error_response(
+                    error="Access forbidden: Admins only",
+                    code=AUTH_FORBIDDEN,
                     status_code=403,
                 )
 
             return fn(*args, current_user=current_user, **kwargs)
         return decorator
     return wrapper
-
-

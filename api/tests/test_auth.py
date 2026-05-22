@@ -50,6 +50,7 @@ def test_register_duplicate_user(admin_client, app):
     })
     assert response.status_code == 400
     assert response.json["error"] == "Username already exists."
+    assert response.json["code"] == "BUSINESS_RULE_VIOLATION"
 
 def test_login_success(client, app):
     """Test successful login."""
@@ -87,6 +88,7 @@ def test_login_invalid_password(client, app):
     })
     assert response.status_code == 403
     assert response.json["error"] == "Invalid password."
+    assert response.json["code"] == "AUTH_FORBIDDEN"
 
 def test_login_nonexistent_user(client):
     """Test login with non-existent user."""
@@ -96,6 +98,7 @@ def test_login_nonexistent_user(client):
     })
     assert response.status_code == 401
     assert response.json["error"] == "User does not exist."
+    assert response.json["code"] == "AUTH_NOT_AUTHENTICATED"
 
 def test_logout(auth_client):
     """Test logout."""

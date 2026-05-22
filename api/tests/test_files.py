@@ -137,3 +137,13 @@ def test_task_status_requires_auth(client):
     response = client.get('/api/status/task-123')
 
     assert response.status_code == 401
+    assert response.json["code"] == "AUTH_NOT_AUTHENTICATED"
+
+
+def test_download_normalized_texts_empty_ids_returns_error(auth_client):
+    """Download failures should use the canonical error envelope."""
+    response = auth_client.post('/api/download/', json={"text_ids": [], "use_tags": False})
+
+    assert response.status_code == 400
+    assert response.json["error"] == "'text_ids' must be a non-empty list"
+    assert response.json["code"] == "BUSINESS_RULE_VIOLATION"

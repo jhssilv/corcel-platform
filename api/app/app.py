@@ -5,11 +5,12 @@ from dotenv import load_dotenv
 
 load_dotenv() # Load env vars before importing config
 
-from flask import Flask, jsonify, g, request
+from flask import Flask, g, request
 from flask_cors import CORS
 from pydantic import ValidationError
 from celery import Celery
 from flask_jwt_extended import get_jwt_identity
+from werkzeug.exceptions import HTTPException
 
 from .extensions import db, celery, jwt, limiter
 from .routes.auth_routes import auth_bp
@@ -28,6 +29,15 @@ from .logging_config import (
     sanitize_headers,
 )
 from .database.models import User
+from .utils.api_errors import (
+    INVALID_REQUEST,
+    INTERNAL_SERVER_ERROR,
+    METHOD_NOT_ALLOWED,
+    RATE_LIMIT_EXCEEDED,
+    RESOURCE_NOT_FOUND,
+    VALIDATION_ERROR,
+    error_response,
+)
 
 def make_celery(app_name=__name__):
     redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
@@ -126,11 +136,11 @@ def create_app():
 
     @app.errorhandler(ValidationError)
     def handle_validation_error(e: ValidationError):
-        """Captura erros do Pydantic e retorna JSON formatado."""
+        """Captures Pydantic validation errors and returns the canonical JSON envelope."""
         error_details = [
             {
                 "field": error.get("loc")[-1],
-                "message": error.get("msg")
+                "message": error.get("msg"),
             }
             for error in e.errors()
         ]
@@ -144,13 +154,16 @@ def create_app():
                 }
             },
         )
-        return jsonify({
-            "error": "Validation failed",
-            "details": error_details
-        }), 400
+        return error_response(
+            error="Validation failed",
+            code=VALIDATION_ERROR,
+            status_code=400,
+            details=error_details,
+        )
 
     @app.errorhandler(429)
     def ratelimit_handler(e):
+        details = [{"field": None, "message": str(e.description)}]
         request_logger.warning(
             'Rate limit exceeded',
             extra={
@@ -161,7 +174,53 @@ def create_app():
                 }
             },
         )
-        return jsonify(error="Rate limit exceeded", message=str(e.description)), 429
+        return error_response(
+            error="Rate limit exceeded",
+            code=RATE_LIMIT_EXCEEDED,
+            status_code=429,
+            details=details,
+        )
+
+    @app.errorhandler(HTTPException)
+    def handle_http_exception(e: HTTPException):
+        if e.code == 429:
+            return ratelimit_handler(e)
+
+        code = RESOURCE_NOT_FOUND if e.code == 404 else METHOD_NOT_ALLOWED if e.code == 405 else INVALID_REQUEST
+        request_logger.warning(
+            'HTTP exception raised',
+            extra={
+                'event': {
+                    'source': 'route',
+                    'blueprint': request.blueprint or 'http',
+                    'status_code': e.code,
+                    'error': e.description,
+                }
+            },
+        )
+        return error_response(
+            error=e.description,
+            code=code,
+            status_code=e.code or 500,
+        )
+
+    @app.errorhandler(Exception)
+    def handle_unexpected_exception(e: Exception):
+        request_logger.exception(
+            'Unhandled exception',
+            extra={
+                'event': {
+                    'source': 'route',
+                    'blueprint': request.blueprint or 'http',
+                    'error': str(e),
+                }
+            },
+        )
+        return error_response(
+            error="Internal server error",
+            code=INTERNAL_SERVER_ERROR,
+            status_code=500,
+        )
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(text_bp)

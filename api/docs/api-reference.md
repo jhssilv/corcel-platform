@@ -34,18 +34,22 @@ These schemas appear across many endpoints:
 
 **ErrorResponse**
 ```json
-{ "error": "Error description.", "code": "OPTIONAL_ERROR_CODE" }
-```
-
-**Validation Error** (Pydantic)
-```json
 {
-  "error": "Validation failed",
+  "error": "Error description.",
+  "code": "OPTIONAL_ERROR_CODE",
   "details": [
     { "field": "username", "message": "Field required" }
   ]
 }
 ```
+
+All JSON error responses now use the same envelope:
+
+| Field | Type | Description |
+|---|---|---|
+| `error` | string | Human-readable top-level error message |
+| `code` | string | Machine-readable error code |
+| `details` | array | Optional structured detail items, mainly used for validation and limit context |
 
 ---
 

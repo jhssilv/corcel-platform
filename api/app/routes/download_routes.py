@@ -6,10 +6,14 @@ from flask_pydantic import validate
 from app.utils.decorators import login_required
 from app.logging_config import get_logger
 import app.schemas.download as download_schemas
-import app.schemas.generic as generic_schemas
 from app.download_texts import save_modified_texts
 from app.generate_report import generate_report
 from app.extensions import limiter
+from app.utils.api_errors import (
+    BUSINESS_RULE_VIOLATION,
+    INTERNAL_SERVER_ERROR,
+    error_response,
+)
 
 download_bp = Blueprint('download', __name__)
 
@@ -41,7 +45,7 @@ def request_report(current_user, body: download_schemas.ReportRequest):
         return response
     except Exception as e:
         logger.exception("Failed to generate report")
-        return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
+        return error_response(error="Internal server error", code=INTERNAL_SERVER_ERROR, status_code=500)
 
 @download_bp.route('/api/download/', methods=['POST'])
 @limiter.limit("5 per minute")
@@ -72,12 +76,16 @@ def download_normalized_texts(current_user, body: download_schemas.DownloadReque
         use_tags = body.use_tags
 
         if not text_ids:
-            return jsonify(generic_schemas.ErrorResponse(error="'text_ids' must be a non-empty list").model_dump()), 400
+            return error_response(
+                error="'text_ids' must be a non-empty list",
+                code=BUSINESS_RULE_VIOLATION,
+                status_code=400,
+            )
 
         zip_abs_path = save_modified_texts(current_user.id, text_ids, use_tags)
 
         if not os.path.exists(zip_abs_path):
-            return jsonify(generic_schemas.ErrorResponse(error="Failed to generate zip").model_dump()), 500
+            return error_response(error="Failed to generate zip", code=INTERNAL_SERVER_ERROR, status_code=500)
 
         directory = os.path.dirname(zip_abs_path)
         filename = os.path.basename(zip_abs_path)
@@ -108,4 +116,4 @@ def download_normalized_texts(current_user, body: download_schemas.DownloadReque
             'Error during download',
             extra={'event': {'source': 'route', 'blueprint': 'download'}},
         )
-        return jsonify(generic_schemas.ErrorResponse(error="Internal server error").model_dump()), 500
+        return error_response(error="Internal server error", code=INTERNAL_SERVER_ERROR, status_code=500)

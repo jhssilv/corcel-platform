@@ -8,8 +8,12 @@ from app.tasks.constants import TEMP_UPLOADS_FOLDER
 from app.utils.decorators import admin_required, login_required
 from app.extensions import celery, limiter
 from app.logging_config import get_logger
+from app.utils.api_errors import (
+    INTERNAL_SERVER_ERROR,
+    INVALID_REQUEST,
+    error_response,
+)
 
-from app.schemas import generic as generic_schemas
 from app.schemas import upload as upload_schemas
 
 
@@ -39,7 +43,7 @@ def upload_file(current_user):
             'Upload request missing file',
             extra={'event': {'source': 'route', 'blueprint': 'upload'}},
         )
-        return jsonify(generic_schemas.ErrorResponse(error='File not found.').model_dump()), 400
+        return error_response(error='File not found.', code=INVALID_REQUEST, status_code=400)
     
     file = request.files['file']
     
@@ -48,7 +52,7 @@ def upload_file(current_user):
             'Upload rejected due to invalid file extension',
             extra={'event': {'source': 'route', 'blueprint': 'upload', 'filename': file.filename}},
         )
-        return jsonify(generic_schemas.ErrorResponse(error='Invalid file type.').model_dump()), 400
+        return error_response(error='Invalid file type.', code=INVALID_REQUEST, status_code=400)
                 
     filename = secure_filename(file.filename)
     unique_name = f"{uuid.uuid4()}_{filename}"
@@ -61,7 +65,7 @@ def upload_file(current_user):
         logger.exception('Failed to enqueue text upload task', extra={'event': {'error': str(e)}})
         if os.path.exists(save_path):
             os.remove(save_path)
-        return jsonify(generic_schemas.ErrorResponse(error='Failed to start text upload processing.').model_dump()), 500
+        return error_response(error='Internal server error', code=INTERNAL_SERVER_ERROR, status_code=500)
 
     response = upload_schemas.UploadResponse(task_id=task.id)
     return jsonify(response.model_dump()), 202

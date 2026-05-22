@@ -79,6 +79,7 @@ def test_upload_ocr_zip_no_file(admin_client, app):
     assert response.status_code == 400
     assert 'error' in response.json
     assert 'not found' in response.json['error'].lower()
+    assert response.json["code"] == "INVALID_REQUEST"
 
 
 def test_upload_ocr_zip_invalid_file_type(admin_client, app):
@@ -94,6 +95,7 @@ def test_upload_ocr_zip_invalid_file_type(admin_client, app):
     assert response.status_code == 400
     assert 'error' in response.json
     assert 'zip' in response.json['error'].lower()
+    assert response.json["code"] == "INVALID_REQUEST"
 
 
 def test_upload_ocr_zip_empty_filename(admin_client, app):
@@ -150,6 +152,7 @@ def test_get_raw_text_image_not_found(admin_client, app):
     
     assert response.status_code == 404
     assert 'error' in response.json
+    assert response.json["code"] == "RESOURCE_NOT_FOUND"
 
 
 def test_get_raw_text_image_no_image_path(admin_client, app):
@@ -168,6 +171,7 @@ def test_get_raw_text_image_no_image_path(admin_client, app):
     
     assert response.status_code == 404
     assert 'error' in response.json
+    assert response.json["code"] == "RESOURCE_NOT_FOUND"
 
 
 def test_get_raw_text_image_non_admin(auth_client, app):

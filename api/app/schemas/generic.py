@@ -1,11 +1,18 @@
 from pydantic import BaseModel, Field
+from typing import Optional
+
+
+class ErrorDetail(BaseModel):
+    """Structured error detail item."""
+    field: Optional[str] = Field(default=None, json_schema_extra={"example": "username"})
+    message: str = Field(..., json_schema_extra={"example": "Field is required."})
+
 
 class ErrorResponse(BaseModel):
-    """Error Response Schema.
-    Args:
-        error (str): Description of the error.
-    """
-    error: str = Field(..., json_schema_extra={"example": "Error description."})
+    """Canonical API error response schema."""
+    error: str = Field(..., json_schema_extra={"example": "Validation failed"})
+    code: str = Field(..., json_schema_extra={"example": "VALIDATION_ERROR"})
+    details: Optional[list[ErrorDetail]] = Field(default=None)
 
 class MessageResponse(BaseModel):
     """Success Response Schema.

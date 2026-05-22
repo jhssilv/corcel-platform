@@ -9,6 +9,11 @@ from app.schemas import generic as generic_schemas
 from app.schemas import assignment as assignment_schemas
 from app.extensions import db
 from app.logging_config import get_logger
+from app.utils.api_errors import (
+    BUSINESS_RULE_VIOLATION,
+    INTERNAL_SERVER_ERROR,
+    error_response,
+)
 
 session = db.session
 
@@ -39,10 +44,10 @@ def bulk_assign_texts(current_user, body: assignment_schemas.BulkAssignRequest):
         user_ids = queries.get_user_ids_by_usernames(session, body.usernames)
         
         if not user_ids:
-            return jsonify(generic_schemas.ErrorResponse(error="No valid users found").model_dump()), 400
+            return error_response(error="No valid users found", code=BUSINESS_RULE_VIOLATION, status_code=400)
         
         if not body.text_ids:
-            return jsonify(generic_schemas.ErrorResponse(error="No texts provided").model_dump()), 400
+            return error_response(error="No texts provided", code=BUSINESS_RULE_VIOLATION, status_code=400)
         
         # Perform bulk assignment
         assignment_counts = queries.bulk_assign_texts(session, body.text_ids, user_ids)
@@ -67,7 +72,7 @@ def bulk_assign_texts(current_user, body: assignment_schemas.BulkAssignRequest):
             'Bulk assignment failed',
             extra={'event': {'source': 'route', 'blueprint': 'assignment', 'error': str(e)}},
         )
-        return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
+        return error_response(error="Internal server error", code=INTERNAL_SERVER_ERROR, status_code=500)
 
 
 @assignment_bp.route('/api/assignments/', methods=['DELETE'])
@@ -87,10 +92,10 @@ def bulk_unassign_texts(current_user, body: assignment_schemas.BulkAssignRequest
         user_ids = queries.get_user_ids_by_usernames(session, body.usernames)
         
         if not user_ids:
-            return jsonify(generic_schemas.ErrorResponse(error="No valid users found").model_dump()), 400
+            return error_response(error="No valid users found", code=BUSINESS_RULE_VIOLATION, status_code=400)
         
         if not body.text_ids:
-            return jsonify(generic_schemas.ErrorResponse(error="No texts provided").model_dump()), 400
+            return error_response(error="No texts provided", code=BUSINESS_RULE_VIOLATION, status_code=400)
         
         unassignment_counts = queries.bulk_unassign_texts(session, body.text_ids, user_ids)
         
@@ -113,4 +118,4 @@ def bulk_unassign_texts(current_user, body: assignment_schemas.BulkAssignRequest
             'Bulk unassignment failed',
             extra={'event': {'source': 'route', 'blueprint': 'assignment', 'error': str(e)}},
         )
-        return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
+        return error_response(error="Internal server error", code=INTERNAL_SERVER_ERROR, status_code=500)

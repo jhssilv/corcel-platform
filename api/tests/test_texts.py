@@ -92,6 +92,7 @@ def test_get_filtered_texts_normalized_invalid(auth_client, mocker):
 
     assert response.status_code == 400
     assert response.json["error"] == "Validation failed"
+    assert response.json["code"] == "VALIDATION_ERROR"
     assert response.json["details"][0]["field"] == "normalized"
     assert "true" in response.json["details"][0]["message"]
     mock_get.assert_not_called()
@@ -121,6 +122,7 @@ def test_get_text_detail_not_found(auth_client, mocker):
 
     response = auth_client.get('/api/texts/999')
     assert response.status_code == 404
+    assert response.json["code"] == "RESOURCE_NOT_FOUND"
 
 def test_add_normalization(auth_client, mocker):
     """Test adding a normalization."""
@@ -206,6 +208,7 @@ def test_set_token_normalization_flag_not_found(auth_client, mocker):
 
     assert response.status_code == 404
     assert response.json["error"] == "Token not found"
+    assert response.json["code"] == "RESOURCE_NOT_FOUND"
 
 def test_save_normalization_with_global_suggestion(auth_client, mocker):
     """Test saving a normalization with suggest_for_all=True."""

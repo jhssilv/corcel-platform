@@ -1,7 +1,6 @@
-from flask import Blueprint, jsonify, request
-from flask_jwt_extended import create_access_token, jwt_required, set_access_cookies, unset_jwt_cookies
+from flask import Blueprint, jsonify
+from flask_jwt_extended import create_access_token, set_access_cookies, unset_jwt_cookies
 from flask_pydantic import validate
-from datetime import datetime
 import secrets
 
 from app.schemas import auth as auth_schemas
@@ -12,6 +11,14 @@ import app.database.queries as queries
 from app.database.models import User
 from app.utils.decorators import login_required, admin_required
 from app.extensions import db, limiter
+from app.utils.api_errors import (
+    AUTH_FORBIDDEN,
+    AUTH_NOT_AUTHENTICATED,
+    BUSINESS_RULE_VIOLATION,
+    INTERNAL_SERVER_ERROR,
+    RESOURCE_NOT_FOUND,
+    error_response,
+)
 
 session = db.session
 
@@ -37,9 +44,8 @@ def get_usernames(current_user):
         
         response_data = user_schemas.UsernamesResponse(usernames=username_list)
         return jsonify(response_data.model_dump()), 200
-    except Exception as e:
-        error_response = generic_schemas.ErrorResponse(error=str(e))
-        return jsonify(error_response.model_dump()), 500
+    except Exception:
+        return error_response(error="Internal server error", code=INTERNAL_SERVER_ERROR, status_code=500)
 
 
 @auth_bp.route('/api/me', methods=['GET'])
@@ -52,9 +58,8 @@ def get_current_user(current_user):
             isAdmin=current_user.is_admin,
         )
         return jsonify(response_data.model_dump(by_alias=True)), 200
-    except Exception as e:
-        error_response = generic_schemas.ErrorResponse(error=str(e))
-        return jsonify(error_response.model_dump()), 500
+    except Exception:
+        return error_response(error="Internal server error", code=INTERNAL_SERVER_ERROR, status_code=500)
 
 
 @auth_bp.route('/api/register', methods=['POST'])
@@ -79,8 +84,7 @@ def register(body: auth_schemas.UserRegisterRequest, current_user=None):
     user = queries.get_user_by_username(session, username)
     
     if user is not None:
-        error_response = generic_schemas.ErrorResponse(error="Username already exists.")
-        return jsonify(error_response.model_dump()), 400
+        return error_response(error="Username already exists.", code=BUSINESS_RULE_VIOLATION, status_code=400)
     
     # Create inactive user with a random placeholder password; user sets a real one on activation
     temp_password = secrets.token_urlsafe(12)
@@ -112,12 +116,10 @@ def activate_account(body: auth_schemas.UserActivationRequest):
         user = queries.get_user_by_username(session, username)
         
         if user is None:
-            response = generic_schemas.ErrorResponse(error="Usuário não existe.")        
-            return jsonify(response.model_dump()), 404
+            return error_response(error="Usuário não existe.", code=RESOURCE_NOT_FOUND, status_code=404)
             
         if user.is_active:
-            response = generic_schemas.ErrorResponse(error="Usuário já está ativo.")
-            return jsonify(response.model_dump()), 400
+            return error_response(error="Usuário já está ativo.", code=BUSINESS_RULE_VIOLATION, status_code=400)
             
         user.set_password(password)
         user.is_active = True
@@ -126,9 +128,8 @@ def activate_account(body: auth_schemas.UserActivationRequest):
         
         response = generic_schemas.MessageResponse(message="Account activated successfully.")
         return jsonify(response.model_dump()), 200
-    except Exception as e:
-        error_response = generic_schemas.ErrorResponse(error=str(e))
-        return jsonify(error_response.model_dump()), 500
+    except Exception:
+        return error_response(error="Internal server error", code=INTERNAL_SERVER_ERROR, status_code=500)
 
 @auth_bp.route('/api/login', methods=['POST'])
 @limiter.limit("10 per minute; 20 per hour")
@@ -150,16 +151,13 @@ def login(body: auth_schemas.UserCredentials):
         user = queries.get_user_by_username(session, username)
         
         if user is None:
-            response = generic_schemas.ErrorResponse(error="User does not exist.")
-            return jsonify(response.model_dump()), 401
+            return error_response(error="User does not exist.", code=AUTH_NOT_AUTHENTICATED, status_code=401)
         
         elif not user.check_password(password):
-            response = generic_schemas.ErrorResponse(error="Invalid password.")
-            return jsonify(response.model_dump()), 403
+            return error_response(error="Invalid password.", code=AUTH_FORBIDDEN, status_code=403)
             
         if not user.is_active:
-            response = generic_schemas.ErrorResponse(error="Account is not active.")
-            return jsonify(response.model_dump()), 403
+            return error_response(error="Account is not active.", code=AUTH_FORBIDDEN, status_code=403)
         
         user_is_admin = user.is_admin
         
@@ -169,9 +167,8 @@ def login(body: auth_schemas.UserCredentials):
         set_access_cookies(response, access_token)
         
         return response, 200
-    except Exception as e:
-        error_response = generic_schemas.ErrorResponse(error=str(e))
-        return jsonify(error_response.model_dump()), 500
+    except Exception:
+        return error_response(error="Internal server error", code=INTERNAL_SERVER_ERROR, status_code=500)
     
 @auth_bp.route('/api/logout', methods=['GET'])
 @login_required()
@@ -185,9 +182,8 @@ def logout(current_user):
         response = jsonify(success_response.model_dump())
         unset_jwt_cookies(response)
         return response, 200
-    except Exception as e:
-        error_response = generic_schemas.ErrorResponse(error=str(e))
-        return jsonify(error_response.model_dump()), 500
+    except Exception:
+        return error_response(error="Internal server error", code=INTERNAL_SERVER_ERROR, status_code=500)
 
 @auth_bp.route('/api/users/<string:username>/status', methods=['PATCH'])
 @limiter.limit("10 per minute")
@@ -211,15 +207,13 @@ def set_user_status(username: str, body: auth_schemas.SetUserActiveRequest, curr
         user = queries.set_user_active_status(session, username, body.is_active)
 
         if user is None:
-            response = generic_schemas.ErrorResponse(error="User does not exist.")
-            return jsonify(response.model_dump()), 404
+            return error_response(error="User does not exist.", code=RESOURCE_NOT_FOUND, status_code=404)
 
         message = "User activated successfully." if body.is_active else "User deactivated successfully."
         response = generic_schemas.MessageResponse(message=message)
         return jsonify(response.model_dump()), 200
-    except Exception as e:
-        error_response = generic_schemas.ErrorResponse(error=str(e))
-        return jsonify(error_response.model_dump()), 500
+    except Exception:
+        return error_response(error="Internal server error", code=INTERNAL_SERVER_ERROR, status_code=500)
     
 @auth_bp.route('/api/users/<string:username>/role', methods=['PATCH'])
 @limiter.limit("10 per minute")
@@ -247,21 +241,22 @@ def set_user_role(username: str, body: auth_schemas.SetUserAdminRequest, current
         user = queries.get_user_by_username(session, username)
         
         if user is None:
-            response = generic_schemas.ErrorResponse(error="Usuário não existe.")
-            return jsonify(response.model_dump()), 404
+            return error_response(error="Usuário não existe.", code=RESOURCE_NOT_FOUND, status_code=404)
             
         number_of_admins = queries.count_admin_users(session)
         if number_of_admins <= 1 and user.is_admin and not body.is_admin:
-            response = generic_schemas.ErrorResponse(error="Cannot revoke admin privileges from the last admin user.")
-            return jsonify(response.model_dump()), 400
+            return error_response(
+                error="Cannot revoke admin privileges from the last admin user.",
+                code=BUSINESS_RULE_VIOLATION,
+                status_code=400,
+            )
 
         queries.set_user_admin_status(session, username, body.is_admin)
         message = "User granted admin privileges." if body.is_admin else "User admin privileges revoked."
         response = generic_schemas.MessageResponse(message=message)
         return jsonify(response.model_dump()), 200
-    except Exception as e:
-        error_response = generic_schemas.ErrorResponse(error=str(e))
-        return jsonify(error_response.model_dump()), 500
+    except Exception:
+        return error_response(error="Internal server error", code=INTERNAL_SERVER_ERROR, status_code=500)
     
 @auth_bp.route('/api/users/data', methods=['GET'])
 @admin_required()
@@ -295,7 +290,6 @@ def get_users_data(current_user):
             users_data.append(data)
         
         return jsonify(user_schemas.UsersDataResponse(usersData=users_data).model_dump(by_alias=True)), 200
-    except Exception as e:
-        error_response = generic_schemas.ErrorResponse(error=str(e))
-        return jsonify(error_response.model_dump()), 500
+    except Exception:
+        return error_response(error="Internal server error", code=INTERNAL_SERVER_ERROR, status_code=500)
     

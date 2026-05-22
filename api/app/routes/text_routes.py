@@ -15,6 +15,12 @@ from app.schemas import generic as generic_schemas
 from app.schemas import normalization as normalization_schemas
 from app.schemas import whitelist as whitelist_schemas
 from app.logging_config import get_logger
+from app.utils.api_errors import (
+    INTERNAL_SERVER_ERROR,
+    RESOURCE_NOT_FOUND,
+    VALIDATION_ERROR,
+    error_response,
+)
 
 session = db.session
 
@@ -26,9 +32,9 @@ def _parse_normalized_filter(normalized_param: str):
     """Parses normalized query param as tri-state: True, False, or None.
 
     Returns:
-        tuple[bool | None, dict | None]:
+        tuple[bool | None, list[dict] | None]:
             - Parsed normalized filter value.
-            - Validation error response body (or None).
+            - Validation error details (or None).
     """
     if normalized_param == '':
         return None, None
@@ -39,15 +45,12 @@ def _parse_normalized_filter(normalized_param: str):
     if normalized_value == 'false':
         return False, None
 
-    return None, {
-        "error": "Validation failed",
-        "details": [
-            {
-                "field": "normalized",
-                "message": "Must be 'true' or 'false'"
-            }
-        ]
-    }
+    return None, [
+        {
+            "field": "normalized",
+            "message": "Must be 'true' or 'false'",
+        }
+    ]
 
 @text_bp.route('/api/texts/', methods=['GET'])
 @login_required()
@@ -81,8 +84,8 @@ def get_texts_data(current_user):
 
         response = text_schemas.TextsDataResponse(textsData=texts_list)
         return jsonify(response.model_dump(by_alias=True)), 200
-    except Exception as e:
-        return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
+    except Exception:
+        return error_response(error="Internal server error", code=INTERNAL_SERVER_ERROR, status_code=500)
 
 @text_bp.route('/api/texts/status/batch', methods=['POST'])
 @login_required()
@@ -106,9 +109,9 @@ def get_batch_texts_status(current_user, body: text_schemas.BatchTextsStatusRequ
         
         response = text_schemas.BatchTextsStatusResponse(statuses=result)
         return jsonify(response.model_dump()), 200
-    except Exception as e:
+    except Exception:
         logger.exception("Failed to fetch batch text statuses")
-        return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
+        return error_response(error="Internal server error", code=INTERNAL_SERVER_ERROR, status_code=500)
 
 @text_bp.route('/api/texts/filtered', methods=['GET'])
 @login_required()
@@ -132,7 +135,12 @@ def get_filtered_texts_data(current_user, query: text_schemas.FilteredTextsQuery
         
         normalized_filter, normalized_error = _parse_normalized_filter(query.normalized or '')
         if normalized_error:
-            return jsonify(normalized_error), 400
+            return error_response(
+                error="Validation failed",
+                code=VALIDATION_ERROR,
+                status_code=400,
+                details=normalized_error,
+            )
         
         # Use existing get_filtered_texts query
         texts_data_from_db = queries.get_filtered_texts(
@@ -158,8 +166,8 @@ def get_filtered_texts_data(current_user, query: text_schemas.FilteredTextsQuery
 
         response = text_schemas.TextsDataResponse(textsData=texts_list)
         return jsonify(response.model_dump(by_alias=True)), 200
-    except Exception as e:
-        return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
+    except Exception:
+        return error_response(error="Internal server error", code=INTERNAL_SERVER_ERROR, status_code=500)
 
 @text_bp.route('/api/texts/<int:text_id>', methods=['GET'])
 @login_required()
@@ -181,13 +189,12 @@ def get_text_detail(current_user, text_id: int):
     try:
         text_data_dict = queries.get_text_by_id(session, text_id, current_user.id)
         if not text_data_dict:
-            response = generic_schemas.ErrorResponse(error="Text not found")
-            return jsonify(response.model_dump()), 404
+            return error_response(error="Text not found", code=RESOURCE_NOT_FOUND, status_code=404)
     
         response_schema = text_schemas.TextDetailResponse(**text_data_dict)
         return jsonify(response_schema.model_dump(by_alias=True)), 200
-    except Exception as e:
-        return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
+    except Exception:
+        return error_response(error="Internal server error", code=INTERNAL_SERVER_ERROR, status_code=500)
 
 @text_bp.route('/api/raw-texts/', methods=['GET'])
 @login_required()
@@ -217,8 +224,8 @@ def get_raw_texts_data(current_user):
 
         response = text_schemas.RawTextsDataResponse(textsData=texts_list)
         return jsonify(response.model_dump(by_alias=True)), 200
-    except Exception as e:
-        return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
+    except Exception:
+        return error_response(error="Internal server error", code=INTERNAL_SERVER_ERROR, status_code=500)
 
 @text_bp.route('/api/raw-texts/<int:text_id>', methods=['GET'])
 @login_required()
@@ -240,13 +247,12 @@ def get_raw_text_detail(current_user, text_id: int):
     try:
         raw_text_data = queries.get_raw_text_by_id(session, text_id)
         if not raw_text_data:
-            response = generic_schemas.ErrorResponse(error="Raw text not found")
-            return jsonify(response.model_dump()), 404
+            return error_response(error="Raw text not found", code=RESOURCE_NOT_FOUND, status_code=404)
     
         response = text_schemas.RawTextDetailResponse(**raw_text_data)
         return jsonify(response.model_dump()), 200
-    except Exception as e:
-        return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
+    except Exception:
+        return error_response(error="Internal server error", code=INTERNAL_SERVER_ERROR, status_code=500)
 
 @text_bp.route('/api/raw-texts/<int:text_id>', methods=['PUT'])
 @login_required()
@@ -271,13 +277,12 @@ def update_raw_text(current_user, text_id: int, body: text_schemas.UpdateRawText
         
         success = queries.update_raw_text_content(session, text_id, new_content)
         if not success:
-            response = generic_schemas.ErrorResponse(error="Raw text not found")
-            return jsonify(response.model_dump()), 404
+            return error_response(error="Raw text not found", code=RESOURCE_NOT_FOUND, status_code=404)
     
         response = generic_schemas.MessageResponse(message="Text updated successfully")
         return jsonify(response.model_dump()), 200
-    except Exception as e:
-        return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
+    except Exception:
+        return error_response(error="Internal server error", code=INTERNAL_SERVER_ERROR, status_code=500)
 
 @text_bp.route('/api/raw-texts/<int:text_id>/finalize', methods=['POST'])
 @limiter.limit("20 per minute")
@@ -303,14 +308,12 @@ def finalize_raw_text(current_user, text_id: int, body: text_schemas.FinalizeRaw
         # Get raw text
         raw_text_data = queries.get_raw_text_by_id(session, text_id)
         if not raw_text_data:
-            response = generic_schemas.ErrorResponse(error="Raw text not found")
-            return jsonify(response.model_dump()), 404
+            return error_response(error="Raw text not found", code=RESOURCE_NOT_FOUND, status_code=404)
         
         # Get the actual RawText object for deletion
         raw_text = session.query(RawText).filter(RawText.id == text_id).first()
         if not raw_text:
-            response = generic_schemas.ErrorResponse(error="Raw text not found")
-            return jsonify(response.model_dump()), 404
+            return error_response(error="Raw text not found", code=RESOURCE_NOT_FOUND, status_code=404)
         
         # Get optional source_file_name from request body
         source_file_name = body.source_file_name if body.source_file_name is not None else raw_text_data['source_file_name']
@@ -364,7 +367,7 @@ def finalize_raw_text(current_user, text_id: int, body: text_schemas.FinalizeRaw
             'Error finalizing raw text',
             extra={'event': {'source': 'route', 'blueprint': 'text', 'error': str(e), 'text_id': text_id}},
         )
-        return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
+        return error_response(error="Internal server error", code=INTERNAL_SERVER_ERROR, status_code=500)
 
 @text_bp.route('/api/texts/<int:text_id>/normalizations', methods=['GET'])
 @login_required()
@@ -396,8 +399,8 @@ def get_normalizations(current_user, text_id: int):
         validated = normalization_schemas.NormalizationResponse.validate_python(corrections)
         response_data = {key: value.model_dump() for key, value in validated.items()}
         return jsonify(response_data), 200
-    except Exception as e:
-        return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
+    except Exception:
+        return error_response(error="Internal server error", code=INTERNAL_SERVER_ERROR, status_code=500)
 
 @text_bp.route('/api/texts/<int:text_id>/normalizations', methods=['POST'])
 @login_required()
@@ -429,8 +432,8 @@ def save_normalization(current_user, text_id: int, body: normalization_schemas.N
         )
         response = generic_schemas.MessageResponse(message=f"Correction added: {body.new_token}")
         return jsonify(response.model_dump()), 200
-    except Exception as e:
-        return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
+    except Exception:
+        return error_response(error="Internal server error", code=INTERNAL_SERVER_ERROR, status_code=500)
 
 @text_bp.route('/api/texts/<int:text_id>/normalizations', methods=['DELETE'])
 @login_required()
@@ -454,8 +457,8 @@ def delete_normalization(current_user, text_id: int, body: normalization_schemas
         queries.delete_normalization(session, text_id, current_user.id, body.word_index)
         response = generic_schemas.MessageResponse(message="Normalization deleted")
         return jsonify(response.model_dump()), 200
-    except Exception as e:
-        return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
+    except Exception:
+        return error_response(error="Internal server error", code=INTERNAL_SERVER_ERROR, status_code=500)
 
 @text_bp.route('/api/texts/<int:text_id>/normalizations/all', methods=['DELETE'])
 @login_required()
@@ -475,8 +478,8 @@ def delete_all_normalizations(current_user, text_id: int):
         queries.delete_all_normalizations(session, current_user.id, text_id)
         response = generic_schemas.MessageResponse(message="All normalizations deleted")
         return jsonify(response.model_dump()), 200
-    except Exception as e:
-        return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
+    except Exception:
+        return error_response(error="Internal server error", code=INTERNAL_SERVER_ERROR, status_code=500)
 
 @text_bp.route('/api/texts/<int:text_id>/normalizations', methods=['PATCH'])
 @login_required()
@@ -499,8 +502,8 @@ def toggle_normalization_status(current_user, text_id: int):
         queries.toggle_normalized(session, text_id=text_id, user_id=current_user.id)
         response = generic_schemas.MessageResponse(message="Status changed")
         return jsonify(response.model_dump()), 200
-    except Exception as e:
-        return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
+    except Exception:
+        return error_response(error="Internal server error", code=INTERNAL_SERVER_ERROR, status_code=500)
     
     
 @text_bp.route('/api/tokens/<int:token_id>/normalization-flag', methods=['PATCH'])
@@ -524,8 +527,7 @@ def set_token_normalization_flag(current_user, token_id: int, body: normalizatio
     try:
         token = queries.set_to_be_normalized(session, token_id=token_id, to_be_normalized=body.to_be_normalized)
         if token is None:
-            response = generic_schemas.ErrorResponse(error="Token not found")
-            return jsonify(response.model_dump()), 404
+            return error_response(error="Token not found", code=RESOURCE_NOT_FOUND, status_code=404)
 
         message = (
             "Token marked as requiring normalization."
@@ -534,8 +536,8 @@ def set_token_normalization_flag(current_user, token_id: int, body: normalizatio
         )
         response = generic_schemas.MessageResponse(message=message)
         return jsonify(response.model_dump()), 200
-    except Exception as e:
-        return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
+    except Exception:
+        return error_response(error="Internal server error", code=INTERNAL_SERVER_ERROR, status_code=500)
     
 @text_bp.route('/api/whitelist/', methods=['GET'])
 @login_required()
@@ -552,8 +554,8 @@ def get_whitelist_tokens(current_user):
         whitelist_tokens = queries.get_whitelist_tokens(session)
         response = whitelist_schemas.WhitelistTokensResponse(tokens=whitelist_tokens)
         return jsonify(response.model_dump()), 200
-    except Exception as e:
-        return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
+    except Exception:
+        return error_response(error="Internal server error", code=INTERNAL_SERVER_ERROR, status_code=500)
 
 @text_bp.route('/api/whitelist/', methods=['POST'])
 @login_required()
@@ -578,8 +580,8 @@ def create_whitelist_token(current_user, body: whitelist_schemas.WhitelistTokenC
 
         response = generic_schemas.MessageResponse(message=message)
         return jsonify(response.model_dump()), 200
-    except Exception as e:
-        return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
+    except Exception:
+        return error_response(error="Internal server error", code=INTERNAL_SERVER_ERROR, status_code=500)
 
 
 @text_bp.route('/api/whitelist/<path:token_text>', methods=['DELETE'])
@@ -591,5 +593,5 @@ def delete_whitelist_token(current_user, token_text: str):
         queries.remove_whitelist_token(session, decoded_token_text)
         response = generic_schemas.MessageResponse(message=f"Token '{decoded_token_text}' removed from whitelist.")
         return jsonify(response.model_dump()), 200
-    except Exception as e:
-        return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
+    except Exception:
+        return error_response(error="Internal server error", code=INTERNAL_SERVER_ERROR, status_code=500)

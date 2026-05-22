@@ -103,3 +103,4 @@ def test_set_user_role_blocks_last_admin_revoke(admin_client):
 
     assert response.status_code == 400
     assert response.json["error"] == "Cannot revoke admin privileges from the last admin user."
+    assert response.json["code"] == "BUSINESS_RULE_VIOLATION"
