@@ -38,3 +38,68 @@ def test_get_users_data_unauthenticated(client):
     assert response.status_code == 401
     assert response.json["error"] == "Not authenticated"
     assert response.json["code"] == "AUTH_NOT_AUTHENTICATED"
+
+
+def test_set_user_status_deactivates_user(admin_client, app):
+    """Test explicitly setting a user as inactive."""
+    with app.app_context():
+        user = User(username="activeuser", is_active=True, is_admin=False)
+        user.set_password("pass")
+        db.session.add(user)
+        db.session.commit()
+
+    response = admin_client.patch('/api/users/activeuser/status', json={"is_active": False})
+
+    assert response.status_code == 200
+    assert response.json["message"] == "User deactivated successfully."
+
+    with app.app_context():
+        user = db.session.query(User).filter_by(username="activeuser").first()
+        assert user is not None
+        assert user.is_active is False
+
+
+def test_set_user_status_activates_user(admin_client, app):
+    """Test explicitly setting a user as active."""
+    with app.app_context():
+        user = User(username="inactiveuser", is_active=False, is_admin=False)
+        user.set_password("pass")
+        db.session.add(user)
+        db.session.commit()
+
+    response = admin_client.patch('/api/users/inactiveuser/status', json={"is_active": True})
+
+    assert response.status_code == 200
+    assert response.json["message"] == "User activated successfully."
+
+    with app.app_context():
+        user = db.session.query(User).filter_by(username="inactiveuser").first()
+        assert user is not None
+        assert user.is_active is True
+
+
+def test_set_user_role_grants_admin(admin_client, app):
+    """Test explicitly granting admin privileges."""
+    with app.app_context():
+        user = User(username="regularuser", is_active=True, is_admin=False)
+        user.set_password("pass")
+        db.session.add(user)
+        db.session.commit()
+
+    response = admin_client.patch('/api/users/regularuser/role', json={"is_admin": True})
+
+    assert response.status_code == 200
+    assert response.json["message"] == "User granted admin privileges."
+
+    with app.app_context():
+        user = db.session.query(User).filter_by(username="regularuser").first()
+        assert user is not None
+        assert user.is_admin is True
+
+
+def test_set_user_role_blocks_last_admin_revoke(admin_client):
+    """Test that the last admin cannot be demoted."""
+    response = admin_client.patch('/api/users/adminuser/role', json={"is_admin": False})
+
+    assert response.status_code == 400
+    assert response.json["error"] == "Cannot revoke admin privileges from the last admin user."

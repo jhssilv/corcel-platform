@@ -27,9 +27,10 @@ class NormalizationCreateRequest(BaseModel):
     new_token: str = Field(..., json_schema_extra={"example": "new corrected token"}, description="The new token that will replace the original.")
     suggest_for_all: Optional[bool] = Field(False, description="If true, suggests this correction for all occurrences of the text.")
 
-class ToggleToBeNormalizedRequest(BaseModel):
-    """Schema for toggling the to_be_normalized flag for a token.
-    Args:
-        token_id (int): ID of the token to toggle.
-    """
-    token_id: int = Field(..., json_schema_extra={"example": 42}, description="ID of the token to toggle.")
+class SetToBeNormalizedRequest(BaseModel):
+    """Schema for explicitly setting the to_be_normalized flag for a token."""
+    to_be_normalized: bool = Field(
+        ...,
+        json_schema_extra={"example": False},
+        description="Desired value for the token normalization flag.",
+    )

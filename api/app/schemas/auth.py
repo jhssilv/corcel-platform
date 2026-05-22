@@ -35,9 +35,11 @@ class LoginResponse(BaseModel):
     message: str = Field(..., json_schema_extra={"example": "Olá, admin!"})
     is_admin: bool = Field(..., alias="isAdmin", json_schema_extra={"example": True})
 
-class ToggleUserRequest(BaseModel):
-    """Schema for toggling user status or admin privileges.
-    Args:
-        username (str): The username of the user.
-    """
-    username: str = Field(..., json_schema_extra={"example": "user1"}, description="Username.")
+class SetUserActiveRequest(BaseModel):
+    """Schema for explicitly setting a user's active status."""
+    is_active: bool = Field(..., json_schema_extra={"example": False}, description="Desired active status.")
+
+
+class SetUserAdminRequest(BaseModel):
+    """Schema for explicitly setting a user's admin role."""
+    is_admin: bool = Field(..., json_schema_extra={"example": True}, description="Desired admin status.")

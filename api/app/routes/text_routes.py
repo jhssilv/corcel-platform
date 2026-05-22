@@ -1,4 +1,5 @@
 import os
+from urllib.parse import unquote
 
 from flask import Blueprint, jsonify
 from flask_pydantic import validate
@@ -502,16 +503,16 @@ def toggle_normalization_status(current_user, text_id: int):
         return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
     
     
-@text_bp.route('/api/tokens/<int:token_id>/suggestions/toggle', methods=['PATCH'])
+@text_bp.route('/api/tokens/<int:token_id>/normalization-flag', methods=['PATCH'])
 @login_required()
 @validate()
-def toggle_token_suggestions(current_user, token_id: int, body: normalization_schemas.ToggleToBeNormalizedRequest):
-    """Toggles the to_be_normalized flag for a specific token for ALL users.
+def set_token_normalization_flag(current_user, token_id: int, body: normalization_schemas.SetToBeNormalizedRequest):
+    """Sets the to_be_normalized flag for a specific token for ALL users.
 
     Args:
         current_user (User): The currently logged-in user.
-        token_id (int): The ID of the token to toggle the to_be_normalized flag for.
-        body (toggleToBeNormalizedRequest): The request body containing toggle details.
+        token_id (int): The ID of the token whose to_be_normalized flag will be updated.
+        body (SetToBeNormalizedRequest): The request body containing the desired flag state.
 
     Returns:
         MessageResponse: The response containing a confirmation message.
@@ -521,8 +522,17 @@ def toggle_token_suggestions(current_user, token_id: int, body: normalization_sc
         
     """
     try:
-        queries.toggle_to_be_normalized(session, token_id=token_id)
-        response = generic_schemas.MessageResponse(message="Token 'to_be_normalized' status toggled")
+        token = queries.set_to_be_normalized(session, token_id=token_id, to_be_normalized=body.to_be_normalized)
+        if token is None:
+            response = generic_schemas.ErrorResponse(error="Token not found")
+            return jsonify(response.model_dump()), 404
+
+        message = (
+            "Token marked as requiring normalization."
+            if body.to_be_normalized
+            else "Token marked as not requiring normalization."
+        )
+        response = generic_schemas.MessageResponse(message=message)
         return jsonify(response.model_dump()), 200
     except Exception as e:
         return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
@@ -545,15 +555,15 @@ def get_whitelist_tokens(current_user):
     except Exception as e:
         return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
 
-@text_bp.route('/api/whitelist/', methods=['POST', 'DELETE'])
+@text_bp.route('/api/whitelist/', methods=['POST'])
 @login_required()
 @validate()
-def manage_whitelist_token(current_user, body: whitelist_schemas.WhitelistManageRequest):
-    """Manages whitelist tokens by adding or removing them.
+def create_whitelist_token(current_user, body: whitelist_schemas.WhitelistTokenCreateRequest):
+    """Adds a token to the whitelist.
 
     Args:
         current_user (User): The currently logged-in user.
-        body (whitelist_schemas.WhitelistManageRequest): The request body containing token management details.
+        body (whitelist_schemas.WhitelistTokenCreateRequest): The request body containing the token text.
 
     Returns:
         MessageResponse: The response containing a confirmation message.
@@ -563,16 +573,23 @@ def manage_whitelist_token(current_user, body: whitelist_schemas.WhitelistManage
         
     """
     try:
-        if body.action == 'add':
-            queries.add_whitelist_token(session, body.token_text)
-            message = f"Token '{body.token_text}' added to whitelist."
-        elif body.action == 'remove':
-            queries.remove_whitelist_token(session, body.token_text)
-            message = f"Token '{body.token_text}' removed from whitelist."
-        else:
-            return jsonify(generic_schemas.ErrorResponse(error="Invalid action").model_dump()), 400
+        queries.add_whitelist_token(session, body.token_text)
+        message = f"Token '{body.token_text}' added to whitelist."
 
         response = generic_schemas.MessageResponse(message=message)
+        return jsonify(response.model_dump()), 200
+    except Exception as e:
+        return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500
+
+
+@text_bp.route('/api/whitelist/<path:token_text>', methods=['DELETE'])
+@login_required()
+def delete_whitelist_token(current_user, token_text: str):
+    """Removes a token from the whitelist."""
+    try:
+        decoded_token_text = unquote(token_text)
+        queries.remove_whitelist_token(session, decoded_token_text)
+        response = generic_schemas.MessageResponse(message=f"Token '{decoded_token_text}' removed from whitelist.")
         return jsonify(response.model_dump()), 200
     except Exception as e:
         return jsonify(generic_schemas.ErrorResponse(error=str(e)).model_dump()), 500

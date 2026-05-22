@@ -393,14 +393,37 @@ def get_user_by_username(db, username: str):
     return db.query(User).filter(User.username == username).first()
 
 
-def toggle_to_be_normalized(db, token_id: int):
+def set_user_active_status(db, username: str, is_active: bool):
+    """Sets the active status for a specific user."""
+    user = get_user_by_username(db, username)
+    if not user:
+        return None
+
+    user.is_active = is_active
+    db.commit()
+    return user
+
+
+def set_user_admin_status(db, username: str, is_admin: bool):
+    """Sets the admin status for a specific user."""
+    user = get_user_by_username(db, username)
+    if not user:
+        return None
+
+    user.is_admin = is_admin
+    db.commit()
+    return user
+
+
+def set_to_be_normalized(db, token_id: int, to_be_normalized: bool):
     """
-    Toggles the 'to_be_normalized' flag for a specific token.
+    Sets the 'to_be_normalized' flag for a specific token.
     """
     token = db.query(Token).filter(Token.id == token_id).first()
     if token:
-        token.to_be_normalized = not token.to_be_normalized
+        token.to_be_normalized = to_be_normalized
         db.commit()
+    return token
         
 def get_whitelist_tokens(db):
     """

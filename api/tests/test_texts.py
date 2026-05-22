@@ -167,16 +167,45 @@ def test_toggle_normalization_status(auth_client, mocker):
     assert response.json["message"] == "Status changed"
     mock_toggle.assert_called_once()
 
-def test_toggle_token_suggestions(auth_client, mocker):
-    """Test toggling the 'to_be_normalized' status of a token."""
-    mock_toggle = mocker.patch('app.database.queries.toggle_to_be_normalized')
-    
-    # Token ID 102
-    response = auth_client.patch('/api/tokens/102/suggestions/toggle', json={"token_id": 102})
-    
+def test_set_token_normalization_flag_true(auth_client, mocker):
+    """Test explicitly setting the 'to_be_normalized' flag to true."""
+    mock_set = mocker.patch('app.database.queries.set_to_be_normalized', return_value=object())
+
+    response = auth_client.patch(
+        '/api/tokens/102/normalization-flag',
+        json={"to_be_normalized": True},
+    )
+
     assert response.status_code == 200
-    assert response.json["message"] == "Token 'to_be_normalized' status toggled"
-    mock_toggle.assert_called_once_with(mocker.ANY, token_id=102)
+    assert response.json["message"] == "Token marked as requiring normalization."
+    mock_set.assert_called_once_with(mocker.ANY, token_id=102, to_be_normalized=True)
+
+
+def test_set_token_normalization_flag_false(auth_client, mocker):
+    """Test explicitly setting the 'to_be_normalized' flag to false."""
+    mock_set = mocker.patch('app.database.queries.set_to_be_normalized', return_value=object())
+
+    response = auth_client.patch(
+        '/api/tokens/102/normalization-flag',
+        json={"to_be_normalized": False},
+    )
+
+    assert response.status_code == 200
+    assert response.json["message"] == "Token marked as not requiring normalization."
+    mock_set.assert_called_once_with(mocker.ANY, token_id=102, to_be_normalized=False)
+
+
+def test_set_token_normalization_flag_not_found(auth_client, mocker):
+    """Test explicitly setting the token flag for a missing token."""
+    mocker.patch('app.database.queries.set_to_be_normalized', return_value=None)
+
+    response = auth_client.patch(
+        '/api/tokens/102/normalization-flag',
+        json={"to_be_normalized": True},
+    )
+
+    assert response.status_code == 404
+    assert response.json["error"] == "Token not found"
 
 def test_save_normalization_with_global_suggestion(auth_client, mocker):
     """Test saving a normalization with suggest_for_all=True."""
@@ -198,3 +227,25 @@ def test_save_normalization_with_global_suggestion(auth_client, mocker):
     call_args = mock_save.call_args
     # args: (session, text_id, user_id, first_index, last_index, new_token, suggest_for_all)
     assert call_args[0][6] is True
+
+
+def test_create_whitelist_token(auth_client, mocker):
+    """Test adding a token to the whitelist without an action field."""
+    mock_add = mocker.patch('app.database.queries.add_whitelist_token')
+
+    response = auth_client.post('/api/whitelist/', json={"token_text": "caza"})
+
+    assert response.status_code == 200
+    assert response.json["message"] == "Token 'caza' added to whitelist."
+    mock_add.assert_called_once_with(mocker.ANY, "caza")
+
+
+def test_delete_whitelist_token(auth_client, mocker):
+    """Test removing a token from the whitelist using the path token."""
+    mock_remove = mocker.patch('app.database.queries.remove_whitelist_token')
+
+    response = auth_client.delete('/api/whitelist/token%20text')
+
+    assert response.status_code == 200
+    assert response.json["message"] == "Token 'token text' removed from whitelist."
+    mock_remove.assert_called_once_with(mocker.ANY, "token text")

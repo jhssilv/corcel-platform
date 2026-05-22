@@ -189,15 +189,16 @@ def logout(current_user):
         error_response = generic_schemas.ErrorResponse(error=str(e))
         return jsonify(error_response.model_dump()), 500
 
-@auth_bp.route('/api/users/toggleActive', methods=['PATCH'])
+@auth_bp.route('/api/users/<string:username>/status', methods=['PATCH'])
 @limiter.limit("10 per minute")
 @validate()
 @admin_required()
-def deactivate_user(body: auth_schemas.ToggleUserRequest, current_user):
-    """Toggles the active status of a user.
+def set_user_status(username: str, body: auth_schemas.SetUserActiveRequest, current_user):
+    """Sets the active status of a user.
 
     Args:
-        body (ToggleUserRequest): Username of the user to toggle.
+        username (str): Username of the target user.
+        body (SetUserActiveRequest): Desired active status.
         current_user (User): The currently logged-in user.
 
     Returns: JSON response indicating success or failure.
@@ -207,36 +208,29 @@ def deactivate_user(body: auth_schemas.ToggleUserRequest, current_user):
         
     """
     try:
-        username = body.username
-        
-        user = queries.get_user_by_username(session, username)
-        
+        user = queries.set_user_active_status(session, username, body.is_active)
+
         if user is None:
             response = generic_schemas.ErrorResponse(error="User does not exist.")
             return jsonify(response.model_dump()), 404
-            
-        user.is_active = not user.is_active
-        session.commit()
-        
-        if not user.is_active:
-            response = generic_schemas.MessageResponse(message="User deactivated successfully.")
-            return jsonify(response.model_dump()), 200
-        else:
-            response = generic_schemas.MessageResponse(message="User activated successfully.")
-            return jsonify(response.model_dump()), 200
+
+        message = "User activated successfully." if body.is_active else "User deactivated successfully."
+        response = generic_schemas.MessageResponse(message=message)
+        return jsonify(response.model_dump()), 200
     except Exception as e:
         error_response = generic_schemas.ErrorResponse(error=str(e))
         return jsonify(error_response.model_dump()), 500
     
-@auth_bp.route('/api/users/toggleAdmin', methods=['PATCH'])
+@auth_bp.route('/api/users/<string:username>/role', methods=['PATCH'])
 @limiter.limit("10 per minute")
 @validate()
 @admin_required()
-def toggle_user_is_admin(body: auth_schemas.ToggleUserRequest, current_user):
-    """Toggles the admin status of a user.
+def set_user_role(username: str, body: auth_schemas.SetUserAdminRequest, current_user):
+    """Sets the admin status of a user.
 
     Args:
-        body (ToggleUserRequest): Username of the user to toggle.
+        username (str): Username of the target user.
+        body (SetUserAdminRequest): Desired admin status.
         current_user (User): The currently logged-in user.
 
     Returns:
@@ -246,12 +240,10 @@ def toggle_user_is_admin(body: auth_schemas.ToggleUserRequest, current_user):
         Admin privileges.
 
     Post-Conditions:
-        User's admin status is toggled unless they are the last admin.
+        User's admin status is updated unless they are the last admin being revoked.
         
     """
     try:
-        username = body.username
-        
         user = queries.get_user_by_username(session, username)
         
         if user is None:
@@ -259,19 +251,14 @@ def toggle_user_is_admin(body: auth_schemas.ToggleUserRequest, current_user):
             return jsonify(response.model_dump()), 404
             
         number_of_admins = queries.count_admin_users(session)
-        if number_of_admins <= 1 and user.is_admin:
+        if number_of_admins <= 1 and user.is_admin and not body.is_admin:
             response = generic_schemas.ErrorResponse(error="Cannot revoke admin privileges from the last admin user.")
             return jsonify(response.model_dump()), 400
-            
-        user.is_admin = not user.is_admin
-        session.commit()
-        
-        if user.is_admin:
-            response = generic_schemas.MessageResponse(message="User granted admin privileges.")
-            return jsonify(response.model_dump()), 200
-        else:
-            response = generic_schemas.MessageResponse(message="User admin privileges revoked.")
-            return jsonify(response.model_dump()), 200
+
+        queries.set_user_admin_status(session, username, body.is_admin)
+        message = "User granted admin privileges." if body.is_admin else "User admin privileges revoked."
+        response = generic_schemas.MessageResponse(message=message)
+        return jsonify(response.model_dump()), 200
     except Exception as e:
         error_response = generic_schemas.ErrorResponse(error=str(e))
         return jsonify(error_response.model_dump()), 500
