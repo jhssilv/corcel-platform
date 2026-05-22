@@ -29,9 +29,20 @@ export interface FinalizeRawTextRequest {
 	source_file_name?: string;
 }
 
-export interface WhitelistManageRequest {
+export interface WhitelistTokenCreateRequest {
 	token_text: string;
-	action: "add" | "remove";
+}
+
+export interface SetUserActiveRequest {
+	is_active: boolean;
+}
+
+export interface SetUserAdminRequest {
+	is_admin: boolean;
+}
+
+export interface SetTokenNormalizationFlagRequest {
+	to_be_normalized: boolean;
 }
 
 export type NormalizationCreateRequest = NormalizationCreatePayload;

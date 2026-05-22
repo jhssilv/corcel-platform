@@ -150,12 +150,16 @@ export async function toggleNormalizedStatus(
 	return schemas.MessageResponseSchema.parse(data);
 }
 
-export async function toggleToBeNormalized(tokenId: number): Promise<void> {
+export async function setTokenNormalizationFlag(
+	tokenId: number,
+	toBeNormalized: boolean,
+): Promise<void> {
 	const payload = {
-		token_id: tokenId,
+		to_be_normalized: toBeNormalized,
 	};
 
-	await apiPrivate.patch(`/tokens/${tokenId}/suggestions/toggle`, payload);
+	schemas.SetTokenNormalizationFlagRequestSchema.parse(payload);
+	await apiPrivate.patch(`/tokens/${tokenId}/normalization-flag`, payload);
 }
 
 export async function deleteAllNormalizations(

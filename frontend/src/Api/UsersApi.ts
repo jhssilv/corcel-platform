@@ -32,12 +32,32 @@ export async function getUsersData(): Promise<UserData[]> {
 	return schemas.UsersDataResponseSchema.parse(data.usersData);
 }
 
-export async function toggleUserActive(username: string): Promise<unknown> {
-	const response = await apiPrivate.patch("/users/toggleActive", { username });
+export async function setUserActiveStatus(
+	username: string,
+	isActive: boolean,
+): Promise<unknown> {
+	const payload = {
+		is_active: isActive,
+	};
+	schemas.SetUserActiveRequestSchema.parse(payload);
+	const response = await apiPrivate.patch(
+		`/users/${encodeURIComponent(username)}/status`,
+		payload,
+	);
 	return response;
 }
 
-export async function toggleUserAdmin(username: string): Promise<unknown> {
-	const response = await apiPrivate.patch("/users/toggleAdmin", { username });
+export async function setUserAdminRole(
+	username: string,
+	isAdmin: boolean,
+): Promise<unknown> {
+	const payload = {
+		is_admin: isAdmin,
+	};
+	schemas.SetUserAdminRequestSchema.parse(payload);
+	const response = await apiPrivate.patch(
+		`/users/${encodeURIComponent(username)}/role`,
+		payload,
+	);
 	return response;
 }

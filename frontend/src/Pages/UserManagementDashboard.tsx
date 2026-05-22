@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import TopBar from "../Components/Layout/TopBar";
-import { getUsersData, toggleUserActive, toggleUserAdmin } from "../Api";
+import { getUsersData, setUserActiveStatus, setUserAdminRole } from "../Api";
 import { useAuth } from "../Context/Auth/UseAuth";
 import { useSnackbar } from "../Context/Generic";
 import {
@@ -22,9 +22,7 @@ function UserManagementDashboard() {
 	const [filteredUsers, setFilteredUsers] = useState<UserData[]>([]);
 	const [searchTerm, setSearchTerm] = useState("");
 	const [loading, setLoading] = useState(true);
-	const [confirmAdminToggle, setConfirmAdminToggle] = useState<string | null>(
-		null,
-	);
+	const [confirmAdminToggle, setConfirmAdminToggle] = useState<UserData | null>(null);
 
 	const { username: currentUsername } = useAuth();
 	const navigate = useNavigate();
@@ -77,7 +75,7 @@ function UserManagementDashboard() {
 						size="sm"
 						tier="secondary"
 						variant={user.isAdmin ? "action" : "neutral"}
-						onClick={() => setConfirmAdminToggle(user.username)}
+						onClick={() => setConfirmAdminToggle(user)}
 						disabled={user.username === currentUsername}
 					>
 						{user.isAdmin ? "Remover Admin" : "Tornar Admin"}
@@ -87,7 +85,7 @@ function UserManagementDashboard() {
 						tier="secondary"
 						variant={user.isActive ? "danger" : "action"}
 						onClick={() => {
-							void handleToggleActive(user.username);
+							void handleSetActiveStatus(user.username, !user.isActive);
 						}}
 						disabled={user.username === currentUsername}
 					>
@@ -133,45 +131,53 @@ function UserManagementDashboard() {
 		setFilteredUsers(users);
 	}, [searchTerm, users]);
 
-	const handleToggleActive = async (username: string) => {
+	const handleSetActiveStatus = async (
+		username: string,
+		isActive: boolean,
+	) => {
 		if (username === currentUsername) {
 			return;
 		}
 
 		try {
-			await toggleUserActive(username);
+			await setUserActiveStatus(username, isActive);
 			await fetchUsers();
 			addSnackbar({
-				text: `Status de '${username}' atualizado com sucesso.`,
+				text: isActive
+					? `Usuário '${username}' ativado com sucesso.`
+					: `Usuário '${username}' desativado com sucesso.`,
 				type: "success",
 			});
 		} catch (err) {
-			console.error("Failed to toggle active status", err);
+			console.error("Failed to update active status", err);
 			addSnackbar({
-				text: "Failed to toggle active status",
+				text: "Failed to update active status",
 				type: "error",
 			});
 		}
 	};
 
-	const handleToggleAdmin = async () => {
+	const handleSetAdminRole = async () => {
 		if (!confirmAdminToggle) {
 			return;
 		}
 
 		try {
-			await toggleUserAdmin(confirmAdminToggle);
-			const userRef = confirmAdminToggle;
+			const nextIsAdmin = !confirmAdminToggle.isAdmin;
+			await setUserAdminRole(confirmAdminToggle.username, nextIsAdmin);
+			const userRef = confirmAdminToggle.username;
 			setConfirmAdminToggle(null);
 			await fetchUsers();
 			addSnackbar({
-				text: `Privilégios de '${userRef}' atualizados com sucesso.`,
+				text: nextIsAdmin
+					? `Privilégios de administrador concedidos a '${userRef}'.`
+					: `Privilégios de administrador removidos de '${userRef}'.`,
 				type: "success",
 			});
 		} catch (err) {
-			console.error("Failed to toggle admin status", err);
+			console.error("Failed to update admin status", err);
 			addSnackbar({
-				text: "Failed to toggle admin status",
+				text: "Failed to update admin status",
 				type: "error",
 			});
 			setConfirmAdminToggle(null);
@@ -253,7 +259,7 @@ function UserManagementDashboard() {
 								tier="primary"
 								variant="action"
 								onClick={() => {
-									void handleToggleAdmin();
+									void handleSetAdminRole();
 								}}
 							>
 								Confirmar
@@ -263,8 +269,14 @@ function UserManagementDashboard() {
 				>
 					<Stack direction="vertical" gap={12}>
 						<p>
-							Tem certeza que deseja alterar o status de administrador para{" "}
-							<strong>{confirmAdminToggle}</strong>?
+							Tem certeza que deseja{" "}
+							<strong>
+								{confirmAdminToggle.isAdmin
+									? "remover"
+									: "conceder"}
+							</strong>{" "}
+							status de administrador para{" "}
+							<strong>{confirmAdminToggle.username}</strong>?
 						</p>
 					</Stack>
 				</ModalScaffold>

@@ -6,19 +6,14 @@ import type { WhitelistTokensResponse } from "../types";
 export async function addToWhitelist(tokenText: string): Promise<void> {
 	const payload = {
 		token_text: tokenText,
-		action: "add",
 	};
 
+	schemas.WhitelistTokenAddRequestSchema.parse(payload);
 	await apiPrivate.post("/whitelist/", payload);
 }
 
 export async function removeFromWhitelist(tokenText: string): Promise<void> {
-	const payload = {
-		token_text: tokenText,
-		action: "remove",
-	};
-
-	await apiPrivate.delete("/whitelist/", { data: payload });
+	await apiPrivate.delete(`/whitelist/${encodeURIComponent(tokenText)}`);
 }
 
 export async function getWhitelist(): Promise<WhitelistTokensResponse> {

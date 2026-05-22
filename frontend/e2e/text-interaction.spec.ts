@@ -227,14 +227,15 @@ test.describe('Text Interaction', () => {
   });
 
   test('should toggle "to be normalized" status', async ({ page }) => {
-    // Mock the toggle API call
+    // Mock the explicit flag update API call
     let toggleCalled = false;
-    await page.route('**/api/tokens/102/suggestions/toggle', async route => {
+    await page.route('**/api/tokens/102/normalization-flag', async route => {
       toggleCalled = true;
+      expect(route.request().postDataJSON()).toEqual({ to_be_normalized: false });
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ message: "Token 'to_be_normalized' status toggled" }),
+        body: JSON.stringify({ message: "Token marked as not requiring normalization." }),
       });
     });
 

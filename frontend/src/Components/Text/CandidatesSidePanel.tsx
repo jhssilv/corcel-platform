@@ -9,7 +9,7 @@ import {
 } from "react";
 import { Checkbox, Icon } from "../Generic";
 import styles from "../../styles/candidates_side_panel.module.css";
-import { toggleToBeNormalized } from "../../Api";
+import { setTokenNormalizationFlag } from "../../Api";
 
 interface PanelPosition {
 	left: number;
@@ -146,7 +146,7 @@ const CandidatesSidePanel = ({
 			return;
 		}
 
-		await toggleToBeNormalized(tokenId);
+		await setTokenNormalizationFlag(tokenId, !(toBeNormalized ?? false));
 		await refreshEssay();
 		setShowRemoveConfirmation(false);
 	};

@@ -198,8 +198,16 @@ export const WhitelistTokenAddRequestSchema = z.object({
 	token_text: z.string().min(1, "Token text cannot be empty."),
 });
 
-export const WhitelistTokenRemoveRequestSchema = z.object({
-	token_text: z.string().min(1, "Token text cannot be empty."),
+export const SetUserActiveRequestSchema = z.object({
+	is_active: z.boolean(),
+});
+
+export const SetUserAdminRequestSchema = z.object({
+	is_admin: z.boolean(),
+});
+
+export const SetTokenNormalizationFlagRequestSchema = z.object({
+	to_be_normalized: z.boolean(),
 });
 
 const UsersData = z.object({
