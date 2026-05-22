@@ -22,8 +22,8 @@ Key libraries:
 stateDiagram-v2
     [*] --> Created: Admin calls POST /api/register
     Created --> Active: User calls POST /api/activate
-    Active --> Inactive: Admin calls PATCH /api/users/toggleActive
-    Inactive --> Active: Admin calls PATCH /api/users/toggleActive
+    Active --> Inactive: Admin calls PATCH /api/users/<username>/status
+    Inactive --> Active: Admin calls PATCH /api/users/<username>/status
     Active --> Active: User logs in / logs out
 
     note right of Created
@@ -36,7 +36,7 @@ stateDiagram-v2
 1. **Registration** — An admin creates a new user via `POST /api/register`. The account is created as **inactive** with a random temporary password.
 2. **Activation** — The new user calls `POST /api/activate` with their username and chosen password. This sets the real password and marks the account as active.
 3. **Login** — The user authenticates via `POST /api/login`. On success, a JWT access token is set as an HTTP-only cookie.
-4. **Deactivation** — An admin can toggle a user's active status via `PATCH /api/users/toggleActive`. This also serves as a password reset mechanism — deactivating a user forces them to re-activate with a new password.
+4. **Deactivation** — An admin can set a user's active status via `PATCH /api/users/<username>/status`. This also serves as a password reset mechanism — deactivating a user forces them to re-activate with a new password.
 5. TODO: Add user deletion with all associated data.
 
 ---
@@ -170,12 +170,12 @@ There are two roles in the system:
 | Role | Description | Access Level |
 |---|---|---|
 | **User** | Regular authenticated user | Can view assigned texts, create normalizations, download reports |
-| **Admin** | Elevated privileges | All user abilities + register/deactivate users, upload texts, manage assignments, toggle admin |
+| **Admin** | Elevated privileges | All user abilities + register/deactivate users, upload texts, manage assignments, manage admin role |
 
 ### Admin Safeguards
 
 - The system prevents revoking admin privileges from the **last remaining admin** (checked via `count_admin_users()` in `queries.py`)
-- Admin status is toggled via `PATCH /api/users/toggleAdmin`
+- Admin status is managed via `PATCH /api/users/<username>/role`
 
 ### Access Level Summary
 

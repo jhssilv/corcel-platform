@@ -311,7 +311,7 @@ All query functions are in [queries.py](../app/database/queries.py). They receiv
 | Function | Description |
 |---|---|
 | `add_suggestion(text_id, token_id, text, db)` | Creates a suggestion and links it to a token (handles concurrent inserts) |
-| `toggle_to_be_normalized(db, token_id)` | Toggles the `to_be_normalized` flag on a token |
+| `set_to_be_normalized(db, token_id, to_be_normalized)` | Sets the `to_be_normalized` flag on a token |
 
 ### Whitelist
 

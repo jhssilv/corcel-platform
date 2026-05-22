@@ -243,18 +243,18 @@ Returns detailed data for all users.
 
 ---
 
-### `PATCH /api/users/toggleActive` 🔑
+### `PATCH /api/users/<username>/status` 🔑
 
-Toggles a user's active/inactive status.
+Sets a user's active/inactive status explicitly.
 
 | | |
 |---|---|
 | **Auth** | Admin required |
-| **Request Body** | `UserRegisterRequest` |
+| **Request Body** | `SetUserActiveRequest` |
 
 **Request Body:**
 ```json
-{ "username": "targetuser" }
+{ "is_active": false }
 ```
 
 **Success Response (200):**
@@ -265,18 +265,18 @@ This functionality can also be used to reset the password of an user, forcing th
 
 ---
 
-### `PATCH /api/users/toggleAdmin` 🔑
+### `PATCH /api/users/<username>/role` 🔑
 
-Toggles a user's admin privileges.
+Sets a user's admin privileges explicitly.
 
 | | |
 |---|---|
 | **Auth** | Admin required |
-| **Request Body** | `UserRegisterRequest` |
+| **Request Body** | `SetUserAdminRequest` |
 
 **Request Body:**
 ```json
-{ "username": "targetuser" }
+{ "is_admin": true }
 ```
 
 **Success Response (200):**
@@ -581,23 +581,23 @@ Toggles whether the current user has marked a text as "normalization complete." 
 
 ## Tokens
 
-### `PATCH /api/tokens/<token_id>/suggestions/toggle` 🔒
+### `PATCH /api/tokens/<token_id>/normalization-flag` 🔒
 
-Toggles the `to_be_normalized` flag for a specific token. This flag determines whether the token is shown as requiring normalization for **all users**. This status simply changes the color of the token in the UI.
+Sets the `to_be_normalized` flag for a specific token. This flag determines whether the token is shown as requiring normalization for **all users**. This status simply changes the color of the token in the UI.
 
 | | |
 |---|---|
 | **Auth** | Login required |
-| **Request Body** | `toggleToBeNormalizedRequest` |
+| **Request Body** | `SetToBeNormalizedRequest` |
 
 **Request Body:**
 ```json
-{ "token_id": 42 }
+{ "to_be_normalized": false }
 ```
 
 **Success Response (200):**
 ```json
-{ "message": "Token 'to_be_normalized' status toggled" }
+{ "message": "Token marked as not requiring normalization." }
 ```
 
 ---
@@ -623,27 +623,37 @@ Returns all whitelisted tokens.
 ---
 
 ### `POST /api/whitelist/` 🔒
-### `DELETE /api/whitelist/` 🔒
 
-Adds or removes a token from the whitelist. Both methods use the same endpoint with an `action` field differentiating them. This functionality can be used to modify the whitelist at any time.
+Adds a token to the whitelist. This functionality can be used to modify the whitelist at any time.
 
 | | |
 |---|---|
 | **Auth** | Login required |
-| **Request Body** | `WhitelistManageRequest` |
+| **Request Body** | `WhitelistTokenCreateRequest` |
 
 **Request Body:**
 ```json
-{
-  "token_text": "caza",
-  "action": "add"
-}
+{ "token_text": "caza" }
 ```
-Valid `action` values: `"add"` or `"remove"`.
 
 **Success Response (200):**
 ```json
 { "message": "Token 'caza' added to whitelist." }
+```
+
+---
+
+### `DELETE /api/whitelist/<token_text>` 🔒
+
+Removes a token from the whitelist using the token text in the path.
+
+| | |
+|---|---|
+| **Auth** | Login required |
+
+**Success Response (200):**
+```json
+{ "message": "Token 'caza' removed from whitelist." }
 ```
 
 ---
