@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import FloatingCandidatesList from "./FloatingCandidatesList";
-import CandidatesSidePanel from "./CandidatesSidePanel";
+import CandidateInspectorPanel from "./CandidateInspectorPanel";
 import { deleteNormalization, postNormalization } from "../../Api";
 
 interface TokenPosition {
@@ -89,10 +89,9 @@ const GeneratedCandidates = ({
 			const targetElement = eventTarget instanceof Element ? eventTarget : null;
 			if (
 				Boolean(targetElement?.closest('[data-testid="essay-token"]')) ||
-				Boolean(
-					targetElement?.closest('[data-testid="confirmation-dialog"]'),
-				) ||
-				Boolean(targetElement?.closest('[data-testid="confirmation-overlay"]'))
+				Boolean(targetElement?.closest('[data-testid="confirmation-dialog"]')) ||
+				Boolean(targetElement?.closest('[role="dialog"][aria-modal="true"]')) ||
+				Boolean(targetElement?.closest('[data-dialog-overlay="true"]'))
 			) {
 				return;
 			}
@@ -153,7 +152,7 @@ const GeneratedCandidates = ({
 				/>
 			)}
 
-			<CandidatesSidePanel
+			<CandidateInspectorPanel
 				selectedTokenText={selectedTokenText}
 				singleWordSelected={singleWordSelected}
 				toBeNormalized={toBeNormalized}
