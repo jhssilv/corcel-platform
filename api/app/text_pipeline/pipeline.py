@@ -22,13 +22,17 @@ For use inside Flask routes, obtain the shared instance from ``g``::
 """
 
 import time
+from typing import TYPE_CHECKING
 
+from . import config as cfg
 from .config import nlp_max_suggestions
 from .dictionary import DictionaryService, match_case
-from .llm_client import OllamaClient
 from .models import ProcessedToken, Token
 from .tokenizer import Tokenizer
 from ..logging_config import get_logger
+
+if TYPE_CHECKING:
+    from .llm_client import OllamaClient
 
 logger = get_logger('app.task.text_processor', source='task', task_module='text_task_logic')
 
@@ -49,10 +53,10 @@ class TextProcessingPipeline:
     def __init__(
         self,
         dictionary: DictionaryService | None = None,
-        llm: OllamaClient | None = None,
+        llm: "OllamaClient | None" = None,
     ) -> None:
         self._dictionary = dictionary or DictionaryService()
-        self._llm = llm or OllamaClient()
+        self._llm = llm
 
     # ------------------------------------------------------------------
     # Public API
@@ -105,7 +109,15 @@ class TextProcessingPipeline:
         try:
             candidates = self._phase1_generate_candidates(tokens)
             llm_corrections = self._phase2_llm_corrections(text)
-            results = self._phase3_merge(tokens, candidates, llm_corrections, llm_assists_detection)
+            effective_llm_assists_detection = (
+                llm_assists_detection and llm_corrections is not None
+            )
+            results = self._phase3_merge(
+                tokens,
+                candidates,
+                llm_corrections or {},
+                effective_llm_assists_detection,
+            )
 
             logger.info(
                 'Text processing finished',
@@ -154,9 +166,33 @@ class TextProcessingPipeline:
     # Phase 2 — LLM correction batch
     # ------------------------------------------------------------------
 
-    def _phase2_llm_corrections(self, text: str) -> dict[str, list[str]]:
-        """Delegate to the LLM client; return empty dict on any failure."""
-        return self._llm.get_corrections(text)
+    @staticmethod
+    def _llm_is_disabled() -> bool:
+        return cfg.ignore_llm_if_on_cpu() and cfg.llm_device() == 'cpu'
+
+    def _get_llm(self) -> "OllamaClient | None":
+        if self._llm is not None:
+            return self._llm
+
+        if self._llm_is_disabled():
+            return None
+
+        from .llm_client import OllamaClient
+
+        self._llm = OllamaClient()
+        return self._llm
+
+    def _phase2_llm_corrections(self, text: str) -> dict[str, list[str]] | None:
+        """Delegate to the LLM client; return ``None`` when it is unavailable."""
+        llm = self._get_llm()
+        if llm is None:
+            logger.info(
+                'LLM client not initialized because it is disabled by config',
+                extra={'event': {'device': cfg.llm_device()}},
+            )
+            return None
+
+        return llm.get_corrections(text)
 
     # ------------------------------------------------------------------
     # Phase 3 — Merge and decide to_be_normalized

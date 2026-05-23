@@ -5,6 +5,34 @@ from datetime import timedelta
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 
 
+def _get_bool_env(name: str, default: bool = False) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+
+    normalized = value.strip().lower()
+    if normalized not in {'true', 'false'}:
+        raise ValueError(f"{name} environment variable must resolve to 'true' or 'false'.")
+
+    return normalized == 'true'
+
+
+def detect_llm_device() -> str:
+    try:
+        import torch
+    except ImportError:
+        return 'cpu'
+
+    if torch.cuda.is_available():
+        return 'cuda'
+
+    mps_backend = getattr(torch.backends, 'mps', None)
+    if mps_backend is not None and mps_backend.is_available():
+        return 'mps'
+
+    return 'cpu'
+
+
 class Config:
     # --- Flask / Core --------------------------------------------------------
 
@@ -62,6 +90,8 @@ class Config:
     OLLAMA_MAX_CTX = int(os.getenv('OLLAMA_MAX_CTX', '8192'))
     OLLAMA_TIMEOUT = 120        # seconds — hard-coded; override via subclass if needed
     OLLAMA_TEMPERATURE = 0.1
+    IGNORE_LLM_IF_ON_CPU = _get_bool_env('IGNORE_LLM_IF_ON_CPU', default=False)
+    LLM_DEVICE = os.getenv('LLM_DEVICE', detect_llm_device()).strip().lower()
 
     # Spell-check / dictionary
     NLP_MAX_SUGGESTIONS = 7

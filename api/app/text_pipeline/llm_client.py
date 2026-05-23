@@ -1,8 +1,8 @@
 """Ollama LLM client for spell-check assistance.
 
 Handles prompt construction, HTTP communication with the Ollama API,
-and response parsing.  On failure it degrades gracefully (returns empty
-corrections) so that callers can fall back to dictionary-only results.
+and response parsing.  On failure it degrades gracefully so callers can
+fall back to dictionary-only normalization.
 """
 
 import json
@@ -32,6 +32,8 @@ class OllamaClient:
         self._max_ctx = cfg.ollama_max_ctx()
         self._timeout = cfg.ollama_timeout()
         self._temperature = cfg.ollama_temperature()
+        self._ignore_if_on_cpu = cfg.ignore_llm_if_on_cpu()
+        self._device = cfg.llm_device()
 
     # ------------------------------------------------------------------
     # Token / context estimation
@@ -114,11 +116,11 @@ class OllamaClient:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _parse_response(raw: str) -> dict[str, list[str]]:
+    def _parse_response(raw: str) -> dict[str, list[str]] | None:
         """Parse the LLM's JSON-array response into ``{word_lower: [suggestions]}``.
 
         Handles common LLM quirks: markdown fenced code-blocks, leading
-        prose before the JSON array, etc.  Returns an empty dict on
+        prose before the JSON array, etc.  Returns ``None`` on
         unparseable output rather than raising.
         """
         text = raw.strip()
@@ -139,10 +141,10 @@ class OllamaClient:
                     items = json.loads(text[start: end + 1])
                 except json.JSONDecodeError:
                     logger.warning('LLM response could not be parsed as JSON: %.500s', raw)
-                    return {}
+                    return None
             else:
                 logger.warning('No JSON array found in LLM response: %.500s', raw)
-                return {}
+                return None
 
         result: dict[str, list[str]] = {}
         for entry in items:
@@ -158,7 +160,7 @@ class OllamaClient:
     # Public API
     # ------------------------------------------------------------------
 
-    def get_corrections(self, text: str) -> dict[str, list[str]]:
+    def get_corrections(self, text: str) -> dict[str, list[str]] | None:
         """Ask the LLM which words in *text* are misspelled.
 
         Returns:
@@ -166,6 +168,13 @@ class OllamaClient:
             considers incorrect.  Returns an empty dict when the LLM is
             unreachable or returns unparseable output (graceful degradation).
         """
+        if self._ignore_if_on_cpu and self._device == 'cpu':
+            logger.info(
+                'LLM request skipped because CPU-only execution is disabled',
+                extra={'event': {'device': self._device}},
+            )
+            return None
+
         prompt = self._build_prompt(text)
         num_ctx = self._compute_context_size(prompt, text)
 
@@ -185,9 +194,9 @@ class OllamaClient:
             raw = self._generate(prompt, num_ctx=num_ctx)
         except Exception as exc:
             logger.warning(
-                'LLM request failed, falling back to dictionary-only corrections',
+                'LLM request failed, falling back to dictionary-only normalization',
                 extra={'event': {'error': str(exc)}},
             )
-            return {}
+            return None
 
         return self._parse_response(raw)

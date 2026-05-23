@@ -145,6 +145,8 @@ Example shape:
 | Variable | Purpose | Default |
 |---|---|---|
 | `OLLAMA_BASE_URL` | Ollama API base URL | `http://localhost:11434` |
+| `IGNORE_LLM_IF_ON_CPU` | Skip the LLM call when resolved device is `cpu` | `false` |
+| `LLM_DEVICE` | LLM device override; falls back to runtime detection (`cuda`, `mps`, `cpu`) | auto-detected |
 | `HUNSPELL_DIC` | Hunspell `.dic` path | `/usr/share/hunspell/pt_BR.dic` |
 | `HUNSPELL_AFF` | Hunspell `.aff` path | `/usr/share/hunspell/pt_BR.aff` |
 | `SPELLCHECKER_DICT` | JSON dictionary used by `SpellChecker` | `app/dicts/br-utf8.json` |
@@ -154,5 +156,7 @@ Example shape:
 ## Important Implementation Notes
 
 1. `process_text()` currently performs the LLM call even when `llm_assists_detection=False`; in that mode, LLM suggestions can still appear, but dictionary validity controls the normalization flag.
-2. Non-word tokens are never flagged (`to_be_normalized=False`) and always carry empty suggestions.
-3. Suggestion ranking is deterministic by merge order: LLM first, dictionary second.
+2. If `IGNORE_LLM_IF_ON_CPU=true` and the resolved `LLM_DEVICE` is `cpu`, the pipeline does not initialize the LLM client and falls back to dictionary-only normalization decisions.
+3. If the LLM request fails or returns an unparseable payload, the pipeline also falls back to dictionary-only normalization decisions for that text.
+4. Non-word tokens are never flagged (`to_be_normalized=False`) and always carry empty suggestions.
+5. Suggestion ranking is deterministic by merge order: LLM first, dictionary second.

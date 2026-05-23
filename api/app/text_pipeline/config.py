@@ -54,6 +54,12 @@ def ollama_timeout() -> int:
 def ollama_temperature() -> float:
     return _cfg('OLLAMA_TEMPERATURE')
 
+def ignore_llm_if_on_cpu() -> bool:
+    return _cfg('IGNORE_LLM_IF_ON_CPU')
+
+def llm_device() -> str:
+    return _cfg('LLM_DEVICE')
+
 
 # ---------------------------------------------------------------------------
 # Spell-check / dictionary
