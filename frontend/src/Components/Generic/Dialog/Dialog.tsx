@@ -96,6 +96,7 @@ export function Dialog({
 			alignY="center"
 			alignX="center"
 			className={styles.overlay}
+			data-dialog-overlay="true"
 			onClick={handleOverlayClick}
 		>
 			<Stack

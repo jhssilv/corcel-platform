@@ -12,6 +12,10 @@
 	user-select: none;
 }
 
+.fullWidth {
+	width: 100%;
+}
+
 .button:disabled,
 .button.disabled {
 	cursor: not-allowed;

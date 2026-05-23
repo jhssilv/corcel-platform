@@ -29,3 +29,4 @@ export * from "./ListState/ListState";
 export * from "./ListSurface/ListSurface";
 export * from "./TextArea/TextArea";
 export * from "./GenericTable/GenericTable";
+export * from "./FloatingPanel";

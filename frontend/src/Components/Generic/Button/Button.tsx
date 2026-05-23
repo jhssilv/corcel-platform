@@ -16,6 +16,7 @@ export type ButtonProps<E extends ElementType = "button"> = {
 	rightIcon?: IconName;
 	children?: ReactNode;
 	disabled?: boolean;
+	fullWidth?: boolean;
 	className?: string;
 } & Omit<
 	React.ComponentPropsWithoutRef<E>,
@@ -33,6 +34,7 @@ export const Button = forwardRef<HTMLElement, ButtonProps<any>>(
 			isLoading = false,
 			leftIcon,
 			rightIcon,
+			fullWidth = false,
 			className = "",
 			children,
 			disabled = false,
@@ -49,6 +51,7 @@ export const Button = forwardRef<HTMLElement, ButtonProps<any>>(
 			styles[`size-${size}`],
 			isLoading ? styles.loading : "",
 			isDisabled ? styles.disabled : "",
+			fullWidth ? styles.fullWidth : "",
 			className,
 		]
 			.filter(Boolean)

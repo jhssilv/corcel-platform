@@ -12,6 +12,7 @@ export interface ModalScaffoldProps {
 	children: ReactNode;
 	className?: string;
 	bodyClassName?: string;
+	dialogTestId?: string;
 	footer?: ReactNode;
 	footerAlign?: "left" | "center" | "right";
 }
@@ -25,11 +26,18 @@ export function ModalScaffold({
 	children,
 	className,
 	bodyClassName = "",
+	dialogTestId,
 	footer,
 	footerAlign = "right",
 }: ModalScaffoldProps) {
 	return (
-		<Dialog isOpen={isOpen} onClose={onClose} size={size} className={className}>
+		<Dialog
+			isOpen={isOpen}
+			onClose={onClose}
+			size={size}
+			className={className}
+			data-testid={dialogTestId}
+		>
 			<DialogHeader onClose={onClose} icon={icon}>
 				{title}
 			</DialogHeader>
