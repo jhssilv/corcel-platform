@@ -10,7 +10,7 @@ Verifies that:
 import pytest
 from app.text_pipeline import TextProcessingPipeline
 from app.text_pipeline.models import Token
-from app.database.models import Text, Token as DbToken, Suggestion
+from app.database.models import Text, Token as DbToken
 from app.database.queries import add_text
 from app.extensions import db
 
@@ -22,8 +22,9 @@ def pipeline(mocker):
     Real Hunspell/SpellChecker are exercised; only the external network
     call to Ollama is replaced with a deterministic stub.
     """
-    p = TextProcessingPipeline()
-    mocker.patch.object(p._llm, 'get_corrections', return_value={'caza': ['casa']})
+    llm = mocker.Mock()
+    llm.get_corrections.return_value = {'caza': ['casa']}
+    p = TextProcessingPipeline(llm=llm)
     return p
 
 
@@ -63,6 +64,25 @@ def test_pipeline_process_tokens_accepts_token_dataclasses(pipeline):
     assert results[0]['to_be_normalized'] is True
     assert 1 in results
     assert results[1]['to_be_normalized'] is False
+
+
+def test_pipeline_flags_dictionary_invalid_token_when_llm_request_fails(mocker):
+    """LLM failures should fall back to dictionary-only normalization decisions."""
+    dictionary = mocker.Mock()
+    dictionary.get_candidates.return_value = ["casa"]
+    dictionary.is_valid_word.return_value = False
+
+    llm = mocker.Mock()
+    llm.get_corrections.return_value = None
+
+    pipeline = TextProcessingPipeline(dictionary=dictionary, llm=llm)
+    results = pipeline.process_tokens(
+        [Token(idx=0, text='caza', is_word=True, whitespace_after=' ')],
+        'caza ',
+    )
+
+    assert results[0]['to_be_normalized'] is True
+    assert results[0]['suggestions'] == ["casa"]
 
 
 def test_pipeline_and_db_insertion(app, pipeline):

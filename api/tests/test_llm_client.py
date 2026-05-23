@@ -40,11 +40,11 @@ class TestParseResponse:
         result = OllamaClient._parse_response(raw)
         assert "caza" in result
 
-    def test_empty_string_returns_empty_dict(self):
-        assert OllamaClient._parse_response("") == {}
+    def test_empty_string_returns_none(self):
+        assert OllamaClient._parse_response("") is None
 
-    def test_unparseable_json_returns_empty_dict(self):
-        assert OllamaClient._parse_response("not json at all") == {}
+    def test_unparseable_json_returns_none(self):
+        assert OllamaClient._parse_response("not json at all") is None
 
     def test_non_string_suggestions_are_filtered(self):
         raw = '[{"word": "caza", "suggestions": ["casa", 42, null]}]'
@@ -58,8 +58,18 @@ class TestParseResponse:
 
 
 class TestGetCorrections:
+    def test_skips_llm_when_cpu_execution_is_disabled(self, mocker):
+        client = OllamaClient()
+        client._ignore_if_on_cpu = True
+        client._device = "cpu"
+        generate = mocker.patch.object(client, '_generate')
+
+        assert client.get_corrections("A caza bonita.") is None
+        generate.assert_not_called()
+
     def test_returns_parsed_corrections_on_success(self, mocker):
         client = OllamaClient()
+        client._ignore_if_on_cpu = False
         mocker.patch.object(
             client, '_generate',
             return_value='[{"word": "caza", "suggestions": ["casa"]}]'
@@ -67,12 +77,20 @@ class TestGetCorrections:
         result = client.get_corrections("A caza bonita.")
         assert "caza" in result
 
-    def test_returns_empty_dict_on_request_failure(self, mocker):
+    def test_returns_none_on_request_failure(self, mocker):
         client = OllamaClient()
+        client._ignore_if_on_cpu = False
         mocker.patch.object(client, '_generate', side_effect=Exception("connection refused"))
-        assert client.get_corrections("A caza bonita.") == {}
+        assert client.get_corrections("A caza bonita.") is None
 
-    def test_returns_empty_dict_on_parse_failure(self, mocker):
+    def test_returns_none_on_parse_failure(self, mocker):
         client = OllamaClient()
+        client._ignore_if_on_cpu = False
         mocker.patch.object(client, '_generate', return_value="not json")
-        assert client.get_corrections("A caza bonita.") == {}
+        assert client.get_corrections("A caza bonita.") is None
+
+    def test_returns_empty_dict_when_llm_finds_no_corrections(self, mocker):
+        client = OllamaClient()
+        client._ignore_if_on_cpu = False
+        mocker.patch.object(client, '_generate', return_value="[]")
+        assert client.get_corrections("Texto correto.") == {}
