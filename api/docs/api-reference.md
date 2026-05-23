@@ -722,7 +722,7 @@ Polls the status of an asynchronous processing task.
   "result": {
     "kind": "text_upload",
     "text_ids": [1, 2, 3],
-    "processed": 3,
+    "created": 3,
     "failed_files": []
   },
   "failed_files": []

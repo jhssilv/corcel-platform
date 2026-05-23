@@ -12,7 +12,7 @@ Two operations are too expensive to run in a request-response cycle and are offl
 
 | Task | Trigger | What It Does |
 |---|---|---|
-| `process_text_upload_zip` | `POST /api/upload` | Reads a saved `.zip`, imports `.txt`/`.docx` files into the database, then runs the background NLP pipeline for the created texts |
+| `process_text_upload_zip` | `POST /api/upload` | Reads a saved `.zip`, imports `.txt`/`.docx` files into the database, and queues a separate background NLP task for the created texts |
 | `process_ocr_zip` | `POST /api/ocr/upload` | Extracts images from a ZIP, runs OCR via Google Gemini, and stores the results as raw texts for manual review |
 
 Both tasks report progress that can be polled via `GET /api/status/<task_id>`.
@@ -56,6 +56,12 @@ flask run --host=0.0.0.0 --port=5000
 
 Processes uploaded text documents asynchronously after the API route has already accepted the upload and returned a `task_id`.
 
+Current behavior:
+
+1. Import the `.txt` / `.docx` files and persist `Text` + `Token` rows immediately with `processing_status=PENDING`.
+2. Queue `process_texts_background(text_ids)` as a separate Celery task.
+3. Treat upload-task `SUCCESS` as "import completed and background processing was queued", not "all texts finished NLP processing".
+
 ### Pipeline
 
 ```mermaid
@@ -96,6 +102,22 @@ flowchart TD
 ```
 
 On failure, the task raises an exception and transitions to `FAILURE`. The status endpoint returns the failure message under `error`.
+
+Current success payload:
+
+```json
+{
+  "status": "Concluido",
+  "total": 10,
+  "result": {
+    "kind": "text_upload",
+    "text_ids": [42, 43],
+    "created": 2,
+    "failed_files": []
+  },
+  "failed_files": []
+}
+```
 
 ### Implementation Notes
 

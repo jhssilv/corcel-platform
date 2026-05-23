@@ -1,10 +1,9 @@
-import os
 import uuid
+import base64
 from flask import Blueprint, request, jsonify
 from werkzeug.utils import secure_filename
 
 from app.tasks.celery_tasks import process_text_upload_zip
-from app.tasks.constants import TEMP_UPLOADS_FOLDER
 from app.utils.decorators import admin_required, login_required
 from app.extensions import celery, limiter
 from app.logging_config import get_logger
@@ -19,8 +18,6 @@ from app.schemas import upload as upload_schemas
 
 upload_bp = Blueprint('upload', __name__)
 logger = get_logger('app.route.upload', source='route', blueprint='upload')
-
-UPLOAD_FOLDER = TEMP_UPLOADS_FOLDER
 
 @upload_bp.route('/api/upload', methods=['POST'])
 @limiter.limit("10 per minute; 50 per hour")
@@ -56,15 +53,15 @@ def upload_file(current_user):
                 
     filename = secure_filename(file.filename)
     unique_name = f"{uuid.uuid4()}_{filename}"
-    save_path = os.path.join(UPLOAD_FOLDER, unique_name)
-    file.save(save_path)
+    zip_payload_b64 = base64.b64encode(file.read()).decode('ascii')
 
     try:
-        task = process_text_upload_zip.delay(save_path)
+        task = process_text_upload_zip.delay(
+            zip_payload_b64=zip_payload_b64,
+            original_filename=unique_name,
+        )
     except Exception as e:
         logger.exception('Failed to enqueue text upload task', extra={'event': {'error': str(e)}})
-        if os.path.exists(save_path):
-            os.remove(save_path)
         return error_response(error='Internal server error', code=INTERNAL_SERVER_ERROR, status_code=500)
 
     response = upload_schemas.UploadResponse(task_id=task.id)

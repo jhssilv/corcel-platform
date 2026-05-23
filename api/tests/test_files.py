@@ -1,5 +1,6 @@
 import pytest
 import io
+import base64
 from app.database.models import User
 from app.extensions import db
 
@@ -75,10 +76,7 @@ def test_upload_file_success(client, app, mocker):
     # Mock Celery task
     mock_task = mocker.patch('app.routes.upload_routes.process_text_upload_zip.delay')
     mock_task.return_value.id = "text-upload-task-123"
-    
-    # Mock file save so the file isn't actually written to disk
-    mock_save = mocker.patch('werkzeug.datastructures.FileStorage.save')
-    
+
     data = {
         'file': (io.BytesIO(b"fake zip content"), 'test.zip')
     }
@@ -88,7 +86,10 @@ def test_upload_file_success(client, app, mocker):
     assert response.status_code == 202
     assert response.json == {"task_id": "text-upload-task-123"}
     mock_task.assert_called_once()
-    mock_save.assert_called_once()
+
+    _, kwargs = mock_task.call_args
+    assert kwargs["original_filename"].endswith("_test.zip")
+    assert base64.b64decode(kwargs["zip_payload_b64"]) == b"fake zip content"
 
 def test_task_status(auth_client, mocker):
     """Test checking task status."""
@@ -100,7 +101,7 @@ def test_task_status(auth_client, mocker):
         'result': {
             'kind': 'text_upload',
             'text_ids': [1, 2],
-            'processed': 2,
+            'created': 2,
             'failed_files': [],
         }
     }

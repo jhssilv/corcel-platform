@@ -101,7 +101,7 @@ const isTextUploadTaskResult = (
 	return (
 		maybeResult.kind === "text_upload" &&
 		Array.isArray(maybeResult.text_ids) &&
-		typeof maybeResult.processed === "number" &&
+		typeof maybeResult.created === "number" &&
 		Array.isArray(maybeResult.failed_files)
 	);
 };
@@ -130,12 +130,38 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 		return localStorage.getItem("isTrackingUpload") === "true";
 	});
 
+	const trackingTotal = trackedTexts.length;
+	const trackingCompleted = trackedTexts.filter(
+		(text) =>
+			text.processing_status === "READY" ||
+			text.processing_status === "FAILED",
+	).length;
+	const trackingPercent =
+		trackingTotal > 0
+			? Math.round((trackingCompleted / trackingTotal) * 100)
+			: 0;
+	const trackingStatusMessage =
+		trackingTotal > 0
+			? `Processando textos ${trackingCompleted}/${trackingTotal}`
+			: "Aguardando status dos textos...";
+
 	useEffect(() => {
 		localStorage.setItem("uploadTrackingTexts", JSON.stringify(trackedTexts));
 	}, [trackedTexts]);
 
 	const pollingInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 	const abortControllerRef = useRef<AbortController | null>(null);
+
+	const seedTrackedTexts = useCallback((textIds: number[]) => {
+		setTrackedTexts(
+			textIds.map((id) => ({
+				id,
+				source_file_name: `Texto #${id}`,
+				processing_status: "PENDING" as const,
+			})),
+		);
+		setIsTracking(textIds.length > 0);
+	}, []);
 
 	const resetState = useCallback(() => {
 		setStagedFiles([]);
@@ -221,7 +247,7 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 
 						setFailedFiles(result.failed_files);
 						addSnackbar({
-							text: `${result.text_ids.length} arquivo(s) enviado(s) para processamento em background.`,
+							text: `${result.created} arquivo(s) importado(s). O processamento foi iniciado em segundo plano.`,
 							type: "success",
 						});
 						setUploadSuccess(true);
@@ -232,6 +258,7 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 						setIgnoredFiles([]);
 
 						if (result.text_ids.length > 0) {
+							seedTrackedTexts(result.text_ids);
 							void pollBatchStatus(result.text_ids);
 						}
 						return;
@@ -257,7 +284,7 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 				}
 			}, 2000);
 		},
-		[addSnackbar],
+		[addSnackbar, seedTrackedTexts],
 	);
 
 	useEffect(() => {
@@ -290,6 +317,16 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 		try {
 			const initial = await getBatchStatus(ids);
 			setTrackedTexts(initial.statuses);
+			const initialAllDone = initial.statuses.every(
+				(status) =>
+					status.processing_status === "READY" ||
+					status.processing_status === "FAILED",
+			);
+
+			if (initialAllDone) {
+				setIsTracking(false);
+				return;
+			}
 
 			if (pollingInterval.current) {
 				clearInterval(pollingInterval.current);
@@ -527,6 +564,14 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 				{isTracking || uploadSuccess ? (
 					<Stack direction="vertical" gap={12}>
 						<h3>Status de Processamento</h3>
+						{trackedTexts.length > 0 && (
+							<ProgressInline
+								progress={trackingPercent}
+								statusMessage={trackingStatusMessage}
+								hintText="Os textos seguem sendo processados em segundo plano."
+								showPercent={false}
+							/>
+						)}
 						<ListSurface>
 							{trackedTexts.map((textItem) => (
 								<ListSurfaceItem key={textItem.id}>

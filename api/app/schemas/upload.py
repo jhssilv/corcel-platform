@@ -10,7 +10,7 @@ class UploadResponse(BaseModel):
 class TextUploadTaskResult(BaseModel):
     kind: Literal["text_upload"]
     text_ids: list[int]
-    processed: int
+    created: int
     failed_files: list[str] = []
 
 class TaskStatusResponse(BaseModel):

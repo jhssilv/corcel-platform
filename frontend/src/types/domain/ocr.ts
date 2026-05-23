@@ -15,16 +15,16 @@ export interface RawTextDetail {
 export interface TaskStatusResponse {
 	state: string;
 	status: string;
-	current?: number;
-	total?: number;
-	result?: TextUploadTaskResult | Record<string, unknown> | unknown[];
-	error?: string;
-	failed_files?: string[];
+	current?: number | null;
+	total?: number | null;
+	result?: TextUploadTaskResult | Record<string, unknown> | unknown[] | null;
+	error?: string | null;
+	failed_files?: string[] | null;
 }
 
 export interface TextUploadTaskResult {
 	kind: "text_upload";
 	text_ids: ID[];
-	processed: number;
+	created: number;
 	failed_files: string[];
 }

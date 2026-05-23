@@ -170,24 +170,25 @@ export const OCRUploadResponseSchema = z.object({
 export const TextUploadTaskResultSchema = z.object({
 	kind: z.literal("text_upload"),
 	text_ids: z.array(z.number()),
-	processed: z.number(),
+	created: z.number(),
 	failed_files: z.array(z.string()),
 });
 
 export const TaskStatusResponseSchema = z.object({
 	state: z.string(),
 	status: z.string(),
-	current: z.number().optional(),
-	total: z.number().optional(),
+	current: z.number().nullable().optional(),
+	total: z.number().nullable().optional(),
 	result: z
 		.union([
 			TextUploadTaskResultSchema,
 			z.array(z.unknown()),
 			z.record(z.string(), z.unknown()),
 		])
+		.nullable()
 		.optional(),
-	error: z.string().optional(),
-	failed_files: z.array(z.string()).optional(),
+	error: z.string().nullable().optional(),
+	failed_files: z.array(z.string()).nullable().optional(),
 });
 
 export const WhitelistTokensResponseSchema = z.object({

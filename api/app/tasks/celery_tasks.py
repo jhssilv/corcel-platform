@@ -107,9 +107,14 @@ def process_ocr_zip(self, zip_path):
 
 
 @celery.task(bind=True)
-def process_text_upload_zip(self, zip_path):
+def process_text_upload_zip(self, zip_path=None, zip_payload_b64=None, original_filename=None):
     bind_task_context(self.request.id)
     try:
-        return run_text_upload_zip_pipeline(self, zip_path)
+        return run_text_upload_zip_pipeline(
+            self,
+            zip_path=zip_path,
+            zip_payload_b64=zip_payload_b64,
+            original_filename=original_filename,
+        )
     finally:
         clear_task_context()

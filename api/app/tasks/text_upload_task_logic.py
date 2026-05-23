@@ -1,5 +1,7 @@
 """Background Celery task logic for asynchronous text ZIP uploads."""
 
+import base64
+import binascii
 import io
 import os
 import zipfile
@@ -32,26 +34,51 @@ def _collect_text_archive_members(zip_ref: zipfile.ZipFile) -> list[str]:
     return file_list
 
 
-def run_text_upload_zip_pipeline(task, zip_path: str):
+def _open_text_upload_archive(zip_path: str | None, zip_payload_b64: str | None) -> zipfile.ZipFile:
+    if zip_payload_b64 is not None:
+        try:
+            zip_bytes = base64.b64decode(zip_payload_b64)
+        except (binascii.Error, ValueError) as exc:
+            raise RuntimeError('Invalid or corrupted ZIP file.') from exc
+
+        return zipfile.ZipFile(io.BytesIO(zip_bytes), 'r')
+
+    if zip_path is None:
+        raise RuntimeError('No ZIP archive was provided.')
+
+    return zipfile.ZipFile(zip_path, 'r')
+
+
+def run_text_upload_zip_pipeline(
+    task,
+    zip_path: str | None = None,
+    zip_payload_b64: str | None = None,
+    original_filename: str | None = None,
+):
     from app.extensions import db
     from app.text_pipeline import get_tokenizer
     from app.database import models
     from app.database.queries import add_text
 
-    from .text_task_logic import run_process_texts_pipeline
+    from .celery_tasks import process_texts_background
 
     text_ids: list[int] = []
     ingestion_failed_files: list[str] = []
 
     try:
-        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+        with _open_text_upload_archive(zip_path, zip_payload_b64) as zip_ref:
             file_list = _collect_text_archive_members(zip_ref)
             total_files = len(file_list)
             tokenizer = get_tokenizer()
 
             logger.info(
                 'Asynchronous text upload pipeline started',
-                extra={'event': {'total_files': total_files}},
+                extra={
+                    'event': {
+                        'total_files': total_files,
+                        'original_filename': original_filename,
+                    }
+                },
             )
 
             for index, member_name in enumerate(file_list):
@@ -107,9 +134,20 @@ def run_text_upload_zip_pipeline(task, zip_path: str):
             if not text_ids:
                 raise RuntimeError('No files could be imported from the uploaded archive.')
 
-            processing_result = run_process_texts_pipeline(task, text_ids)
-            processing_failed_files = processing_result.get('failed_files', [])
-            failed_files = list(dict.fromkeys([*ingestion_failed_files, *processing_failed_files]))
+            try:
+                processing_task = process_texts_background.delay(text_ids)
+            except Exception as exc:
+                imported_texts = (
+                    db.session.query(models.Text)
+                    .filter(models.Text.id.in_(text_ids))
+                    .all()
+                )
+                for text_obj in imported_texts:
+                    text_obj.processing_status = models.ProcessingStatus.FAILED
+                db.session.commit()
+                raise RuntimeError('Failed to enqueue background text processing.') from exc
+
+            failed_files = list(dict.fromkeys(ingestion_failed_files))
 
             logger.info(
                 'Asynchronous text upload pipeline finished',
@@ -117,7 +155,9 @@ def run_text_upload_zip_pipeline(task, zip_path: str):
                     'event': {
                         'total_files': total_files,
                         'created_texts': len(text_ids),
+                        'processing_task_id': processing_task.id,
                         'failed_files': failed_files,
+                        'original_filename': original_filename,
                     }
                 },
             )
@@ -128,7 +168,7 @@ def run_text_upload_zip_pipeline(task, zip_path: str):
                 'result': {
                     'kind': 'text_upload',
                     'text_ids': text_ids,
-                    'processed': processing_result.get('processed', 0),
+                    'created': len(text_ids),
                     'failed_files': failed_files,
                 },
                 'failed_files': failed_files,
@@ -139,5 +179,5 @@ def run_text_upload_zip_pipeline(task, zip_path: str):
     except ValueError as exc:
         raise RuntimeError(str(exc)) from exc
     finally:
-        if os.path.exists(zip_path):
+        if zip_path and os.path.exists(zip_path):
             os.remove(zip_path)
