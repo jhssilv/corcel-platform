@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import JSZip from "jszip";
 import {
-	getBatchStatus,
+	getActiveTextUploadBatches,
 	getTaskStatus,
+	getTextUploadBatch,
 	uploadTextArchive,
 } from "../../Api/UploadApi";
 import {
@@ -19,9 +20,14 @@ import {
 	ListSurfaceItem,
 	ListSurfaceText,
 } from "../Generic";
+import { useAuth } from "../../Context/Auth/UseAuth";
 import { useSnackbar } from "../../Context/Generic";
-import type { BatchStatusItem } from "../../types/api/responses";
-import type { TextUploadTaskResult } from "../../types";
+import type {
+	BatchStatusItem,
+	TextUploadBatchDetail,
+	TextUploadBatchStatus,
+	TextUploadTaskResult,
+} from "../../types";
 
 interface UploadModalProps {
 	isOpen: boolean;
@@ -34,8 +40,20 @@ interface UploadErrorShape {
 	name?: string;
 }
 
-const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+const MAX_FILE_SIZE = 50 * 1024 * 1024;
 const TEXT_UPLOAD_TASK_STORAGE_KEY = "currentTextUploadTaskId";
+const TEXT_UPLOAD_BATCH_STORAGE_KEY = "currentTextUploadBatchId";
+const TRACKED_TEXTS_STORAGE_KEY = "uploadTrackingTexts";
+const TRACKING_ENABLED_STORAGE_KEY = "isTrackingUpload";
+
+const TERMINAL_BATCH_STATUSES = new Set<TextUploadBatchStatus>([
+	"COMPLETED",
+	"COMPLETED_WITH_ERRORS",
+	"FAILED",
+]);
+
+const isTerminalBatchStatus = (status: TextUploadBatchStatus): boolean =>
+	TERMINAL_BATCH_STATUSES.has(status);
 
 const isCanceledUpload = (error: unknown): boolean => {
 	if (error instanceof Error) {
@@ -81,13 +99,7 @@ const renderTrackingBadge = (status: BatchStatusItem["processing_status"]) => {
 		);
 	}
 
-	if (status === "FAILED") {
-		return <Badge text="Falha" iconName="XCircle" variant="danger" size="sm" />;
-	}
-
-	return (
-		<Badge text={status} variant="secondary" size="sm" iconPosition="none" />
-	);
+	return <Badge text="Falha" iconName="XCircle" variant="danger" size="sm" />;
 };
 
 const isTextUploadTaskResult = (
@@ -100,6 +112,7 @@ const isTextUploadTaskResult = (
 	const maybeResult = result as Partial<TextUploadTaskResult>;
 	return (
 		maybeResult.kind === "text_upload" &&
+		typeof maybeResult.batch_id === "number" &&
 		Array.isArray(maybeResult.text_ids) &&
 		typeof maybeResult.created === "number" &&
 		Array.isArray(maybeResult.failed_files)
@@ -107,252 +120,329 @@ const isTextUploadTaskResult = (
 };
 
 function UploadModal({ isOpen, onClose }: UploadModalProps) {
+	const { isAdmin, isAuthLoading } = useAuth();
 	const [stagedFiles, setStagedFiles] = useState<File[]>([]);
 	const [ignoredFiles, setIgnoredFiles] = useState<string[]>([]);
-	const { addSnackbar } = useSnackbar();
-	const [isValidating, setIsValidating] = useState(false);
-	const [isProcessing, setIsProcessing] = useState(false);
-	const [progress, setProgress] = useState(0);
-	const [statusMessage, setStatusMessage] = useState("");
-	const [failedFiles, setFailedFiles] = useState<string[]>([]);
-	const [uploadSuccess, setUploadSuccess] = useState(false);
-
-	// Tracking States
 	const [trackedTexts, setTrackedTexts] = useState<BatchStatusItem[]>(() => {
 		try {
-			const saved = localStorage.getItem("uploadTrackingTexts");
+			const saved = localStorage.getItem(TRACKED_TEXTS_STORAGE_KEY);
 			return saved ? JSON.parse(saved) : [];
 		} catch {
 			return [];
 		}
 	});
-	const [isTracking, setIsTracking] = useState<boolean>(() => {
-		return localStorage.getItem("isTrackingUpload") === "true";
-	});
+	const [failedFiles, setFailedFiles] = useState<string[]>([]);
+	const [currentBatch, setCurrentBatch] = useState<TextUploadBatchDetail | null>(null);
+	const [currentBatchId, setCurrentBatchId] = useState<number | null>(() => {
+		const raw = localStorage.getItem(TEXT_UPLOAD_BATCH_STORAGE_KEY);
+		if (!raw) {
+			return null;
+		}
 
-	const trackingTotal = trackedTexts.length;
-	const trackingCompleted = trackedTexts.filter(
-		(text) =>
-			text.processing_status === "READY" ||
-			text.processing_status === "FAILED",
-	).length;
+		const parsed = Number(raw);
+		return Number.isFinite(parsed) ? parsed : null;
+	});
+	const [isValidating, setIsValidating] = useState(false);
+	const [isProcessing, setIsProcessing] = useState(false);
+	const [isTracking, setIsTracking] = useState<boolean>(() => {
+		return localStorage.getItem(TRACKING_ENABLED_STORAGE_KEY) === "true";
+	});
+	const [progress, setProgress] = useState(0);
+	const [statusMessage, setStatusMessage] = useState("");
+	const [uploadSuccess, setUploadSuccess] = useState(false);
+
+	const { addSnackbar } = useSnackbar();
+	const abortControllerRef = useRef<AbortController | null>(null);
+	const taskPollingInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+	const batchPollingInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+
+	const trackingTotal = currentBatch?.created_texts ?? trackedTexts.length;
+	const trackingCompleted =
+		(currentBatch?.processed_texts ?? 0) + (currentBatch?.failed_texts ?? 0);
 	const trackingPercent =
 		trackingTotal > 0
 			? Math.round((trackingCompleted / trackingTotal) * 100)
 			: 0;
 	const trackingStatusMessage =
-		trackingTotal > 0
+		currentBatch?.status_message ||
+		(trackingTotal > 0
 			? `Processando textos ${trackingCompleted}/${trackingTotal}`
-			: "Aguardando status dos textos...";
+			: "Aguardando status dos textos...");
 
-	useEffect(() => {
-		localStorage.setItem("uploadTrackingTexts", JSON.stringify(trackedTexts));
-	}, [trackedTexts]);
-
-	const pollingInterval = useRef<ReturnType<typeof setInterval> | null>(null);
-	const abortControllerRef = useRef<AbortController | null>(null);
-
-	const seedTrackedTexts = useCallback((textIds: number[]) => {
-		setTrackedTexts(
-			textIds.map((id) => ({
-				id,
-				source_file_name: `Texto #${id}`,
-				processing_status: "PENDING" as const,
-			})),
-		);
-		setIsTracking(textIds.length > 0);
+	const clearTaskPolling = useCallback(() => {
+		if (taskPollingInterval.current) {
+			clearInterval(taskPollingInterval.current);
+			taskPollingInterval.current = null;
+		}
 	}, []);
 
-	const resetState = useCallback(() => {
+	const clearBatchPolling = useCallback(() => {
+		if (batchPollingInterval.current) {
+			clearInterval(batchPollingInterval.current);
+			batchPollingInterval.current = null;
+		}
+	}, []);
+
+	const clearStoredTracking = useCallback(() => {
+		localStorage.removeItem(TEXT_UPLOAD_TASK_STORAGE_KEY);
+		localStorage.removeItem(TEXT_UPLOAD_BATCH_STORAGE_KEY);
+		localStorage.removeItem(TRACKED_TEXTS_STORAGE_KEY);
+		localStorage.removeItem(TRACKING_ENABLED_STORAGE_KEY);
+	}, []);
+
+	const applyBatchDetail = useCallback((detail: TextUploadBatchDetail) => {
+		setCurrentBatch(detail);
+		setCurrentBatchId(detail.id);
+		setTrackedTexts(detail.texts);
+		setFailedFiles(detail.failed_files);
+
+		const isTerminal = isTerminalBatchStatus(detail.status);
+		setIsTracking(!isTerminal);
+		setUploadSuccess(isTerminal && detail.created_texts > 0);
+
+		if (detail.status !== "IMPORTING") {
+			setIsProcessing(false);
+			clearTaskPolling();
+			localStorage.removeItem(TEXT_UPLOAD_TASK_STORAGE_KEY);
+		}
+
+		if (isTerminal) {
+			clearBatchPolling();
+		}
+	}, [clearBatchPolling, clearTaskPolling]);
+
+	const refreshBatchDetail = useCallback(async (batchId: number) => {
+		const detail = await getTextUploadBatch(batchId);
+		applyBatchDetail(detail);
+		return detail;
+	}, [applyBatchDetail]);
+
+	const startBatchTracking = useCallback(async (batchId: number) => {
+		localStorage.setItem(TEXT_UPLOAD_BATCH_STORAGE_KEY, String(batchId));
+		const detail = await refreshBatchDetail(batchId);
+
+		if (isTerminalBatchStatus(detail.status)) {
+			return;
+		}
+
+		clearBatchPolling();
+		batchPollingInterval.current = setInterval(async () => {
+			try {
+				const latest = await refreshBatchDetail(batchId);
+				if (isTerminalBatchStatus(latest.status)) {
+					clearBatchPolling();
+				}
+			} catch (error) {
+				console.error("Batch polling failed:", error);
+			}
+		}, 3000);
+	}, [clearBatchPolling, refreshBatchDetail]);
+
+	const pollTaskStatus = useCallback((taskId: string, batchId: number) => {
+		setIsProcessing(true);
+		setStatusMessage("Aguardando inicio da importacao...");
+		localStorage.setItem(TEXT_UPLOAD_TASK_STORAGE_KEY, taskId);
+		localStorage.setItem(TEXT_UPLOAD_BATCH_STORAGE_KEY, String(batchId));
+
+		clearTaskPolling();
+		taskPollingInterval.current = setInterval(async () => {
+			try {
+				const data = await getTaskStatus(taskId);
+
+				if (data.state === "PROGRESS") {
+					if (
+						typeof data.total === "number" &&
+						data.total > 0 &&
+						typeof data.current === "number"
+					) {
+						setProgress(Math.round((data.current / data.total) * 100));
+					}
+					setStatusMessage(data.status || "Importando arquivos...");
+					return;
+				}
+
+				if (data.state === "SUCCESS") {
+					clearTaskPolling();
+					localStorage.removeItem(TEXT_UPLOAD_TASK_STORAGE_KEY);
+					setIsProcessing(false);
+					setProgress(100);
+
+					if (isTextUploadTaskResult(data.result)) {
+						setFailedFiles(data.result.failed_files);
+						addSnackbar({
+							text: `${data.result.created} arquivo(s) importado(s). O processamento foi iniciado em segundo plano.`,
+							type: "success",
+						});
+						void startBatchTracking(data.result.batch_id);
+					} else {
+						void startBatchTracking(batchId);
+					}
+					return;
+				}
+
+				if (data.state === "FAILURE") {
+					clearTaskPolling();
+					localStorage.removeItem(TEXT_UPLOAD_TASK_STORAGE_KEY);
+					setIsProcessing(false);
+					setFailedFiles(data.failed_files ?? []);
+					addSnackbar({
+						text: data.error || "Falha no processamento do upload.",
+						type: "error",
+						duration: 5000,
+					});
+					void startBatchTracking(batchId);
+				}
+			} catch (error) {
+				console.error("Task polling failed:", error);
+				clearTaskPolling();
+				setIsProcessing(false);
+				void startBatchTracking(batchId);
+			}
+		}, 2000);
+	}, [addSnackbar, clearTaskPolling, startBatchTracking]);
+
+	const resetState = useCallback((clearPersisted: boolean) => {
 		setStagedFiles([]);
 		setIgnoredFiles([]);
+		setFailedFiles([]);
+		setCurrentBatch(null);
+		setTrackedTexts([]);
+		setCurrentBatchId(null);
 		setIsProcessing(false);
+		setIsTracking(false);
 		setProgress(0);
 		setStatusMessage("");
-		setFailedFiles([]);
 		setUploadSuccess(false);
+
+		clearTaskPolling();
+		clearBatchPolling();
 
 		if (abortControllerRef.current) {
 			abortControllerRef.current.abort();
 			abortControllerRef.current = null;
 		}
-	}, []);
 
-	const handleClose = useCallback(() => {
-		if (!isProcessing) {
-			resetState();
+		if (clearPersisted) {
+			clearStoredTracking();
 		}
-		onClose();
-	}, [isProcessing, onClose, resetState]);
+	}, [clearBatchPolling, clearStoredTracking, clearTaskPolling]);
 
 	useEffect(() => {
-		if (!isOpen) {
-		}
+		localStorage.setItem(TRACKED_TEXTS_STORAGE_KEY, JSON.stringify(trackedTexts));
+	}, [trackedTexts]);
 
-		if (!isProcessing && !uploadSuccess) {
-			resetState();
+	useEffect(() => {
+		localStorage.setItem(TRACKING_ENABLED_STORAGE_KEY, String(isTracking));
+	}, [isTracking]);
+
+	useEffect(() => {
+		if (currentBatchId !== null) {
+			localStorage.setItem(TEXT_UPLOAD_BATCH_STORAGE_KEY, String(currentBatchId));
 		}
-	}, [isOpen, resetState, isProcessing, uploadSuccess]);
+	}, [currentBatchId]);
 
 	useEffect(() => {
 		return () => {
-			if (abortControllerRef.current) abortControllerRef.current.abort();
+			clearTaskPolling();
+			clearBatchPolling();
+			if (abortControllerRef.current) {
+				abortControllerRef.current.abort();
+			}
 		};
-	}, []);
-
-	const pollTaskStatus = useCallback(
-		(taskId: string) => {
-			setIsProcessing(true);
-			setStatusMessage("Aguardando início do processamento...");
-
-			if (pollingInterval.current) {
-				clearInterval(pollingInterval.current);
-			}
-
-			pollingInterval.current = setInterval(async () => {
-				try {
-					const data = await getTaskStatus(taskId);
-
-					if (data.state === "PROGRESS") {
-						if (
-							typeof data.total === "number" &&
-							data.total > 0 &&
-							typeof data.current === "number"
-						) {
-							const percent = Math.round((data.current / data.total) * 100);
-							setProgress(percent);
-						}
-						setStatusMessage(data.status || "Processando upload...");
-						return;
-					}
-
-					if (data.state === "SUCCESS") {
-						if (pollingInterval.current) {
-							clearInterval(pollingInterval.current);
-							pollingInterval.current = null;
-						}
-
-						localStorage.removeItem(TEXT_UPLOAD_TASK_STORAGE_KEY);
-
-						const result = data.result;
-						if (!isTextUploadTaskResult(result)) {
-							addSnackbar({
-								text: "O servidor concluiu a tarefa sem retornar os textos criados.",
-								type: "error",
-								duration: 5000,
-							});
-							setIsProcessing(false);
-							return;
-						}
-
-						setFailedFiles(result.failed_files);
-						addSnackbar({
-							text: `${result.created} arquivo(s) importado(s). O processamento foi iniciado em segundo plano.`,
-							type: "success",
-						});
-						setUploadSuccess(true);
-						setIsProcessing(false);
-						setProgress(100);
-						setStatusMessage("Upload concluído com sucesso!");
-						setStagedFiles([]);
-						setIgnoredFiles([]);
-
-						if (result.text_ids.length > 0) {
-							seedTrackedTexts(result.text_ids);
-							void pollBatchStatus(result.text_ids);
-						}
-						return;
-					}
-
-					if (data.state === "FAILURE") {
-						if (pollingInterval.current) {
-							clearInterval(pollingInterval.current);
-							pollingInterval.current = null;
-						}
-
-						localStorage.removeItem(TEXT_UPLOAD_TASK_STORAGE_KEY);
-						setFailedFiles(data.failed_files ?? []);
-						setIsProcessing(false);
-						addSnackbar({
-							text: data.error || "Falha no processamento do upload.",
-							type: "error",
-							duration: 5000,
-						});
-					}
-				} catch (error) {
-					console.error("Task polling failed:", error);
-				}
-			}, 2000);
-		},
-		[addSnackbar, seedTrackedTexts],
-	);
+	}, [clearBatchPolling, clearTaskPolling]);
 
 	useEffect(() => {
+		const savedBatchIdRaw = localStorage.getItem(TEXT_UPLOAD_BATCH_STORAGE_KEY);
 		const savedTaskId = localStorage.getItem(TEXT_UPLOAD_TASK_STORAGE_KEY);
-		if (savedTaskId && !pollingInterval.current) {
-			void pollTaskStatus(savedTaskId);
-		}
-	}, [pollTaskStatus]);
+		const hasStoredTrackingState =
+			Boolean(savedBatchIdRaw) ||
+			Boolean(savedTaskId) ||
+			localStorage.getItem(TRACKING_ENABLED_STORAGE_KEY) === "true";
 
-	useEffect(() => {
-		localStorage.setItem("isTrackingUpload", String(isTracking));
-		if (isTracking && trackedTexts.length > 0 && !pollingInterval.current) {
-			const anyInProgress = trackedTexts.some(
-				(t) =>
-					t.processing_status === "PENDING" ||
-					t.processing_status === "PROCESSING",
-			);
-			if (anyInProgress) {
-				const ids = trackedTexts.map((t) => t.id);
-				void pollBatchStatus(ids);
-			} else {
+		if (isAuthLoading) {
+			return;
+		}
+
+		if (!isAdmin) {
+			if (hasStoredTrackingState) {
+				clearStoredTracking();
+				setCurrentBatch(null);
+				setCurrentBatchId(null);
+				setTrackedTexts([]);
+				setFailedFiles([]);
 				setIsTracking(false);
 			}
+			return;
 		}
-	}, [isTracking]);
 
-	const pollBatchStatus = async (textIds: number[]) => {
-		setIsTracking(true);
-		let ids = textIds;
-		try {
-			const initial = await getBatchStatus(ids);
-			setTrackedTexts(initial.statuses);
-			const initialAllDone = initial.statuses.every(
-				(status) =>
-					status.processing_status === "READY" ||
-					status.processing_status === "FAILED",
-			);
+		if (!isOpen && !hasStoredTrackingState) {
+			return;
+		}
 
-			if (initialAllDone) {
-				setIsTracking(false);
-				return;
-			}
+		let canceled = false;
 
-			if (pollingInterval.current) {
-				clearInterval(pollingInterval.current);
-			}
-			pollingInterval.current = setInterval(async () => {
+		const restore = async () => {
+			const savedBatchId = savedBatchIdRaw ? Number(savedBatchIdRaw) : null;
+
+			if (savedBatchId && Number.isFinite(savedBatchId)) {
 				try {
-					const latest = await getBatchStatus(ids);
-					setTrackedTexts(latest.statuses);
-					const allDone = latest.statuses.every(
-						(s) =>
-							s.processing_status === "READY" ||
-							s.processing_status === "FAILED",
-					);
-					if (allDone && pollingInterval.current) {
-						clearInterval(pollingInterval.current);
-						setIsTracking(false);
+					const detail = await refreshBatchDetail(savedBatchId);
+					if (canceled) {
+						return;
 					}
-				} catch (e) {
-					console.error("Polling tick failed:", e);
+
+					if (detail.status === "IMPORTING" && savedTaskId) {
+						pollTaskStatus(savedTaskId, savedBatchId);
+					} else if (!isTerminalBatchStatus(detail.status)) {
+						void startBatchTracking(savedBatchId);
+					} else {
+						clearStoredTracking();
+					}
+					return;
+				} catch (error) {
+					console.error("Failed to resume stored text upload batch:", error);
 				}
-			}, 3000);
-		} catch (e) {
-			console.error("Initial batch status failed:", e);
-			setIsTracking(false);
+			}
+
+			try {
+				const active = await getActiveTextUploadBatches();
+				if (canceled) {
+					return;
+				}
+
+				const resumableBatch = active.batches.find(
+					(batch) => !isTerminalBatchStatus(batch.status),
+				);
+
+				if (resumableBatch) {
+					void startBatchTracking(resumableBatch.id);
+				}
+			} catch (error) {
+				console.error("Failed to restore active text upload batches:", error);
+			}
+		};
+
+		void restore();
+
+		return () => {
+			canceled = true;
+		};
+	}, [
+		clearStoredTracking,
+		isAdmin,
+		isAuthLoading,
+		isOpen,
+		pollTaskStatus,
+		refreshBatchDetail,
+		startBatchTracking,
+	]);
+
+	const handleClose = useCallback(() => {
+		if (!isProcessing && !isTracking) {
+			resetState(true);
 		}
-	};
+		onClose();
+	}, [isProcessing, isTracking, onClose, resetState]);
 
 	const processFiles = async (files: FileList | File[]) => {
 		setIsValidating(true);
@@ -372,12 +462,13 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 					const zipContents = await zip.loadAsync(file);
 
 					for (const [name, zipObj] of Object.entries(zipContents.files)) {
-						if (zipObj.dir) continue;
+						if (zipObj.dir) {
+							continue;
+						}
 
 						const fileName = name.split("/").pop() ?? "";
 						const loweredFileName = fileName.toLowerCase();
 
-						// Ignore system/hidden files silently
 						if (
 							!fileName ||
 							fileName.startsWith(".") ||
@@ -394,7 +485,6 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 							if (blob.size > MAX_FILE_SIZE) {
 								newIgnored.push(`${fileName} (Excede 50MB)`);
 							} else {
-								// Prevent duplicates by name in the staged files list
 								newStaged.push(
 									new File([blob], fileName, {
 										type: loweredFileName.endsWith(".txt")
@@ -404,7 +494,7 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 								);
 							}
 						} else {
-							newIgnored.push(`${fileName} (Formato inválido)`);
+							newIgnored.push(`${fileName} (Formato invalido)`);
 						}
 					}
 				} else if (
@@ -417,22 +507,18 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 						newStaged.push(file);
 					}
 				} else {
-					newIgnored.push(`${file.name} (Formato inválido)`);
+					newIgnored.push(`${file.name} (Formato invalido)`);
 				}
 			}
 
 			setStagedFiles((prev) => {
-				// Combine and remove exact name duplicates
 				const combined = [...prev, ...newStaged];
-				const unique = Array.from(
-					new Map(combined.map((f) => [f.name, f])).values(),
-				);
-				return unique;
+				return Array.from(new Map(combined.map((file) => [file.name, file])).values());
 			});
 			setIgnoredFiles((prev) => [...prev, ...newIgnored]);
 		} catch (error) {
 			addSnackbar({
-				text: "Erro ao ler arquivos. Verifique se o ZIP não está corrompido.",
+				text: "Erro ao ler arquivos. Verifique se o ZIP nao esta corrompido.",
 				type: "error",
 			});
 			console.error("File validation error:", error);
@@ -442,7 +528,7 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 	};
 
 	const removeStagedFile = (nameToRemove: string) => {
-		setStagedFiles((prev) => prev.filter((f) => f.name !== nameToRemove));
+		setStagedFiles((prev) => prev.filter((file) => file.name !== nameToRemove));
 	};
 
 	const handleCancelRequest = () => {
@@ -451,20 +537,22 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 			abortControllerRef.current = null;
 			return;
 		}
+
 		setIsProcessing(false);
 		setStatusMessage("Upload cancelado.");
-		addSnackbar({ text: "Operação cancelada pelo usuário.", type: "info" });
+		addSnackbar({ text: "Operacao cancelada pelo usuario.", type: "info" });
 	};
 
 	const handleConfirm = async () => {
-		if (stagedFiles.length === 0) return;
+		if (stagedFiles.length === 0) {
+			return;
+		}
 
 		setIsProcessing(true);
 		setStatusMessage("Compactando arquivos para envio...");
 		setProgress(0);
 
 		try {
-			// Build ZIP blob in memory
 			const zip = new JSZip();
 			stagedFiles.forEach((file) => {
 				zip.file(file.name, file);
@@ -481,26 +569,24 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 
 			const response = await uploadTextArchive(uploadFile, controller.signal);
 
-			abortControllerRef.current = null; // Clean up
-			localStorage.setItem(TEXT_UPLOAD_TASK_STORAGE_KEY, response.task_id);
-			setStatusMessage("Upload enviado. Aguardando processamento...");
+			abortControllerRef.current = null;
+			setCurrentBatchId(response.batch_id);
+			setCurrentBatch(null);
 			setFailedFiles([]);
-			void pollTaskStatus(response.task_id);
-			return;
-
+			setTrackedTexts([]);
+			setIsTracking(false);
+			setStatusMessage("Upload enviado. Aguardando importacao...");
+			pollTaskStatus(response.task_id, response.batch_id);
 		} catch (error: unknown) {
-			console.error("Erro no upload:", error);
-			if (isCanceledUpload(error)) {
-				// Handled in handleCancelRequest
-			} else {
-				console.error(error);
+			console.error("Upload error:", error);
+			if (!isCanceledUpload(error)) {
 				addSnackbar({
 					text: "Falha ao enviar arquivos.",
 					type: "error",
 					duration: 5000,
 				});
-				setIsProcessing(false);
 			}
+			setIsProcessing(false);
 		}
 	};
 
@@ -534,7 +620,7 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 						</Button>
 					)}
 
-					{!isProcessing && !uploadSuccess && (
+					{!isProcessing && !isTracking && !uploadSuccess && (
 						<Button
 							tier="primary"
 							variant="action"
@@ -554,17 +640,17 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 							<strong>Os seguintes arquivos falharam:</strong>
 						</p>
 						<ul>
-							{failedFiles.map((f, i) => (
-								<li key={i}>{f}</li>
+							{failedFiles.map((fileName, index) => (
+								<li key={index}>{fileName}</li>
 							))}
 						</ul>
 					</Banner>
 				)}
 
-				{isTracking || uploadSuccess ? (
+				{(isTracking || uploadSuccess || currentBatch !== null) && (
 					<Stack direction="vertical" gap={12}>
 						<h3>Status de Processamento</h3>
-						{trackedTexts.length > 0 && (
+						{trackingTotal > 0 && (
 							<ProgressInline
 								progress={trackingPercent}
 								statusMessage={trackingStatusMessage}
@@ -576,8 +662,8 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 							{trackedTexts.map((textItem) => (
 								<ListSurfaceItem key={textItem.id}>
 									<Stack alignX="space-between" alignY="center">
-										<ListSurfaceText title={textItem.source_file_name}>
-											{textItem.source_file_name}
+										<ListSurfaceText title={textItem.source_file_name ?? `Texto #${textItem.id}`}>
+											{textItem.source_file_name ?? `Texto #${textItem.id}`}
 										</ListSurfaceText>
 										{renderTrackingBadge(textItem.processing_status)}
 									</Stack>
@@ -585,95 +671,90 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 							))}
 						</ListSurface>
 						<p>
-							A avaliação é executada em segundo plano. Você já pode fechar esta
-							janela caso queira e analisar os textos disponíveis no painel.
+							A avaliacao e executada em segundo plano. Voce pode fechar esta
+							janela e retomar o acompanhamento depois, mesmo apos reiniciar o
+							navegador.
 						</p>
 					</Stack>
-				) : (
-					!isProcessing && (
-						<>
-							<DropZone
-								variant="panel"
-								accept=".zip,.txt,.docx"
-								multiple
-								onFilesDropped={(files) => {
-									void processFiles(files);
-								}}
-							>
-								{() => {
-									return isValidating ? (
-										<ProgressInline
-											progress={0}
-											statusMessage="Verificando arquivos..."
-											showPercent={false}
-											mode="spinner"
-										/>
-									) : (
-										<Stack direction="vertical" alignX="center" gap={12}>
-											<Icon name="Upload" color="current" size={64} />
-											<p>Arraste arquivos TXT, DOCX ou ZIPs</p>
-											<p>ou clique para selecionar (Máx 50MB por arquivo)</p>
-										</Stack>
-									);
-								}}
-							</DropZone>
+				)}
 
-							{stagedFiles.length > 0 && (
-								<div>
-									<h4>Arquivos Válidos ({stagedFiles.length})</h4>
-									<ListSurface>
-										{stagedFiles.map((file, idx) => (
-											<ListSurfaceItem key={idx}>
-												<Stack alignX="space-between" alignY="center">
-													<ListSurfaceText title={file.name}>
-														{file.name}
-													</ListSurfaceText>
-													<IconButton
-														icon="X"
-														label="Remover"
-														size="sm"
-														variant="danger"
-														onClick={(e) => {
-															e.stopPropagation();
-															removeStagedFile(file.name);
-														}}
-													/>
-												</Stack>
-											</ListSurfaceItem>
-										))}
-									</ListSurface>
-								</div>
-							)}
+				{!isProcessing && !isTracking && !uploadSuccess && currentBatch === null && (
+					<>
+						<DropZone
+							variant="panel"
+							accept=".zip,.txt,.docx"
+							multiple
+							onFilesDropped={(files) => {
+								void processFiles(files);
+							}}
+						>
+							{() => {
+								return isValidating ? (
+									<ProgressInline
+										progress={0}
+										statusMessage="Verificando arquivos..."
+										showPercent={false}
+										mode="spinner"
+									/>
+								) : (
+									<Stack direction="vertical" alignX="center" gap={12}>
+										<Icon name="Upload" color="current" size={64} />
+										<p>Arraste arquivos TXT, DOCX ou ZIPs</p>
+										<p>ou clique para selecionar (Max 50MB por arquivo)</p>
+									</Stack>
+								);
+							}}
+						</DropZone>
 
-							{ignoredFiles.length > 0 && (
-								<div>
-									<h4>Arquivos Ignorados ({ignoredFiles.length})</h4>
-									<ListSurface>
-										{ignoredFiles.map((err, idx) => (
-											<ListSurfaceItem key={idx}>
-												<Stack alignX="space-between" alignY="center">
-													<ListSurfaceText tone="danger" truncate={false}>
-														{err}
-													</ListSurfaceText>
-												</Stack>
-											</ListSurfaceItem>
-										))}
-									</ListSurface>
-								</div>
-							)}
-						</>
-					)
+						{stagedFiles.length > 0 && (
+							<div>
+								<h4>Arquivos Validos ({stagedFiles.length})</h4>
+								<ListSurface>
+									{stagedFiles.map((file, index) => (
+										<ListSurfaceItem key={index}>
+											<Stack alignX="space-between" alignY="center">
+												<ListSurfaceText title={file.name}>
+													{file.name}
+												</ListSurfaceText>
+												<IconButton
+													icon="X"
+													label="Remover"
+													size="sm"
+													variant="danger"
+													onClick={(event) => {
+														event.stopPropagation();
+														removeStagedFile(file.name);
+													}}
+												/>
+											</Stack>
+										</ListSurfaceItem>
+									))}
+								</ListSurface>
+							</div>
+						)}
+
+						{ignoredFiles.length > 0 && (
+							<div>
+								<h4>Arquivos Ignorados ({ignoredFiles.length})</h4>
+								<ListSurface>
+									{ignoredFiles.map((message, index) => (
+										<ListSurfaceItem key={index}>
+											<ListSurfaceText tone="danger" truncate={false}>
+												{message}
+											</ListSurfaceText>
+										</ListSurfaceItem>
+									))}
+								</ListSurface>
+							</div>
+						)}
+					</>
 				)}
 
 				{isProcessing && (
 					<ProgressInline
 						progress={progress}
 						statusMessage={statusMessage}
-						hintText={
-							progress < 100
-								? "Você pode fechar esta janela, o processo continuará em segundo plano."
-								: undefined
-						}
+						hintText="Voce pode fechar esta janela. A importacao continuara em segundo plano."
 						showPercent={false}
 					/>
 				)}

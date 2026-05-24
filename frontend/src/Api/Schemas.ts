@@ -151,16 +151,19 @@ export const DownloadRequestSchema = z.object({
 
 export const UploadResponseSchema = z.object({
 	task_id: z.string(),
+	batch_id: z.number(),
 });
 
 export const BatchStatusItemSchema = z.object({
 	id: z.number(),
-	source_file_name: z.string(),
+	source_file_name: z.string().nullable(),
 	processing_status: z.enum(["PENDING", "PROCESSING", "READY", "FAILED"]),
+	processing_attempts: z.number().optional(),
 });
 
 export const BatchStatusResponseSchema = z.object({
 	statuses: z.array(BatchStatusItemSchema),
+	missing_ids: z.array(z.number()).default([]),
 });
 
 export const OCRUploadResponseSchema = z.object({
@@ -169,9 +172,44 @@ export const OCRUploadResponseSchema = z.object({
 
 export const TextUploadTaskResultSchema = z.object({
 	kind: z.literal("text_upload"),
+	batch_id: z.number(),
 	text_ids: z.array(z.number()),
 	created: z.number(),
 	failed_files: z.array(z.string()),
+});
+
+const TextUploadBatchSummarySchema = z.object({
+	id: z.number(),
+	source_file_name: z.string().nullable(),
+	status: z.enum([
+		"IMPORTING",
+		"QUEUED",
+		"PROCESSING",
+		"COMPLETED",
+		"COMPLETED_WITH_ERRORS",
+		"FAILED",
+	]),
+	status_message: z.string(),
+	is_recovering: z.boolean(),
+	total_files: z.number(),
+	created_texts: z.number(),
+	processed_texts: z.number(),
+	failed_texts: z.number(),
+	failed_files: z.array(z.string()),
+	created_at: z.string().nullable().optional(),
+	updated_at: z.string().nullable().optional(),
+	import_finished_at: z.string().nullable().optional(),
+	processing_started_at: z.string().nullable().optional(),
+	processing_finished_at: z.string().nullable().optional(),
+	last_error: z.string().nullable().optional(),
+});
+
+export const TextUploadBatchDetailSchema = TextUploadBatchSummarySchema.extend({
+	texts: z.array(BatchStatusItemSchema),
+});
+
+export const ActiveTextUploadBatchesResponseSchema = z.object({
+	batches: z.array(TextUploadBatchSummarySchema),
 });
 
 export const TaskStatusResponseSchema = z.object({

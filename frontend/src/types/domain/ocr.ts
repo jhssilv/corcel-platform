@@ -24,6 +24,7 @@ export interface TaskStatusResponse {
 
 export interface TextUploadTaskResult {
 	kind: "text_upload";
+	batch_id: ID;
 	text_ids: ID[];
 	created: number;
 	failed_files: string[];

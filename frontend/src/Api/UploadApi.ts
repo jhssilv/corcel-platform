@@ -2,7 +2,9 @@ import { apiPrivate } from "./Client";
 import * as schemas from "./Schemas";
 import { unwrapData } from "./Utils";
 import type {
+	ActiveTextUploadBatchesResponse,
 	TaskStatusApiResponse,
+	TextUploadBatchDetail,
 	UploadResponse,
 	BatchStatusResponse,
 } from "../types";
@@ -44,4 +46,20 @@ export async function getBatchStatus(
 		}),
 	);
 	return schemas.BatchStatusResponseSchema.parse(data);
+}
+
+export async function getTextUploadBatch(
+	batchId: number,
+): Promise<TextUploadBatchDetail> {
+	const data = unwrapData(
+		await apiPrivate.get<TextUploadBatchDetail>(`/text-upload-batches/${batchId}`),
+	);
+	return schemas.TextUploadBatchDetailSchema.parse(data);
+}
+
+export async function getActiveTextUploadBatches(): Promise<ActiveTextUploadBatchesResponse> {
+	const data = unwrapData(
+		await apiPrivate.get<ActiveTextUploadBatchesResponse>("/text-upload-batches/active"),
+	);
+	return schemas.ActiveTextUploadBatchesResponseSchema.parse(data);
 }

@@ -20,16 +20,54 @@ export type NormalizationsGetResponse = NormalizationMap;
 
 export interface UploadResponse {
 	task_id: string;
+	batch_id: number;
 }
 
 export interface BatchStatusItem {
 	id: number;
-	source_file_name: string;
+	source_file_name: string | null;
 	processing_status: "PENDING" | "PROCESSING" | "READY" | "FAILED";
+	processing_attempts?: number;
 }
 
 export interface BatchStatusResponse {
 	statuses: BatchStatusItem[];
+	missing_ids: number[];
+}
+
+export type TextUploadBatchStatus =
+	| "IMPORTING"
+	| "QUEUED"
+	| "PROCESSING"
+	| "COMPLETED"
+	| "COMPLETED_WITH_ERRORS"
+	| "FAILED";
+
+export interface TextUploadBatchSummary {
+	id: number;
+	source_file_name: string | null;
+	status: TextUploadBatchStatus;
+	status_message: string;
+	is_recovering: boolean;
+	total_files: number;
+	created_texts: number;
+	processed_texts: number;
+	failed_texts: number;
+	failed_files: string[];
+	created_at?: string | null;
+	updated_at?: string | null;
+	import_finished_at?: string | null;
+	processing_started_at?: string | null;
+	processing_finished_at?: string | null;
+	last_error?: string | null;
+}
+
+export interface TextUploadBatchDetail extends TextUploadBatchSummary {
+	texts: BatchStatusItem[];
+}
+
+export interface ActiveTextUploadBatchesResponse {
+	batches: TextUploadBatchSummary[];
 }
 
 export interface OCRUploadResponse {
