@@ -2,7 +2,7 @@
 
 This document describes the Celery-based task system used for long-running operations: text file processing and OCR. It also explains how to customize the OCR module for your own use case.
 
-Source files: [tasks.py](../app/tasks.py) · [text_processor.py](../app/text_processor.py) · [tokenizer.py](../app/tokenizer.py) · [ocr_service.py](../app/services/ocr_service.py) · [run_worker.py](../run_worker.py) · [start.sh](../start.sh)
+Source files: [celery_tasks.py](../app/tasks/celery_tasks.py) · [text_upload_task_logic.py](../app/tasks/text_upload_task_logic.py) · [text_task_logic.py](../app/tasks/text_task_logic.py) · [text_upload_batches.py](../app/text_upload_batches.py) · [run_worker.py](../run_worker.py) · [start.sh](../start.sh)
 
 ---
 
@@ -12,7 +12,7 @@ Two operations are too expensive to run in a request-response cycle and are offl
 
 | Task | Trigger | What It Does |
 |---|---|---|
-| `process_text_upload_zip` | `POST /api/upload` | Reads a saved `.zip`, imports `.txt`/`.docx` files into the database, and queues a separate background NLP task for the created texts |
+| `process_text_upload_zip` | `POST /api/upload` | Creates a durable upload batch, imports `.txt`/`.docx` files into the database, and fans out one background NLP task per imported text |
 | `process_ocr_zip` | `POST /api/ocr/upload` | Extracts images from a ZIP, runs OCR via Google Gemini, and stores the results as raw texts for manual review |
 
 Both tasks report progress that can be polled via `GET /api/status/<task_id>`.
@@ -54,35 +54,38 @@ flask run --host=0.0.0.0 --port=5000
 
 ## Task 1: `process_text_upload_zip`
 
-Processes uploaded text documents asynchronously after the API route has already accepted the upload and returned a `task_id`.
+Processes uploaded text documents asynchronously after the API route has already accepted the upload and returned a `task_id` plus `batch_id`.
 
 Current behavior:
 
-1. Import the `.txt` / `.docx` files and persist `Text` + `Token` rows immediately with `processing_status=PENDING`.
-2. Queue `process_texts_background(text_ids)` as a separate Celery task.
-3. Treat upload-task `SUCCESS` as "import completed and background processing was queued", not "all texts finished NLP processing".
+1. Create a durable `text_upload_batches` row before import starts.
+2. Import the `.txt` / `.docx` files and persist `Text` + `Token` rows immediately with `processing_status=PENDING`.
+3. Record imported texts under `upload_batch_id` and queue one `process_single_text_background(text_id)` task per imported text.
+4. Treat upload-task `SUCCESS` as "import completed and background processing was queued", not "all texts finished NLP processing".
+5. Use `GET /api/text-upload-batches/<batch_id>` as the durable source of truth for resume/recovery after the short-lived Celery import task finishes or disappears.
 
 ### Pipeline
 
 ```mermaid
 flowchart TD
-    A["ZIP file uploaded"] --> B["Extract .txt / .docx files"]
-    B --> C["For each file:"]
-    C --> D["Read text content"]
-    D --> E["TextProcessor.process_text()"]
-    E --> F["Build Token + candidates list"]
-    F --> G["queries.add_text() → DB"]
-    G --> H["Report progress"]
-    H --> C
+    A["ZIP file uploaded"] --> B["Create upload batch row"]
+    B --> C["Extract .txt / .docx files"]
+    C --> D["For each file: read and tokenize"]
+    D --> E["Persist Text + Token rows as PENDING"]
+    E --> F["Mark batch QUEUED"]
+    F --> G["Queue one process_single_text_background task per text"]
+    G --> H["Workers update text + batch state in DB"]
+    H --> I["Frontend resumes via batch_id"]
 ```
 
 ### Step-by-Step
 
-1. **Extract** — The ZIP is opened and filtered for `.txt` and `.docx` files (hidden files and `__MACOSX` are skipped).
-2. **Read** — `.docx` files are parsed with `python-docx`; `.txt` files are decoded as UTF-8.
-3. **Process** — Each file's text is passed to `TextProcessor.process_text()`, which returns tokenized data with spell-check results and ranked suggestions.
-4. **Store** — For each token, a `Token` model is created and paired with its suggestion candidates. The entire batch is inserted via `queries.add_text()`.
-5. **Progress** — After each file, the task calls `self.update_state()` with the current progress.
+1. **Extract** - The ZIP is opened and filtered for `.txt` and `.docx` files (hidden files and `__MACOSX` are skipped).
+2. **Read** - `.docx` files are parsed with `python-docx`; `.txt` files are decoded as UTF-8.
+3. **Tokenize** - Each file is tokenized immediately during import so the database contains durable `Text` + `Token` rows before NLP processing begins.
+4. **Store** - For each token, a `Token` model is created and inserted through `queries.add_text()`, and the created text is linked to the upload batch.
+5. **Queue** - After import completes, the batch is marked `QUEUED` and one Celery task is enqueued for each imported text.
+6. **Recover** - Batch/text state lives in Postgres, and stale `PENDING` / `PROCESSING` work is re-enqueued by periodic reconciliation rather than relying on Redis task metadata.
 
 > [!NOTE]
 > For a user-facing explanation of text processing behavior (tokenization, suggestions, correction workflow, and outputs), see [Text Processing Pipeline](text-processing-pipeline.md).
@@ -91,26 +94,11 @@ flowchart TD
 
 ```json
 {
-    "status": "Concluido",
-  "total": 10,
-  "result": {
-    "essay_001.txt": { "text_id": 42, "token_count": 350 },
-    "essay_002.docx": { "text_id": 43, "token_count": 280 }
-    },
-    "failed_files": []
-}
-```
-
-On failure, the task raises an exception and transitions to `FAILURE`. The status endpoint returns the failure message under `error`.
-
-Current success payload:
-
-```json
-{
-  "status": "Concluido",
+  "status": "Completed",
   "total": 10,
   "result": {
     "kind": "text_upload",
+    "batch_id": 7,
     "text_ids": [42, 43],
     "created": 2,
     "failed_files": []
@@ -119,11 +107,14 @@ Current success payload:
 }
 ```
 
+On failure, the task raises an exception and transitions to `FAILURE`. The status endpoint returns the failure message under `error`.
+
 ### Implementation Notes
 
-- ZIP path entries are normalized to base filenames (`os.path.basename(...)`) before processing and persistence.
-- Temporary ZIP files are cleaned up in a `finally` block, regardless of success or failure.
-- Recommended operational behavior: treat `FAILURE` as a terminal state and avoid retry storms without root-cause classification.
+- ZIP entries are normalized to base filenames (`os.path.basename(...)`) before persistence.
+- The import route returns both `task_id` and `batch_id`; `task_id` is for short-lived import progress only.
+- Durable progress, restart recovery, and resumed UI tracking must read from the batch endpoints and per-text DB state, not from Redis task metadata.
+- Text processing is idempotent per text: generated suggestions and `to_be_normalized` flags are recomputed on retry.
 
 ---
 
@@ -167,12 +158,12 @@ Further checks can (and maybe should) be added in the future to improve security
 
 ### Step-by-Step
 
-1. **Validate ZIP** — Check total uncompressed size against the limit.
-2. **Filter** — Keep only files ending in `.png`, `.jpg`, `.jpeg`, `.tif`, `.tiff`.
-3. **Validate image** — Check magic bytes to verify the file is actually an image.
-4. **Convert** — Open with PIL, convert to RGB, save as JPEG (quality 85) to the `images/` directory with a UUID prefix.
-5. **OCR** — Call `ocr_service.perform_ocr(image_path)` to extract text via Google Gemini.
-6. **Store** — Insert a `RawText` record with the extracted text and the path to the saved image.
+1. **Validate ZIP** - Check total uncompressed size against the limit.
+2. **Filter** - Keep only files ending in `.png`, `.jpg`, `.jpeg`, `.tif`, `.tiff`.
+3. **Validate image** - Check magic bytes to verify the file is actually an image.
+4. **Convert** - Open with PIL, convert to RGB, save as JPEG (quality 85) to the `images/` directory with a UUID prefix.
+5. **OCR** - Call `ocr_service.perform_ocr(image_path)` to extract text via Google Gemini.
+6. **Store** - Insert a `RawText` record with the extracted text and the path to the saved image.
 
 If any file fails validation or OCR processing, the task raises and ends as `FAILURE`.
 
@@ -180,7 +171,7 @@ If any file fails validation or OCR processing, the task raises and ends as `FAI
 
 ```json
 {
-  "status": "Concluido",
+  "status": "Completed",
   "total": 5,
   "result": {
         "page_01.png": { "text_content": "...", "image_path": "uuid_page_01.jpg" }
@@ -225,7 +216,7 @@ def perform_ocr(image_path: str) -> str:
 
 1. **Create your OCR module** (e.g., `my_ocr_service.py`) with a `perform_ocr(image_path: str) -> str` function.
 
-2. **Update the import** in [tasks.py](../app/tasks.py):
+2. **Update the import** in [ocr_task_logic.py](../app/tasks/ocr_task_logic.py):
 
 ```diff
 -from .services import ocr_service
@@ -259,7 +250,7 @@ This requires the `API_KEY` environment variable to be set.
 
 ## Text Formatting
 
-Before raw texts (from OCR) are stored in the database, the `format_text_content()` helper in [tasks.py](../app/tasks.py) applies formatting:
+Before raw texts (from OCR) are stored in the database, the `format_text_content()` helper in [text_formatting.py](../app/tasks/text_formatting.py) applies formatting:
 
 - Single line breaks (`\n`) are replaced with a space
 - Double line breaks (`\n\n`) are replaced with `\n\t` (newline + tab)
@@ -274,7 +265,7 @@ Both tasks report progress via Celery's `update_state()` mechanism. The authenti
 
 | State | Meaning | Meta Fields |
 |---|---|---|
-| `PENDING` | Task is queued | — |
+| `PENDING` | Task is queued | - |
 | `PROGRESS` | Task is running | `current`, `total`, `status` |
 | `SUCCESS` | Task completed | `result`, `failed_files` |
 | `FAILURE` | Task failed | `error` |
