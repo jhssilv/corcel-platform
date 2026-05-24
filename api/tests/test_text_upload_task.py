@@ -4,7 +4,27 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from app.database.models import TextUploadBatch, TextUploadBatchStatus, User
 from app.tasks.text_upload_task_logic import run_text_upload_zip_pipeline
+
+
+def _create_upload_batch(app):
+    from app.extensions import db
+
+    with app.app_context():
+        user = User(username="batch-admin", is_admin=True)
+        user.set_password("password123")
+        db.session.add(user)
+        db.session.commit()
+
+        batch = TextUploadBatch(
+            created_by_user_id=user.id,
+            source_file_name="upload_batch.zip",
+            status=TextUploadBatchStatus.IMPORTING,
+        )
+        db.session.add(batch)
+        db.session.commit()
+        return batch.id
 
 
 def test_run_text_upload_zip_pipeline_success(app, mocker, tmp_path):
@@ -18,19 +38,20 @@ def test_run_text_upload_zip_pipeline_success(app, mocker, tmp_path):
 
     mocker.patch("app.text_pipeline.get_tokenizer", return_value=tokenizer)
     mocker.patch("app.database.queries.add_text", return_value=11)
-    enqueue = mocker.patch("app.tasks.celery_tasks.process_texts_background.delay")
-    enqueue.return_value.id = "processing-task-123"
+    enqueue = mocker.patch("app.tasks.text_upload_task_logic.enqueue_text_processing_task")
 
     task = MagicMock()
+    batch_id = _create_upload_batch(app)
 
     with app.app_context():
-        result = run_text_upload_zip_pipeline(task, str(zip_path))
+        result = run_text_upload_zip_pipeline(task, batch_id=batch_id, zip_path=str(zip_path))
 
     assert result["result"]["kind"] == "text_upload"
+    assert result["result"]["batch_id"] == batch_id
     assert result["result"]["text_ids"] == [11]
     assert result["result"]["created"] == 1
     assert result["result"]["failed_files"] == []
-    enqueue.assert_called_once_with([11])
+    enqueue.assert_called_once()
     assert not zip_path.exists()
 
 
@@ -40,9 +61,10 @@ def test_run_text_upload_zip_pipeline_invalid_zip(app, tmp_path):
     zip_path.write_bytes(b"not-a-zip")
 
     task = MagicMock()
+    batch_id = _create_upload_batch(app)
 
     with app.app_context(), pytest.raises(RuntimeError, match="Invalid or corrupted ZIP file."):
-        run_text_upload_zip_pipeline(task, str(zip_path))
+        run_text_upload_zip_pipeline(task, batch_id=batch_id, zip_path=str(zip_path))
 
     assert not zip_path.exists()
 
@@ -54,9 +76,10 @@ def test_run_text_upload_zip_pipeline_requires_valid_members(app, tmp_path):
         zip_file.writestr("image.png", b"pngdata")
 
     task = MagicMock()
+    batch_id = _create_upload_batch(app)
 
     with app.app_context(), pytest.raises(RuntimeError, match="does not contain valid files"):
-        run_text_upload_zip_pipeline(task, str(zip_path))
+        run_text_upload_zip_pipeline(task, batch_id=batch_id, zip_path=str(zip_path))
 
     assert not zip_path.exists()
 
@@ -69,9 +92,10 @@ def test_run_text_upload_zip_pipeline_rejects_large_archives(app, tmp_path):
             zip_file.writestr(f"doc-{index}.txt", "hello world")
 
     task = MagicMock()
+    batch_id = _create_upload_batch(app)
 
     with app.app_context(), pytest.raises(RuntimeError, match="Maximum of 200 files allowed per upload."):
-        run_text_upload_zip_pipeline(task, str(zip_path))
+        run_text_upload_zip_pipeline(task, batch_id=batch_id, zip_path=str(zip_path))
 
     assert not zip_path.exists()
 
@@ -90,19 +114,19 @@ def test_run_text_upload_zip_pipeline_collects_partial_failures(app, mocker, tmp
     mocker.patch("app.text_pipeline.get_tokenizer", return_value=tokenizer)
     add_text = mocker.patch("app.database.queries.add_text")
     add_text.side_effect = [11, RuntimeError("insert failed"), 12]
-    enqueue = mocker.patch("app.tasks.celery_tasks.process_texts_background.delay")
-    enqueue.return_value.id = "processing-task-456"
+    enqueue = mocker.patch("app.tasks.text_upload_task_logic.enqueue_text_processing_task")
 
     task = MagicMock()
+    batch_id = _create_upload_batch(app)
 
     with app.app_context():
-        result = run_text_upload_zip_pipeline(task, str(zip_path))
+        result = run_text_upload_zip_pipeline(task, batch_id=batch_id, zip_path=str(zip_path))
 
     assert result["result"]["text_ids"] == [11, 12]
     assert result["result"]["created"] == 2
     assert result["result"]["failed_files"] == ["bad.txt"]
     assert result["failed_files"] == ["bad.txt"]
-    enqueue.assert_called_once_with([11, 12])
+    assert enqueue.call_count == 2
     assert not zip_path.exists()
 
 
@@ -117,22 +141,24 @@ def test_run_text_upload_zip_pipeline_accepts_base64_payload(app, mocker, tmp_pa
 
     mocker.patch("app.text_pipeline.get_tokenizer", return_value=tokenizer)
     mocker.patch("app.database.queries.add_text", return_value=42)
-    enqueue = mocker.patch("app.tasks.celery_tasks.process_texts_background.delay")
-    enqueue.return_value.id = "processing-task-payload"
+    enqueue = mocker.patch("app.tasks.text_upload_task_logic.enqueue_text_processing_task")
 
     task = MagicMock()
     zip_payload_b64 = base64.b64encode(zip_buffer.read_bytes()).decode("ascii")
+    batch_id = _create_upload_batch(app)
 
     with app.app_context():
         result = run_text_upload_zip_pipeline(
             task,
+            batch_id=batch_id,
             zip_payload_b64=zip_payload_b64,
             original_filename="payload.zip",
         )
 
     assert result["result"]["text_ids"] == [42]
     assert result["result"]["created"] == 1
-    enqueue.assert_called_once_with([42])
+    assert result["result"]["batch_id"] == batch_id
+    enqueue.assert_called_once()
 
 
 def test_run_text_upload_zip_pipeline_keeps_imported_texts_pending_until_background_task(app, mocker, tmp_path):
@@ -148,17 +174,18 @@ def test_run_text_upload_zip_pipeline_keeps_imported_texts_pending_until_backgro
     tokenizer.tokenize.return_value = []
 
     mocker.patch("app.text_pipeline.get_tokenizer", return_value=tokenizer)
-    enqueue = mocker.patch("app.tasks.celery_tasks.process_texts_background.delay")
-    enqueue.return_value.id = "processing-task-789"
+    enqueue = mocker.patch("app.tasks.text_upload_task_logic.enqueue_text_processing_task")
 
     task = MagicMock()
+    batch_id = _create_upload_batch(app)
 
     with app.app_context():
-        result = run_text_upload_zip_pipeline(task, str(zip_path))
+        result = run_text_upload_zip_pipeline(task, batch_id=batch_id, zip_path=str(zip_path))
         saved_text = db.session.get(Text, result["result"]["text_ids"][0])
 
     assert saved_text is not None
     assert saved_text.processing_status == ProcessingStatus.PENDING
+    assert saved_text.upload_batch_id == batch_id
     enqueue.assert_called_once()
 
 
@@ -178,17 +205,18 @@ def test_run_text_upload_zip_pipeline_marks_imported_texts_failed_when_enqueuein
 
     mocker.patch("app.text_pipeline.get_tokenizer", return_value=tokenizer)
     mocker.patch(
-        "app.tasks.celery_tasks.process_texts_background.delay",
+        "app.tasks.text_upload_task_logic.enqueue_text_processing_task",
         side_effect=RuntimeError("broker unavailable"),
     )
 
     task = MagicMock()
+    batch_id = _create_upload_batch(app)
 
     with app.app_context():
-        with pytest.raises(RuntimeError, match="Failed to enqueue background text processing."):
-            run_text_upload_zip_pipeline(task, str(zip_path))
+        result = run_text_upload_zip_pipeline(task, batch_id=batch_id, zip_path=str(zip_path))
         saved_texts = db.session.query(Text).all()
 
     assert len(saved_texts) == 1
     assert saved_texts[0].processing_status == ProcessingStatus.FAILED
+    assert result["result"]["failed_files"] == ["doc.txt"]
     assert not zip_path.exists()

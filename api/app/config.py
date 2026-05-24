@@ -58,6 +58,10 @@ class Config:
     CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
     CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
     RATELIMIT_STORAGE_URI = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+    CELERY_VISIBILITY_TIMEOUT = int(os.getenv('CELERY_VISIBILITY_TIMEOUT', '3600'))
+    TEXT_UPLOAD_RECONCILE_INTERVAL_SECONDS = int(os.getenv('TEXT_UPLOAD_RECONCILE_INTERVAL_SECONDS', '60'))
+    TEXT_UPLOAD_STALE_AFTER_SECONDS = int(os.getenv('TEXT_UPLOAD_STALE_AFTER_SECONDS', '600'))
+    TEXT_UPLOAD_MAX_PROCESSING_ATTEMPTS = int(os.getenv('TEXT_UPLOAD_MAX_PROCESSING_ATTEMPTS', '3'))
 
     # --- Logging -------------------------------------------------------------
 

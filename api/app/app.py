@@ -20,6 +20,7 @@ from .routes.upload_routes import upload_bp
 from .routes.ocr_routes import ocr_bp
 from .routes.assignment_routes import assignment_bp
 from .config import Config
+from .database.schema import ensure_database_schema
 from .logging_config import (
     bind_request_context,
     clear_request_context,
@@ -45,7 +46,7 @@ def make_celery(app_name=__name__):
         app_name,
         backend=redis_url,
         broker=redis_url,
-        include=['api.app.tasks.celery_tasks'] # Ajuste o caminho das tasks conforme necessário
+        include=['api.app.tasks.celery_tasks']
     )
     return celery_instance
 
@@ -67,8 +68,26 @@ def create_app():
     db.init_app(app)
     limiter.init_app(app)
     
-    # Atualiza a configuração da instância global do Celery
-    celery.conf.update(app.config)
+    celery.conf.update(
+        broker_url=app.config.get('CELERY_BROKER_URL'),
+        result_backend=app.config.get('CELERY_RESULT_BACKEND'),
+        task_acks_late=True,
+        task_reject_on_worker_lost=True,
+        worker_prefetch_multiplier=1,
+        broker_transport_options={
+            'visibility_timeout': app.config.get('CELERY_VISIBILITY_TIMEOUT', 3600),
+        },
+        beat_schedule={
+            'reconcile-text-upload-batches': {
+                'task': 'app.tasks.reconcile_text_upload_batches',
+                'schedule': app.config.get('TEXT_UPLOAD_RECONCILE_INTERVAL_SECONDS', 60),
+            }
+        },
+        timezone='UTC',
+        enable_utc=True,
+        TEXT_UPLOAD_STALE_AFTER_SECONDS=app.config.get('TEXT_UPLOAD_STALE_AFTER_SECONDS', 600),
+        TEXT_UPLOAD_MAX_PROCESSING_ATTEMPTS=app.config.get('TEXT_UPLOAD_MAX_PROCESSING_ATTEMPTS', 3),
+    )
 
     @app.before_request
     def before_request_logging():
@@ -228,6 +247,10 @@ def create_app():
     app.register_blueprint(upload_bp)
     app.register_blueprint(ocr_bp)
     app.register_blueprint(assignment_bp)
+
+    with app.app_context():
+        ensure_database_schema(db.engine)
+
     return app
 
 if __name__ == '__main__':

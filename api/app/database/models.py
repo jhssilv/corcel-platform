@@ -22,6 +22,15 @@ class ProcessingStatus(enum.Enum):
     PROCESSING = 'PROCESSING'
     READY = 'READY'
     FAILED = 'FAILED'
+
+
+class TextUploadBatchStatus(enum.Enum):
+    IMPORTING = 'IMPORTING'
+    QUEUED = 'QUEUED'
+    PROCESSING = 'PROCESSING'
+    COMPLETED = 'COMPLETED'
+    COMPLETED_WITH_ERRORS = 'COMPLETED_WITH_ERRORS'
+    FAILED = 'FAILED'
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import declarative_base, relationship
 
@@ -42,6 +51,7 @@ class User(Base):
 
     normalizations = relationship('Normalization', back_populates='user', cascade="all, delete-orphan")
     texts_association = relationship('TextsUsers', back_populates='user', cascade="all, delete-orphan")
+    text_upload_batches = relationship('TextUploadBatch', back_populates='created_by_user', cascade="all, delete-orphan")
 
     def set_password(self, password: str):
         self.hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
@@ -64,8 +74,45 @@ class Text(Base):
     normalizations = relationship('Normalization', back_populates='text', cascade="all, delete-orphan")
     texts_association = relationship('TextsUsers', back_populates='text', cascade="all, delete-orphan")
     tokens = relationship('Token', back_populates='text', cascade="all, delete-orphan", order_by='Token.position')
+    upload_batch = relationship('TextUploadBatch', back_populates='texts')
     creation_date = Column(TIMESTAMP, nullable=False, default=func.now())
     processing_status = Column(SQLAlchemyEnum(ProcessingStatus), nullable=False, default=ProcessingStatus.PENDING)
+    upload_batch_id = Column(Integer, ForeignKey('text_upload_batches.id', ondelete="SET NULL"), nullable=True, index=True)
+    processing_started_at = Column(TIMESTAMP, nullable=True)
+    processing_heartbeat_at = Column(TIMESTAMP, nullable=True)
+    processing_enqueued_at = Column(TIMESTAMP, nullable=True)
+    processing_attempts = Column(Integer, nullable=False, default=0)
+    last_processing_error = Column(TextType, nullable=True)
+    processing_task_id = Column(String(255), nullable=True)
+
+
+class TextUploadBatch(Base):
+    __tablename__ = 'text_upload_batches'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    created_by_user_id = Column(Integer, ForeignKey('users.id', ondelete="CASCADE"), nullable=False, index=True)
+    source_file_name = Column(String(255), nullable=True)
+    status = Column(
+        SQLAlchemyEnum(TextUploadBatchStatus),
+        nullable=False,
+        default=TextUploadBatchStatus.IMPORTING,
+        index=True,
+    )
+    celery_import_task_id = Column(String(255), nullable=True)
+    total_files = Column(Integer, nullable=False, default=0)
+    created_texts = Column(Integer, nullable=False, default=0)
+    processed_texts = Column(Integer, nullable=False, default=0)
+    failed_texts = Column(Integer, nullable=False, default=0)
+    failed_files = Column(TextType, nullable=False, default='[]')
+    last_error = Column(TextType, nullable=True)
+    created_at = Column(TIMESTAMP, nullable=False, default=func.now())
+    updated_at = Column(TIMESTAMP, nullable=False, default=func.now(), onupdate=func.now())
+    import_finished_at = Column(TIMESTAMP, nullable=True)
+    processing_started_at = Column(TIMESTAMP, nullable=True)
+    processing_finished_at = Column(TIMESTAMP, nullable=True)
+
+    created_by_user = relationship('User', back_populates='text_upload_batches')
+    texts = relationship('Text', back_populates='upload_batch')
 
 class RawText(Base):
     """

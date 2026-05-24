@@ -97,6 +97,8 @@ def get_batch_texts_status(current_user, body: text_schemas.BatchTextsStatusRequ
     try:
         text_ids = body.text_ids
         texts = session.query(Text.id, Text.source_file_name, Text.processing_status).filter(Text.id.in_(text_ids)).all()
+        found_ids = {text.id for text in texts}
+        missing_ids = [text_id for text_id in text_ids if text_id not in found_ids]
         
         result = [
             {
@@ -107,7 +109,7 @@ def get_batch_texts_status(current_user, body: text_schemas.BatchTextsStatusRequ
             for t in texts
         ]
         
-        response = text_schemas.BatchTextsStatusResponse(statuses=result)
+        response = text_schemas.BatchTextsStatusResponse(statuses=result, missing_ids=missing_ids)
         return jsonify(response.model_dump()), 200
     except Exception:
         logger.exception("Failed to fetch batch text statuses")

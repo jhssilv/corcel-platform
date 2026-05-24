@@ -1,7 +1,8 @@
-import pytest
 import io
 import base64
-from app.database.models import User
+import pytest
+
+from app.database.models import ProcessingStatus, Text, TextUploadBatch, TextUploadBatchStatus, User
 from app.extensions import db
 
 def test_request_report(auth_client, mocker):
@@ -84,11 +85,13 @@ def test_upload_file_success(client, app, mocker):
     response = client.post('/api/upload', data=data, content_type='multipart/form-data')
     
     assert response.status_code == 202
-    assert response.json == {"task_id": "text-upload-task-123"}
+    assert response.json["task_id"] == "text-upload-task-123"
+    assert isinstance(response.json["batch_id"], int)
     mock_task.assert_called_once()
 
     _, kwargs = mock_task.call_args
     assert kwargs["original_filename"].endswith("_test.zip")
+    assert kwargs["batch_id"] == response.json["batch_id"]
     assert base64.b64decode(kwargs["zip_payload_b64"]) == b"fake zip content"
 
 def test_task_status(auth_client, mocker):
@@ -100,6 +103,7 @@ def test_task_status(auth_client, mocker):
     mock_instance.info = {
         'result': {
             'kind': 'text_upload',
+            'batch_id': 99,
             'text_ids': [1, 2],
             'created': 2,
             'failed_files': [],
@@ -111,6 +115,7 @@ def test_task_status(auth_client, mocker):
     assert response.status_code == 200
     assert response.json['status'] == 'Finished'
     assert response.json['result']['kind'] == 'text_upload'
+    assert response.json['result']['batch_id'] == 99
     assert response.json['result']['text_ids'] == [1, 2]
 
 def test_task_status_progress(auth_client, mocker):
@@ -148,3 +153,67 @@ def test_download_normalized_texts_empty_ids_returns_error(auth_client):
     assert response.status_code == 400
     assert response.json["error"] == "'text_ids' must be a non-empty list"
     assert response.json["code"] == "BUSINESS_RULE_VIOLATION"
+
+
+def test_batch_status_reports_missing_ids(auth_client, app):
+    with app.app_context():
+        text = Text(source_file_name="doc.txt", processing_status=ProcessingStatus.PENDING)
+        db.session.add(text)
+        db.session.commit()
+        text_id = text.id
+
+    response = auth_client.post('/api/texts/status/batch', json={"text_ids": [text_id, 999999]})
+
+    assert response.status_code == 200
+    assert response.json["statuses"][0]["id"] == text_id
+    assert response.json["missing_ids"] == [999999]
+
+
+def test_get_text_upload_batch_detail(admin_client, app):
+    with app.app_context():
+        admin_user = db.session.query(User).filter_by(username="adminuser").first()
+        batch = TextUploadBatch(
+            created_by_user_id=admin_user.id,
+            source_file_name="upload_batch.zip",
+            status=TextUploadBatchStatus.QUEUED,
+            total_files=2,
+            created_texts=2,
+            failed_files='["bad.txt"]',
+        )
+        db.session.add(batch)
+        db.session.flush()
+
+        db.session.add_all([
+            Text(source_file_name="good-1.txt", upload_batch_id=batch.id, processing_status=ProcessingStatus.PENDING),
+            Text(source_file_name="good-2.txt", upload_batch_id=batch.id, processing_status=ProcessingStatus.PROCESSING),
+        ])
+        db.session.commit()
+        batch_id = batch.id
+
+    response = admin_client.get(f'/api/text-upload-batches/{batch_id}')
+
+    assert response.status_code == 200
+    assert response.json["id"] == batch_id
+    assert response.json["failed_files"] == ["bad.txt"]
+    assert len(response.json["texts"]) == 2
+
+
+def test_get_active_text_upload_batches_returns_current_admin_batches(admin_client, app):
+    with app.app_context():
+        admin_user = db.session.query(User).filter_by(username="adminuser").first()
+        batch = TextUploadBatch(
+            created_by_user_id=admin_user.id,
+            source_file_name="upload_batch.zip",
+            status=TextUploadBatchStatus.QUEUED,
+            total_files=1,
+            created_texts=1,
+        )
+        db.session.add(batch)
+        db.session.commit()
+        batch_id = batch.id
+
+    response = admin_client.get('/api/text-upload-batches/active')
+
+    assert response.status_code == 200
+    assert response.json["batches"]
+    assert response.json["batches"][0]["id"] == batch_id

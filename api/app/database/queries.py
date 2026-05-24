@@ -50,7 +50,7 @@ def get_texts_data(db, user_id):
     )
     
     result = db.query(
-        func.coalesce(normalized_subquery).label("normalized_by_user"),
+        func.coalesce(normalized_subquery, False).label("normalized_by_user"),
         users_agg_subquery.label("users_assigned"),
         Text.id.label("id"),
         Text.grade.label("grade"),
@@ -107,9 +107,9 @@ def get_text_by_id(db, text_id, user_id):
         'id': text_info.id,
         'grade': text_info.grade,
         'tokens': tokens_data, 
-        'normalized_by_user': assoc.normalized if assoc else False,
+        'normalized_by_user': bool(assoc.normalized) if assoc else False,
         'source_file_name': text_info.source_file_name,
-        'assigned_to_user': assoc.assigned if assoc else False,
+        'assigned_to_user': bool(assoc.assigned) if assoc else False,
         'processing_status': text_info.processing_status.name if hasattr(text_info.processing_status, 'name') else str(text_info.processing_status),
     }
     return response_dict

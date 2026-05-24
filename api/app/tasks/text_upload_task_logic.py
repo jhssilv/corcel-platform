@@ -8,7 +8,19 @@ import zipfile
 
 from docx import Document
 
+from ..database import models
 from ..logging_config import get_logger
+from ..tasks.constants import (
+    TEXT_UPLOAD_MAX_MEMBER_SIZE,
+    TEXT_UPLOAD_MAX_UNCOMPRESSED_SIZE,
+)
+from ..text_upload_batches import (
+    append_failed_files,
+    enqueue_text_processing_task,
+    load_failed_files,
+    sync_text_upload_batch_state,
+    utcnow,
+)
 
 logger = get_logger('app.task.text_upload_task_logic', source='task', task_module='text_upload_task_logic')
 
@@ -34,6 +46,19 @@ def _collect_text_archive_members(zip_ref: zipfile.ZipFile) -> list[str]:
     return file_list
 
 
+def _validate_text_archive_members(zip_ref: zipfile.ZipFile, file_list: list[str]) -> None:
+    total_uncompressed_size = 0
+
+    for member_name in file_list:
+        info = zip_ref.getinfo(member_name)
+        if info.file_size > TEXT_UPLOAD_MAX_MEMBER_SIZE:
+            raise ValueError(f'File "{os.path.basename(member_name)}" exceeds the 50 MB text upload limit.')
+
+        total_uncompressed_size += info.file_size
+        if total_uncompressed_size > TEXT_UPLOAD_MAX_UNCOMPRESSED_SIZE:
+            raise ValueError('The uploaded archive exceeds the maximum uncompressed size.')
+
+
 def _open_text_upload_archive(zip_path: str | None, zip_payload_b64: str | None) -> zipfile.ZipFile:
     if zip_payload_b64 is not None:
         try:
@@ -51,25 +76,32 @@ def _open_text_upload_archive(zip_path: str | None, zip_payload_b64: str | None)
 
 def run_text_upload_zip_pipeline(
     task,
+    batch_id: int | None = None,
     zip_path: str | None = None,
     zip_payload_b64: str | None = None,
     original_filename: str | None = None,
 ):
     from app.extensions import db
     from app.text_pipeline import get_tokenizer
-    from app.database import models
     from app.database.queries import add_text
 
-    from .celery_tasks import process_texts_background
-
     text_ids: list[int] = []
+    imported_texts: dict[int, models.Text] = {}
     ingestion_failed_files: list[str] = []
+    batch = db.session.get(models.TextUploadBatch, batch_id) if batch_id is not None else None
 
     try:
+        if batch is None:
+            raise RuntimeError('Text upload batch not found.')
+
         with _open_text_upload_archive(zip_path, zip_payload_b64) as zip_ref:
             file_list = _collect_text_archive_members(zip_ref)
+            _validate_text_archive_members(zip_ref, file_list)
             total_files = len(file_list)
             tokenizer = get_tokenizer()
+            batch.total_files = total_files
+            batch.status = models.TextUploadBatchStatus.IMPORTING
+            db.session.commit()
 
             logger.info(
                 'Asynchronous text upload pipeline started',
@@ -102,7 +134,10 @@ def run_text_upload_zip_pipeline(
 
                     tokenized_tokens = tokenizer.tokenize(text_content)
                     tokenized_data = {token.idx: token for token in tokenized_tokens}
-                    text_obj = models.Text(source_file_name=base_name)
+                    text_obj = models.Text(
+                        source_file_name=base_name,
+                        upload_batch_id=batch.id,
+                    )
 
                     tokens_with_candidates = []
                     for position, token_data in tokenized_data.items():
@@ -116,7 +151,10 @@ def run_text_upload_zip_pipeline(
                         tokens_with_candidates.append((token, []))
 
                     text_id = add_text(text_obj, tokens_with_candidates, db.session)
+                    if text_obj.id is None:
+                        text_obj.id = text_id
                     text_ids.append(text_id)
+                    imported_texts[text_id] = text_obj
 
                 except Exception as exc:
                     db.session.rollback()
@@ -132,22 +170,37 @@ def run_text_upload_zip_pipeline(
                     )
 
             if not text_ids:
+                batch.status = models.TextUploadBatchStatus.FAILED
+                batch.last_error = 'No files could be imported from the uploaded archive.'
+                append_failed_files(batch, ingestion_failed_files)
+                db.session.commit()
                 raise RuntimeError('No files could be imported from the uploaded archive.')
 
-            try:
-                processing_task = process_texts_background.delay(text_ids)
-            except Exception as exc:
-                imported_texts = (
-                    db.session.query(models.Text)
-                    .filter(models.Text.id.in_(text_ids))
-                    .all()
-                )
-                for text_obj in imported_texts:
-                    text_obj.processing_status = models.ProcessingStatus.FAILED
-                db.session.commit()
-                raise RuntimeError('Failed to enqueue background text processing.') from exc
-
             failed_files = list(dict.fromkeys(ingestion_failed_files))
+            append_failed_files(batch, failed_files)
+            batch.import_finished_at = utcnow()
+            batch.status = models.TextUploadBatchStatus.QUEUED
+            db.session.commit()
+
+            for text_id in text_ids:
+                text_obj = imported_texts.get(text_id) or db.session.get(models.Text, text_id)
+                if text_obj is None:
+                    continue
+
+                try:
+                    enqueue_text_processing_task(db.session, text_obj)
+                except Exception as exc:
+                    db.session.rollback()
+                    text_obj = db.session.get(models.Text, text_id)
+                    if text_obj is not None:
+                        text_obj.processing_status = models.ProcessingStatus.FAILED
+                        text_obj.last_processing_error = 'Failed to enqueue text processing task.'
+                        db.session.commit()
+                    append_failed_files(batch, [text_obj.source_file_name if text_obj else f'text:{text_id}'])
+                    batch.last_error = str(exc)
+                    db.session.commit()
+
+            batch = sync_text_upload_batch_state(db.session, batch.id)
 
             logger.info(
                 'Asynchronous text upload pipeline finished',
@@ -155,7 +208,7 @@ def run_text_upload_zip_pipeline(
                     'event': {
                         'total_files': total_files,
                         'created_texts': len(text_ids),
-                        'processing_task_id': processing_task.id,
+                        'batch_id': batch.id,
                         'failed_files': failed_files,
                         'original_filename': original_filename,
                     }
@@ -163,21 +216,38 @@ def run_text_upload_zip_pipeline(
             )
 
             return {
-                'status': 'Concluido',
+                'status': 'Completed',
                 'total': total_files,
                 'result': {
                     'kind': 'text_upload',
+                    'batch_id': batch.id,
                     'text_ids': text_ids,
                     'created': len(text_ids),
-                    'failed_files': failed_files,
+                    'failed_files': load_failed_files(batch.failed_files),
                 },
-                'failed_files': failed_files,
+                'failed_files': load_failed_files(batch.failed_files),
             }
 
     except zipfile.BadZipFile as exc:
+        if batch is not None:
+            batch.status = models.TextUploadBatchStatus.FAILED
+            batch.last_error = 'Invalid or corrupted ZIP file.'
+            db.session.commit()
         raise RuntimeError('Invalid or corrupted ZIP file.') from exc
     except ValueError as exc:
+        if batch is not None:
+            batch.status = models.TextUploadBatchStatus.FAILED
+            batch.last_error = str(exc)
+            db.session.commit()
         raise RuntimeError(str(exc)) from exc
+    except RuntimeError:
+        raise
+    except Exception as exc:
+        if batch is not None:
+            batch.status = models.TextUploadBatchStatus.FAILED
+            batch.last_error = str(exc)
+            db.session.commit()
+        raise
     finally:
         if zip_path and os.path.exists(zip_path):
             os.remove(zip_path)

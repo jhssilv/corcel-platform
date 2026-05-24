@@ -88,6 +88,7 @@ class BatchTextsStatusItem(BaseModel):
 
 class BatchTextsStatusResponse(BaseModel):
     statuses: List[BatchTextsStatusItem]
+    missing_ids: List[int] = []
 
 class FilteredTextsQuery(BaseModel):
     grades: Optional[str] = None
