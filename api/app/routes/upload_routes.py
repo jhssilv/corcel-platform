@@ -1,70 +1,69 @@
+import os
 import uuid
-import base64
-from flask import Blueprint, request, jsonify
+
+from flask import Blueprint, jsonify, request
 from werkzeug.utils import secure_filename
 
+from app.background_jobs import create_background_job, get_background_job, serialize_background_job_status
 from app.database import models
-from app.tasks.celery_tasks import process_text_upload_zip
-from app.tasks.constants import TEXT_UPLOAD_MAX_ARCHIVE_SIZE
-from app.utils.decorators import admin_required, login_required
-from app.extensions import celery, db, limiter
+from app.extensions import db, limiter
 from app.logging_config import get_logger
-from app.text_upload_batches import list_resumable_text_upload_batches, serialize_text_upload_batch, sync_text_upload_batch_state
+from app.schemas import upload as upload_schemas
+from app.tasks.constants import TEMP_UPLOADS_FOLDER, TEXT_UPLOAD_MAX_ARCHIVE_SIZE
+from app.text_upload_batches import (
+    list_resumable_text_upload_batches,
+    serialize_text_upload_batch,
+    sync_text_upload_batch_state,
+)
 from app.utils.api_errors import (
     INTERNAL_SERVER_ERROR,
     INVALID_REQUEST,
     RESOURCE_NOT_FOUND,
     error_response,
 )
-
-from app.schemas import upload as upload_schemas
+from app.utils.decorators import admin_required, login_required
 
 
 upload_bp = Blueprint('upload', __name__)
 logger = get_logger('app.route.upload', source='route', blueprint='upload')
 
+
 @upload_bp.route('/api/upload', methods=['POST'])
 @limiter.limit("10 per minute; 50 per hour")
 @admin_required()
 def upload_file(current_user):
-    """Uploads a ZIP file for processing.
-
-    Args:
-        current_user (User): The currently logged-in user.
-
-    Returns:
-        JSON response with the task ID.
-        
-    Pre-Conditions:
-        Admin privileges.
-        
-    """
+    """Upload a ZIP file and create a durable background job."""
     if 'file' not in request.files:
         logger.warning(
             'Upload request missing file',
             extra={'event': {'source': 'route', 'blueprint': 'upload'}},
         )
         return error_response(error='File not found.', code=INVALID_REQUEST, status_code=400)
-    
+
     file = request.files['file']
-    
+
     if file.filename == '' or not file.filename.endswith('.zip'):
         logger.warning(
             'Upload rejected due to invalid file extension',
             extra={'event': {'source': 'route', 'blueprint': 'upload', 'filename': file.filename}},
         )
         return error_response(error='Invalid file type.', code=INVALID_REQUEST, status_code=400)
-                
-    filename = secure_filename(file.filename)
-    unique_name = f"{uuid.uuid4()}_{filename}"
-    zip_payload = file.read()
 
-    if len(zip_payload) > TEXT_UPLOAD_MAX_ARCHIVE_SIZE:
+    file.seek(0, os.SEEK_END)
+    archive_size = file.tell()
+    file.seek(0)
+
+    if archive_size > TEXT_UPLOAD_MAX_ARCHIVE_SIZE:
         return error_response(
             error='Uploaded ZIP exceeds the maximum supported size.',
             code=INVALID_REQUEST,
             status_code=400,
         )
+
+    filename = secure_filename(file.filename)
+    unique_name = f"{uuid.uuid4()}_{filename}"
+    save_path = os.path.join(TEMP_UPLOADS_FOLDER, unique_name)
+    file.save(save_path)
 
     batch = models.TextUploadBatch(
         created_by_user_id=current_user.id,
@@ -74,72 +73,45 @@ def upload_file(current_user):
     db.session.add(batch)
     db.session.commit()
 
-    zip_payload_b64 = base64.b64encode(zip_payload).decode('ascii')
-
     try:
-        task = process_text_upload_zip.delay(
-            batch_id=batch.id,
-            zip_payload_b64=zip_payload_b64,
-            original_filename=unique_name,
+        job = create_background_job(
+            db.session,
+            kind=models.BackgroundJobKind.TEXT_UPLOAD_IMPORT,
+            created_by_user_id=current_user.id,
+            payload_json={
+                'batch_id': batch.id,
+                'zip_path': save_path,
+                'original_filename': unique_name,
+            },
+            status_message='Waiting...',
         )
-        batch.celery_import_task_id = task.id
-        db.session.commit()
-    except Exception as e:
-        logger.exception('Failed to enqueue text upload task', extra={'event': {'error': str(e)}})
+    except Exception as exc:
+        logger.exception('Failed to create text upload job', extra={'event': {'error': str(exc)}})
         batch.status = models.TextUploadBatchStatus.FAILED
-        batch.last_error = 'Failed to enqueue text upload task.'
+        batch.last_error = 'Failed to create text upload job.'
         db.session.commit()
+        if os.path.exists(save_path):
+            os.remove(save_path)
         return error_response(error='Internal server error', code=INTERNAL_SERVER_ERROR, status_code=500)
 
-    response = upload_schemas.UploadResponse(task_id=task.id, batch_id=batch.id)
+    response = upload_schemas.UploadResponse(job_id=job.id, batch_id=batch.id)
     return jsonify(response.model_dump()), 202
 
-@upload_bp.route('/api/status/<task_id>', methods=['GET'])
+
+@upload_bp.route('/api/status/<job_id>', methods=['GET'])
 @limiter.limit("120 per minute")
 @login_required()
-def task_status(current_user, task_id):
-    """Gets the status of a background upload task.
+def job_status(current_user, job_id):
+    """Get the status of a background job."""
+    background_job = get_background_job(db.session, job_id)
 
-    Args:
-        task_id (str): The ID of the task.
+    if background_job is None:
+        return error_response(error='Job not found', code=RESOURCE_NOT_FOUND, status_code=404)
 
-    Returns: JSON response with the task status and any relevant information:
-        state: Current state of the task (e.g., PENDING, PROGRESS, SUCCESS, FAILURE).
-        status: A human-readable status message.
-        result: (if SUCCESS) Result data from the task.
-        error: (if FAILURE) Error message from the task.
-    """
-    task = celery.AsyncResult(task_id)
-    
-    response = {
-        'state': task.state,
-        'status': 'Waiting...'
-    }
+    if not current_user.is_admin and background_job.created_by_user_id != current_user.id:
+        return error_response(error='Job not found', code=RESOURCE_NOT_FOUND, status_code=404)
 
-    if task.state == 'PROGRESS' and isinstance(task.info, dict):
-        response.update(task.info)
-    elif task.state == 'SUCCESS' and isinstance(task.info, dict):
-        response['status'] = 'Finished'
-        response['result'] = task.info.get('result')
-        response['current'] = task.info.get('current')
-        response['total'] = task.info.get('total')
-        response['failed_files'] = task.info.get('failed_files', [])
-    elif task.state == 'FAILURE':
-        response['status'] = 'Processing Failed'
-        response['error'] = str(task.info)
-        logger.error(
-            'Upload task failed',
-            extra={
-                'event': {
-                    'source': 'route',
-                    'blueprint': 'upload',
-                    'celery_task_id': task_id,
-                    'error': str(task.info),
-                }
-            },
-        )
-        
-    response_schema = upload_schemas.TaskStatusResponse(**response)
+    response_schema = upload_schemas.JobStatusResponse(**serialize_background_job_status(background_job))
     return jsonify(response_schema.model_dump()), 200
 
 

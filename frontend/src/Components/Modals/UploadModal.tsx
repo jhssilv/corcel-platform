@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import JSZip from "jszip";
 import {
 	getActiveTextUploadBatches,
-	getTaskStatus,
+	getJobStatus,
 	getTextUploadBatch,
 	uploadTextArchive,
 } from "../../Api/UploadApi";
@@ -41,7 +41,7 @@ interface UploadErrorShape {
 }
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024;
-const TEXT_UPLOAD_TASK_STORAGE_KEY = "currentTextUploadTaskId";
+const TEXT_UPLOAD_JOB_STORAGE_KEY = "currentTextUploadJobId";
 const TEXT_UPLOAD_BATCH_STORAGE_KEY = "currentTextUploadBatchId";
 const TRACKED_TEXTS_STORAGE_KEY = "uploadTrackingTexts";
 const TRACKING_ENABLED_STORAGE_KEY = "isTrackingUpload";
@@ -153,7 +153,7 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 
 	const { addSnackbar } = useSnackbar();
 	const abortControllerRef = useRef<AbortController | null>(null);
-	const taskPollingInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+	const jobPollingInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 	const batchPollingInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
 	const trackingTotal = currentBatch?.created_texts ?? trackedTexts.length;
@@ -169,10 +169,10 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 			? `Processando textos ${trackingCompleted}/${trackingTotal}`
 			: "Aguardando status dos textos...");
 
-	const clearTaskPolling = useCallback(() => {
-		if (taskPollingInterval.current) {
-			clearInterval(taskPollingInterval.current);
-			taskPollingInterval.current = null;
+	const clearJobPolling = useCallback(() => {
+		if (jobPollingInterval.current) {
+			clearInterval(jobPollingInterval.current);
+			jobPollingInterval.current = null;
 		}
 	}, []);
 
@@ -184,7 +184,7 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 	}, []);
 
 	const clearStoredTracking = useCallback(() => {
-		localStorage.removeItem(TEXT_UPLOAD_TASK_STORAGE_KEY);
+		localStorage.removeItem(TEXT_UPLOAD_JOB_STORAGE_KEY);
 		localStorage.removeItem(TEXT_UPLOAD_BATCH_STORAGE_KEY);
 		localStorage.removeItem(TRACKED_TEXTS_STORAGE_KEY);
 		localStorage.removeItem(TRACKING_ENABLED_STORAGE_KEY);
@@ -202,14 +202,14 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 
 		if (detail.status !== "IMPORTING") {
 			setIsProcessing(false);
-			clearTaskPolling();
-			localStorage.removeItem(TEXT_UPLOAD_TASK_STORAGE_KEY);
+			clearJobPolling();
+			localStorage.removeItem(TEXT_UPLOAD_JOB_STORAGE_KEY);
 		}
 
 		if (isTerminal) {
 			clearBatchPolling();
 		}
-	}, [clearBatchPolling, clearTaskPolling]);
+	}, [clearBatchPolling, clearJobPolling]);
 
 	const refreshBatchDetail = useCallback(async (batchId: number) => {
 		const detail = await getTextUploadBatch(batchId);
@@ -238,18 +238,18 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 		}, 3000);
 	}, [clearBatchPolling, refreshBatchDetail]);
 
-	const pollTaskStatus = useCallback((taskId: string, batchId: number) => {
+	const pollJobStatus = useCallback((jobId: string, batchId: number) => {
 		setIsProcessing(true);
 		setStatusMessage("Aguardando inicio da importacao...");
-		localStorage.setItem(TEXT_UPLOAD_TASK_STORAGE_KEY, taskId);
+		localStorage.setItem(TEXT_UPLOAD_JOB_STORAGE_KEY, jobId);
 		localStorage.setItem(TEXT_UPLOAD_BATCH_STORAGE_KEY, String(batchId));
 
-		clearTaskPolling();
-		taskPollingInterval.current = setInterval(async () => {
+		clearJobPolling();
+		jobPollingInterval.current = setInterval(async () => {
 			try {
-				const data = await getTaskStatus(taskId);
+				const data = await getJobStatus(jobId);
 
-				if (data.state === "PROGRESS") {
+				if (data.state === "RUNNING" || data.state === "PROGRESS") {
 					if (
 						typeof data.total === "number" &&
 						data.total > 0 &&
@@ -262,8 +262,8 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 				}
 
 				if (data.state === "SUCCESS") {
-					clearTaskPolling();
-					localStorage.removeItem(TEXT_UPLOAD_TASK_STORAGE_KEY);
+					clearJobPolling();
+					localStorage.removeItem(TEXT_UPLOAD_JOB_STORAGE_KEY);
 					setIsProcessing(false);
 					setProgress(100);
 
@@ -281,8 +281,8 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 				}
 
 				if (data.state === "FAILURE") {
-					clearTaskPolling();
-					localStorage.removeItem(TEXT_UPLOAD_TASK_STORAGE_KEY);
+					clearJobPolling();
+					localStorage.removeItem(TEXT_UPLOAD_JOB_STORAGE_KEY);
 					setIsProcessing(false);
 					setFailedFiles(data.failed_files ?? []);
 					addSnackbar({
@@ -293,13 +293,13 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 					void startBatchTracking(batchId);
 				}
 			} catch (error) {
-				console.error("Task polling failed:", error);
-				clearTaskPolling();
+				console.error("Job polling failed:", error);
+				clearJobPolling();
 				setIsProcessing(false);
 				void startBatchTracking(batchId);
 			}
 		}, 2000);
-	}, [addSnackbar, clearTaskPolling, startBatchTracking]);
+	}, [addSnackbar, clearJobPolling, startBatchTracking]);
 
 	const resetState = useCallback((clearPersisted: boolean) => {
 		setStagedFiles([]);
@@ -314,7 +314,7 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 		setStatusMessage("");
 		setUploadSuccess(false);
 
-		clearTaskPolling();
+		clearJobPolling();
 		clearBatchPolling();
 
 		if (abortControllerRef.current) {
@@ -325,7 +325,7 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 		if (clearPersisted) {
 			clearStoredTracking();
 		}
-	}, [clearBatchPolling, clearStoredTracking, clearTaskPolling]);
+	}, [clearBatchPolling, clearStoredTracking, clearJobPolling]);
 
 	useEffect(() => {
 		localStorage.setItem(TRACKED_TEXTS_STORAGE_KEY, JSON.stringify(trackedTexts));
@@ -343,20 +343,20 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 
 	useEffect(() => {
 		return () => {
-			clearTaskPolling();
+			clearJobPolling();
 			clearBatchPolling();
 			if (abortControllerRef.current) {
 				abortControllerRef.current.abort();
 			}
 		};
-	}, [clearBatchPolling, clearTaskPolling]);
+	}, [clearBatchPolling, clearJobPolling]);
 
 	useEffect(() => {
 		const savedBatchIdRaw = localStorage.getItem(TEXT_UPLOAD_BATCH_STORAGE_KEY);
-		const savedTaskId = localStorage.getItem(TEXT_UPLOAD_TASK_STORAGE_KEY);
+		const savedJobId = localStorage.getItem(TEXT_UPLOAD_JOB_STORAGE_KEY);
 		const hasStoredTrackingState =
 			Boolean(savedBatchIdRaw) ||
-			Boolean(savedTaskId) ||
+			Boolean(savedJobId) ||
 			localStorage.getItem(TRACKING_ENABLED_STORAGE_KEY) === "true";
 
 		if (isAuthLoading) {
@@ -391,8 +391,8 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 						return;
 					}
 
-					if (detail.status === "IMPORTING" && savedTaskId) {
-						pollTaskStatus(savedTaskId, savedBatchId);
+					if (detail.status === "IMPORTING" && savedJobId) {
+						pollJobStatus(savedJobId, savedBatchId);
 					} else if (!isTerminalBatchStatus(detail.status)) {
 						void startBatchTracking(savedBatchId);
 					} else {
@@ -432,7 +432,7 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 		isAdmin,
 		isAuthLoading,
 		isOpen,
-		pollTaskStatus,
+		pollJobStatus,
 		refreshBatchDetail,
 		startBatchTracking,
 	]);
@@ -576,7 +576,7 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 			setTrackedTexts([]);
 			setIsTracking(false);
 			setStatusMessage("Upload enviado. Aguardando importacao...");
-			pollTaskStatus(response.task_id, response.batch_id);
+			pollJobStatus(response.job_id, response.batch_id);
 		} catch (error: unknown) {
 			console.error("Upload error:", error);
 			if (!isCanceledUpload(error)) {

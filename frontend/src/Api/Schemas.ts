@@ -150,7 +150,7 @@ export const DownloadRequestSchema = z.object({
 });
 
 export const UploadResponseSchema = z.object({
-	task_id: z.string(),
+	job_id: z.string(),
 	batch_id: z.number(),
 });
 
@@ -167,7 +167,7 @@ export const BatchStatusResponseSchema = z.object({
 });
 
 export const OCRUploadResponseSchema = z.object({
-	task_id: z.string(),
+	job_id: z.string(),
 });
 
 export const TextUploadTaskResultSchema = z.object({
@@ -212,7 +212,7 @@ export const ActiveTextUploadBatchesResponseSchema = z.object({
 	batches: z.array(TextUploadBatchSummarySchema),
 });
 
-export const TaskStatusResponseSchema = z.object({
+export const JobStatusResponseSchema = z.object({
 	state: z.string(),
 	status: z.string(),
 	current: z.number().nullable().optional(),

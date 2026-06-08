@@ -12,7 +12,7 @@ export interface RawTextDetail {
 	image_path?: string | null;
 }
 
-export interface TaskStatusResponse {
+export interface JobStatusResponse {
 	state: string;
 	status: string;
 	current?: number | null;

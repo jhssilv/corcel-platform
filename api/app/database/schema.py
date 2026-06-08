@@ -9,10 +9,8 @@ TEXTS_COLUMNS = {
     'upload_batch_id': 'INTEGER',
     'processing_started_at': 'TIMESTAMP',
     'processing_heartbeat_at': 'TIMESTAMP',
-    'processing_enqueued_at': 'TIMESTAMP',
     'processing_attempts': 'INTEGER NOT NULL DEFAULT 0',
     'last_processing_error': 'TEXT',
-    'processing_task_id': 'VARCHAR(255)',
 }
 
 TEXTS_INDEXES = {

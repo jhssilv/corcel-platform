@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 
 class UploadResponse(BaseModel):
-    task_id: str
+    job_id: str
     batch_id: int
 
 
@@ -50,7 +50,7 @@ class TextUploadBatchDetail(TextUploadBatchSummary):
 class ActiveTextUploadBatchesResponse(BaseModel):
     batches: list[TextUploadBatchSummary]
 
-class TaskStatusResponse(BaseModel):
+class JobStatusResponse(BaseModel):
     state: str
     status: str
     current: Optional[int] = None

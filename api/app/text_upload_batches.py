@@ -2,6 +2,8 @@ import json
 from datetime import datetime, timedelta
 from typing import Iterable
 
+from sqlalchemy import or_
+
 from .database import models
 
 
@@ -174,63 +176,48 @@ def list_resumable_text_upload_batches(session, user_id: int, recent_window_hour
     )
 
 
-def enqueue_text_processing_task(session, text: models.Text):
-    from .tasks.celery_tasks import process_single_text_background
-
-    task = process_single_text_background.delay(text.id)
-    text.processing_enqueued_at = utcnow()
-    text.processing_task_id = task.id
-    session.commit()
-    return task
-
-
-def enqueue_pending_batch_texts(
+def claim_next_pending_text_for_processing(
     session,
-    batch_id: int,
     stale_after_seconds: int,
-    ignore_recent_enqueue: bool = False,
-) -> int:
-    batch = session.get(models.TextUploadBatch, batch_id)
-    if batch is None or batch.status not in NON_TERMINAL_BATCH_STATUSES:
-        return 0
-
-    stale_cutoff = utcnow() - timedelta(seconds=stale_after_seconds)
-    pending_texts = (
+):
+    query = (
         session.query(models.Text)
-        .filter(models.Text.upload_batch_id == batch_id)
+        .outerjoin(models.TextUploadBatch, models.Text.upload_batch_id == models.TextUploadBatch.id)
         .filter(models.Text.processing_status == models.ProcessingStatus.PENDING)
-        .all()
+        .filter(
+            or_(
+                models.Text.upload_batch_id.is_(None),
+                models.TextUploadBatch.import_finished_at.isnot(None),
+            )
+        )
+        .order_by(models.Text.creation_date.asc(), models.Text.id.asc())
     )
 
-    enqueued = 0
-    for text in pending_texts:
-        if (
-            not ignore_recent_enqueue
-            and text.processing_enqueued_at
-            and text.processing_enqueued_at > stale_cutoff
-        ):
-            continue
-        try:
-            enqueue_text_processing_task(session, text)
-            enqueued += 1
-        except Exception as exc:
-            session.rollback()
-            refreshed_text = session.get(models.Text, text.id)
-            refreshed_batch = session.get(models.TextUploadBatch, batch_id)
-            if refreshed_text is not None:
-                refreshed_text.processing_task_id = None
-                refreshed_text.processing_enqueued_at = None
-                refreshed_text.last_processing_error = f'Failed to enqueue text processing task: {exc}'
-            if refreshed_batch is not None:
-                refreshed_batch.last_error = str(exc)
-            session.commit()
+    if session.bind and session.bind.dialect.name == 'postgresql':
+        query = query.with_for_update(skip_locked=True)
 
-    if enqueued > 0:
-        batch.status = models.TextUploadBatchStatus.QUEUED
+    text = query.first()
+    if text is None:
+        session.rollback()
+        return None
+
+    text.processing_status = models.ProcessingStatus.PROCESSING
+    text.processing_started_at = text.processing_started_at or utcnow()
+    text.processing_heartbeat_at = utcnow()
+    text.processing_attempts = (text.processing_attempts or 0) + 1
+    text.last_processing_error = None
+
+    batch = session.get(models.TextUploadBatch, text.upload_batch_id) if text.upload_batch_id else None
+    if batch is not None:
+        if batch.status != models.TextUploadBatchStatus.IMPORTING:
+            batch.status = models.TextUploadBatchStatus.PROCESSING
+        batch.processing_started_at = batch.processing_started_at or utcnow()
         batch.processing_finished_at = None
-        session.commit()
+        batch.last_error = None
 
-    return enqueued
+    session.commit()
+    session.refresh(text)
+    return text.id
 
 
 def reconcile_stale_text_upload_batches(
@@ -270,8 +257,6 @@ def reconcile_stale_text_upload_batches(
                     text.last_processing_error = 'Text processing exceeded the maximum retry attempts.'
                 else:
                     text.processing_status = models.ProcessingStatus.PENDING
-                    text.processing_task_id = None
-                    text.processing_enqueued_at = None
                     if text.last_processing_error is None:
                         text.last_processing_error = (
                             'Recovered after worker restart.'
@@ -281,35 +266,8 @@ def reconcile_stale_text_upload_batches(
                 text.processing_heartbeat_at = utcnow()
                 batch_changed = True
 
-            if (
-                text.processing_status == models.ProcessingStatus.PENDING
-                and (
-                    (
-                        force_processing_recovery
-                        and (text.processing_enqueued_at is not None or text.processing_task_id is not None)
-                    )
-                    or (
-                        text.processing_enqueued_at
-                        and text.processing_enqueued_at < stale_cutoff
-                    )
-                )
-            ):
-                text.processing_task_id = None
-                text.processing_enqueued_at = None
-                if force_processing_recovery and text.last_processing_error is None:
-                    text.last_processing_error = 'Recovered pending text after worker restart.'
-                batch_changed = True
-
         if batch_changed:
             session.commit()
-
-        if batch.import_finished_at is not None:
-            enqueue_pending_batch_texts(
-                session,
-                batch.id,
-                stale_after_seconds,
-                ignore_recent_enqueue=force_processing_recovery,
-            )
 
         sync_text_upload_batch_state(session, batch.id)
         touched_batch_ids.add(batch.id)

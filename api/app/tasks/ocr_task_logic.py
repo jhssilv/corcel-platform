@@ -76,14 +76,12 @@ def run_ocr_zip_pipeline(task, zip_path):
                         }
                     },
                 )
-                task.update_state(
-                    state='PROGRESS',
-                    meta={
-                        'current': index + 1,
-                        'total': total_files,
-                        'status': f'Processando OCR: {base_name} ({index + 1}/{total_files})',
-                    },
-                )
+                if task is not None and hasattr(task, 'report_progress'):
+                    task.report_progress(
+                        current=index + 1,
+                        total=total_files,
+                        status_message=f'Processando OCR: {base_name} ({index + 1}/{total_files})',
+                    )
 
                 try:
                     # 1. Read image from ZIP

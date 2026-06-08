@@ -6,7 +6,7 @@ import {
 	type ChangeEvent,
 	type DragEvent,
 } from "react";
-import { getTaskStatus, uploadOCRArchive } from "../../Api";
+import { getJobStatus, uploadOCRArchive } from "../../Api";
 import { validateImageZipFile } from "../../Services/Upload/ZipValidators";
 import { useSnackbar } from "../../Context/Generic";
 
@@ -24,7 +24,7 @@ interface UseOCRUploadTaskOptions {
 }
 
 export function UseOCRUploadTask({
-	storageKey = "currentOCRTaskId",
+	storageKey = "currentOCRJobId",
 	onUploadComplete,
 	onSuccess,
 	resetOnSuccess = false,
@@ -83,14 +83,14 @@ export function UseOCRUploadTask({
 	);
 
 	const pollStatus = useCallback(
-		(taskId: string) => {
+		(jobId: string) => {
 			setStatusMessage("Aguardando início do processamento...");
 
 			pollingInterval.current = setInterval(async () => {
 				try {
-					const data = await getTaskStatus(taskId);
+					const data = await getJobStatus(jobId);
 
-					if (data.state === "PROGRESS") {
+					if (data.state === "RUNNING" || data.state === "PROGRESS") {
 						if (
 							typeof data.total === "number" &&
 							data.total > 0 &&
@@ -160,10 +160,10 @@ export function UseOCRUploadTask({
 	);
 
 	useEffect(() => {
-		const savedTaskId = localStorage.getItem(storageKey);
-		if (savedTaskId && !pollingInterval.current) {
+		const savedJobId = localStorage.getItem(storageKey);
+		if (savedJobId && !pollingInterval.current) {
 			setIsProcessing(true);
-			pollStatus(savedTaskId);
+			pollStatus(savedJobId);
 		}
 
 		return () => {
@@ -197,9 +197,9 @@ export function UseOCRUploadTask({
 
 		try {
 			const response = await uploadOCRArchive(uploadFile);
-			const taskId = response.task_id;
+			const jobId = response.job_id;
 
-			if (!taskId) {
+			if (!jobId) {
 				setHasError(true);
 				addSnackbar({
 					text: "O servidor não retornou um ID de tarefa.",
@@ -209,8 +209,8 @@ export function UseOCRUploadTask({
 				return;
 			}
 
-			localStorage.setItem(storageKey, taskId);
-			pollStatus(taskId);
+			localStorage.setItem(storageKey, jobId);
+			pollStatus(jobId);
 		} catch (error) {
 			console.error(error);
 			setHasError(true);

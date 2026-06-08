@@ -94,10 +94,8 @@ class Text(Base):
     upload_batch_id = Column(Integer, ForeignKey('text_upload_batches.id', ondelete="SET NULL"), nullable=True, index=True)
     processing_started_at = Column(TIMESTAMP, nullable=True)
     processing_heartbeat_at = Column(TIMESTAMP, nullable=True)
-    processing_enqueued_at = Column(TIMESTAMP, nullable=True)
     processing_attempts = Column(Integer, nullable=False, default=0)
     last_processing_error = Column(TextType, nullable=True)
-    processing_task_id = Column(String(255), nullable=True)
 
 
 class TextUploadBatch(Base):
@@ -112,7 +110,6 @@ class TextUploadBatch(Base):
         default=TextUploadBatchStatus.IMPORTING,
         index=True,
     )
-    celery_import_task_id = Column(String(255), nullable=True)
     total_files = Column(Integer, nullable=False, default=0)
     created_texts = Column(Integer, nullable=False, default=0)
     processed_texts = Column(Integer, nullable=False, default=0)

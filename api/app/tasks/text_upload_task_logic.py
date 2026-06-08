@@ -16,7 +16,6 @@ from ..tasks.constants import (
 )
 from ..text_upload_batches import (
     append_failed_files,
-    enqueue_text_processing_task,
     load_failed_files,
     sync_text_upload_batch_state,
     utcnow,
@@ -86,7 +85,6 @@ def run_text_upload_zip_pipeline(
     from app.database.queries import add_text
 
     text_ids: list[int] = []
-    imported_texts: dict[int, models.Text] = {}
     ingestion_failed_files: list[str] = []
     batch = db.session.get(models.TextUploadBatch, batch_id) if batch_id is not None else None
 
@@ -115,14 +113,12 @@ def run_text_upload_zip_pipeline(
 
             for index, member_name in enumerate(file_list):
                 base_name = os.path.basename(member_name)
-                task.update_state(
-                    state='PROGRESS',
-                    meta={
-                        'current': index + 1,
-                        'total': total_files,
-                        'status': f'Importando arquivo {index + 1}/{total_files}',
-                    },
-                )
+                if task is not None and hasattr(task, 'report_progress'):
+                    task.report_progress(
+                        current=index + 1,
+                        total=total_files,
+                        status_message=f'Importando arquivo {index + 1}/{total_files}',
+                    )
 
                 try:
                     with zip_ref.open(member_name) as file_handle:
@@ -154,7 +150,6 @@ def run_text_upload_zip_pipeline(
                     if text_obj.id is None:
                         text_obj.id = text_id
                     text_ids.append(text_id)
-                    imported_texts[text_id] = text_obj
 
                 except Exception as exc:
                     db.session.rollback()
@@ -180,25 +175,8 @@ def run_text_upload_zip_pipeline(
             append_failed_files(batch, failed_files)
             batch.import_finished_at = utcnow()
             batch.status = models.TextUploadBatchStatus.QUEUED
+            batch.last_error = None
             db.session.commit()
-
-            for text_id in text_ids:
-                text_obj = imported_texts.get(text_id) or db.session.get(models.Text, text_id)
-                if text_obj is None:
-                    continue
-
-                try:
-                    enqueue_text_processing_task(db.session, text_obj)
-                except Exception as exc:
-                    db.session.rollback()
-                    text_obj = db.session.get(models.Text, text_id)
-                    if text_obj is not None:
-                        text_obj.processing_status = models.ProcessingStatus.FAILED
-                        text_obj.last_processing_error = 'Failed to enqueue text processing task.'
-                        db.session.commit()
-                    append_failed_files(batch, [text_obj.source_file_name if text_obj else f'text:{text_id}'])
-                    batch.last_error = str(exc)
-                    db.session.commit()
 
             batch = sync_text_upload_batch_state(db.session, batch.id)
 

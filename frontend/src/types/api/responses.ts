@@ -2,7 +2,7 @@ import type { MessageResponse } from "../domain/common";
 import type { NormalizationMap } from "../domain/normalization";
 import type { TextDetail, TextMetadata } from "../domain/text";
 import type { CurrentUser, UserData, LoginResponse } from "../domain/user";
-import type { TaskStatusResponse } from "../domain/ocr";
+import type { JobStatusResponse } from "../domain/ocr";
 
 export interface UsernamesResponse {
 	usernames: string[];
@@ -19,7 +19,7 @@ export type TextDetailResponse = TextDetail;
 export type NormalizationsGetResponse = NormalizationMap;
 
 export interface UploadResponse {
-	task_id: string;
+	job_id: string;
 	batch_id: number;
 }
 
@@ -71,10 +71,10 @@ export interface ActiveTextUploadBatchesResponse {
 }
 
 export interface OCRUploadResponse {
-	task_id: string;
+	job_id: string;
 }
 
-export type TaskStatusApiResponse = TaskStatusResponse;
+export type JobStatusApiResponse = JobStatusResponse;
 
 export interface WhitelistTokensResponse {
 	tokens: string[];

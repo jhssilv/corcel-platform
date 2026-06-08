@@ -1,6 +1,7 @@
 import socket
 import uuid
 from datetime import datetime, timedelta
+from types import SimpleNamespace
 from typing import Any
 
 from sqlalchemy import and_, or_
@@ -174,3 +175,29 @@ def mark_background_job_failure(
     session.commit()
     session.refresh(job)
     return job
+
+
+class BackgroundJobReporter:
+    def __init__(self, session, job_id: str):
+        self._session = session
+        self._job_id = job_id
+        self.request = SimpleNamespace(id=job_id)
+
+    def report_progress(
+        self,
+        *,
+        current: int | None = None,
+        total: int | None = None,
+        status_message: str | None = None,
+    ) -> None:
+        job = get_background_job(self._session, self._job_id)
+        if job is None:
+            return
+
+        touch_background_job(
+            self._session,
+            job,
+            current=current,
+            total=total,
+            status_message=status_message,
+        )

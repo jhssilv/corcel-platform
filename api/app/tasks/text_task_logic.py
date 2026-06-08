@@ -1,4 +1,4 @@
-"""Background Celery task logic for per-text processing."""
+"""Background task logic for per-text processing."""
 
 from ..database import models
 from ..logging_config import get_logger
@@ -8,9 +8,20 @@ from ..text_upload_batches import sync_text_upload_batch_state, utcnow
 logger = get_logger('app.task.text_task_logic', source='task', task_module='text_task_logic')
 
 
+def _report_progress(task, *, text_id: int) -> None:
+    if task is None or not hasattr(task, 'report_progress'):
+        return
+
+    task.report_progress(
+        current=1,
+        total=1,
+        status_message=f'Processando texto {text_id}',
+    )
+
+
 def run_process_single_text_pipeline(task, text_id: int):
-    from app.extensions import db
     from app.database.queries import add_suggestion
+    from app.extensions import db
 
     pipeline = TextProcessingPipeline()
     text_obj = db.session.get(models.Text, text_id)
@@ -35,20 +46,11 @@ def run_process_single_text_pipeline(task, text_id: int):
     batch = db.session.get(models.TextUploadBatch, text_obj.upload_batch_id) if text_obj.upload_batch_id else None
 
     try:
-        task.update_state(
-            state='PROGRESS',
-            meta={
-                'current': 1,
-                'total': 1,
-                'status': f'Processando texto {text_id}',
-            },
-        )
+        _report_progress(task, text_id=text_id)
 
         text_obj.processing_status = models.ProcessingStatus.PROCESSING
         text_obj.processing_started_at = text_obj.processing_started_at or utcnow()
         text_obj.processing_heartbeat_at = utcnow()
-        text_obj.processing_attempts = (text_obj.processing_attempts or 0) + 1
-        text_obj.processing_task_id = task.request.id
         text_obj.last_processing_error = None
 
         if batch is not None:
@@ -92,8 +94,10 @@ def run_process_single_text_pipeline(task, text_id: int):
         processed_data = pipeline.process_tokens(tokens, full_text)
         text_obj.processing_heartbeat_at = utcnow()
 
+        tokens_by_position = {token.position: token for token in token_rows}
+
         for position, token_data in processed_data.items():
-            token = next((row for row in token_rows if row.position == position), None)
+            token = tokens_by_position.get(position)
             if token is None:
                 continue
 
@@ -137,9 +141,11 @@ def run_process_single_text_pipeline(task, text_id: int):
             failed_file = f'text:{text_id}'
 
         if batch is not None:
-            batch.last_error = str(exc)
-            db.session.commit()
-            batch = sync_text_upload_batch_state(db.session, batch.id)
+            batch = db.session.get(models.TextUploadBatch, batch.id)
+            if batch is not None:
+                batch.last_error = str(exc)
+                db.session.commit()
+                batch = sync_text_upload_batch_state(db.session, batch.id)
 
         logger.exception(
             'Failed to process ML pipeline for text',

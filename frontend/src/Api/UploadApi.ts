@@ -3,7 +3,7 @@ import * as schemas from "./Schemas";
 import { unwrapData } from "./Utils";
 import type {
 	ActiveTextUploadBatchesResponse,
-	TaskStatusApiResponse,
+	JobStatusApiResponse,
 	TextUploadBatchDetail,
 	UploadResponse,
 	BatchStatusResponse,
@@ -28,13 +28,13 @@ export async function uploadTextArchive(
 	return schemas.UploadResponseSchema.parse(data);
 }
 
-export async function getTaskStatus(
-	taskId: string,
-): Promise<TaskStatusApiResponse> {
+export async function getJobStatus(
+	jobId: string,
+): Promise<JobStatusApiResponse> {
 	const data = unwrapData(
-		await apiPrivate.get<TaskStatusApiResponse>(`/status/${taskId}`),
+		await apiPrivate.get<JobStatusApiResponse>(`/status/${jobId}`),
 	);
-	return schemas.TaskStatusResponseSchema.parse(data);
+	return schemas.JobStatusResponseSchema.parse(data);
 }
 
 export async function getBatchStatus(
