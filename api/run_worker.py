@@ -8,7 +8,7 @@ from app.app import create_app
 from app.extensions import celery
 from app.logging_config import configure_stream_logging, get_logger, start_stream_consumer
 
-flask_app = create_app()
+flask_app = create_app(run_schema_bootstrap=False)
 flask_app.app_context().push()
 
 configure_stream_logging(flask_app.config)

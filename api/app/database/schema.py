@@ -2,6 +2,8 @@ from sqlalchemy import inspect, text
 
 from .models import Base
 
+SCHEMA_BOOTSTRAP_LOCK_KEY = 483021541
+
 
 TEXTS_COLUMNS = {
     'upload_batch_id': 'INTEGER',
@@ -32,13 +34,19 @@ TEXTSUSERS_BACKFILL_STATEMENTS = (
 
 
 def ensure_database_schema(engine) -> None:
-    Base.metadata.create_all(bind=engine)
-
-    inspector = inspect(engine)
-    if 'texts' not in inspector.get_table_names():
-        return
-
     with engine.begin() as connection:
+        if engine.dialect.name == 'postgresql':
+            connection.execute(
+                text('SELECT pg_advisory_xact_lock(:lock_key)'),
+                {'lock_key': SCHEMA_BOOTSTRAP_LOCK_KEY},
+            )
+
+        Base.metadata.create_all(bind=connection)
+
+        inspector = inspect(connection)
+        if 'texts' not in inspector.get_table_names():
+            return
+
         existing_columns = {column['name'] for column in inspector.get_columns('texts')}
         for column_name, column_type in TEXTS_COLUMNS.items():
             if column_name in existing_columns:

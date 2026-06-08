@@ -50,7 +50,7 @@ def make_celery(app_name=__name__):
     )
     return celery_instance
 
-def create_app():
+def create_app(*, run_schema_bootstrap: bool = True):
     app = Flask(__name__)
     
     app.config.from_object(Config)
@@ -248,8 +248,9 @@ def create_app():
     app.register_blueprint(ocr_bp)
     app.register_blueprint(assignment_bp)
 
-    with app.app_context():
-        ensure_database_schema(db.engine)
+    if run_schema_bootstrap:
+        with app.app_context():
+            ensure_database_schema(db.engine)
 
     return app
 
