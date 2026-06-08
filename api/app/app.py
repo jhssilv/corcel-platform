@@ -1,26 +1,20 @@
-import os
 import time
 import uuid
+
 from dotenv import load_dotenv
 
-load_dotenv() # Load env vars before importing config
+load_dotenv()
 
 from flask import Flask, g, request
 from flask_cors import CORS
-from pydantic import ValidationError
-from celery import Celery
 from flask_jwt_extended import get_jwt_identity
+from pydantic import ValidationError
 from werkzeug.exceptions import HTTPException
 
-from .extensions import db, celery, jwt, limiter
-from .routes.auth_routes import auth_bp
-from .routes.text_routes import text_bp
-from .routes.download_routes import download_bp
-from .routes.upload_routes import upload_bp
-from .routes.ocr_routes import ocr_bp
-from .routes.assignment_routes import assignment_bp
 from .config import Config
+from .database.models import User
 from .database.schema import ensure_database_schema
+from .extensions import db, jwt, limiter
 from .logging_config import (
     bind_request_context,
     clear_request_context,
@@ -29,10 +23,15 @@ from .logging_config import (
     redact_sensitive_data,
     sanitize_headers,
 )
-from .database.models import User
+from .routes.assignment_routes import assignment_bp
+from .routes.auth_routes import auth_bp
+from .routes.download_routes import download_bp
+from .routes.ocr_routes import ocr_bp
+from .routes.text_routes import text_bp
+from .routes.upload_routes import upload_bp
 from .utils.api_errors import (
-    INVALID_REQUEST,
     INTERNAL_SERVER_ERROR,
+    INVALID_REQUEST,
     METHOD_NOT_ALLOWED,
     RATE_LIMIT_EXCEEDED,
     RESOURCE_NOT_FOUND,
@@ -40,19 +39,10 @@ from .utils.api_errors import (
     error_response,
 )
 
-def make_celery(app_name=__name__):
-    redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
-    celery_instance = Celery(
-        app_name,
-        backend=redis_url,
-        broker=redis_url,
-        include=['api.app.tasks.celery_tasks']
-    )
-    return celery_instance
 
 def create_app(*, run_schema_bootstrap: bool = True):
     app = Flask(__name__)
-    
+
     app.config.from_object(Config)
     configure_stream_logging(app.config)
 
@@ -63,31 +53,10 @@ def create_app(*, run_schema_bootstrap: bool = True):
         identity = jwt_data["sub"]
         return db.session.get(User, identity)
 
-    CORS(app) 
+    CORS(app)
     jwt.init_app(app)
     db.init_app(app)
     limiter.init_app(app)
-    
-    celery.conf.update(
-        broker_url=app.config.get('CELERY_BROKER_URL'),
-        result_backend=app.config.get('CELERY_RESULT_BACKEND'),
-        task_acks_late=True,
-        task_reject_on_worker_lost=True,
-        worker_prefetch_multiplier=1,
-        broker_transport_options={
-            'visibility_timeout': app.config.get('CELERY_VISIBILITY_TIMEOUT', 3600),
-        },
-        beat_schedule={
-            'reconcile-text-upload-batches': {
-                'task': 'app.tasks.reconcile_text_upload_batches',
-                'schedule': app.config.get('TEXT_UPLOAD_RECONCILE_INTERVAL_SECONDS', 60),
-            }
-        },
-        timezone='UTC',
-        enable_utc=True,
-        TEXT_UPLOAD_STALE_AFTER_SECONDS=app.config.get('TEXT_UPLOAD_STALE_AFTER_SECONDS', 600),
-        TEXT_UPLOAD_MAX_PROCESSING_ATTEMPTS=app.config.get('TEXT_UPLOAD_MAX_PROCESSING_ATTEMPTS', 3),
-    )
 
     @app.before_request
     def before_request_logging():
@@ -154,14 +123,13 @@ def create_app(*, run_schema_bootstrap: bool = True):
         clear_request_context()
 
     @app.errorhandler(ValidationError)
-    def handle_validation_error(e: ValidationError):
-        """Captures Pydantic validation errors and returns the canonical JSON envelope."""
+    def handle_validation_error(error: ValidationError):
         error_details = [
             {
-                "field": error.get("loc")[-1],
-                "message": error.get("msg"),
+                "field": item.get("loc")[-1],
+                "message": item.get("msg"),
             }
-            for error in e.errors()
+            for item in error.errors()
         ]
         request_logger.warning(
             'Validation failed',
@@ -181,15 +149,15 @@ def create_app(*, run_schema_bootstrap: bool = True):
         )
 
     @app.errorhandler(429)
-    def ratelimit_handler(e):
-        details = [{"field": None, "message": str(e.description)}]
+    def ratelimit_handler(error):
+        details = [{"field": None, "message": str(error.description)}]
         request_logger.warning(
             'Rate limit exceeded',
             extra={
                 'event': {
                     'source': 'route',
                     'blueprint': request.blueprint or 'http',
-                    'error': str(e.description),
+                    'error': str(error.description),
                 }
             },
         )
@@ -201,37 +169,37 @@ def create_app(*, run_schema_bootstrap: bool = True):
         )
 
     @app.errorhandler(HTTPException)
-    def handle_http_exception(e: HTTPException):
-        if e.code == 429:
-            return ratelimit_handler(e)
+    def handle_http_exception(error: HTTPException):
+        if error.code == 429:
+            return ratelimit_handler(error)
 
-        code = RESOURCE_NOT_FOUND if e.code == 404 else METHOD_NOT_ALLOWED if e.code == 405 else INVALID_REQUEST
+        code = RESOURCE_NOT_FOUND if error.code == 404 else METHOD_NOT_ALLOWED if error.code == 405 else INVALID_REQUEST
         request_logger.warning(
             'HTTP exception raised',
             extra={
                 'event': {
                     'source': 'route',
                     'blueprint': request.blueprint or 'http',
-                    'status_code': e.code,
-                    'error': e.description,
+                    'status_code': error.code,
+                    'error': error.description,
                 }
             },
         )
         return error_response(
-            error=e.description,
+            error=error.description,
             code=code,
-            status_code=e.code or 500,
+            status_code=error.code or 500,
         )
 
     @app.errorhandler(Exception)
-    def handle_unexpected_exception(e: Exception):
+    def handle_unexpected_exception(error: Exception):
         request_logger.exception(
             'Unhandled exception',
             extra={
                 'event': {
                     'source': 'route',
                     'blueprint': request.blueprint or 'http',
-                    'error': str(e),
+                    'error': str(error),
                 }
             },
         )
@@ -253,6 +221,7 @@ def create_app(*, run_schema_bootstrap: bool = True):
             ensure_database_schema(db.engine)
 
     return app
+
 
 if __name__ == '__main__':
     app = create_app()

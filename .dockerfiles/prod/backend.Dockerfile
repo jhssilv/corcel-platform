@@ -2,13 +2,11 @@ FROM python:3.12-slim
 
 COPY --from=ghcr.io/astral-sh/uv:0.11.15 /uv /uvx /bin/
 
-# Installs system dependencies, including Redis
 RUN apt-get update && apt-get install -y \
     build-essential \
     libhunspell-dev \
     python3-dev \
     hunspell-pt-br \
-    redis-server \
     && apt-get clean
 
 WORKDIR /app/api
@@ -27,5 +25,5 @@ RUN chmod +x /app/api/start.sh
 
 EXPOSE 5000
 
-# Executes the script that manages Redis, Celery, and Flask
+# Executes the script that manages the local worker and Flask.
 CMD ["./start.sh"]

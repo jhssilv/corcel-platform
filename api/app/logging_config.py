@@ -1,27 +1,19 @@
 import json
 import logging
-import os
-import socket
 import threading
-import time
 import traceback
-import uuid
 from contextvars import ContextVar
 from datetime import datetime
 from pathlib import Path
-
-from redis import Redis
-from redis.exceptions import RedisError
 
 
 _request_id_ctx = ContextVar('request_id', default=None)
 _trace_id_ctx = ContextVar('trace_id', default=None)
 _user_id_ctx = ContextVar('user_id', default=None)
-_task_id_ctx = ContextVar('celery_task_id', default=None)
+_job_id_ctx = ContextVar('job_id', default=None)
 
-_producer_lock = threading.Lock()
-_producer_handler = None
-_consumer_thread = None
+_handler_lock = threading.Lock()
+_jsonl_handler = None
 
 
 def _now_local_iso():
@@ -121,110 +113,7 @@ def get_logger(name, **event_defaults):
     return StructuredAdapter(logging.getLogger(name), event_defaults)
 
 
-class RedisStreamHandler(logging.Handler):
-    def __init__(self, redis_url, stream_key, stream_maxlen):
-        super().__init__()
-        self.stream_key = stream_key
-        self.stream_maxlen = stream_maxlen
-        self.client = Redis.from_url(redis_url, decode_responses=True)
-
-    def emit(self, record):
-        event = self._build_event(record)
-        if not event:
-            return
-
-        try:
-            self.client.xadd(
-                self.stream_key,
-                {'event': json.dumps(event, ensure_ascii=False)},
-                maxlen=self.stream_maxlen,
-                approximate=True,
-            )
-        except RedisError:
-            # Fail-open behavior by design.
-            return
-
-    def _build_event(self, record):
-        event = {}
-
-        if hasattr(record, 'event') and isinstance(record.event, dict):
-            event.update(record.event)
-
-        source = event.get('source')
-        if not source:
-            if '.route.' in record.name:
-                source = 'route'
-            elif '.task.' in record.name:
-                source = 'task'
-            elif '.celery' in record.name:
-                source = 'celery'
-            else:
-                source = 'app'
-
-        event.update(
-            {
-                'timestamp': _now_local_iso(),
-                'level': record.levelname,
-                'logger': record.name,
-                'message': record.getMessage(),
-                'source': source,
-                'request_id': event.get('request_id') or _request_id_ctx.get(),
-                'trace_id': event.get('trace_id') or _trace_id_ctx.get(),
-                'user_id': event.get('user_id') or _user_id_ctx.get(),
-                'celery_task_id': event.get('celery_task_id') or _task_id_ctx.get(),
-            }
-        )
-
-        if record.exc_info:
-            event['exception'] = ''.join(traceback.format_exception(*record.exc_info))
-
-        return redact_sensitive_data(_safe_json(event))
-
-
-def configure_stream_logging(config):
-    global _producer_handler
-
-    with _producer_lock:
-        if _producer_handler is not None:
-            return
-
-        handler = RedisStreamHandler(
-            redis_url=config.get('LOG_REDIS_URL'),
-            stream_key=config.get('LOG_STREAM_KEY'),
-            stream_maxlen=config.get('LOG_STREAM_MAXLEN'),
-        )
-
-        root_logger = logging.getLogger()
-        root_logger.setLevel(_normalize_level(config.get('LOG_LEVEL', 'INFO')))
-        root_logger.addHandler(handler)
-        _producer_handler = handler
-
-
-def bind_request_context(request_id=None, trace_id=None, user_id=None):
-    if request_id:
-        _request_id_ctx.set(request_id)
-    if trace_id:
-        _trace_id_ctx.set(trace_id)
-    if user_id is not None:
-        _user_id_ctx.set(str(user_id))
-
-
-def clear_request_context():
-    _request_id_ctx.set(None)
-    _trace_id_ctx.set(None)
-    _user_id_ctx.set(None)
-
-
-def bind_task_context(task_id=None):
-    if task_id:
-        _task_id_ctx.set(str(task_id))
-
-
-def clear_task_context():
-    _task_id_ctx.set(None)
-
-
-def _rotate_if_needed(file_path, max_bytes):
+def _rotate_if_needed(file_path: Path, max_bytes: int):
     if not file_path.exists() or file_path.stat().st_size < max_bytes:
         return
 
@@ -244,116 +133,121 @@ def _resolve_target_filename(event):
     if source == 'task':
         module_name = event.get('task_module') or 'tasks'
         return f'{module_name}.jsonl'
-    if source == 'celery':
-        return 'celery_worker.jsonl'
+    if source in {'job_worker', 'worker'}:
+        return 'job_worker.jsonl'
     return 'app.jsonl'
 
 
-def _flush_events(logs_root_dir, max_file_bytes, buffered_records):
-    logs_root = Path(logs_root_dir)
-    logs_root.mkdir(parents=True, exist_ok=True)
+class JsonlFileHandler(logging.Handler):
+    def __init__(self, *, root_dir: str, max_file_bytes: int):
+        super().__init__()
+        self.root_dir = Path(root_dir)
+        self.max_file_bytes = max_file_bytes
+        self._write_lock = threading.Lock()
 
-    grouped = {}
-    for _, event in buffered_records:
-        file_name = _resolve_target_filename(event)
-        grouped.setdefault(file_name, []).append(event)
-
-    for file_name, events in grouped.items():
-        path = logs_root / file_name
-        _rotate_if_needed(path, max_file_bytes)
-        with path.open('a', encoding='utf-8') as stream:
-            for event in events:
-                stream.write(json.dumps(event, ensure_ascii=False) + '\n')
-
-
-def _consume_stream_loop(config):
-    redis_client = Redis.from_url(config.get('LOG_REDIS_URL'), decode_responses=True)
-    stream_key = config.get('LOG_STREAM_KEY')
-    group = config.get('LOG_STREAM_GROUP')
-    consumer = config.get('LOG_STREAM_CONSUMER') or f"{socket.gethostname()}-{os.getpid()}"
-    flush_batch_size = int(config.get('LOG_FLUSH_BATCH_SIZE', 500))
-    flush_interval = float(config.get('LOG_FLUSH_INTERVAL_SECONDS', 2))
-    max_file_bytes = int(config.get('LOG_FILE_MAX_BYTES', 512 * 1024 * 1024))
-    logs_root_dir = config.get('LOG_ROOT_DIR')
-
-    while True:
-        try:
-            redis_client.xgroup_create(stream_key, group, id='0', mkstream=True)
-            break
-        except RedisError as exc:
-            if 'BUSYGROUP' in str(exc):
-                break
-            time.sleep(1)
-
-    pending = []
-    last_flush = time.monotonic()
-
-    while True:
-        try:
-            response = redis_client.xreadgroup(
-                groupname=group,
-                consumername=consumer,
-                streams={stream_key: '>'},
-                count=flush_batch_size,
-                block=1000,
-            )
-        except RedisError:
-            time.sleep(1)
-            continue
-
-        if response:
-            for _, entries in response:
-                for entry_id, fields in entries:
-                    raw_event = fields.get('event')
-                    if not raw_event:
-                        continue
-                    try:
-                        event = json.loads(raw_event)
-                    except json.JSONDecodeError:
-                        event = {
-                            'timestamp': _now_local_iso(),
-                            'level': 'ERROR',
-                            'source': 'app',
-                            'message': 'Invalid log event payload',
-                            'raw_event': _truncate(raw_event),
-                        }
-                    pending.append((entry_id, event))
-
-        should_flush = (
-            len(pending) >= flush_batch_size
-            or (pending and (time.monotonic() - last_flush) >= flush_interval)
-        )
-
-        if not should_flush:
-            continue
-
-        try:
-            _flush_events(logs_root_dir, max_file_bytes, pending)
-        except Exception:
-            time.sleep(1)
-            continue
-
-        for entry_id, _ in pending:
-            try:
-                redis_client.xack(stream_key, group, entry_id)
-            except RedisError:
-                continue
-
-        pending.clear()
-        last_flush = time.monotonic()
-
-
-def start_stream_consumer(config):
-    global _consumer_thread
-
-    with _producer_lock:
-        if _consumer_thread and _consumer_thread.is_alive():
+    def emit(self, record):
+        event = self._build_event(record)
+        if not event:
             return
 
-        _consumer_thread = threading.Thread(
-            target=_consume_stream_loop,
-            args=(config,),
-            daemon=True,
-            name='redis-log-stream-consumer',
+        file_name = _resolve_target_filename(event)
+        file_path = self.root_dir / file_name
+
+        try:
+            self.root_dir.mkdir(parents=True, exist_ok=True)
+            with self._write_lock:
+                _rotate_if_needed(file_path, self.max_file_bytes)
+                with file_path.open('a', encoding='utf-8') as stream:
+                    stream.write(json.dumps(event, ensure_ascii=False) + '\n')
+        except Exception:
+            return
+
+    def _build_event(self, record):
+        event = {}
+
+        if hasattr(record, 'event') and isinstance(record.event, dict):
+            event.update(record.event)
+
+        source = event.get('source')
+        if not source:
+            if '.route.' in record.name:
+                source = 'route'
+            elif '.task.' in record.name:
+                source = 'task'
+            elif '.jobs.' in record.name or '.worker' in record.name:
+                source = 'job_worker'
+            else:
+                source = 'app'
+
+        event.update(
+            {
+                'timestamp': _now_local_iso(),
+                'level': record.levelname,
+                'logger': record.name,
+                'message': record.getMessage(),
+                'source': source,
+                'request_id': event.get('request_id') or _request_id_ctx.get(),
+                'trace_id': event.get('trace_id') or _trace_id_ctx.get(),
+                'user_id': event.get('user_id') or _user_id_ctx.get(),
+                'job_id': event.get('job_id') or _job_id_ctx.get(),
+            }
         )
-        _consumer_thread.start()
+
+        if record.exc_info:
+            event['exception'] = ''.join(traceback.format_exception(*record.exc_info))
+
+        return redact_sensitive_data(_safe_json(event))
+
+
+def configure_stream_logging(config):
+    global _jsonl_handler
+
+    with _handler_lock:
+        if _jsonl_handler is not None:
+            return
+
+        handler = JsonlFileHandler(
+            root_dir=config.get('LOG_ROOT_DIR'),
+            max_file_bytes=int(config.get('LOG_FILE_MAX_BYTES', 512 * 1024 * 1024)),
+        )
+
+        root_logger = logging.getLogger()
+        root_logger.setLevel(_normalize_level(config.get('LOG_LEVEL', 'INFO')))
+        root_logger.addHandler(handler)
+        _jsonl_handler = handler
+
+
+def bind_request_context(request_id=None, trace_id=None, user_id=None):
+    if request_id:
+        _request_id_ctx.set(request_id)
+    if trace_id:
+        _trace_id_ctx.set(trace_id)
+    if user_id is not None:
+        _user_id_ctx.set(str(user_id))
+
+
+def clear_request_context():
+    _request_id_ctx.set(None)
+    _trace_id_ctx.set(None)
+    _user_id_ctx.set(None)
+
+
+def bind_job_context(job_id=None):
+    if job_id:
+        _job_id_ctx.set(str(job_id))
+
+
+def clear_job_context():
+    _job_id_ctx.set(None)
+
+
+def bind_task_context(job_id=None):
+    bind_job_context(job_id)
+
+
+def clear_task_context():
+    clear_job_context()
+
+
+def start_stream_consumer(_config):
+    return None

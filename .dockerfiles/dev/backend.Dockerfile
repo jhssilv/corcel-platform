@@ -10,7 +10,6 @@ RUN apt-get update && apt-get install -y \
     libhunspell-dev \
     python3-dev \
     hunspell-pt-br \
-    redis-server \
     && apt-get clean
 
 WORKDIR /app/api
@@ -20,5 +19,9 @@ COPY api/pyproject.toml api/uv.lock ./
 RUN uv sync --frozen --no-dev
 
 RUN uv run python -c "import spacy_udpipe; spacy_udpipe.download('pt')"
+
+COPY api/ /app/api
+
+RUN chmod +x /app/api/start.sh
 
 EXPOSE 5000

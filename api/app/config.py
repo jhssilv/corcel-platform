@@ -53,25 +53,17 @@ class Config:
     JWT_TOKEN_LOCATION = ['cookies']
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=24)
 
-    # --- Celery / Redis -------------------------------------------------------
+    # --- Background jobs / rate limiting ------------------------------------
 
-    CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
-    CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
-    RATELIMIT_STORAGE_URI = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
-    CELERY_VISIBILITY_TIMEOUT = int(os.getenv('CELERY_VISIBILITY_TIMEOUT', '3600'))
+    RATELIMIT_STORAGE_URI = 'memory://'
     TEXT_UPLOAD_RECONCILE_INTERVAL_SECONDS = int(os.getenv('TEXT_UPLOAD_RECONCILE_INTERVAL_SECONDS', '60'))
     TEXT_UPLOAD_STALE_AFTER_SECONDS = int(os.getenv('TEXT_UPLOAD_STALE_AFTER_SECONDS', '600'))
     TEXT_UPLOAD_MAX_PROCESSING_ATTEMPTS = int(os.getenv('TEXT_UPLOAD_MAX_PROCESSING_ATTEMPTS', '3'))
+    JOB_WORKER_IDLE_SLEEP_SECONDS = float(os.getenv('JOB_WORKER_IDLE_SLEEP_SECONDS', '1'))
 
     # --- Logging -------------------------------------------------------------
 
     LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
-    LOG_REDIS_URL = os.getenv('LOG_REDIS_URL', os.getenv('REDIS_URL', 'redis://localhost:6379/0'))
-    LOG_STREAM_KEY = os.getenv('LOG_STREAM_KEY', 'corcel:logs:stream')
-    LOG_STREAM_GROUP = os.getenv('LOG_STREAM_GROUP', 'corcel:logs:writer')
-    LOG_STREAM_MAXLEN = int(os.getenv('LOG_STREAM_MAXLEN', '200000'))
-    LOG_FLUSH_BATCH_SIZE = int(os.getenv('LOG_FLUSH_BATCH_SIZE', '500'))
-    LOG_FLUSH_INTERVAL_SECONDS = float(os.getenv('LOG_FLUSH_INTERVAL_SECONDS', '2'))
     LOG_FILE_MAX_BYTES = int(os.getenv('LOG_FILE_MAX_BYTES', str(512 * 1024 * 1024)))
     LOG_ROOT_DIR = os.getenv('LOG_ROOT_DIR', os.path.join(PROJECT_ROOT, 'logs'))
 
@@ -84,8 +76,8 @@ class Config:
     ]
 
     # --- Text Processing Pipeline --------------------------------------------
-    # Keys consumed by app.text_pipeline.  All names are prefixed with OLLAMA_
-    # or NLP_ to avoid collisions with Flask / Celery built-ins.
+    # Keys consumed by app.text_pipeline. All names are prefixed with OLLAMA_
+    # or NLP_ to avoid collisions with Flask built-ins.
 
     # Ollama LLM endpoint
     OLLAMA_BASE_URL = os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434')

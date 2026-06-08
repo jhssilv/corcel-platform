@@ -23,7 +23,7 @@ services:
       context: .
       dockerfile: .dockerfiles/dev/backend.Dockerfile
     container_name: corcel_backend_local
-    command: python run_api.py
+    command: sh start.sh
     working_dir: /app/api
     ports:
       - "5000:5000"
@@ -35,80 +35,14 @@ services:
       - POSTGRES_PASSWORD=1234
       - POSTGRES_DB=corcel
       - FLASK_APP=app/app
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
-      - REDIS_URL=redis://redis:6379/0
-      - LOG_REDIS_URL=redis://redis:6379/0
       - OLLAMA_BASE_URL=http://ollama:11434
       - SECRET_KEY=your_secret_key_here
       - PYTHONUNBUFFERED=1
     volumes:
       - ./api:/app/api
+      - backend_logs_local:/app/logs
     depends_on:
       - db
-      - redis
-      - ollama
-    networks:
-      - app_network
-
-  worker:
-    build:
-      context: .
-      dockerfile: .dockerfiles/dev/backend.Dockerfile
-    container_name: corcel_worker_local
-    command: celery -A run_worker worker --pool=solo --loglevel=info
-    working_dir: /app/api
-    environment:
-      - DATABASE_URL=postgresql://postgres:1234@db:5432/corcel
-      - POSTGRES_USER=postgres
-      - POSTGRES_HOST=db
-      - POSTGRES_PORT=5432
-      - POSTGRES_PASSWORD=1234
-      - POSTGRES_DB=corcel
-      - FLASK_APP=app/app
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
-      - REDIS_URL=redis://redis:6379/0
-      - LOG_REDIS_URL=redis://redis:6379/0
-      - OLLAMA_BASE_URL=http://ollama:11434
-      - SECRET_KEY=your_secret_key_here
-      - PYTHONUNBUFFERED=1
-    volumes:
-      - ./api:/app/api
-    depends_on:
-      - db
-      - redis
-      - ollama
-    networks:
-      - app_network
-
-  beat:
-    build:
-      context: .
-      dockerfile: .dockerfiles/dev/backend.Dockerfile
-    container_name: corcel_beat_local
-    command: celery -A run_worker beat --loglevel=info
-    working_dir: /app/api
-    environment:
-      - DATABASE_URL=postgresql://postgres:1234@db:5432/corcel
-      - POSTGRES_USER=postgres
-      - POSTGRES_HOST=db
-      - POSTGRES_PORT=5432
-      - POSTGRES_PASSWORD=1234
-      - POSTGRES_DB=corcel
-      - FLASK_APP=app/app
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
-      - REDIS_URL=redis://redis:6379/0
-      - LOG_REDIS_URL=redis://redis:6379/0
-      - OLLAMA_BASE_URL=http://ollama:11434
-      - SECRET_KEY=your_secret_key_here
-      - PYTHONUNBUFFERED=1
-    volumes:
-      - ./api:/app/api
-    depends_on:
-      - db
-      - redis
       - ollama
     networks:
       - app_network
@@ -124,14 +58,6 @@ services:
       - POSTGRES_DB=corcel
     volumes:
       - postgres_data_local:/var/lib/postgresql/data
-    networks:
-      - app_network
-
-  redis:
-    image: redis:7-alpine
-    container_name: corcel_redis_local
-    ports:
-      - "6379:6379"
     networks:
       - app_network
 
@@ -175,5 +101,6 @@ networks:
 
 volumes:
   frontend_node_modules:
+  backend_logs_local:
   postgres_data_local:
   ollama_data_local:
