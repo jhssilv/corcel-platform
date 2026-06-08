@@ -3,7 +3,9 @@ import os
 import io
 import zipfile
 from PIL import Image
-from app.tasks.celery_tasks import process_ocr_zip
+from unittest.mock import MagicMock
+
+from app.tasks.ocr_task_logic import run_ocr_zip_pipeline
 from app.tasks.constants import IMAGES_FOLDER
 from app.tasks.persistence import add_to_database
 from app.tasks.text_formatting import format_text_content
@@ -79,12 +81,11 @@ def test_process_ocr_zip_success(app, mocker, tmp_path):
     # Mock OCR service
     mocker.patch('app.tasks.ocr_task_logic.ocr_service.perform_ocr', return_value="Extracted text content")
     
-    # Mock the update_state method on the task
-    mocker.patch.object(process_ocr_zip, 'update_state')
+    reporter = MagicMock()
+    reporter.report_progress = MagicMock()
     
     with app.app_context():
-        # Call the task's run method directly with just the zip_path
-        result = process_ocr_zip.run(str(zip_path))
+        result = run_ocr_zip_pipeline(reporter, str(zip_path))
         
         # Verify result
         assert result['status'] == 'Concluido'
@@ -125,11 +126,11 @@ def test_process_ocr_zip_multiple_images(app, mocker, tmp_path):
     mock_ocr = mocker.patch('app.tasks.ocr_task_logic.ocr_service.perform_ocr')
     mock_ocr.side_effect = [f"Text {i}" for i in range(3)]
     
-    # Mock update_state
-    mocker.patch.object(process_ocr_zip, 'update_state')
+    reporter = MagicMock()
+    reporter.report_progress = MagicMock()
     
     with app.app_context():
-        result = process_ocr_zip.run(str(zip_path))
+        result = run_ocr_zip_pipeline(reporter, str(zip_path))
         
         assert result['total'] == 3
         assert len(result['result']) == 3
@@ -149,7 +150,7 @@ def test_process_ocr_zip_file_not_found(app, mocker):
     """Test processing non-existent ZIP file."""
     with app.app_context():
         with pytest.raises(FileNotFoundError, match='Temp file not found in server'):
-            process_ocr_zip.run('/non/existent/path.zip')
+            run_ocr_zip_pipeline(None, '/non/existent/path.zip')
 
 
 def test_process_ocr_zip_no_images(app, mocker, tmp_path):
@@ -161,7 +162,7 @@ def test_process_ocr_zip_no_images(app, mocker, tmp_path):
     
     with app.app_context():
         with pytest.raises(RuntimeError, match='does not contain valid images'):
-            process_ocr_zip.run(str(zip_path))
+            run_ocr_zip_pipeline(None, str(zip_path))
 
 
 def test_process_ocr_zip_mixed_files(app, mocker, tmp_path):
@@ -185,10 +186,11 @@ def test_process_ocr_zip_mixed_files(app, mocker, tmp_path):
         zf.writestr('valid2.jpg', img_bytes2.getvalue())
     
     mocker.patch('app.tasks.ocr_task_logic.ocr_service.perform_ocr', return_value="OCR text")
-    mocker.patch.object(process_ocr_zip, 'update_state')
+    reporter = MagicMock()
+    reporter.report_progress = MagicMock()
     
     with app.app_context():
-        result = process_ocr_zip.run(str(zip_path))
+        result = run_ocr_zip_pipeline(reporter, str(zip_path))
         
         # Should process only the 2 valid images
         assert result['total'] == 2
@@ -218,10 +220,11 @@ def test_process_ocr_zip_filters_double_underscore(app, mocker, tmp_path):
         zf.writestr('__MACOSX/hidden.jpg', img_bytes.getvalue())
     
     mocker.patch('app.tasks.ocr_task_logic.ocr_service.perform_ocr', return_value="Text")
-    mocker.patch.object(process_ocr_zip, 'update_state')
+    reporter = MagicMock()
+    reporter.report_progress = MagicMock()
     
     with app.app_context():
-        result = process_ocr_zip.run(str(zip_path))
+        result = run_ocr_zip_pipeline(reporter, str(zip_path))
         
         # Should only process 1 image (not the __MACOSX one)
         assert result['total'] == 1
@@ -246,10 +249,11 @@ def test_process_ocr_zip_image_conversion(app, mocker, tmp_path):
         zf.writestr('rgba_image.png', img_bytes.getvalue())
     
     mocker.patch('app.tasks.ocr_task_logic.ocr_service.perform_ocr', return_value="Converted text")
-    mocker.patch.object(process_ocr_zip, 'update_state')
+    reporter = MagicMock()
+    reporter.report_progress = MagicMock()
     
     with app.app_context():
-        result = process_ocr_zip.run(str(zip_path))
+        result = run_ocr_zip_pipeline(reporter, str(zip_path))
         
         raw_text = db.session.query(RawText).first()
         
@@ -262,6 +266,7 @@ def test_process_ocr_zip_image_conversion(app, mocker, tmp_path):
         saved_img = Image.open(saved_path)
         assert saved_img.mode == 'RGB'
         assert saved_img.format == 'JPEG'
+        saved_img.close()
         
         # Cleanup
         os.remove(saved_path)
@@ -278,10 +283,11 @@ def test_process_ocr_zip_unique_filenames(app, mocker, tmp_path):
         zf.writestr('same_name.jpg', img_bytes.getvalue())
     
     mocker.patch('app.tasks.ocr_task_logic.ocr_service.perform_ocr', return_value="Text")
-    mocker.patch.object(process_ocr_zip, 'update_state')
+    reporter = MagicMock()
+    reporter.report_progress = MagicMock()
     
     with app.app_context():
-        result = process_ocr_zip.run(str(zip_path))
+        result = run_ocr_zip_pipeline(reporter, str(zip_path))
         
         raw_text = db.session.query(RawText).first()
         
@@ -312,13 +318,14 @@ def test_process_ocr_zip_ocr_error_raises_runtime_error(app, mocker, tmp_path):
     mock_ocr = mocker.patch('app.tasks.ocr_task_logic.ocr_service.perform_ocr')
     mock_ocr.side_effect = Exception('OCR failed')
     
-    mocker.patch.object(process_ocr_zip, 'update_state')
+    reporter = MagicMock()
+    reporter.report_progress = MagicMock()
 
     existing_files = set(os.listdir(IMAGES_FOLDER)) if os.path.isdir(IMAGES_FOLDER) else set()
     
     with app.app_context():
         with pytest.raises(RuntimeError, match='OCR Processing Error: OCR failed'):
-            process_ocr_zip.run(str(zip_path))
+            run_ocr_zip_pipeline(reporter, str(zip_path))
 
         # No partial persistence is expected because failures abort before DB write.
         raw_texts = db.session.query(RawText).all()

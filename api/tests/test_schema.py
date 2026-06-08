@@ -18,18 +18,18 @@ def test_ensure_database_schema_adds_text_upload_columns_and_index():
     inspector = inspect(engine)
     columns = {column["name"] for column in inspector.get_columns("texts")}
     indexes = {index["name"] for index in inspector.get_indexes("texts")}
+    tables = set(inspector.get_table_names())
     with engine.begin() as connection:
         textsusers_row = connection.execute(
             text("SELECT assigned, normalized FROM textsusers WHERE text_id = 1 AND user_id = 1")
         ).one()
 
+    assert "background_jobs" in tables
     assert "upload_batch_id" in columns
     assert "processing_started_at" in columns
     assert "processing_heartbeat_at" in columns
-    assert "processing_enqueued_at" in columns
     assert "processing_attempts" in columns
     assert "last_processing_error" in columns
-    assert "processing_task_id" in columns
     assert "ix_texts_upload_batch_id" in indexes
     assert textsusers_row.assigned in (0, False)
     assert textsusers_row.normalized in (0, False)

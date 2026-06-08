@@ -1,8 +1,8 @@
 import io
-import base64
 import pytest
 
-from app.database.models import ProcessingStatus, Text, TextUploadBatch, TextUploadBatchStatus, User
+from app.background_jobs import create_background_job
+from app.database.models import BackgroundJobKind, BackgroundJobState, ProcessingStatus, Text, TextUploadBatch, TextUploadBatchStatus, User
 from app.extensions import db
 
 def test_request_report(auth_client, mocker):
@@ -64,6 +64,7 @@ def test_upload_file_no_file(auth_client):
 
 def test_upload_file_success(client, app, mocker):
     """Test successful file upload."""
+    _ = mocker
     # Create admin user
     with app.app_context():
         user = User(username="admin", is_admin=True)
@@ -74,10 +75,6 @@ def test_upload_file_success(client, app, mocker):
     # Login as admin
     client.post('/api/login', json={"username": "admin", "password": "adminpass"})
     
-    # Mock Celery task
-    mock_task = mocker.patch('app.routes.upload_routes.process_text_upload_zip.delay')
-    mock_task.return_value.id = "text-upload-task-123"
-
     data = {
         'file': (io.BytesIO(b"fake zip content"), 'test.zip')
     }
@@ -85,32 +82,47 @@ def test_upload_file_success(client, app, mocker):
     response = client.post('/api/upload', data=data, content_type='multipart/form-data')
     
     assert response.status_code == 202
-    assert response.json["task_id"] == "text-upload-task-123"
+    assert isinstance(response.json["job_id"], str)
     assert isinstance(response.json["batch_id"], int)
-    mock_task.assert_called_once()
 
-    _, kwargs = mock_task.call_args
-    assert kwargs["original_filename"].endswith("_test.zip")
-    assert kwargs["batch_id"] == response.json["batch_id"]
-    assert base64.b64decode(kwargs["zip_payload_b64"]) == b"fake zip content"
+    with app.app_context():
+        batch = db.session.get(TextUploadBatch, response.json["batch_id"])
+        assert batch is not None
+        assert batch.source_file_name.endswith("_test.zip")
 
-def test_task_status(auth_client, mocker):
-    """Test checking task status."""
-    # Mock AsyncResult
-    mock_result = mocker.patch('app.routes.upload_routes.celery.AsyncResult')
-    mock_instance = mock_result.return_value
-    mock_instance.state = 'SUCCESS'
-    mock_instance.info = {
-        'result': {
+    with app.app_context():
+        from app.database.models import BackgroundJob
+
+        saved_job = db.session.get(BackgroundJob, response.json["job_id"])
+        assert saved_job is not None
+        assert saved_job.kind == BackgroundJobKind.TEXT_UPLOAD_IMPORT
+        assert saved_job.state == BackgroundJobState.PENDING
+        assert saved_job.payload_json["batch_id"] == response.json["batch_id"]
+        assert saved_job.payload_json["original_filename"].endswith("_test.zip")
+
+def test_task_status(auth_client, app):
+    """Test checking background job status."""
+    with app.app_context():
+        user = db.session.query(User).filter_by(username="testuser").first()
+        job = create_background_job(
+            db.session,
+            kind=BackgroundJobKind.TEXT_UPLOAD_IMPORT,
+            created_by_user_id=user.id,
+            payload_json={"batch_id": 99},
+        )
+        job.state = BackgroundJobState.SUCCESS
+        job.result_json = {
             'kind': 'text_upload',
             'batch_id': 99,
             'text_ids': [1, 2],
             'created': 2,
             'failed_files': [],
         }
-    }
-    
-    response = auth_client.get('/api/status/task-123')
+        job.status_message = "Finished"
+        db.session.commit()
+        job_id = job.id
+
+    response = auth_client.get(f'/api/status/{job_id}')
     
     assert response.status_code == 200
     assert response.json['status'] == 'Finished'
@@ -120,19 +132,26 @@ def test_task_status(auth_client, mocker):
 
 def test_task_status_progress(auth_client, mocker):
     """Test checking task progress details."""
-    mock_result = mocker.patch('app.routes.upload_routes.celery.AsyncResult')
-    mock_instance = mock_result.return_value
-    mock_instance.state = 'PROGRESS'
-    mock_instance.info = {
-        'current': 2,
-        'total': 5,
-        'status': 'Importando arquivo 2/5',
-    }
+    _ = mocker
+    with auth_client.application.app_context():
+        user = db.session.query(User).filter_by(username="testuser").first()
+        job = create_background_job(
+            db.session,
+            kind=BackgroundJobKind.TEXT_UPLOAD_IMPORT,
+            created_by_user_id=user.id,
+            payload_json={"batch_id": 99},
+            status_message="Importando arquivo 2/5",
+        )
+        job.state = BackgroundJobState.RUNNING
+        job.current = 2
+        job.total = 5
+        db.session.commit()
+        job_id = job.id
 
-    response = auth_client.get('/api/status/task-123')
+    response = auth_client.get(f'/api/status/{job_id}')
 
     assert response.status_code == 200
-    assert response.json['state'] == 'PROGRESS'
+    assert response.json['state'] == 'RUNNING'
     assert response.json['current'] == 2
     assert response.json['total'] == 5
     assert response.json['status'] == 'Importando arquivo 2/5'
@@ -140,7 +159,7 @@ def test_task_status_progress(auth_client, mocker):
 
 def test_task_status_requires_auth(client):
     """Task status polling should require authentication."""
-    response = client.get('/api/status/task-123')
+    response = client.get('/api/status/job-123')
 
     assert response.status_code == 401
     assert response.json["code"] == "AUTH_NOT_AUTHENTICATED"

@@ -20,8 +20,6 @@ def app():
         "JWT_SECRET_KEY": "test-secret",
         "WTF_CSRF_ENABLED": False,  # Disable CSRF for testing if used
         "JWT_COOKIE_CSRF_PROTECT": False, # Disable JWT CSRF for testing
-        "CELERY_BROKER_URL": "memory://",
-        "CELERY_RESULT_BACKEND": "memory://",
         "RATELIMIT_ENABLED": False,
     })
     from app.extensions import limiter

@@ -1,16 +1,13 @@
-import pytest
 import os
 import io
 import zipfile
-from app.database.models import RawText
+from app.database.models import BackgroundJob, BackgroundJobKind, BackgroundJobState, RawText
 from app.extensions import db
 
 
 def test_upload_ocr_zip_success(admin_client, app, mocker):
     """Test successful OCR ZIP upload by admin."""
-    # Mock Celery task
-    mock_task = mocker.patch('app.routes.ocr_routes.process_ocr_zip.delay')
-    mock_task.return_value.id = "ocr-task-123"
+    _ = mocker
     
     # Create a minimal valid ZIP file
     zip_buffer = io.BytesIO()
@@ -27,11 +24,13 @@ def test_upload_ocr_zip_success(admin_client, app, mocker):
                                   content_type='multipart/form-data')
     
     assert response.status_code == 202
-    assert 'task_id' in response.json
-    assert response.json['task_id'] == "ocr-task-123"
-    
-    # Verify task was called
-    mock_task.assert_called_once()
+    assert 'job_id' in response.json
+
+    with app.app_context():
+        job = db.session.get(BackgroundJob, response.json['job_id'])
+        assert job is not None
+        assert job.kind == BackgroundJobKind.OCR_UPLOAD
+        assert job.state == BackgroundJobState.PENDING
 
 
 def test_upload_ocr_zip_non_admin(auth_client, app):
@@ -139,6 +138,7 @@ def test_get_raw_text_image_success(admin_client, app, tmp_path):
         
         assert response.status_code == 200
         assert response.data == b'fake image content'
+        response.close()
     
     finally:
         # Cleanup
