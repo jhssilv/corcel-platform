@@ -13,7 +13,8 @@ from sqlalchemy import (
     PrimaryKeyConstraint,
     UniqueConstraint,
     func,
-    Enum as SQLAlchemyEnum
+    Enum as SQLAlchemyEnum,
+    JSON,
 )
 import enum
 
@@ -31,6 +32,18 @@ class TextUploadBatchStatus(enum.Enum):
     COMPLETED = 'COMPLETED'
     COMPLETED_WITH_ERRORS = 'COMPLETED_WITH_ERRORS'
     FAILED = 'FAILED'
+
+
+class BackgroundJobKind(enum.Enum):
+    TEXT_UPLOAD_IMPORT = 'TEXT_UPLOAD_IMPORT'
+    OCR_UPLOAD = 'OCR_UPLOAD'
+
+
+class BackgroundJobState(enum.Enum):
+    PENDING = 'PENDING'
+    RUNNING = 'RUNNING'
+    SUCCESS = 'SUCCESS'
+    FAILURE = 'FAILURE'
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import declarative_base, relationship
 
@@ -52,6 +65,7 @@ class User(Base):
     normalizations = relationship('Normalization', back_populates='user', cascade="all, delete-orphan")
     texts_association = relationship('TextsUsers', back_populates='user', cascade="all, delete-orphan")
     text_upload_batches = relationship('TextUploadBatch', back_populates='created_by_user', cascade="all, delete-orphan")
+    background_jobs = relationship('BackgroundJob', back_populates='created_by_user', cascade="all, delete-orphan")
 
     def set_password(self, password: str):
         self.hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
@@ -113,6 +127,36 @@ class TextUploadBatch(Base):
 
     created_by_user = relationship('User', back_populates='text_upload_batches')
     texts = relationship('Text', back_populates='upload_batch')
+
+
+class BackgroundJob(Base):
+    __tablename__ = 'background_jobs'
+
+    id = Column(String(36), primary_key=True)
+    kind = Column(SQLAlchemyEnum(BackgroundJobKind), nullable=False, index=True)
+    state = Column(
+        SQLAlchemyEnum(BackgroundJobState),
+        nullable=False,
+        default=BackgroundJobState.PENDING,
+        index=True,
+    )
+    created_by_user_id = Column(Integer, ForeignKey('users.id', ondelete="CASCADE"), nullable=False, index=True)
+    payload_json = Column(JSON, nullable=False, default=dict)
+    result_json = Column(JSON, nullable=True)
+    current = Column(Integer, nullable=True)
+    total = Column(Integer, nullable=True)
+    status_message = Column(String(255), nullable=False, default='Waiting...')
+    error_message = Column(TextType, nullable=True)
+    attempts = Column(Integer, nullable=False, default=0)
+    claimed_at = Column(TIMESTAMP, nullable=True)
+    claimed_by = Column(String(255), nullable=True)
+    heartbeat_at = Column(TIMESTAMP, nullable=True)
+    created_at = Column(TIMESTAMP, nullable=False, default=func.now())
+    updated_at = Column(TIMESTAMP, nullable=False, default=func.now(), onupdate=func.now())
+    started_at = Column(TIMESTAMP, nullable=True)
+    finished_at = Column(TIMESTAMP, nullable=True)
+
+    created_by_user = relationship('User', back_populates='background_jobs')
 
 class RawText(Base):
     """
