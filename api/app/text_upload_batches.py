@@ -184,7 +184,12 @@ def enqueue_text_processing_task(session, text: models.Text):
     return task
 
 
-def enqueue_pending_batch_texts(session, batch_id: int, stale_after_seconds: int) -> int:
+def enqueue_pending_batch_texts(
+    session,
+    batch_id: int,
+    stale_after_seconds: int,
+    ignore_recent_enqueue: bool = False,
+) -> int:
     batch = session.get(models.TextUploadBatch, batch_id)
     if batch is None or batch.status not in NON_TERMINAL_BATCH_STATUSES:
         return 0
@@ -199,7 +204,11 @@ def enqueue_pending_batch_texts(session, batch_id: int, stale_after_seconds: int
 
     enqueued = 0
     for text in pending_texts:
-        if text.processing_enqueued_at and text.processing_enqueued_at > stale_cutoff:
+        if (
+            not ignore_recent_enqueue
+            and text.processing_enqueued_at
+            and text.processing_enqueued_at > stale_cutoff
+        ):
             continue
         try:
             enqueue_text_processing_task(session, text)
@@ -274,18 +283,33 @@ def reconcile_stale_text_upload_batches(
 
             if (
                 text.processing_status == models.ProcessingStatus.PENDING
-                and text.processing_enqueued_at
-                and text.processing_enqueued_at < stale_cutoff
+                and (
+                    (
+                        force_processing_recovery
+                        and (text.processing_enqueued_at is not None or text.processing_task_id is not None)
+                    )
+                    or (
+                        text.processing_enqueued_at
+                        and text.processing_enqueued_at < stale_cutoff
+                    )
+                )
             ):
                 text.processing_task_id = None
                 text.processing_enqueued_at = None
+                if force_processing_recovery and text.last_processing_error is None:
+                    text.last_processing_error = 'Recovered pending text after worker restart.'
                 batch_changed = True
 
         if batch_changed:
             session.commit()
 
         if batch.import_finished_at is not None:
-            enqueue_pending_batch_texts(session, batch.id, stale_after_seconds)
+            enqueue_pending_batch_texts(
+                session,
+                batch.id,
+                stale_after_seconds,
+                ignore_recent_enqueue=force_processing_recovery,
+            )
 
         sync_text_upload_batch_state(session, batch.id)
         touched_batch_ids.add(batch.id)

@@ -198,6 +198,79 @@ def test_reconcile_text_upload_batches_forces_processing_recovery_on_worker_star
     assert saved_batch.status == TextUploadBatchStatus.QUEUED
 
 
+def test_reconcile_text_upload_batches_forces_pending_recovery_on_worker_start(app, mocker):
+    from app.extensions import db
+
+    batch_id, text_ids, _token_ids = _create_batch_with_texts(app)
+    text_id = text_ids[0]
+
+    with app.app_context():
+        text = db.session.get(Text, text_id)
+        batch = db.session.get(TextUploadBatch, batch_id)
+        text.processing_status = ProcessingStatus.PENDING
+        text.processing_attempts = 1
+        text.processing_enqueued_at = utcnow()
+        text.processing_task_id = "lost-redis-task"
+        batch.status = TextUploadBatchStatus.PROCESSING
+        db.session.commit()
+
+    enqueue = mocker.patch("app.tasks.celery_tasks.process_single_text_background.delay")
+    enqueue.return_value.id = "recovered-pending-task"
+
+    with app.app_context():
+        touched_batch_ids = reconcile_stale_text_upload_batches(
+            db.session,
+            stale_after_seconds=600,
+            max_attempts=3,
+            force_processing_recovery=True,
+        )
+        saved_text = db.session.get(Text, text_id)
+        saved_batch = db.session.get(TextUploadBatch, batch_id)
+
+    assert touched_batch_ids == [batch_id]
+    assert enqueue.called
+    assert saved_text.processing_status == ProcessingStatus.PENDING
+    assert saved_text.processing_task_id == "recovered-pending-task"
+    assert saved_text.last_processing_error == "Recovered pending text after worker restart."
+    assert saved_batch.status == TextUploadBatchStatus.QUEUED
+
+
+def test_reconcile_text_upload_batches_keeps_recent_pending_enqueue_in_periodic_mode(app, mocker):
+    from app.extensions import db
+
+    batch_id, text_ids, _token_ids = _create_batch_with_texts(app)
+    text_id = text_ids[0]
+
+    with app.app_context():
+        text = db.session.get(Text, text_id)
+        batch = db.session.get(TextUploadBatch, batch_id)
+        text.processing_status = ProcessingStatus.PENDING
+        text.processing_attempts = 1
+        text.processing_enqueued_at = utcnow()
+        text.processing_task_id = "recent-task"
+        batch.status = TextUploadBatchStatus.QUEUED
+        db.session.commit()
+
+    enqueue = mocker.patch("app.tasks.celery_tasks.process_single_text_background.delay")
+
+    with app.app_context():
+        touched_batch_ids = reconcile_stale_text_upload_batches(
+            db.session,
+            stale_after_seconds=600,
+            max_attempts=3,
+            force_processing_recovery=False,
+        )
+        saved_text = db.session.get(Text, text_id)
+        saved_batch = db.session.get(TextUploadBatch, batch_id)
+
+    assert touched_batch_ids == [batch_id]
+    assert not enqueue.called
+    assert saved_text.processing_task_id == "recent-task"
+    assert saved_text.processing_enqueued_at is not None
+    assert saved_text.last_processing_error is None
+    assert saved_batch.status == TextUploadBatchStatus.QUEUED
+
+
 def test_enqueue_pending_batch_texts_continues_after_single_enqueue_failure(app, mocker):
     from app.extensions import db
 
