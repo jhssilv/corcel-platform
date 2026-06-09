@@ -40,7 +40,7 @@ erDiagram
         bool is_word
         int position
         bool to_be_normalized
-        char(1) whitespace_after
+        text whitespace_after
         bool whitelisted
     }
 
@@ -153,7 +153,7 @@ Stores individual tokens (words, punctuation, etc.) from processed texts. Each t
 | `is_word` | `BOOLEAN` | NOT NULL | `true` if alphabetic (not punctuation) |
 | `position` | `INTEGER` | NOT NULL | Position index within the text |
 | `to_be_normalized` | `BOOLEAN` | Nullable | Whether marked for normalization |
-| `whitespace_after` | `CHAR(1)` | Nullable, default `''` | Whitespace character following this token |
+| `whitespace_after` | `TEXT` | Nullable, default `''` | Whitespace following this token |
 | `whitelisted` | `BOOLEAN` | NOT NULL, default `false` | Whether this token is whitelisted |
 
 **Constraints:**

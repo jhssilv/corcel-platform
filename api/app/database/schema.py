@@ -30,6 +30,10 @@ TEXTSUSERS_BACKFILL_STATEMENTS = (
     "UPDATE textsusers SET normalized = FALSE WHERE normalized IS NULL",
 )
 
+POSTGRESQL_TOKEN_COLUMN_MIGRATIONS = (
+    "ALTER TABLE tokens ALTER COLUMN whitespace_after TYPE TEXT USING whitespace_after::text",
+)
+
 
 def ensure_database_schema(engine) -> None:
     with engine.begin() as connection:
@@ -66,6 +70,16 @@ def ensure_database_schema(engine) -> None:
                 if constraint_name in existing_foreign_keys:
                     continue
                 connection.execute(text(add_foreign_key_sql))
+
+        if engine.dialect.name == 'postgresql' and 'tokens' in inspector.get_table_names():
+            token_columns = {
+                column['name']: column
+                for column in inspector.get_columns('tokens')
+            }
+            whitespace_after = token_columns.get('whitespace_after')
+            if whitespace_after is not None and str(whitespace_after['type']).lower() != 'text':
+                for statement in POSTGRESQL_TOKEN_COLUMN_MIGRATIONS:
+                    connection.execute(text(statement))
 
         if 'textsusers' in inspector.get_table_names():
             for statement in TEXTSUSERS_BACKFILL_STATEMENTS:

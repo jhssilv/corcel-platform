@@ -1,7 +1,6 @@
 from app.extensions import bcrypt
 
 from sqlalchemy import (
-    CHAR,
     Column,
     Integer,
     String,
@@ -10,12 +9,15 @@ from sqlalchemy import (
     TIMESTAMP,
     Text as TextType,
     ForeignKey,
-    PrimaryKeyConstraint,
     UniqueConstraint,
     func,
     Enum as SQLAlchemyEnum,
     JSON,
 )
+
+from sqlalchemy.orm import declarative_base, relationship
+
+
 import enum
 
 class ProcessingStatus(enum.Enum):
@@ -44,8 +46,6 @@ class BackgroundJobState(enum.Enum):
     RUNNING = 'RUNNING'
     SUCCESS = 'SUCCESS'
     FAILURE = 'FAILURE'
-from sqlalchemy.dialects.postgresql import ARRAY, JSONB
-from sqlalchemy.orm import declarative_base, relationship
 
 Base = declarative_base()
 
@@ -177,7 +177,7 @@ class Token(Base):
     is_word = Column(Boolean, nullable=False)
     position = Column(Integer, nullable=False)
     to_be_normalized = Column(Boolean, nullable=True, )
-    whitespace_after = Column(CHAR(1), nullable=True, default='')
+    whitespace_after = Column(TextType, nullable=True, default='')
     whitelisted = Column(Boolean, nullable=False, default=False)
 
     __table_args__ = (
@@ -192,7 +192,7 @@ class Token(Base):
         backref='tokens',
         order_by='Suggestion.token_text'
     )
-    
+
 class Normalization(Base):
     """
     Model for the 'normalizations' table.
@@ -235,7 +235,7 @@ class Suggestion(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     token_text = Column(String(64), nullable=False, unique=True)
-    
+
 class TokensSuggestions(Base):
     """
     Model for the 'tokenssuggestions' table.
@@ -244,8 +244,8 @@ class TokensSuggestions(Base):
     __tablename__ = 'tokenssuggestions'
     token_id = Column(Integer, ForeignKey('tokens.id', ondelete="CASCADE"), primary_key=True)
     suggestion_id = Column(Integer, ForeignKey('suggestions.id', ondelete="CASCADE"), primary_key=True)
-    
-    
+
+
 class WhitelistTokens(Base):
     """
     Model for the 'whitelist_tokens' table.
@@ -255,4 +255,3 @@ class WhitelistTokens(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     token_text = Column(String(64), nullable=False, unique=True)
-    
