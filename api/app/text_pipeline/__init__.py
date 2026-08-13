@@ -2,7 +2,7 @@
 
 Import surface for all consumers::
 
-    from app.text_pipeline import TextProcessingPipeline, Tokenizer, get_pipeline
+    from app.text_pipeline import process_text, Tokenizer
 
 Flask integration (shared Tokenizer via ``g``)::
 
@@ -21,7 +21,7 @@ from .dictionary import DictionaryService
 from .exceptions import ResourceLoadError
 from .llm_client import OllamaClient
 from .models import ProcessedToken, Token
-from .pipeline import TextProcessingPipeline
+from .pipeline import process_text, process_tokens
 from .tokenizer import Tokenizer
 
 __all__ = [
@@ -29,10 +29,10 @@ __all__ = [
     "OllamaClient",
     "ProcessedToken",
     "ResourceLoadError",
-    "TextProcessingPipeline",
+    "process_text",
+    "process_tokens",
     "Token",
     "Tokenizer",
-    "get_pipeline",
     "get_tokenizer",
 ]
 
@@ -61,14 +61,4 @@ def get_tokenizer() -> Tokenizer:
     return g.tokenizer
 
 
-def get_pipeline() -> TextProcessingPipeline:
-    """Return a :class:`TextProcessingPipeline` instance.
 
-    The pipeline is created fresh per call (its heavy dependencies —
-    DictionaryService and OllamaClient — are lightweight to construct;
-    their resources are lazy-loaded and cached on the instances).
-
-    Callers that need the same pipeline instance multiple times within a
-    request can store it on ``g`` themselves.
-    """
-    return TextProcessingPipeline()

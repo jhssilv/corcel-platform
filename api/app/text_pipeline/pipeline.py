@@ -9,16 +9,10 @@ Coordinates the three-phase spell-check pipeline:
 
 Usage::
 
-    from app.text_pipeline import TextProcessingPipeline
+    from app.text_pipeline import process_text
 
-    pipeline = TextProcessingPipeline()
-    results = pipeline.process_text("O governo precisa fazer casas melhore.")
+    results = process_text("O governo precisa fazer casas melhore.")
     # results: dict[int, dict]  — keyed by token position
-
-For use inside Flask routes, obtain the shared instance from ``g``::
-
-    from app.text_pipeline import get_pipeline
-    pipeline = get_pipeline()
 """
 
 import time
@@ -34,251 +28,181 @@ if TYPE_CHECKING:
     from .llm_client import OllamaClient
 
 
+_dictionary = None
+_llm = None
 
 
-class TextProcessingPipeline:
-    """Orchestrates the full text-processing pipeline.
+def _get_dictionary() -> DictionaryService:
+    global _dictionary
+    if _dictionary is None:
+        _dictionary = DictionaryService()
+    return _dictionary
 
-    Dependencies (``dictionary``, ``llm``) are injected via the
-    constructor so they can be easily swapped in tests.
+
+def _llm_is_disabled() -> bool:
+    return cfg.ignore_llm_if_on_cpu() and cfg.llm_device() == "cpu"
+
+
+def _get_llm() -> "OllamaClient | None":
+    global _llm
+    if _llm is not None:
+        return _llm
+
+    if _llm_is_disabled():
+        return None
+
+    from .llm_client import OllamaClient
+
+    _llm = OllamaClient()
+    return _llm
+
+
+def process_text(text: str, llm_assists_detection: bool = True) -> dict[int, dict]:
+    """Tokenise *text* and run the full pipeline.
 
     Args:
-        config: Pipeline configuration.  Defaults to env-var-derived values.
-        dictionary: Dictionary service instance.  Created from *config* if omitted.
-        llm: Ollama LLM client instance.  Created from *config* if omitted.
+        text: Raw text string to process.
+        llm_assists_detection: Passed through to :func:`process_tokens`.
+
+    Returns:
+        ``dict[int, dict]`` — token results keyed by position index.
     """
+    tokenizer = Tokenizer()
+    tokens = tokenizer.tokenize(text)
+    return process_tokens(tokens, text, llm_assists_detection=llm_assists_detection)
 
-    def __init__(
-        self,
-        dictionary: DictionaryService | None = None,
-        llm: "OllamaClient | None" = None,
-    ) -> None:
-        self._dictionary = dictionary or DictionaryService()
-        self._llm = llm
 
-    # ------------------------------------------------------------------
-    # Public API
-    # ------------------------------------------------------------------
+def process_tokens(
+    tokens: list[Token],
+    text: str,
+    llm_assists_detection: bool = True,
+) -> dict[int, dict]:
+    """Run the full pipeline on a pre-tokenised token list."""
+    try:
+        candidates = _phase1_generate_candidates(tokens)
+        llm_corrections = _phase2_llm_corrections(text)
+        effective_llm_assists_detection = (
+            llm_assists_detection and llm_corrections is not None
+        )
+        results = _phase3_merge(
+            tokens,
+            candidates,
+            llm_corrections or {},
+            effective_llm_assists_detection,
+        )
 
-    def process_text(self, text: str, llm_assists_detection: bool = True) -> dict[int, dict]:
-        """Tokenise *text* and run the full pipeline.
+        return {idx: pt.to_dict() for idx, pt in results.items()}
 
-        Args:
-            text: Raw text string to process.
-            llm_assists_detection: Passed through to :meth:`process_tokens`.
+    except Exception:
+        raise
 
-        Returns:
-            ``dict[int, dict]`` — token results keyed by position index.
-        """
-        tokenizer = Tokenizer()
-        tokens = tokenizer.tokenize(text)
-        return self.process_tokens(tokens, text, llm_assists_detection=llm_assists_detection)
 
-    def process_tokens(
-        self,
-        tokens: list[Token],
-        text: str,
-        llm_assists_detection: bool = True,
-    ) -> dict[int, dict]:
-        """Run the full pipeline on a pre-tokenised token list.
+def _phase1_generate_candidates(tokens: list[Token]) -> dict[int, list[str]]:
+    """Generate correction candidates for each word token."""
+    dictionary = _get_dictionary()
+    candidates: dict[int, list[str]] = {}
+    for token in tokens:
+        if not token.is_word or not token.text.replace("-", "").isalpha():
+            continue
+        candidates[token.idx] = dictionary.get_candidates(token.text)
+    return candidates
 
-        Args:
-            tokens: Ordered list of :class:`~.models.Token` dataclasses.
-            text: Full original text string, used as LLM context.
-            llm_assists_detection: If ``True`` (default), the LLM helps
-                decide whether a word is incorrect and can flag words
-                that the dictionary considers valid.  If ``False``, only
-                the dictionaries determine correctness; the LLM still
-                provides suggestions for words the dictionary flags.
 
-        Returns:
-            ``dict[int, dict]`` — keyed by token index.
-        """
-        start = time.perf_counter()
+def _phase2_llm_corrections(text: str) -> dict[str, list[str]] | None:
+    """Delegate to the LLM client; return ``None`` when it is unavailable."""
+    llm = _get_llm()
+    if llm is None:
+        return None
+    return llm.get_corrections(text)
 
-        try:
-            candidates = self._phase1_generate_candidates(tokens)
-            llm_corrections = self._phase2_llm_corrections(text)
-            effective_llm_assists_detection = (
-                llm_assists_detection and llm_corrections is not None
-            )
-            results = self._phase3_merge(
-                tokens,
-                candidates,
-                llm_corrections or {},
-                effective_llm_assists_detection,
-            )
 
-            return {idx: pt.to_dict() for idx, pt in results.items()}
+def _phase3_merge(
+    tokens: list[Token],
+    candidates: dict[int, list[str]],
+    llm_corrections: dict[str, list[str]],
+    llm_assists_detection: bool,
+) -> dict[int, ProcessedToken]:
+    """Merge all signals into final :class:`~.models.ProcessedToken` objects."""
+    dictionary = _get_dictionary()
+    results: dict[int, ProcessedToken] = {}
 
-        except Exception:
-            raise
-
-    # ------------------------------------------------------------------
-    # Phase 1 — Dictionary candidate generation
-    # ------------------------------------------------------------------
-
-    def _phase1_generate_candidates(
-        self, tokens: list[Token]
-    ) -> dict[int, list[str]]:
-        """Generate correction candidates for each word token.
-
-        Non-word tokens (punctuation, numbers, hyphenated non-words) are
-        skipped; a ``ProcessedToken`` with ``is_word=False`` is the
-        caller's responsibility to handle.
-
-        Returns:
-            ``{token.idx: [case-matched candidate, …]}``
-        """
-        candidates: dict[int, list[str]] = {}
-        for token in tokens:
-            if not token.is_word or not token.text.replace("-", "").isalpha():
-                continue
-            candidates[token.idx] = self._dictionary.get_candidates(token.text)
-        return candidates
-
-    # ------------------------------------------------------------------
-    # Phase 2 — LLM correction batch
-    # ------------------------------------------------------------------
-
-    @staticmethod
-    def _llm_is_disabled() -> bool:
-        return cfg.ignore_llm_if_on_cpu() and cfg.llm_device() == 'cpu'
-
-    def _get_llm(self) -> "OllamaClient | None":
-        if self._llm is not None:
-            return self._llm
-
-        if self._llm_is_disabled():
-            return None
-
-        from .llm_client import OllamaClient
-
-        self._llm = OllamaClient()
-        return self._llm
-
-    def _phase2_llm_corrections(self, text: str) -> dict[str, list[str]] | None:
-        """Delegate to the LLM client; return ``None`` when it is unavailable."""
-        llm = self._get_llm()
-        if llm is None:
-            pass
-            return None
-
-        return llm.get_corrections(text)
-
-    # ------------------------------------------------------------------
-    # Phase 3 — Merge and decide to_be_normalized
-    # ------------------------------------------------------------------
-
-    def _phase3_merge(
-        self,
-        tokens: list[Token],
-        candidates: dict[int, list[str]],
-        llm_corrections: dict[str, list[str]],
-        llm_assists_detection: bool,
-    ) -> dict[int, ProcessedToken]:
-        """Merge all signals into final :class:`~.models.ProcessedToken` objects."""
-        results: dict[int, ProcessedToken] = {}
-
-        for token in tokens:
-            # Non-word tokens pass through unchanged.
-            if not token.is_word or not token.text.replace("-", "").isalpha():
-                results[token.idx] = ProcessedToken(
-                    idx=token.idx,
-                    text=token.text,
-                    is_word=False,
-                    whitespace_after=token.whitespace_after,
-                )
-                continue
-
-            word_lower = token.text.lower()
-            dict_is_correct = self._dictionary.is_valid_word(token.text)
-            llm_flagged = word_lower in llm_corrections
-
-            to_be_normalized = self._decide_normalization(
-                dict_is_correct, llm_flagged, llm_corrections.get(word_lower, []),
-                llm_assists_detection,
-            )
-
-            suggestions = self._build_suggestions(
-                token.text, word_lower, llm_flagged, llm_corrections,
-                candidates.get(token.idx, []),
-            )
-
+    for token in tokens:
+        # Non-word tokens pass through unchanged.
+        if not token.is_word or not token.text.replace("-", "").isalpha():
             results[token.idx] = ProcessedToken(
                 idx=token.idx,
                 text=token.text,
-                is_word=True,
+                is_word=False,
                 whitespace_after=token.whitespace_after,
-                to_be_normalized=to_be_normalized,
-                suggestions=suggestions,
             )
+            continue
 
-        return results
+        word_lower = token.text.lower()
+        dict_is_correct = dictionary.is_valid_word(token.text)
+        llm_flagged = word_lower in llm_corrections
 
-    # ------------------------------------------------------------------
-    # Helpers
-    # ------------------------------------------------------------------
+        to_be_normalized = _decide_normalization(
+            dict_is_correct,
+            llm_flagged,
+            llm_corrections.get(word_lower, []),
+            llm_assists_detection,
+        )
 
-    @staticmethod
-    def _decide_normalization(
-        dict_is_correct: bool,
-        llm_flagged: bool,
-        llm_suggestions: list[str],
-        llm_assists_detection: bool,
-    ) -> bool:
-        """Apply the correctness decision matrix.
+        suggestions = _build_suggestions(
+            token.text,
+            word_lower,
+            llm_flagged,
+            llm_corrections,
+            candidates.get(token.idx, []),
+        )
 
-        With LLM assistance (``llm_assists_detection=True``):
+        results[token.idx] = ProcessedToken(
+            idx=token.idx,
+            text=token.text,
+            is_word=True,
+            whitespace_after=token.whitespace_after,
+            to_be_normalized=to_be_normalized,
+            suggestions=suggestions,
+        )
 
-        +------------------+-------------+-------------------------------+
-        | dict_is_correct  | llm_flagged | to_be_normalized              |
-        +==================+=============+===============================+
-        | False            | True        | True                          |
-        +------------------+-------------+-------------------------------+
-        | True             | True        | True only if LLM has          |
-        |                  |             | suggestions (confident flag)   |
-        +------------------+-------------+-------------------------------+
-        | False            | False       | False (LLM overrides dict)    |
-        +------------------+-------------+-------------------------------+
-        | True             | False       | False                         |
-        +------------------+-------------+-------------------------------+
+    return results
 
-        Without LLM assistance: dictionary alone decides.
-        """
-        if not llm_assists_detection:
-            return not dict_is_correct
 
-        if llm_flagged and not dict_is_correct:
-            return True
-        if llm_flagged and dict_is_correct:
-            return bool(llm_suggestions)
-        return False
+def _decide_normalization(
+    dict_is_correct: bool,
+    llm_flagged: bool,
+    llm_suggestions: list[str],
+    llm_assists_detection: bool,
+) -> bool:
+    """Apply the correctness decision matrix."""
+    if not llm_assists_detection:
+        return not dict_is_correct
 
-    @staticmethod
-    def _build_suggestions(
-        word: str,
-        word_lower: str,
-        llm_flagged: bool,
-        llm_corrections: dict[str, list[str]],
-        dict_candidates: list[str],
-    ) -> list[str]:
-        """Build the final suggestion list: LLM first, then dictionary.
+    if llm_flagged and not dict_is_correct:
+        return True
+    if llm_flagged and dict_is_correct:
+        return bool(llm_suggestions)
+    return False
 
-        LLM suggestions are case-matched to the original word.
-        Duplicates and the word itself are removed.
-        Total is capped at ``_MAX_SUGGESTIONS``.
-        """
-        suggestions: list[str] = []
 
-        if llm_flagged:
-            for raw in llm_corrections[word_lower]:
-                matched = match_case(word, raw)
-                if matched not in suggestions and matched.lower() != word_lower:
-                    suggestions.append(matched)
+def _build_suggestions(
+    word: str,
+    word_lower: str,
+    llm_flagged: bool,
+    llm_corrections: dict[str, list[str]],
+    dict_candidates: list[str],
+) -> list[str]:
+    """Build the final suggestion list: LLM first, then dictionary."""
+    suggestions: list[str] = []
 
-        for candidate in dict_candidates:
-            if candidate not in suggestions:
-                suggestions.append(candidate)
+    if llm_flagged:
+        for raw in llm_corrections[word_lower]:
+            matched = match_case(word, raw)
+            if matched not in suggestions and matched.lower() != word_lower:
+                suggestions.append(matched)
 
-        return suggestions[:nlp_max_suggestions()]
+    for candidate in dict_candidates:
+        if candidate not in suggestions:
+            suggestions.append(candidate)
+
+    return suggestions[: nlp_max_suggestions()]

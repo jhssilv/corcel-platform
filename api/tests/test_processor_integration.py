@@ -8,7 +8,7 @@ Verifies that:
 """
 
 import pytest
-from app.text_pipeline import TextProcessingPipeline
+from app.text_pipeline import process_text, process_tokens
 from app.text_pipeline.models import Token
 from app.database.models import Text, Token as DbToken
 from app.database.queries import add_text
@@ -16,22 +16,17 @@ from app.extensions import db
 
 
 @pytest.fixture
-def pipeline(mocker):
-    """TextProcessingPipeline with the LLM call mocked out.
-
-    Real Hunspell/SpellChecker are exercised; only the external network
-    call to Ollama is replaced with a deterministic stub.
-    """
+def mock_llm_pipeline(mocker):
+    """Mock the LLM call out, let Dictionary logic run."""
     llm = mocker.Mock()
     llm.get_corrections.return_value = {'caza': ['casa']}
-    p = TextProcessingPipeline(llm=llm)
-    return p
+    mocker.patch('app.text_pipeline.pipeline._get_llm', return_value=llm)
 
 
-def test_pipeline_detects_misspelled_token(pipeline):
+def test_pipeline_detects_misspelled_token(mock_llm_pipeline):
     """Pipeline should flag 'caza' as incorrect and provide suggestions."""
     sample_text = "A casa e a caza."
-    results = pipeline.process_text(sample_text)
+    results = process_text(sample_text)
 
     assert len(results) > 0
 
@@ -43,22 +38,22 @@ def test_pipeline_detects_misspelled_token(pipeline):
     assert len(caza['suggestions']) > 0, "Should have suggestions for 'caza'"
 
 
-def test_pipeline_leaves_correct_token_clean(pipeline):
+def test_pipeline_leaves_correct_token_clean(mock_llm_pipeline):
     """Pipeline should not flag 'casa' as incorrect."""
-    results = pipeline.process_text("A casa e a caza.")
+    results = process_text("A casa e a caza.")
 
     casa = next((t for t in results.values() if t['text'] == 'casa'), None)
     assert casa is not None
     assert casa['to_be_normalized'] is False
 
 
-def test_pipeline_process_tokens_accepts_token_dataclasses(pipeline):
+def test_pipeline_process_tokens_accepts_token_dataclasses(mock_llm_pipeline):
     """process_tokens() should accept a list of typed Token dataclasses."""
     tokens = [
         Token(idx=0, text='caza', is_word=True, whitespace_after=' '),
         Token(idx=1, text='.', is_word=False, whitespace_after=''),
     ]
-    results = pipeline.process_tokens(tokens, 'caza.')
+    results = process_tokens(tokens, 'caza.')
 
     assert 0 in results
     assert results[0]['to_be_normalized'] is True
@@ -71,12 +66,13 @@ def test_pipeline_flags_dictionary_invalid_token_when_llm_request_fails(mocker):
     dictionary = mocker.Mock()
     dictionary.get_candidates.return_value = ["casa"]
     dictionary.is_valid_word.return_value = False
+    mocker.patch('app.text_pipeline.pipeline._get_dictionary', return_value=dictionary)
 
     llm = mocker.Mock()
     llm.get_corrections.return_value = None
+    mocker.patch('app.text_pipeline.pipeline._get_llm', return_value=llm)
 
-    pipeline = TextProcessingPipeline(dictionary=dictionary, llm=llm)
-    results = pipeline.process_tokens(
+    results = process_tokens(
         [Token(idx=0, text='caza', is_word=True, whitespace_after=' ')],
         'caza ',
     )
@@ -85,16 +81,10 @@ def test_pipeline_flags_dictionary_invalid_token_when_llm_request_fails(mocker):
     assert results[0]['suggestions'] == ["casa"]
 
 
-def test_pipeline_and_db_insertion(app, pipeline):
-    """End-to-end: pipeline output is correctly persisted via add_text.
-
-    Verifies:
-    - Correct number of tokens saved.
-    - 'caza' token is flagged and has suggestions in the DB.
-    - 'casa' token is not flagged.
-    """
+def test_pipeline_and_db_insertion(app, mock_llm_pipeline):
+    """End-to-end: pipeline output is correctly persisted via add_text."""
     sample_text = "A casa e a caza."
-    results = pipeline.process_text(sample_text)
+    results = process_text(sample_text)
 
     text_obj = Text(source_file_name="integration_test.txt")
     tokens_with_suggestions = []

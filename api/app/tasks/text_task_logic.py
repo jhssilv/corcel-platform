@@ -1,7 +1,7 @@
 """Background task logic for per-text processing."""
 
 from ..database import models
-from ..text_pipeline import TextProcessingPipeline
+from ..text_pipeline import process_tokens
 from ..text_upload_batches import sync_text_upload_batch_state, utcnow
 
 
@@ -21,7 +21,6 @@ def run_process_single_text_pipeline(task, text_id: int):
     from app.database.queries import add_suggestion
     from app.extensions import db
 
-    pipeline = TextProcessingPipeline()
     text_obj = db.session.get(models.Text, text_id)
 
     if text_obj is None:
@@ -89,7 +88,7 @@ def run_process_single_text_pipeline(task, text_id: int):
         ]
 
         full_text = ''.join(token.text + token.whitespace_after for token in tokens)
-        processed_data = pipeline.process_tokens(tokens, full_text)
+        processed_data = process_tokens(tokens, full_text)
         text_obj.processing_heartbeat_at = utcnow()
 
         tokens_by_position = {token.position: token for token in token_rows}

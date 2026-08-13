@@ -74,7 +74,7 @@ def test_process_single_text_pipeline_marks_text_ready_and_updates_batch(app, mo
     text_id = text_ids[0]
     token_id = token_ids[0]
     mocker.patch(
-        "app.tasks.text_task_logic.TextProcessingPipeline.process_tokens",
+        "app.tasks.text_task_logic.process_tokens",
         return_value={0: {"to_be_normalized": True, "suggestions": ["hello"]}},
     )
 
@@ -111,7 +111,7 @@ def test_process_single_text_pipeline_clears_previous_generated_state(app, mocke
         db.session.commit()
 
     mocker.patch(
-        "app.tasks.text_task_logic.TextProcessingPipeline.process_tokens",
+        "app.tasks.text_task_logic.process_tokens",
         return_value={0: {"to_be_normalized": False, "suggestions": []}},
     )
 
