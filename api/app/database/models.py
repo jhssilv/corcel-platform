@@ -173,7 +173,7 @@ class Token(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     text_id = Column(Integer, ForeignKey('texts.id', ondelete="CASCADE"), nullable=False, index=True)
-    token_text = Column(String(64), nullable=False)
+    token_text = Column(String(512), nullable=False)
     is_word = Column(Boolean, nullable=False)
     position = Column(Integer, nullable=False)
     to_be_normalized = Column(Boolean, nullable=True, )
@@ -204,7 +204,7 @@ class Normalization(Base):
     user_id = Column(Integer, ForeignKey('users.id', ondelete="CASCADE"), primary_key=True)
     start_index = Column(Integer, primary_key=True)       # Substitutes tokens from start_index to end_index (inclusive)
     end_index = Column(Integer, nullable=True)
-    new_token = Column(String(64), nullable=False)
+    new_token = Column(String(512), nullable=False)
     creation_time = Column(TIMESTAMP, nullable=False)
 
     user = relationship('User', back_populates='normalizations')
@@ -234,7 +234,7 @@ class Suggestion(Base):
     __tablename__ = 'suggestions'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    token_text = Column(String(64), nullable=False, unique=True)
+    token_text = Column(String(512), nullable=False, unique=True)
 
 class TokensSuggestions(Base):
     """
@@ -254,4 +254,4 @@ class WhitelistTokens(Base):
     __tablename__ = 'whitelist_tokens'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    token_text = Column(String(64), nullable=False, unique=True)
+    token_text = Column(String(512), nullable=False, unique=True)
