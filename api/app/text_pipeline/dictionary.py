@@ -8,7 +8,16 @@ import json
 import os
 
 import requests
-from hunspell import HunSpell
+try:
+    from hunspell import HunSpell
+except ImportError:
+    class HunSpell:  # type: ignore
+        def __init__(self, *args, **kwargs):
+            pass
+        def spell(self, word: str) -> bool:
+            return False
+        def suggest(self, word: str) -> list[str]:
+            return []
 from spellchecker import SpellChecker
 
 from . import config as cfg
