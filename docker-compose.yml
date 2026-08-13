@@ -95,18 +95,20 @@ services:
     restart: "no"
 
   backups:
-    build:
-      context: .
-      dockerfile: .dockerfiles/prod/backups.Dockerfile
+    image: prodrigestivill/postgres-backup-local
     container_name: corcel_backups
     depends_on:
       - db
     volumes:
-      - ./backups/dumps:/dumps
+      - ./backups/dumps:/backups
     networks:
       - app_network
     env_file:
       - ./api/.env
+    environment:
+      - POSTGRES_HOST=db
+      - SCHEDULE=@daily
+      - BACKUP_KEEP_DAYS=7
     restart: unless-stopped
 
 networks:
