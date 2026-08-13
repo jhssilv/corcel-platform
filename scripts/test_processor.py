@@ -5,8 +5,7 @@ Run from the project root::
 
     PYTHONPATH=api python scripts/test_processor.py
 
-Requires a running Ollama instance (OLLAMA_BASE_URL env var) and the
-Hunspell PT-BR dictionaries installed.
+Requires a running LanguageTool instance and the Hunspell PT-BR dictionaries installed.
 """
 
 import os
@@ -16,8 +15,7 @@ import time
 # Allow running from the project root without installing the package.
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'api'))
 
-from app.text_pipeline import TextProcessingPipeline
-from app.text_pipeline.config import TextPipelineConfig
+from app.text_pipeline import process_text
 
 SAMPLE_TEXT = """
     O problema e grande para mundo
@@ -37,15 +35,10 @@ SAMPLE_TEXT = """
 
 
 def main():
-    config = TextPipelineConfig()
-    print(f"Model : {config.ollama_model}")
-    print(f"Ollama: {config.ollama_base_url}")
     print("Processing …\n")
 
-    pipeline = TextProcessingPipeline(config)
-
     start = time.time()
-    results = pipeline.process_text(SAMPLE_TEXT, llm_assists_detection=False)
+    results = process_text(SAMPLE_TEXT)
     elapsed = time.time() - start
 
     num_tokens = len(results)
@@ -58,7 +51,7 @@ def main():
     print("Corrections found:")
     for idx, data in results.items():
         if data["to_be_normalized"]:
-            print(f"  [{idx}] '{data['text']}' → {data['suggestions']}")
+            print(f"  [{idx}] '{data['text']}' -> {data['suggestions']}")
 
 
 if __name__ == "__main__":

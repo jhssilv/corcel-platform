@@ -37,14 +37,14 @@ services:
     ports:
       - "5000:5000"
     environment:
-      - OLLAMA_BASE_URL=http://ollama:11434
+      - LANGUAGETOOL_URL=http://languagetool:8010
     volumes:
       - backend_temp_uploads:/app/api/temp_uploads
       - backend_images:/app/api/images
       - backend_logs:/app/logs
     depends_on:
       - db
-      - ollama
+      - languagetool
     networks:
       - app_network
 
@@ -60,39 +60,17 @@ services:
     env_file:
       - ./api/.env
 
-  ollama:
-    build:
-      context: .
-      dockerfile: .dockerfiles/prod/ollama.Dockerfile
-    container_name: corcel_ollama
+  languagetool:
+    image: erikvl87/languagetool:latest
+    container_name: corcel_languagetool
     ports:
-      - "11435:11434"
-    volumes:
-      - ollama_data:/root/.ollama
+      - "8010:8010"
+    environment:
+      Java_Xms: 512m
+      Java_Xmx: 1g
     networks:
       - app_network
     restart: unless-stopped
-
-  ollama-pull:
-    image: ollama/ollama:latest
-    container_name: corcel_ollama_pull
-    depends_on:
-      - ollama
-    volumes:
-      - ollama_data:/root/.ollama
-    entrypoint: [ "/bin/sh", "-c" ]
-    command:
-      - |
-        echo 'Waiting for Ollama server...'
-        until OLLAMA_HOST=http://ollama:11434 ollama list > /dev/null 2>&1; do
-          sleep 2
-        done
-        echo 'Pulling gemma3:4b (this may take a while on first run)...'
-        OLLAMA_HOST=http://ollama:11434 ollama pull gemma3:4b
-        echo 'Model ready.'
-    networks:
-      - app_network
-    restart: "no"
 
   backups:
     image: prodrigestivill/postgres-backup-local

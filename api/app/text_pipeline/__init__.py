@@ -19,14 +19,14 @@ from flask import current_app, g
 
 from .dictionary import DictionaryService
 from .exceptions import ResourceLoadError
-from .llm_client import OllamaClient
+from .languagetool_client import LanguageToolClient
 from .models import ProcessedToken, Token
 from .pipeline import process_text, process_tokens
 from .tokenizer import Tokenizer
 
 __all__ = [
     "DictionaryService",
-    "OllamaClient",
+    "LanguageToolClient",
     "ProcessedToken",
     "ResourceLoadError",
     "process_text",
