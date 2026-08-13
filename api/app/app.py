@@ -14,8 +14,6 @@ from pydantic import ValidationError as PydanticValidationError
 
 from .config import Config
 from .database.models import User
-from .database.schema import ensure_database_schema
-from .extensions import db, jwt, limiter
 from .extensions import db, jwt, limiter
 from .routes.assignment_routes import assignment_bp
 from .routes.auth_routes import auth_bp
@@ -34,7 +32,7 @@ from .utils.api_errors import (
 )
 
 
-def create_app(*, run_schema_bootstrap: bool = True):
+def create_app():
     app = Flask(__name__)
 
     app.config.from_object(Config)
@@ -113,10 +111,6 @@ def create_app(*, run_schema_bootstrap: bool = True):
     app.register_blueprint(upload_bp)
     app.register_blueprint(ocr_bp)
     app.register_blueprint(assignment_bp)
-
-    if run_schema_bootstrap:
-        with app.app_context():
-            ensure_database_schema(db.engine)
 
     return app
 
