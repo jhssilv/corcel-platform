@@ -1,11 +1,9 @@
 """Background task logic for per-text processing."""
 
 from ..database import models
-from ..logging_config import get_logger
 from ..text_pipeline import TextProcessingPipeline
 from ..text_upload_batches import sync_text_upload_batch_state, utcnow
 
-logger = get_logger('app.task.text_task_logic', source='task', task_module='text_task_logic')
 
 
 def _report_progress(task, *, text_id: int) -> None:
@@ -27,7 +25,7 @@ def run_process_single_text_pipeline(task, text_id: int):
     text_obj = db.session.get(models.Text, text_id)
 
     if text_obj is None:
-        logger.warning('Text not found during async processing', extra={'event': {'text_id': text_id}})
+        pass
         return {
             'status': 'Completed',
             'processed': 0,
@@ -115,10 +113,6 @@ def run_process_single_text_pipeline(task, text_id: int):
         if batch is not None:
             batch = sync_text_upload_batch_state(db.session, batch.id)
 
-        logger.info(
-            'Background text processing finished successfully',
-            extra={'event': {'text_id': text_id, 'batch_id': getattr(batch, 'id', None)}},
-        )
 
         return {
             'status': 'Completed',
@@ -147,10 +141,6 @@ def run_process_single_text_pipeline(task, text_id: int):
                 db.session.commit()
                 batch = sync_text_upload_batch_state(db.session, batch.id)
 
-        logger.exception(
-            'Failed to process ML pipeline for text',
-            extra={'event': {'text_id': text_id, 'error': str(exc)}},
-        )
 
         return {
             'status': 'Completed',

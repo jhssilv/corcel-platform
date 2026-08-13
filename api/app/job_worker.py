@@ -8,7 +8,6 @@ from .background_jobs import (
     mark_background_job_success,
 )
 from .database import models
-from .logging_config import get_logger
 from .tasks.ocr_task_logic import run_ocr_zip_pipeline
 from .tasks.text_task_logic import run_process_single_text_pipeline
 from .tasks.text_upload_task_logic import run_text_upload_zip_pipeline
@@ -18,7 +17,6 @@ from .text_upload_batches import (
 )
 
 
-worker_logger = get_logger('app.jobs.runtime', source='job_worker')
 
 
 def _run_text_upload_import_job(session, job: models.BackgroundJob) -> None:
@@ -73,20 +71,12 @@ def process_next_background_job(session, *, worker_id: str, stale_after_seconds:
         else:
             raise RuntimeError(f'Unsupported background job kind: {job.kind.name}')
 
-        worker_logger.info(
-            'Background job completed',
-            extra={'event': {'worker_id': worker_id, 'job_id': job.id, 'job_kind': job.kind.name}},
-        )
     except Exception as exc:
         session.rollback()
         failed_job = session.get(models.BackgroundJob, job.id)
         if failed_job is not None:
             mark_background_job_failure(session, failed_job, error_message=str(exc))
 
-        worker_logger.exception(
-            'Background job failed',
-            extra={'event': {'worker_id': worker_id, 'job_id': job.id, 'job_kind': job.kind.name, 'error': str(exc)}},
-        )
 
     return True
 
@@ -105,16 +95,8 @@ def process_next_pending_text(
 
     try:
         result = run_process_single_text_pipeline(None, text_id)
-        worker_logger.info(
-            'Text processing completed',
-            extra={'event': {'worker_id': worker_id, 'text_id': text_id, 'result': result}},
-        )
     except Exception as exc:
         session.rollback()
-        worker_logger.exception(
-            'Text processing crashed unexpectedly',
-            extra={'event': {'worker_id': worker_id, 'text_id': text_id, 'error': str(exc)}},
-        )
 
     return True
 
@@ -128,10 +110,6 @@ def run_background_job_worker(app) -> None:
     max_attempts = app.config.get('TEXT_UPLOAD_MAX_PROCESSING_ATTEMPTS', 3)
     idle_sleep_seconds = app.config.get('JOB_WORKER_IDLE_SLEEP_SECONDS', 1)
 
-    worker_logger.info(
-        'Background job worker starting',
-        extra={'event': {'worker_id': worker_id}},
-    )
 
     with app.app_context():
         reconcile_stale_text_upload_batches(

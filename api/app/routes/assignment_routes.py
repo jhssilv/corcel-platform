@@ -8,7 +8,6 @@ import app.database.queries as queries
 from app.schemas import generic as generic_schemas
 from app.schemas import assignment as assignment_schemas
 from app.extensions import db
-from app.logging_config import get_logger
 from app.utils.api_errors import (
     BUSINESS_RULE_VIOLATION,
     INTERNAL_SERVER_ERROR,
@@ -18,7 +17,6 @@ from app.utils.api_errors import (
 session = db.session
 
 assignment_bp = Blueprint('assignment', __name__)
-logger = get_logger('app.route.assignment', source='route', blueprint='assignment')
 
 
 
@@ -68,10 +66,6 @@ def bulk_assign_texts(current_user, body: assignment_schemas.BulkAssignRequest):
         return jsonify(response.model_dump()), 200
         
     except Exception as e:
-        logger.exception(
-            'Bulk assignment failed',
-            extra={'event': {'source': 'route', 'blueprint': 'assignment', 'error': str(e)}},
-        )
         return error_response(error="Internal server error", code=INTERNAL_SERVER_ERROR, status_code=500)
 
 
@@ -114,8 +108,4 @@ def bulk_unassign_texts(current_user, body: assignment_schemas.BulkAssignRequest
         return jsonify(response.model_dump()), 200
         
     except Exception as e:
-        logger.exception(
-            'Bulk unassignment failed',
-            extra={'event': {'source': 'route', 'blueprint': 'assignment', 'error': str(e)}},
-        )
         return error_response(error="Internal server error", code=INTERNAL_SERVER_ERROR, status_code=500)

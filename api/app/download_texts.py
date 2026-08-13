@@ -71,7 +71,6 @@ def save_result(base_dir: str, source_file_name: str, text: str, grade: int):
         f.write(text)
 
 def save_modified_texts(user_id: int, text_ids: list[int], use_tags: bool = False) -> str:
-    # Create a temporary directory for this operation
     temp_dir = tempfile.mkdtemp(prefix=f'recovered_texts_user_{user_id}_')
     
     txt_output_dir = os.path.join(temp_dir, 'texts')
@@ -80,12 +79,9 @@ def save_modified_texts(user_id: int, text_ids: list[int], use_tags: bool = Fals
     tokens_by_file = get_normalized_tokens(text_ids, user_id, use_tags) 
 
     for source_file, data in tokens_by_file.items():
-        # Rebuild the text from tokens and normalizations
         rebuilt_text = rebuild_text(data['tokens'])
-        # Create subdirectory based on grade and save the file
         save_result(txt_output_dir, source_file, rebuilt_text, data.get('grade', 0))
 
-    # Zip the results
     zip_basename = 'recovered_texts'
     zip_path_base = os.path.join(temp_dir, zip_basename)
     shutil.make_archive(zip_path_base, 'zip', txt_output_dir)

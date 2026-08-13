@@ -43,6 +43,8 @@ class Config:
     if SECRET_KEY is None:
         raise ValueError("SECRET_KEY environment variable is not set.")
 
+    FLASK_PYDANTIC_VALIDATION_ERROR_RAISE = True
+
     # --- Database ------------------------------------------------------------
 
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'sqlite:///default.db')

@@ -14,7 +14,6 @@ from app.schemas import text as text_schemas
 from app.schemas import generic as generic_schemas
 from app.schemas import normalization as normalization_schemas
 from app.schemas import whitelist as whitelist_schemas
-from app.logging_config import get_logger
 from app.utils.api_errors import (
     INTERNAL_SERVER_ERROR,
     RESOURCE_NOT_FOUND,
@@ -25,7 +24,6 @@ from app.utils.api_errors import (
 session = db.session
 
 text_bp = Blueprint('text', __name__)
-logger = get_logger('app.route.text', source='route', blueprint='text')
 
 
 def _parse_normalized_filter(normalized_param: str):
@@ -112,7 +110,6 @@ def get_batch_texts_status(current_user, body: text_schemas.BatchTextsStatusRequ
         response = text_schemas.BatchTextsStatusResponse(statuses=result, missing_ids=missing_ids)
         return jsonify(response.model_dump()), 200
     except Exception:
-        logger.exception("Failed to fetch batch text statuses")
         return error_response(error="Internal server error", code=INTERNAL_SERVER_ERROR, status_code=500)
 
 @text_bp.route('/api/texts/filtered', methods=['GET'])
@@ -356,19 +353,11 @@ def finalize_raw_text(current_user, text_id: int, body: text_schemas.FinalizeRaw
             image_full_path = os.path.join(images_folder, image_path)
             if os.path.exists(image_full_path):
                 os.remove(image_full_path)
-                logger.info(
-                    'Deleted OCR image file after finalization',
-                    extra={'event': {'source': 'route', 'blueprint': 'text', 'image_path': image_full_path}},
-                )
         
         response = text_schemas.FinalizeRawTextResponse(message="Text finalized successfully", text_id=new_text_id)
         return jsonify(response.model_dump()), 200
     except Exception as e:
         session.rollback()
-        logger.exception(
-            'Error finalizing raw text',
-            extra={'event': {'source': 'route', 'blueprint': 'text', 'error': str(e), 'text_id': text_id}},
-        )
         return error_response(error="Internal server error", code=INTERNAL_SERVER_ERROR, status_code=500)
 
 @text_bp.route('/api/texts/<int:text_id>/normalizations', methods=['GET'])

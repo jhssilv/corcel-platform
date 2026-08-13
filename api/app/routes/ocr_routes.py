@@ -9,7 +9,6 @@ from app.background_jobs import create_background_job
 from app.database import models
 from app.database.models import RawText
 from app.extensions import db, limiter
-from app.logging_config import get_logger
 from app.schemas import ocr as ocr_schemas
 from app.tasks.constants import IMAGES_FOLDER, TEMP_UPLOADS_FOLDER
 from app.utils.api_errors import (
@@ -23,7 +22,6 @@ from app.utils.decorators import admin_required
 
 
 ocr_bp = Blueprint('ocr', __name__)
-logger = get_logger('app.route.ocr', source='route', blueprint='ocr')
 
 UPLOAD_FOLDER = TEMP_UPLOADS_FOLDER
 
@@ -36,16 +34,11 @@ def upload_ocr_zip(current_user):
     max_zip_size = 500 * 1024 * 1024
 
     if 'file' not in request.files:
-        logger.warning('OCR upload missing file', extra={'event': {'source': 'route', 'blueprint': 'ocr'}})
         return error_response(error='File not found.', code=INVALID_REQUEST, status_code=400)
 
     file = request.files['file']
 
     if file.filename == '' or not file.filename.endswith('.zip'):
-        logger.warning(
-            'OCR upload rejected due to invalid extension',
-            extra={'event': {'source': 'route', 'blueprint': 'ocr', 'filename': file.filename}},
-        )
         return error_response(error='Invalid file type. Must be .zip', code=INVALID_REQUEST, status_code=400)
 
     file.seek(0, os.SEEK_END)
@@ -53,17 +46,6 @@ def upload_ocr_zip(current_user):
     file.seek(0)
 
     if file_size > max_zip_size:
-        logger.warning(
-            'OCR upload rejected due to oversized payload',
-            extra={
-                'event': {
-                    'source': 'route',
-                    'blueprint': 'ocr',
-                    'file_size': file_size,
-                    'max_size': max_zip_size,
-                }
-            },
-        )
         return error_response(
             error=f'File too large. Maximum size is {max_zip_size // (1024 * 1024)}MB',
             code=BUSINESS_RULE_VIOLATION,
@@ -87,7 +69,6 @@ def upload_ocr_zip(current_user):
             status_message='Waiting...',
         )
     except Exception as exc:
-        logger.exception('Failed to create OCR upload job', extra={'event': {'error': str(exc)}})
         if os.path.exists(save_path):
             os.remove(save_path)
         return error_response(error="Internal server error", code=INTERNAL_SERVER_ERROR, status_code=500)
@@ -114,14 +95,6 @@ def get_raw_text_image(current_user, text_id):
         return send_from_directory(IMAGES_FOLDER, raw_text.image_path)
 
     except NoResultFound:
-        logger.warning(
-            'Raw text image requested for nonexistent record',
-            extra={'event': {'source': 'route', 'blueprint': 'ocr', 'text_id': text_id}},
-        )
         return error_response(error='Raw text not found.', code=RESOURCE_NOT_FOUND, status_code=404)
     except Exception as exc:
-        logger.exception(
-            'Failed to fetch raw text image',
-            extra={'event': {'source': 'route', 'blueprint': 'ocr', 'text_id': text_id, 'error': str(exc)}},
-        )
         return error_response(error="Internal server error", code=INTERNAL_SERVER_ERROR, status_code=500)

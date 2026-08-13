@@ -22,9 +22,7 @@ from spellchecker import SpellChecker
 
 from . import config as cfg
 from .exceptions import ResourceLoadError
-from ..logging_config import get_logger
 
-logger = get_logger('app.task.dictionary', source='task', task_module='text_task_logic')
 
 
 def _get_resource_path(relative_path: str) -> str:
@@ -51,20 +49,18 @@ def _download_dict() -> None:
     if not os.path.exists(txt_file_path):
         url = cfg.nlp_dict_download_url()
         timeout = cfg.nlp_dict_download_timeout()
-        logger.info('Downloading dictionary from %s', url)
         try:
             resp = requests.get(url, timeout=timeout)
             resp.raise_for_status()
             with open(txt_file_path, 'wb') as f:
                 f.write(resp.content)
-            logger.info('Dictionary download finished')
         except Exception as exc:
             raise ResourceLoadError(
                 f'Failed to download dictionary from {url}'
             ) from exc
 
     if not os.path.exists(json_file_path):
-        logger.info('Converting dictionary to JSON')
+        pass
         data: dict[str, int] = {}
         with open(txt_file_path, 'r', encoding='utf-8') as fh:
             for line in fh:
@@ -74,7 +70,6 @@ def _download_dict() -> None:
 
         with open(json_file_path, 'w', encoding='utf-8') as fh:
             json.dump(data, fh, ensure_ascii=False, indent=4)
-        logger.info('JSON dictionary created')
 
 
 def match_case(original: str, candidate: str) -> str:
@@ -127,7 +122,6 @@ class DictionaryService:
         if self._loaded:
             return
 
-        logger.info('Loading Hunspell resources')
         try:
             self._hobj = HunSpell(self._hunspell_dic, self._hunspell_aff)
         except Exception as exc:

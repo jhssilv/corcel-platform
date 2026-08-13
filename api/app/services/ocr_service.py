@@ -5,10 +5,8 @@ from google.genai import types
 from PIL import Image
 import io
 
-from app.logging_config import get_logger
 
 
-logger = get_logger('app.task.ocr_service', source='task', task_module='ocr_task_logic')
 
 def perform_ocr(image_path_or_bytes):
     """
@@ -20,16 +18,6 @@ def perform_ocr(image_path_or_bytes):
     """
     start_time = time.perf_counter()
     input_kind = 'path' if isinstance(image_path_or_bytes, str) else 'bytes'
-    logger.info(
-        'Image OCR processing started',
-        extra={
-            'event': {
-                'status': 'started',
-                'input_kind': input_kind,
-                'image_path': image_path_or_bytes if isinstance(image_path_or_bytes, str) else None,
-            }
-        },
-    )
 
     api_key = os.getenv("API_KEY")
     if not api_key:
@@ -63,27 +51,8 @@ def perform_ocr(image_path_or_bytes):
             model='gemini-flash-lite-latest',
             contents=[prompt, image]
         )
-        logger.info(
-            'Image OCR processing finished',
-            extra={
-                'event': {
-                    'status': 'success',
-                    'response_size': len(response.text or ''),
-                    'duration_ms': int((time.perf_counter() - start_time) * 1000),
-                }
-            },
-        )
         return response.text
         
     except Exception as e:
-        logger.exception(
-            'Image OCR processing finished with error',
-            extra={
-                'event': {
-                    'status': 'error',
-                    'error': str(e),
-                    'duration_ms': int((time.perf_counter() - start_time) * 1000),
-                }
-            },
-        )
+        pass
         raise e

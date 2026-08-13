@@ -9,9 +9,7 @@ import spacy_udpipe
 
 from .exceptions import ResourceLoadError
 from .models import Token
-from ..logging_config import get_logger
 
-logger = get_logger('app.task.tokenizer', source='task', task_module='text_task_logic')
 
 
 class Tokenizer:
@@ -32,7 +30,6 @@ class Tokenizer:
         if self._nlp is not None:
             return
 
-        logger.info('Loading spaCy resources')
         try:
             spacy_udpipe.download("pt")
             nlp = spacy_udpipe.load("pt")
@@ -43,7 +40,6 @@ class Tokenizer:
                 'Failed to load spaCy/UDPipe model for pt'
             ) from exc
 
-        logger.info('Tokenizer resources loaded')
 
     @property
     def nlp(self):

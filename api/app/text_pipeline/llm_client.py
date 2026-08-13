@@ -11,9 +11,6 @@ import re
 import requests
 
 from . import config as cfg
-from ..logging_config import get_logger
-
-logger = get_logger('app.task.llm_client', source='task', task_module='text_task_logic')
 
 
 class OllamaClient:
@@ -37,6 +34,7 @@ class OllamaClient:
 
     # ------------------------------------------------------------------
     # Token / context estimation
+    
     # ------------------------------------------------------------------
 
     @staticmethod
@@ -140,10 +138,8 @@ class OllamaClient:
                 try:
                     items = json.loads(text[start: end + 1])
                 except json.JSONDecodeError:
-                    logger.warning('LLM response could not be parsed as JSON: %.500s', raw)
                     return None
             else:
-                logger.warning('No JSON array found in LLM response: %.500s', raw)
                 return None
 
         result: dict[str, list[str]] = {}
@@ -169,34 +165,14 @@ class OllamaClient:
             unreachable or returns unparseable output (graceful degradation).
         """
         if self._ignore_if_on_cpu and self._device == 'cpu':
-            logger.info(
-                'LLM request skipped because CPU-only execution is disabled',
-                extra={'event': {'device': self._device}},
-            )
             return None
 
         prompt = self._build_prompt(text)
         num_ctx = self._compute_context_size(prompt, text)
 
-        logger.info(
-            'LLM request context estimated',
-            extra={
-                'event': {
-                    'model': self._model,
-                    'estimated_prompt_tokens': self._estimate_token_count(prompt),
-                    'estimated_source_tokens': self._estimate_token_count(text),
-                    'num_ctx': num_ctx,
-                }
-            },
-        )
-
         try:
             raw = self._generate(prompt, num_ctx=num_ctx)
         except Exception as exc:
-            logger.warning(
-                'LLM request failed, falling back to dictionary-only normalization',
-                extra={'event': {'error': str(exc)}},
-            )
             return None
 
         return self._parse_response(raw)

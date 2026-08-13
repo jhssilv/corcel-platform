@@ -6,7 +6,6 @@ import zipfile
 from PIL import Image
 
 from ..services import ocr_service
-from ..logging_config import get_logger
 from .constants import (
     IMAGE_MAGIC_BYTES,
     IMAGES_FOLDER,
@@ -18,16 +17,14 @@ from .constants import (
 from .persistence import add_to_database
 
 
-logger = get_logger('app.task.ocr_task_logic', source='task', task_module='ocr_task_logic')
 
 
 def run_ocr_zip_pipeline(task, zip_path):
     """
     Process a ZIP file containing images with OCR.
     """
-    logger.info('Starting OCR zip pipeline', extra={'event': {'zip_path': zip_path}})
     if not os.path.exists(zip_path):
-        logger.error('OCR zip file not found', extra={'event': {'zip_path': zip_path}})
+        pass
         raise FileNotFoundError('Temp file not found in server.')
 
     # Ensure images directory exists (in case it was deleted or worker runs in different context)
@@ -53,7 +50,6 @@ def run_ocr_zip_pipeline(task, zip_path):
             ]
 
             total_files = len(file_list)
-            logger.info('Found images in OCR zip', extra={'event': {'total_files': total_files}})
 
             if total_files == 0:
                 raise ValueError('The zip file does not contain valid images.')
@@ -65,17 +61,6 @@ def run_ocr_zip_pipeline(task, zip_path):
                 if '..' in filename:
                     raise ValueError(f'Invalid filename (path traversal detected): {filename}')
 
-                logger.info(
-                    'Image processing started',
-                    extra={
-                        'event': {
-                            'status': 'started',
-                            'index': index + 1,
-                            'total_files': total_files,
-                            'file_name': base_name,
-                        }
-                    },
-                )
                 if task is not None and hasattr(task, 'report_progress'):
                     task.report_progress(
                         current=index + 1,
@@ -124,11 +109,9 @@ def run_ocr_zip_pipeline(task, zip_path):
                     storage_path = os.path.join(IMAGES_FOLDER, storage_filename)
 
                     image.save(storage_path, format='JPEG', quality=85)
-                    logger.info('Image saved for OCR', extra={'event': {'storage_path': storage_path}})
 
                     # 3. Perform OCR
                     # Use the saved file path or the bytes. Service accepts path.
-                    logger.info('Calling OCR service', extra={'event': {'file_name': base_name}})
                     extracted_text = ocr_service.perform_ocr(storage_path)
 
                     # 4. Store raw text without tokenization
@@ -137,32 +120,11 @@ def run_ocr_zip_pipeline(task, zip_path):
                         'text_content': extracted_text,
                         'image_path': storage_filename,
                     }
-                    logger.info(
-                        'Image processing finished',
-                        extra={
-                            'event': {
-                                'status': 'success',
-                                'file_name': base_name,
-                                'extracted_chars': len(extracted_text),
-                            }
-                        },
-                    )
                 except Exception as e:
-                    logger.exception(
-                        'Image processing finished with error',
-                        extra={
-                            'event': {
-                                'status': 'error',
-                                'file_name': base_name,
-                                'error': str(e),
-                            }
-                        },
-                    )
+                    pass
                     raise
 
-            logger.info('Persisting OCR results to database', extra={'event': {'count': len(results)}})
             add_to_database(results)
-            logger.info('OCR zip pipeline finished', extra={'event': {'status': 'success', 'count': len(results)}})
 
         return {
             'status': 'Concluido',
@@ -172,10 +134,7 @@ def run_ocr_zip_pipeline(task, zip_path):
         }
 
     except Exception as e:
-        logger.exception(
-            'OCR zip pipeline finished with error',
-            extra={'event': {'status': 'error', 'error': str(e)}},
-        )
+        pass
         raise RuntimeError(f'OCR Processing Error: {str(e)}') from e
     finally:
         if os.path.exists(zip_path):

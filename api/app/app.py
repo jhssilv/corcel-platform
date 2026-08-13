@@ -8,21 +8,15 @@ load_dotenv()
 from flask import Flask, g, request
 from flask_cors import CORS
 from flask_jwt_extended import get_jwt_identity
-from pydantic import ValidationError
 from werkzeug.exceptions import HTTPException
+from flask_pydantic.exceptions import ValidationError as FlaskPydanticValidationError
+from pydantic import ValidationError as PydanticValidationError
 
 from .config import Config
 from .database.models import User
 from .database.schema import ensure_database_schema
 from .extensions import db, jwt, limiter
-from .logging_config import (
-    bind_request_context,
-    clear_request_context,
-    configure_stream_logging,
-    get_logger,
-    redact_sensitive_data,
-    sanitize_headers,
-)
+from .extensions import db, jwt, limiter
 from .routes.assignment_routes import assignment_bp
 from .routes.auth_routes import auth_bp
 from .routes.download_routes import download_bp
@@ -44,9 +38,6 @@ def create_app(*, run_schema_bootstrap: bool = True):
     app = Flask(__name__)
 
     app.config.from_object(Config)
-    configure_stream_logging(app.config)
-
-    request_logger = get_logger('app.route.http', source='route')
 
     @jwt.user_lookup_loader
     def user_lookup_callback(_jwt_header, jwt_data):
@@ -58,89 +49,27 @@ def create_app(*, run_schema_bootstrap: bool = True):
     db.init_app(app)
     limiter.init_app(app)
 
-    @app.before_request
-    def before_request_logging():
-        request_id = request.headers.get('x-request-id') or str(uuid.uuid4())
-        trace_id = request.headers.get('x-trace-id') or request_id
-        user_id = None
-
-        try:
-            user_id = get_jwt_identity()
-        except Exception:
-            user_id = None
-
-        g.request_started_at = time.perf_counter()
-        g.request_id = request_id
-        g.trace_id = trace_id
-        bind_request_context(request_id=request_id, trace_id=trace_id, user_id=user_id)
-
-    @app.after_request
-    def after_request_logging(response):
-        duration_ms = int((time.perf_counter() - g.get('request_started_at', time.perf_counter())) * 1000)
-        status_code = response.status_code
-        should_include_body = status_code >= 400
-
-        request_body = None
-        if should_include_body:
-            request_json = request.get_json(silent=True)
-            if request_json is not None:
-                request_body = redact_sensitive_data(request_json)
-
-        response_body = None
-        if should_include_body and response.is_json:
-            response_json = response.get_json(silent=True)
-            if response_json is not None:
-                response_body = redact_sensitive_data(response_json)
-
-        request_logger.info(
-            'HTTP request completed',
-            extra={
-                'event': {
-                    'source': 'route',
-                    'blueprint': request.blueprint or 'http',
-                    'method': request.method,
-                    'path': request.path,
-                    'status_code': status_code,
-                    'duration_ms': duration_ms,
-                    'query_params': redact_sensitive_data(request.args.to_dict(flat=False)),
-                    'headers': sanitize_headers(request.headers, app.config.get('LOG_HEADER_ALLOWLIST', [])),
-                    'client_ip': request.headers.get('X-Forwarded-For', request.remote_addr),
-                    'request_body': request_body,
-                    'response_body': response_body,
-                    'request_id': g.get('request_id'),
-                    'trace_id': g.get('trace_id'),
+    @app.errorhandler(PydanticValidationError)
+    @app.errorhandler(FlaskPydanticValidationError)
+    def handle_validation_error(error):
+        error_details = []
+        if isinstance(error, PydanticValidationError):
+            error_details = [
+                {
+                    "field": item.get("loc")[-1] if item.get("loc") else None,
+                    "message": item.get("msg"),
                 }
-            },
-        )
-
-        response.headers['X-Request-Id'] = g.get('request_id', '')
-        response.headers['X-Trace-Id'] = g.get('trace_id', '')
-
-        return response
-
-    @app.teardown_request
-    def teardown_logging(_exc):
-        clear_request_context()
-
-    @app.errorhandler(ValidationError)
-    def handle_validation_error(error: ValidationError):
-        error_details = [
-            {
-                "field": item.get("loc")[-1],
-                "message": item.get("msg"),
-            }
-            for item in error.errors()
-        ]
-        request_logger.warning(
-            'Validation failed',
-            extra={
-                'event': {
-                    'source': 'route',
-                    'blueprint': request.blueprint or 'http',
-                    'validation_errors': error_details,
-                }
-            },
-        )
+                for item in error.errors()
+            ]
+        else:
+            for param_type in ['body_params', 'query_params', 'path_params', 'form_params']:
+                params = getattr(error, param_type, None)
+                if params:
+                    for item in params:
+                        error_details.append({
+                            "field": item.get("loc")[-1] if item.get("loc") else None,
+                            "message": item.get("msg"),
+                        })
         return error_response(
             error="Validation failed",
             code=VALIDATION_ERROR,
@@ -151,16 +80,6 @@ def create_app(*, run_schema_bootstrap: bool = True):
     @app.errorhandler(429)
     def ratelimit_handler(error):
         details = [{"field": None, "message": str(error.description)}]
-        request_logger.warning(
-            'Rate limit exceeded',
-            extra={
-                'event': {
-                    'source': 'route',
-                    'blueprint': request.blueprint or 'http',
-                    'error': str(error.description),
-                }
-            },
-        )
         return error_response(
             error="Rate limit exceeded",
             code=RATE_LIMIT_EXCEEDED,
@@ -174,17 +93,6 @@ def create_app(*, run_schema_bootstrap: bool = True):
             return ratelimit_handler(error)
 
         code = RESOURCE_NOT_FOUND if error.code == 404 else METHOD_NOT_ALLOWED if error.code == 405 else INVALID_REQUEST
-        request_logger.warning(
-            'HTTP exception raised',
-            extra={
-                'event': {
-                    'source': 'route',
-                    'blueprint': request.blueprint or 'http',
-                    'status_code': error.code,
-                    'error': error.description,
-                }
-            },
-        )
         return error_response(
             error=error.description,
             code=code,
@@ -193,16 +101,6 @@ def create_app(*, run_schema_bootstrap: bool = True):
 
     @app.errorhandler(Exception)
     def handle_unexpected_exception(error: Exception):
-        request_logger.exception(
-            'Unhandled exception',
-            extra={
-                'event': {
-                    'source': 'route',
-                    'blueprint': request.blueprint or 'http',
-                    'error': str(error),
-                }
-            },
-        )
         return error_response(
             error="Internal server error",
             code=INTERNAL_SERVER_ERROR,

@@ -29,12 +29,10 @@ from .config import nlp_max_suggestions
 from .dictionary import DictionaryService, match_case
 from .models import ProcessedToken, Token
 from .tokenizer import Tokenizer
-from ..logging_config import get_logger
 
 if TYPE_CHECKING:
     from .llm_client import OllamaClient
 
-logger = get_logger('app.task.text_processor', source='task', task_module='text_task_logic')
 
 
 
@@ -97,14 +95,6 @@ class TextProcessingPipeline:
             ``dict[int, dict]`` — keyed by token index.
         """
         start = time.perf_counter()
-        logger.info(
-            'Text processing started',
-            extra={'event': {
-                'status': 'started',
-                'token_count': len(tokens),
-                'llm_assists_detection': llm_assists_detection,
-            }},
-        )
 
         try:
             candidates = self._phase1_generate_candidates(tokens)
@@ -119,24 +109,9 @@ class TextProcessingPipeline:
                 effective_llm_assists_detection,
             )
 
-            logger.info(
-                'Text processing finished',
-                extra={'event': {
-                    'status': 'success',
-                    'duration_ms': int((time.perf_counter() - start) * 1000),
-                    'token_count': len(results),
-                }},
-            )
             return {idx: pt.to_dict() for idx, pt in results.items()}
 
         except Exception:
-            logger.exception(
-                'Text processing finished with error',
-                extra={'event': {
-                    'status': 'error',
-                    'duration_ms': int((time.perf_counter() - start) * 1000),
-                }},
-            )
             raise
 
     # ------------------------------------------------------------------
@@ -186,10 +161,7 @@ class TextProcessingPipeline:
         """Delegate to the LLM client; return ``None`` when it is unavailable."""
         llm = self._get_llm()
         if llm is None:
-            logger.info(
-                'LLM client not initialized because it is disabled by config',
-                extra={'event': {'device': cfg.llm_device()}},
-            )
+            pass
             return None
 
         return llm.get_corrections(text)

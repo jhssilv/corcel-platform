@@ -9,7 +9,6 @@ import zipfile
 from docx import Document
 
 from ..database import models
-from ..logging_config import get_logger
 from ..tasks.constants import (
     TEXT_UPLOAD_MAX_MEMBER_SIZE,
     TEXT_UPLOAD_MAX_UNCOMPRESSED_SIZE,
@@ -21,7 +20,6 @@ from ..text_upload_batches import (
     utcnow,
 )
 
-logger = get_logger('app.task.text_upload_task_logic', source='task', task_module='text_upload_task_logic')
 
 MAX_TEXT_UPLOAD_FILES = 200
 
@@ -101,15 +99,6 @@ def run_text_upload_zip_pipeline(
             batch.status = models.TextUploadBatchStatus.IMPORTING
             db.session.commit()
 
-            logger.info(
-                'Asynchronous text upload pipeline started',
-                extra={
-                    'event': {
-                        'total_files': total_files,
-                        'original_filename': original_filename,
-                    }
-                },
-            )
 
             for index, member_name in enumerate(file_list):
                 base_name = os.path.basename(member_name)
@@ -154,15 +143,6 @@ def run_text_upload_zip_pipeline(
                 except Exception as exc:
                     db.session.rollback()
                     ingestion_failed_files.append(base_name)
-                    logger.exception(
-                        'Failed to ingest uploaded text file',
-                        extra={
-                            'event': {
-                                'file_name': base_name,
-                                'error': str(exc),
-                            }
-                        },
-                    )
 
             if not text_ids:
                 batch.status = models.TextUploadBatchStatus.FAILED
@@ -180,18 +160,6 @@ def run_text_upload_zip_pipeline(
 
             batch = sync_text_upload_batch_state(db.session, batch.id)
 
-            logger.info(
-                'Asynchronous text upload pipeline finished',
-                extra={
-                    'event': {
-                        'total_files': total_files,
-                        'created_texts': len(text_ids),
-                        'batch_id': batch.id,
-                        'failed_files': failed_files,
-                        'original_filename': original_filename,
-                    }
-                },
-            )
 
             return {
                 'status': 'Completed',

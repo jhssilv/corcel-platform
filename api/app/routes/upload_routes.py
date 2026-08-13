@@ -7,7 +7,6 @@ from werkzeug.utils import secure_filename
 from app.background_jobs import create_background_job, get_background_job, serialize_background_job_status
 from app.database import models
 from app.extensions import db, limiter
-from app.logging_config import get_logger
 from app.schemas import upload as upload_schemas
 from app.tasks.constants import TEMP_UPLOADS_FOLDER, TEXT_UPLOAD_MAX_ARCHIVE_SIZE
 from app.text_upload_batches import (
@@ -25,7 +24,6 @@ from app.utils.decorators import admin_required, login_required
 
 
 upload_bp = Blueprint('upload', __name__)
-logger = get_logger('app.route.upload', source='route', blueprint='upload')
 
 
 @upload_bp.route('/api/upload', methods=['POST'])
@@ -34,19 +32,11 @@ logger = get_logger('app.route.upload', source='route', blueprint='upload')
 def upload_file(current_user):
     """Upload a ZIP file and create a durable background job."""
     if 'file' not in request.files:
-        logger.warning(
-            'Upload request missing file',
-            extra={'event': {'source': 'route', 'blueprint': 'upload'}},
-        )
         return error_response(error='File not found.', code=INVALID_REQUEST, status_code=400)
 
     file = request.files['file']
 
     if file.filename == '' or not file.filename.endswith('.zip'):
-        logger.warning(
-            'Upload rejected due to invalid file extension',
-            extra={'event': {'source': 'route', 'blueprint': 'upload', 'filename': file.filename}},
-        )
         return error_response(error='Invalid file type.', code=INVALID_REQUEST, status_code=400)
 
     file.seek(0, os.SEEK_END)
@@ -86,7 +76,6 @@ def upload_file(current_user):
             status_message='Waiting...',
         )
     except Exception as exc:
-        logger.exception('Failed to create text upload job', extra={'event': {'error': str(exc)}})
         batch.status = models.TextUploadBatchStatus.FAILED
         batch.last_error = 'Failed to create text upload job.'
         db.session.commit()
