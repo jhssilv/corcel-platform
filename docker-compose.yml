@@ -6,6 +6,7 @@ services:
     container_name: corcel_frontend
     ports:
       - "80:80"
+      - "8081:80"
     ulimits:
       nofile:
         soft: 65535
