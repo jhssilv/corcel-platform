@@ -3,7 +3,6 @@ import {
 	useDeferredValue,
 	useEffect,
 	useMemo,
-	useRef,
 	useState,
 	useTransition,
 	type ChangeEvent,
@@ -203,7 +202,9 @@ function AssignmentsPanel() {
 
 				const targetUser =
 					selectedTargetUsernames[userIndex % selectedTargetUsernames.length];
-				const currentAssignees = text.usersAssigned || [];
+				const currentAssignees = Array.isArray(text.usersAssigned)
+					? text.usersAssigned
+					: [];
 				map.set(
 					text.id,
 					currentAssignees.includes(targetUser) ? [] : [targetUser],
@@ -220,7 +221,9 @@ function AssignmentsPanel() {
 				continue;
 			}
 
-			const currentAssignees = text.usersAssigned || [];
+			const currentAssignees = Array.isArray(text.usersAssigned)
+				? text.usersAssigned
+				: [];
 			const targets = currentAssignees.filter((username) =>
 				targetSet.has(username),
 			);
@@ -260,9 +263,6 @@ function AssignmentsPanel() {
 		0,
 	);
 
-	const assignmentTargetsByTextIdRef = useRef(assignmentTargetsByTextId);
-	assignmentTargetsByTextIdRef.current = assignmentTargetsByTextId;
-
 	const handleToggleText = useCallback((textId: number) => {
 		startSelectionTransition(() => {
 			setSelectedTextIds((previous) => {
@@ -293,13 +293,33 @@ function AssignmentsPanel() {
 				width: "40px",
 				align: "center",
 				render: (text, _rowIndex, context) => (
-					<Checkbox
-						checked={context.isSelected}
-						onChange={() => handleToggleText(text.id)}
-						onClick={(event) => event.stopPropagation()}
-						aria-label={`Selecionar ${text.sourceFileName || `Texto ${text.id}`}`}
-						size="sm"
-					/>
+					<div
+						style={{
+							display: "inline-flex",
+							alignItems: "center",
+							justifyContent: "center",
+							cursor: "pointer",
+						}}
+						onClick={(event) => {
+							event.preventDefault();
+							event.stopPropagation();
+							handleToggleText(text.id);
+						}}
+						onKeyDown={(event) => {
+							if (event.key === "Enter") {
+								event.preventDefault();
+								event.stopPropagation();
+								handleToggleText(text.id);
+							}
+						}}
+					>
+						<Checkbox
+							checked={context.isSelected}
+							readOnly
+							aria-label={`Selecionar ${text.sourceFileName || `Texto ${text.id}`}`}
+							size="sm"
+						/>
+					</div>
 				),
 			},
 			{
@@ -326,10 +346,12 @@ function AssignmentsPanel() {
 			{
 				key: "usersAssigned",
 				header: "Atribuído",
-				render: (text) =>
-					text.usersAssigned?.length
-						? text.usersAssigned.join(", ")
-						: "Sem atribuição",
+				render: (text) => {
+					const assignees = Array.isArray(text.usersAssigned)
+						? text.usersAssigned
+						: [];
+					return assignees.length ? assignees.join(", ") : "Sem atribuição";
+				},
 				truncate: true,
 			},
 			{
@@ -340,8 +362,7 @@ function AssignmentsPanel() {
 						return "-";
 					}
 
-					const targets =
-						assignmentTargetsByTextIdRef.current.get(text.id) || [];
+					const targets = assignmentTargetsByTextId.get(text.id) || [];
 					if (targets.length === 0) {
 						return mode === "assign" ? "Sem nova atribuição" : "Nada a remover";
 					}
@@ -351,7 +372,12 @@ function AssignmentsPanel() {
 				truncate: true,
 			},
 		],
-		[mode, selectedTargetUsernames.length, handleToggleText],
+		[
+			mode,
+			selectedTargetUsernames,
+			assignmentTargetsByTextId,
+			handleToggleText,
+		],
 	);
 
 	const handleSelectAll = () => {
