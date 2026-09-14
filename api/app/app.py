@@ -1,9 +1,9 @@
 import time
 import uuid
 
-from dotenv import load_dotenv
+from dotenv import find_dotenv, load_dotenv
 
-load_dotenv()
+load_dotenv(find_dotenv())
 
 from flask import Flask, g, request
 from flask_cors import CORS

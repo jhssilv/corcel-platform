@@ -7,13 +7,8 @@ import os
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if DATABASE_URL is None:
-    from dotenv import load_dotenv
-    from pathlib import Path
-
-    current_file_path = Path(__file__).resolve()
-    root_path = current_file_path.parent.parent.parent
-    dotenv_path = root_path / ".env"
-    load_dotenv(dotenv_path=dotenv_path)
+    from dotenv import find_dotenv, load_dotenv
+    load_dotenv(find_dotenv())
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
