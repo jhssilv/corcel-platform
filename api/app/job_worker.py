@@ -29,9 +29,10 @@ def _run_text_upload_import_job(session, job: models.BackgroundJob) -> None:
         original_filename=payload.get('original_filename'),
     )
 
+    live_job = session.get(models.BackgroundJob, job.id) or job
     mark_background_job_success(
         session,
-        job,
+        live_job,
         result_json=result.get('result'),
         status_message='Finished',
         current=result.get('total'),
@@ -44,9 +45,10 @@ def _run_ocr_upload_job(session, job: models.BackgroundJob) -> None:
     reporter = BackgroundJobReporter(session, job.id)
     result = run_ocr_zip_pipeline(reporter, payload.get('zip_path'))
 
+    live_job = session.get(models.BackgroundJob, job.id) or job
     mark_background_job_success(
         session,
-        job,
+        live_job,
         result_json=result.get('result'),
         status_message='Finished',
         current=result.get('total'),

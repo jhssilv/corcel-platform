@@ -7,8 +7,6 @@ from .text_formatting import format_text_content
 def add_to_database(results: dict):
     from app.extensions import db
 
-    db.session.remove() 
-
     for file_name, data in results.items():
         pass
 

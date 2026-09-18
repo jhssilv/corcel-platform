@@ -19,7 +19,7 @@ def perform_ocr(image_path_or_bytes):
     start_time = time.perf_counter()
     input_kind = 'path' if isinstance(image_path_or_bytes, str) else 'bytes'
 
-    api_key = os.getenv("API_KEY")
+    api_key = os.getenv("API_KEY") or os.getenv("GEMINI_API_KEY")
     if not api_key:
         raise ValueError("API_KEY not found in environment variables.")
 

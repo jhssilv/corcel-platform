@@ -3,6 +3,7 @@ import uuid
 
 from flask import Blueprint, jsonify, request, send_from_directory
 from sqlalchemy.orm.exc import NoResultFound
+from werkzeug.exceptions import NotFound
 from werkzeug.utils import secure_filename
 
 from app.background_jobs import create_background_job
@@ -94,7 +95,7 @@ def get_raw_text_image(current_user, text_id):
 
         return send_from_directory(IMAGES_FOLDER, raw_text.image_path)
 
-    except NoResultFound:
-        return error_response(error='Raw text not found.', code=RESOURCE_NOT_FOUND, status_code=404)
+    except (NoResultFound, NotFound, FileNotFoundError):
+        return error_response(error='Raw text or associated image not found.', code=RESOURCE_NOT_FOUND, status_code=404)
     except Exception as exc:
         return error_response(error="Internal server error", code=INTERNAL_SERVER_ERROR, status_code=500)

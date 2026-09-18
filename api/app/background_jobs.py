@@ -119,6 +119,12 @@ def touch_background_job(
     total: int | None = None,
     status_message: str | None = None,
 ) -> models.BackgroundJob:
+    if job not in session:
+        refreshed = session.get(models.BackgroundJob, job.id)
+        if refreshed is not None:
+            job = refreshed
+        else:
+            session.add(job)
     if current is not None:
         job.current = current
     if total is not None:
@@ -141,6 +147,12 @@ def mark_background_job_success(
     total: int | None = None,
 ) -> models.BackgroundJob:
     now = utcnow()
+    if job not in session:
+        refreshed = session.get(models.BackgroundJob, job.id)
+        if refreshed is not None:
+            job = refreshed
+        else:
+            session.add(job)
     job.state = models.BackgroundJobState.SUCCESS
     job.result_json = result_json
     job.status_message = status_message
@@ -164,6 +176,12 @@ def mark_background_job_failure(
     total: int | None = None,
 ) -> models.BackgroundJob:
     now = utcnow()
+    if job not in session:
+        refreshed = session.get(models.BackgroundJob, job.id)
+        if refreshed is not None:
+            job = refreshed
+        else:
+            session.add(job)
     job.state = models.BackgroundJobState.FAILURE
     job.result_json = result_json
     job.status_message = 'Processing Failed'
