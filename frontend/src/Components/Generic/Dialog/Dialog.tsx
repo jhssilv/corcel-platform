@@ -6,7 +6,7 @@ export interface DialogProps extends HTMLAttributes<HTMLDivElement> {
 	isOpen: boolean;
 	onClose: () => void;
 	children: ReactNode;
-	size?: "sm" | "md" | "lg";
+	size?: "sm" | "md" | "lg" | "xl" | "full";
 	trapFocus?: boolean;
 	closeOnOverlayClick?: boolean;
 }

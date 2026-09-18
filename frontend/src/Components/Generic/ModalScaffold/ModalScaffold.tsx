@@ -8,7 +8,7 @@ export interface ModalScaffoldProps {
 	onClose: () => void;
 	title: ReactNode;
 	icon?: IconName;
-	size?: "sm" | "md" | "lg";
+	size?: "sm" | "md" | "lg" | "xl" | "full";
 	children: ReactNode;
 	className?: string;
 	bodyClassName?: string;

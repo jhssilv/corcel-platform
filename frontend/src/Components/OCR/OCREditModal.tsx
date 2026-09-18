@@ -90,7 +90,7 @@ const OCREditModal = ({
 	}, [rawText]);
 
 	const handleZoomIn = () => {
-		setZoomLevel((previous) => Math.min(previous + 10, 200));
+		setZoomLevel((previous) => Math.min(previous + 10, 300));
 	};
 
 	const handleZoomOut = () => {
@@ -132,7 +132,7 @@ const OCREditModal = ({
 	const handleWheel = (event: ReactWheelEvent<HTMLDivElement>) => {
 		event.preventDefault();
 		const delta = event.deltaY > 0 ? -5 : 5;
-		setZoomLevel((previous) => Math.max(50, Math.min(200, previous + delta)));
+		setZoomLevel((previous) => Math.max(50, Math.min(300, previous + delta)));
 	};
 
 	const handleToggleImage = () => {
@@ -228,6 +228,7 @@ const OCREditModal = ({
 			<Dialog
 				isOpen={!!rawText}
 				onClose={onClose}
+				size="full"
 				className={styles.modalContent}
 			>
 				<DialogHeader onClose={onClose}>
