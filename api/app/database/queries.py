@@ -17,25 +17,6 @@ from app.database.models import (
 from app.extensions import db
 
 
-def authenticate_user(db, username, password):
-    """
-    Authenticate an user. Returns (True, user_id) in case of success,
-    or (False, None) in case of failure.
-    """
-    try:
-        user = db.query(User).filter(User.username == username).one()
-
-        if user.password == password:
-            user.lastlogin = func.now()
-            db.commit()
-            return True, user.id
-        else:
-            # Incorrect password
-            return False, None
-    except NoResultFound:
-        # User not found
-        return False, None
-
 
 def get_texts_data(db, user_id):
     """

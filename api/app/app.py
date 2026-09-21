@@ -42,7 +42,11 @@ def create_app():
         identity = jwt_data["sub"]
         return db.session.get(User, identity)
 
-    CORS(app)
+    CORS(
+        app,
+        origins=app.config.get('CORS_ALLOWED_ORIGINS', ['*']),
+        supports_credentials=True,
+    )
     jwt.init_app(app)
     db.init_app(app)
     limiter.init_app(app)

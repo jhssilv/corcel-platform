@@ -57,6 +57,16 @@ class Config:
     JWT_COOKIE_SECURE = _get_bool_env('JWT_COOKIE_SECURE', default=False)
     JWT_COOKIE_SAMESITE = os.getenv('JWT_COOKIE_SAMESITE', 'Lax')
 
+    # --- CORS ----------------------------------------------------------------
+    CORS_ALLOWED_ORIGINS = [
+        origin.strip()
+        for origin in os.getenv(
+            'CORS_ALLOWED_ORIGINS',
+            'https://corpsell.grpazinatto.com,http://localhost:5173,http://localhost:80,http://localhost',
+        ).split(',')
+        if origin.strip()
+    ]
+
     # --- Background jobs / rate limiting ------------------------------------
 
     RATELIMIT_STORAGE_URI = 'memory://'
