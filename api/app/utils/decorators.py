@@ -28,6 +28,9 @@ def login_required():
             if not current_user:
                 return error_response(error="User not found or invalid token", code=AUTH_INVALID_USER, status_code=401)
 
+            if not current_user.is_active:
+                return error_response(error="Account has been deactivated.", code=AUTH_FORBIDDEN, status_code=403)
+
             return fn(*args, current_user=current_user, **kwargs)
         return decorator
     return wrapper
@@ -53,6 +56,13 @@ def admin_required():
                     error="User not found or invalid token",
                     code=AUTH_INVALID_USER,
                     status_code=401,
+                )
+
+            if not current_user.is_active:
+                return error_response(
+                    error="Account has been deactivated.",
+                    code=AUTH_FORBIDDEN,
+                    status_code=403,
                 )
             
             if not current_user.is_admin:

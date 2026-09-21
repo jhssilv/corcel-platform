@@ -139,3 +139,15 @@ def test_get_users_authenticated(auth_client):
     assert response.status_code == 200
     assert "usernames" in response.json
     assert "testuser" in response.json["usernames"]
+
+def test_deactivated_user_blocked_on_protected_route(auth_client, app):
+    """Test that deactivating an authenticated user immediately blocks access."""
+    with app.app_context():
+        user = db.session.query(User).filter_by(username="testuser").first()
+        user.is_active = False
+        db.session.commit()
+
+    response = auth_client.get('/api/users')
+    assert response.status_code == 403
+    assert response.json["error"] == "Account has been deactivated."
+    assert response.json["code"] == "AUTH_FORBIDDEN"
