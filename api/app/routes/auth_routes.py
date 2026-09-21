@@ -86,40 +86,54 @@ def register(body: auth_schemas.UserRegisterRequest, current_user=None):
     if user is not None:
         return error_response(error="Username already exists.", code=BUSINESS_RULE_VIOLATION, status_code=400)
     
-    # Create inactive user with a random placeholder password; user sets a real one on activation
-    temp_password = secrets.token_urlsafe(12)
+    # Create inactive user with a random temporary password; user uses it on activation
+    temp_password = secrets.token_urlsafe(10)
     new_user = User(username=username, is_active=False)
     new_user.set_password(temp_password)
     
     session.add(new_user)
     session.commit()
     
-    response = generic_schemas.MessageResponse(message="User created successfully")
-    return jsonify(response.model_dump()), 201
+    response = auth_schemas.UserRegisterResponse(
+        message="User created successfully",
+        temporary_password=temp_password,
+    )
+    return jsonify(response.model_dump(by_alias=True)), 201
 
 @auth_bp.route('/api/activate', methods=['POST'])
 @limiter.limit("5 per hour")
 @validate()
 def activate_account(body: auth_schemas.UserActivationRequest):
-    """Activates a user account by setting the password and marking the account as active.
+    """Activates a user account by verifying the temporary password, setting the new password, and marking the account as active.
 
     Args:
-        body (UserActivationRequest): Username and new password.
+        body (UserActivationRequest): Username, temporary password, and new password.
         
     Returns: JSON response indicating success or failure.
 
     """
     try:
         username = body.username
+        temporary_password = body.temporary_password
         password = body.password
         
         user = queries.get_user_by_username(session, username)
         
         if user is None:
             return error_response(error="Usuário não existe.", code=RESOURCE_NOT_FOUND, status_code=404)
+
+        if user.is_admin:
+            return error_response(
+                error="Contas de administrador não podem ser ativadas por esta rota.",
+                code=AUTH_FORBIDDEN,
+                status_code=403,
+            )
             
         if user.is_active:
             return error_response(error="Usuário já está ativo.", code=BUSINESS_RULE_VIOLATION, status_code=400)
+
+        if not user.check_password(temporary_password):
+            return error_response(error="Senha temporária inválida.", code=AUTH_FORBIDDEN, status_code=403)
             
         user.set_password(password)
         user.is_active = True

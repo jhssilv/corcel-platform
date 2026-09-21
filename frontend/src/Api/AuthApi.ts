@@ -39,11 +39,13 @@ export async function logoutUser(): Promise<MessageApiResponse> {
 
 export async function activateUser(
 	username: string,
+	temporaryPassword: string,
 	password: string,
 ): Promise<MessageApiResponse> {
 	const response = unwrapData(
 		await apiPublic.post<MessageApiResponse>("/activate", {
 			username,
+			temporaryPassword,
 			password,
 		}),
 	);

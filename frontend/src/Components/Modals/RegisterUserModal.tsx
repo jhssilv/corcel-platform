@@ -15,6 +15,7 @@ interface FormMessage {
 function RegisterUserModal({ isOpen, onClose }: RegisterUserModalProps) {
 	const [username, setUsername] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [temporaryPassword, setTemporaryPassword] = useState<string | null>(null);
 	const [message, setMessage] = useState<FormMessage>({ text: "", type: "" });
 
 	const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -24,6 +25,7 @@ function RegisterUserModal({ isOpen, onClose }: RegisterUserModalProps) {
 
 		try {
 			const response = await registerUser(username);
+			setTemporaryPassword(response.temporaryPassword || null);
 			setMessage({
 				text: response.message || "Usuário criado com sucesso!",
 				type: "success",
@@ -31,6 +33,7 @@ function RegisterUserModal({ isOpen, onClose }: RegisterUserModalProps) {
 			setUsername("");
 		} catch (error) {
 			console.error(error);
+			setTemporaryPassword(null);
 			setMessage({ text: "Erro ao registrar usuário.", type: "error" });
 		} finally {
 			setIsSubmitting(false);
@@ -39,6 +42,7 @@ function RegisterUserModal({ isOpen, onClose }: RegisterUserModalProps) {
 
 	const handleClose = () => {
 		setUsername("");
+		setTemporaryPassword(null);
 		setMessage({ text: "", type: "" });
 		onClose();
 	};
@@ -86,7 +90,7 @@ function RegisterUserModal({ isOpen, onClose }: RegisterUserModalProps) {
 					label="Nome de Usuário"
 					htmlFor="username"
 					required
-					helperText="O usuário será criado como inativo e escolherá sua senha no primeiro acesso."
+					helperText="O usuário será criado como inativo e escolherá sua senha definitiva no primeiro acesso."
 				>
 					<input
 						type="text"
@@ -102,7 +106,27 @@ function RegisterUserModal({ isOpen, onClose }: RegisterUserModalProps) {
 
 				{message.text && (
 					<Banner variant={message.type === "error" ? "danger" : "success"}>
-						{message.text}
+						<div>{message.text}</div>
+						{temporaryPassword && (
+							<div style={{ marginTop: "8px" }}>
+								<div>
+									<strong>Senha temporária:</strong>{" "}
+									<code
+										style={{
+											background: "#f0f0f0",
+											padding: "2px 6px",
+											borderRadius: "4px",
+											userSelect: "all",
+										}}
+									>
+										{temporaryPassword}
+									</code>
+								</div>
+								<div style={{ fontSize: "0.85em", marginTop: "4px", opacity: 0.9 }}>
+									Forneça esta senha ao usuário para que ele possa realizar o primeiro acesso.
+								</div>
+							</div>
+						)}
 					</Banner>
 				)}
 			</Stack>

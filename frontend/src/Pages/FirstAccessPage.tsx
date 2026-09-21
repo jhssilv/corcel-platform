@@ -21,6 +21,7 @@ interface ApiErrorShape {
 
 function FirstAccessPage() {
 	const [username, setUsername] = useState("");
+	const [temporaryPassword, setTemporaryPassword] = useState("");
 	const [password, setPassword] = useState("");
 	const [confirmPassword, setConfirmPassword] = useState("");
 	const [message, setMessage] = useState<MessageState>({ text: "", type: "" });
@@ -39,7 +40,7 @@ function FirstAccessPage() {
 		setIsSubmitting(true);
 
 		try {
-			await activateUser(username, password);
+			await activateUser(username, temporaryPassword, password);
 			setMessage({
 				text: "Conta ativada com sucesso! Redirecionando...",
 				type: "success",
@@ -49,7 +50,7 @@ function FirstAccessPage() {
 			}, 2000);
 		} catch (error) {
 			console.error(error);
-			setMessage({ text: "Erro ao ativar conta.", type: "error" });
+			setMessage({ text: "Erro ao ativar conta. Verifique a senha temporária.", type: "error" });
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -67,6 +68,18 @@ function FirstAccessPage() {
 							value={username}
 							onChange={(event: ChangeEvent<HTMLInputElement>) =>
 								setUsername(event.target.value)
+							}
+							required
+						/>
+					</FormField>
+
+					<FormField label="Senha Temporária" htmlFor="temporaryPassword" required helperText="Fornecida pelo administrador">
+						<input
+							type="text"
+							id="temporaryPassword"
+							value={temporaryPassword}
+							onChange={(event: ChangeEvent<HTMLInputElement>) =>
+								setTemporaryPassword(event.target.value)
 							}
 							required
 						/>

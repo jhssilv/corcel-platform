@@ -9,23 +9,37 @@ def test_register_user(admin_client, app):
     })
     assert response.status_code == 201
     assert response.json["message"] == "User created successfully"
+    assert "temporaryPassword" in response.json
+    temp_pw = response.json["temporaryPassword"]
 
     with app.app_context():
         user = db.session.query(User).filter_by(username="newuser").first()
         assert user is not None
         assert user.is_active is False
+        assert user.check_password(temp_pw)
 
 def test_activate_user(client, app):
     """Test user activation."""
     # Create inactive user
     with app.app_context():
         user = User(username="inactiveuser", is_active=False)
-        user.set_password("temp")
+        user.set_password("temp123456")
         db.session.add(user)
         db.session.commit()
 
+    # Wrong temporary password must fail
+    response_wrong = client.post('/api/activate', json={
+        "username": "inactiveuser",
+        "temporary_password": "wrongpassword",
+        "password": "finalpassword"
+    })
+    assert response_wrong.status_code == 403
+    assert response_wrong.json["error"] == "Senha temporária inválida."
+
+    # Correct temporary password succeeds
     response = client.post('/api/activate', json={
         "username": "inactiveuser",
+        "temporary_password": "temp123456",
         "password": "finalpassword"
     })
     assert response.status_code == 200

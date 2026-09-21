@@ -17,14 +17,27 @@ class UserRegisterRequest(BaseModel):
     """
     username: str = Field(..., json_schema_extra={"example": "newuser"}, description="Username.")
 
+class UserRegisterResponse(BaseModel):
+    """Schema for user registration response with temporary password.
+    Args:
+        message (str): Confirmation message.
+        temporary_password (str): Auto-generated temporary password.
+    """
+    message: str = Field(..., json_schema_extra={"example": "User created successfully"})
+    temporary_password: str = Field(..., alias="temporaryPassword", json_schema_extra={"example": "aB3_xK9zP1"})
+    model_config = ConfigDict(populate_by_name=True)
+
 class UserActivationRequest(BaseModel):
     """Schema for user activation requests.
     Args:
         username (str): The username of the user to activate.
+        temporary_password (str): Temporary password provided by administrator.
         password (str): The new password for the user.
     """
     username: str = Field(..., json_schema_extra={"example": "newuser"})
+    temporary_password: str = Field(..., alias="temporaryPassword", json_schema_extra={"example": "aB3_xK9zP1"})
     password: str = Field(..., json_schema_extra={"example": "newpassword123"})
+    model_config = ConfigDict(populate_by_name=True)
 
 class LoginResponse(BaseModel):
     """Schema for the login response.

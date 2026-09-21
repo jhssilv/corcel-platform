@@ -3,17 +3,16 @@ import * as schemas from "./Schemas";
 import { unwrapData } from "./Utils";
 import type { MessageApiResponse, UserData } from "../types";
 
+export interface RegisterUserApiResponse extends MessageApiResponse {
+	temporaryPassword?: string;
+}
+
 export async function registerUser(
 	username: string,
-): Promise<MessageApiResponse> {
+): Promise<RegisterUserApiResponse> {
 	const response = unwrapData(
-		await apiPrivate.post<MessageApiResponse>("/register", { username }),
+		await apiPrivate.post<RegisterUserApiResponse>("/register", { username }),
 	);
-
-	const parsed = schemas.MessageResponseSchema.safeParse(response);
-	if (parsed.success) {
-		return parsed.data;
-	}
 
 	if (response && typeof response === "object") {
 		const maybeError = (response as { error?: unknown }).error;
@@ -22,7 +21,10 @@ export async function registerUser(
 		}
 	}
 
-	return { message: "Usuário criado com sucesso!" };
+	return {
+		message: response?.message || "Usuário criado com sucesso!",
+		temporaryPassword: response?.temporaryPassword,
+	};
 }
 
 export async function getUsersData(): Promise<UserData[]> {

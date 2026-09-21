@@ -8,6 +8,7 @@ test.describe('First Access', () => {
       const postData = request.postDataJSON();
 
       expect(postData.username).toBe('newuser');
+      expect(postData.temporaryPassword).toBe('tempPass123');
       expect(postData.password).toBe('newpassword123');
 
       await route.fulfill({
@@ -21,6 +22,7 @@ test.describe('First Access', () => {
 
     // Fill form
     await page.fill('input[id="username"]', 'newuser');
+    await page.fill('input[id="temporaryPassword"]', 'tempPass123');
     await page.fill('input[id="password"]', 'newpassword123');
     await page.fill('input[id="confirmPassword"]', 'newpassword123');
 
