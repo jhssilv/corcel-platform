@@ -49,11 +49,11 @@ services:
     restart: unless-stopped
 
   languagetool:
-    image: erikvl87/languagetool:latest
+    image: meyay/languagetool:latest
     container_name: corcel_languagetool
     environment:
       Java_Xms: 512m
-      Java_Xmx: 1g
+      Java_Xmx: 2g
     networks:
       - app_network
     restart: unless-stopped
