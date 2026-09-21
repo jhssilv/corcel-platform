@@ -12,6 +12,8 @@ services:
         hard: 65535
     depends_on:
       - backend
+    env_file:
+      - ./api/.env
     networks:
       - app_network
     restart: unless-stopped
