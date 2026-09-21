@@ -46,6 +46,11 @@ services:
       - app_network
     env_file:
       - ./api/.env
+    healthcheck:                                                                                                                                                
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-corcel}"]                                                                 
+      interval: 5s                                                                                                                                              
+      timeout: 5s                                                                                                                                               
+      retries: 5  
     restart: unless-stopped
 
   languagetool:
