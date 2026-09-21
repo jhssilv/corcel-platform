@@ -54,6 +54,8 @@ class Config:
 
     JWT_TOKEN_LOCATION = ['cookies']
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=24)
+    JWT_COOKIE_SECURE = _get_bool_env('JWT_COOKIE_SECURE', default=False)
+    JWT_COOKIE_SAMESITE = os.getenv('JWT_COOKIE_SAMESITE', 'Lax')
 
     # --- Background jobs / rate limiting ------------------------------------
 
