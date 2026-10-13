@@ -142,6 +142,15 @@
 	/* Essay token text */
 	--color-token-candidates-text: #fca5a5;
 	--color-token-corrected-text: #93c5fd;
+
+	/* Compatibility aliases */
+	--color-background-elevated: var(--color-bg-panel);
+	--color-background-secondary: var(--color-bg-panel-alt);
+	--color-bg-secondary: var(--color-bg-panel-alt);
+	--color-border: var(--color-border-subtle);
+	--color-text: var(--color-text-primary);
+	--color-error: var(--color-danger);
+	--color-primary: var(--color-accent);
 }
 
 /* ============================================
@@ -271,6 +280,15 @@
 	/* Essay token text */
 	--color-token-candidates-text: #b91c1c;
 	--color-token-corrected-text: #1d4ed8;
+
+	/* Compatibility aliases */
+	--color-background-elevated: var(--color-bg-panel);
+	--color-background-secondary: var(--color-bg-panel-alt);
+	--color-bg-secondary: var(--color-bg-panel-alt);
+	--color-border: var(--color-border-subtle);
+	--color-text: var(--color-text-primary);
+	--color-error: var(--color-danger);
+	--color-primary: var(--color-accent);
 }
 
 /* ============================================
@@ -401,6 +419,15 @@
 		/* Essay token text */
 		--color-token-candidates-text: #b91c1c;
 		--color-token-corrected-text: #1d4ed8;
+
+		/* Compatibility aliases */
+		--color-background-elevated: var(--color-bg-panel);
+		--color-background-secondary: var(--color-bg-panel-alt);
+		--color-bg-secondary: var(--color-bg-panel-alt);
+		--color-border: var(--color-border-subtle);
+		--color-text: var(--color-text-primary);
+		--color-error: var(--color-danger);
+		--color-primary: var(--color-accent);
 	}
 }
 

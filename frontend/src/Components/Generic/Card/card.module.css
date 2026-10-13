@@ -1,8 +1,8 @@
 .card {
-	background-color: var(--color-background-secondary, #282828);
-	border-radius: 8px;
-	border: 1px solid var(--color-border, rgba(255, 255, 255, 0.1));
-	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+	background-color: var(--color-bg-panel);
+	border-radius: var(--radius-md, 8px);
+	border: 1px solid var(--color-border-subtle);
+	box-shadow: var(--shadow-md);
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
@@ -14,7 +14,7 @@
 
 .titleContainer {
 	padding: 1rem 1.25rem;
-	border-bottom: 1px solid var(--color-border, rgba(255, 255, 255, 0.1));
+	border-bottom: 1px solid var(--color-border-subtle);
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
@@ -24,7 +24,7 @@
 	margin: 0;
 	font-size: 1.125rem;
 	font-weight: 500;
-	color: var(--color-text, rgba(255, 255, 255, 0.87));
+	color: var(--color-text-primary);
 }
 
 .closeButton {
@@ -33,7 +33,7 @@
 	outline: none;
 	font-size: 1.5rem;
 	line-height: 1;
-	color: var(--color-text-muted, rgba(255, 255, 255, 0.6));
+	color: var(--color-text-muted);
 	cursor: pointer;
 	padding: 0;
 	margin: 0;
@@ -45,16 +45,16 @@
 	justify-content: center;
 	height: 32px;
 	width: 32px;
-	border-radius: 6px;
+	border-radius: var(--radius-sm, 6px);
 	box-shadow: none;
 }
 
 .closeButton:hover {
-	color: var(--color-text, rgba(255, 255, 255, 1));
-	background-color: rgba(255, 255, 255, 0.1);
+	color: var(--color-text-primary);
+	background-color: var(--color-bg-hover);
 }
 
 .closeButton:focus-visible {
-	outline: 2px solid var(--color-accent, #646cff);
+	outline: 2px solid var(--color-accent);
 	outline-offset: 2px;
 }

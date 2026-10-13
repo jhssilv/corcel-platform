@@ -56,7 +56,6 @@ function OCRUploadModal({
 		<Dialog
 			isOpen={isOpen}
 			onClose={handleClose}
-			className="modal-content upload-modal ocr"
 		>
 			<DialogHeader onClose={handleClose}>
 				Upload de Imagens para OCR

@@ -113,7 +113,9 @@ function RegisterUserModal({ isOpen, onClose }: RegisterUserModalProps) {
 									<strong>Senha temporária:</strong>{" "}
 									<code
 										style={{
-											background: "#f0f0f0",
+											background: "var(--color-bg-control)",
+											color: "var(--color-text-primary)",
+											border: "1px solid var(--color-border-subtle)",
 											padding: "2px 6px",
 											borderRadius: "4px",
 											userSelect: "all",
