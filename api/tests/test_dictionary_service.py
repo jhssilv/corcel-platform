@@ -80,3 +80,43 @@ class TestDictionaryService:
 
         with pytest.raises(ResourceLoadError, match='Failed to load Hunspell'):
             service._load_resources()
+
+    def test_is_valid_word_returns_true_for_valid_hyphenated_compound(self):
+        service = _make_service_with_mocks(
+            mock_hobj=MagicMock(spell=lambda w: w in {"guarda", "chuva", "bem", "te", "vi"}),
+            mock_spell=MagicMock(known=lambda words: set(words) & {"guarda", "chuva", "bem", "te", "vi"}),
+        )
+        assert service.is_valid_word("guarda-chuva") is True
+        assert service.is_valid_word("bem-te-vi") is True
+
+    def test_is_valid_word_returns_false_when_hyphenated_compound_has_invalid_part(self):
+        service = _make_service_with_mocks(
+            mock_hobj=MagicMock(spell=lambda w: w in {"guarda"}),
+            mock_spell=MagicMock(known=lambda words: set(words) & {"guarda"}),
+        )
+        assert service.is_valid_word("guarda-xuva") is False
+
+    def test_is_valid_word_returns_false_for_malformed_hyphen_tokens(self):
+        service = _make_service_with_mocks(
+            mock_hobj=MagicMock(spell=MagicMock(return_value=False)),
+            mock_spell=MagicMock(known=MagicMock(return_value=set())),
+        )
+        assert service.is_valid_word("-") is False
+        assert service.is_valid_word("--") is False
+        assert service.is_valid_word("guarda-") is False
+        assert service.is_valid_word("-chuva") is False
+
+    def test_get_candidates_generates_compound_candidates_for_misspelled_part(self):
+        service = _make_service_with_mocks(
+            mock_hobj=MagicMock(
+                spell=lambda w: w in {"guarda", "uva"},
+                suggest=lambda w: ["uva"] if w == "xuva" else [],
+            ),
+            mock_spell=MagicMock(
+                known=lambda words: set(words) & {"guarda", "uva"},
+                candidates=lambda w: {"uva"} if w == "xuva" else set(),
+            ),
+        )
+        candidates = service.get_candidates("guarda-xuva")
+        assert "guarda-uva" in candidates
+

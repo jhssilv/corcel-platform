@@ -4,6 +4,7 @@ Encapsulates Hunspell and SpellChecker (pyspellchecker) resources,
 including the first-run dictionary download from USP.
 """
 
+import itertools
 import json
 import os
 
@@ -82,7 +83,7 @@ def match_case(original: str, candidate: str) -> str:
     """
     if original.isupper():
         return candidate.upper()
-    if original[0].isupper():
+    if original and original[0].isupper():
         return candidate.capitalize()
     return candidate.lower()
 
@@ -160,9 +161,34 @@ class DictionaryService:
     # Public API
     # ------------------------------------------------------------------
 
+    def _is_single_word_valid(self, word: str) -> bool:
+        return bool(self.hobj.spell(word) or self.spell.known([word]))
+
     def is_valid_word(self, word: str) -> bool:
-        """Return ``True`` if *word* is recognised by Hunspell **or** SpellChecker."""
-        return self.hobj.spell(word) or bool(self.spell.known([word]))
+        """Return ``True`` if *word* is recognised by Hunspell **or** SpellChecker.
+
+        For hyphenated words (e.g. 'guarda-chuva', 'disse-lhe'), checks if the whole
+        word or all constituent hyphen-delimited parts are valid words.
+        """
+        if self._is_single_word_valid(word):
+            return True
+        if "-" in word:
+            parts = word.split("-")
+            return len(parts) > 1 and all(
+                bool(part.isalpha() and self._is_single_word_valid(part))
+                for part in parts
+            )
+        return False
+
+    def _get_single_word_candidates(self, word: str) -> set[str]:
+        raw: set[str] = set()
+        raw.update(self.spell.candidates(word) or [])
+        try:
+            raw.update(self.hobj.suggest(word))
+        except Exception:
+            pass
+        raw.discard(word)
+        return raw
 
     def get_candidates(self, word: str) -> list[str]:
         """Return case-matched correction candidates for *word*.
@@ -171,12 +197,23 @@ class DictionaryService:
         deduplicated, and case-matched to *word*.  The original word
         itself is excluded.
         """
-        raw: set[str] = set()
-        raw.update(self.spell.candidates(word) or [])
-        try:
-            raw.update(self.hobj.suggest(word))
-        except Exception:
-            pass
+        raw: set[str] = self._get_single_word_candidates(word)
+
+        if "-" in word:
+            parts = word.split("-")
+            if len(parts) > 1 and all(p.isalpha() for p in parts):
+                if not all(self._is_single_word_valid(p) for p in parts):
+                    part_options: list[list[str]] = []
+                    for p in parts:
+                        if self._is_single_word_valid(p):
+                            part_options.append([p])
+                        else:
+                            cands = list(self._get_single_word_candidates(p))[:5]
+                            part_options.append(cands if cands else [p])
+                    for combo in itertools.product(*part_options):
+                        candidate = "-".join(combo)
+                        if candidate != word:
+                            raw.add(candidate)
 
         raw.discard(word)
 

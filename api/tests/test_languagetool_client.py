@@ -27,7 +27,7 @@ def test_languagetool_client_returns_matches(mocker):
     mock_post.assert_called_once_with(
         "http://localhost:8010/v2/check",
         data={"text": "A caza", "language": "pt-BR"},
-        timeout=5.0,
+        timeout=10.0,
     )
 
     assert len(matches) == 1

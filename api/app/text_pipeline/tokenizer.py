@@ -12,6 +12,14 @@ from .models import Token
 
 
 
+def is_word_token(text: str) -> bool:
+    """Check if token text represents a word, including hyphenated compounds."""
+    if not text:
+        return False
+    parts = text.split("-")
+    return bool(parts) and all(part.isalpha() for part in parts)
+
+
 class Tokenizer:
     """Tokenizes raw text into a list of :class:`Token` dataclasses.
 
@@ -62,7 +70,7 @@ class Tokenizer:
             Token(
                 idx=i,
                 text=token.text,
-                is_word=token.text.isalpha(),
+                is_word=is_word_token(token.text),
                 whitespace_after=token.whitespace_,
             )
             for i, token in enumerate(doc)

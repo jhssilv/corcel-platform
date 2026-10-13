@@ -14,7 +14,7 @@ from . import config as cfg
 from .config import nlp_max_suggestions
 from .dictionary import DictionaryService, match_case
 from .models import ProcessedToken, Token
-from .tokenizer import Tokenizer
+from .tokenizer import Tokenizer, is_word_token
 from .languagetool_client import LanguageToolClient
 
 _dictionary = None
@@ -57,7 +57,7 @@ def process_tokens(
             token_len = len(token.text)
             token_end = char_offset + token_len
             
-            if not token.is_word or not token.text.replace("-", "").isalpha():
+            if not is_word_token(token.text):
                 results[token.idx] = ProcessedToken(
                     idx=token.idx,
                     text=token.text,

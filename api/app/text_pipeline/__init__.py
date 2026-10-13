@@ -22,13 +22,14 @@ from .exceptions import ResourceLoadError
 from .languagetool_client import LanguageToolClient
 from .models import ProcessedToken, Token
 from .pipeline import process_text, process_tokens
-from .tokenizer import Tokenizer
+from .tokenizer import Tokenizer, is_word_token
 
 __all__ = [
     "DictionaryService",
     "LanguageToolClient",
     "ProcessedToken",
     "ResourceLoadError",
+    "is_word_token",
     "process_text",
     "process_tokens",
     "Token",

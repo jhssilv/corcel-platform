@@ -69,3 +69,27 @@ def test_pipeline_merges_dictionary_and_languagetool_suggestions(mocker):
     assert results[1]["to_be_normalized"] is True
     assert "casa" in results[1]["suggestions"]
     assert "caca" in results[1]["suggestions"]
+
+
+def test_pipeline_processes_hyphenated_words_as_words(mocker):
+    dictionary = mocker.Mock()
+    dictionary.get_candidates.return_value = []
+    dictionary.is_valid_word.return_value = True
+    mocker.patch('app.text_pipeline.pipeline._get_dictionary', return_value=dictionary)
+
+    lt_client = mocker.Mock()
+    lt_client.check_text.return_value = []
+    mocker.patch('app.text_pipeline.pipeline._get_languagetool', return_value=lt_client)
+
+    tokens = [
+        Token(idx=0, text="guarda-chuva", is_word=True, whitespace_after=" "),
+        Token(idx=1, text="--", is_word=False, whitespace_after=" "),
+    ]
+    text = "guarda-chuva -- "
+
+    results = process_tokens(tokens, text)
+
+    assert results[0]["is_word"] is True
+    assert results[0]["to_be_normalized"] is False
+    assert results[1]["is_word"] is False
+
