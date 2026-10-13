@@ -208,8 +208,9 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 
 		if (isTerminal) {
 			clearBatchPolling();
+			clearStoredTracking();
 		}
-	}, [clearBatchPolling, clearJobPolling]);
+	}, [clearBatchPolling, clearJobPolling, clearStoredTracking]);
 
 	const refreshBatchDetail = useCallback(async (batchId: number) => {
 		const detail = await getTextUploadBatch(batchId);
@@ -283,6 +284,7 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 				if (data.state === "FAILURE") {
 					clearJobPolling();
 					localStorage.removeItem(TEXT_UPLOAD_JOB_STORAGE_KEY);
+					localStorage.removeItem(TEXT_UPLOAD_BATCH_STORAGE_KEY);
 					setIsProcessing(false);
 					setFailedFiles(data.failed_files ?? []);
 					addSnackbar({
@@ -295,6 +297,7 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 			} catch (error) {
 				console.error("Job polling failed:", error);
 				clearJobPolling();
+				localStorage.removeItem(TEXT_UPLOAD_JOB_STORAGE_KEY);
 				setIsProcessing(false);
 				void startBatchTracking(batchId);
 			}
@@ -328,18 +331,28 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 	}, [clearBatchPolling, clearStoredTracking, clearJobPolling]);
 
 	useEffect(() => {
-		localStorage.setItem(TRACKED_TEXTS_STORAGE_KEY, JSON.stringify(trackedTexts));
-	}, [trackedTexts]);
+		if (isTracking && trackedTexts.length > 0) {
+			localStorage.setItem(TRACKED_TEXTS_STORAGE_KEY, JSON.stringify(trackedTexts));
+		} else if (!isTracking) {
+			localStorage.removeItem(TRACKED_TEXTS_STORAGE_KEY);
+		}
+	}, [trackedTexts, isTracking]);
 
 	useEffect(() => {
-		localStorage.setItem(TRACKING_ENABLED_STORAGE_KEY, String(isTracking));
+		if (isTracking) {
+			localStorage.setItem(TRACKING_ENABLED_STORAGE_KEY, "true");
+		} else {
+			localStorage.removeItem(TRACKING_ENABLED_STORAGE_KEY);
+		}
 	}, [isTracking]);
 
 	useEffect(() => {
-		if (currentBatchId !== null) {
+		if (isTracking && currentBatchId !== null) {
 			localStorage.setItem(TEXT_UPLOAD_BATCH_STORAGE_KEY, String(currentBatchId));
+		} else if (!isTracking) {
+			localStorage.removeItem(TEXT_UPLOAD_BATCH_STORAGE_KEY);
 		}
-	}, [currentBatchId]);
+	}, [currentBatchId, isTracking]);
 
 	useEffect(() => {
 		return () => {
@@ -401,6 +414,7 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 					return;
 				} catch (error) {
 					console.error("Failed to resume stored text upload batch:", error);
+					clearStoredTracking();
 				}
 			}
 
@@ -438,11 +452,16 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 	]);
 
 	const handleClose = useCallback(() => {
-		if (!isProcessing && !isTracking) {
-			resetState(true);
+		if (!isProcessing) {
+			const isTerminal = currentBatch
+				? isTerminalBatchStatus(currentBatch.status)
+				: !isTracking;
+			if (isTerminal) {
+				resetState(true);
+			}
 		}
 		onClose();
-	}, [isProcessing, isTracking, onClose, resetState]);
+	}, [currentBatch, isProcessing, isTracking, onClose, resetState]);
 
 	const processFiles = async (files: FileList | File[]) => {
 		setIsValidating(true);
@@ -620,7 +639,7 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 						</Button>
 					)}
 
-					{!isProcessing && !isTracking && !uploadSuccess && (
+					{!isProcessing && !isTracking && !uploadSuccess && currentBatch === null && (
 						<Button
 							tier="primary"
 							variant="action"
@@ -630,20 +649,42 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 							Enviar
 						</Button>
 					)}
+
+					{!isProcessing && (currentBatch !== null || failedFiles.length > 0 || uploadSuccess) && (
+						<Button
+							tier="primary"
+							variant="action"
+							onClick={() => resetState(true)}
+						>
+							Novo Upload
+						</Button>
+					)}
 				</>
 			}
 		>
 			<Stack direction="vertical" gap={12}>
 				{failedFiles.length > 0 && !isProcessing && (
 					<Banner variant="danger">
-						<p>
-							<strong>Os seguintes arquivos falharam:</strong>
-						</p>
-						<ul>
-							{failedFiles.map((fileName, index) => (
-								<li key={index}>{fileName}</li>
-							))}
-						</ul>
+						<Stack direction="vertical" gap={8}>
+							<p style={{ margin: 0 }}>
+								<strong>Os seguintes arquivos falharam:</strong>
+							</p>
+							<ul style={{ margin: 0, paddingLeft: "1.25rem" }}>
+								{failedFiles.map((fileName, index) => (
+									<li key={index}>{fileName}</li>
+								))}
+							</ul>
+							<div>
+								<Button
+									tier="secondary"
+									variant="danger"
+									size="sm"
+									onClick={() => resetState(true)}
+								>
+									Limpar e Iniciar Novo Upload
+								</Button>
+							</div>
+						</Stack>
 					</Banner>
 				)}
 
@@ -675,6 +716,18 @@ function UploadModal({ isOpen, onClose }: UploadModalProps) {
 							janela e retomar o acompanhamento depois, mesmo apos reiniciar o
 							navegador.
 						</p>
+						{isTracking && (
+							<div>
+								<Button
+									tier="secondary"
+									variant="neutral"
+									size="sm"
+									onClick={() => resetState(true)}
+								>
+									Descartar Acompanhamento
+								</Button>
+							</div>
+						)}
 					</Stack>
 				)}
 
