@@ -6,6 +6,9 @@ services:
     container_name: corcel_frontend
     ports:
       - "80:80"
+      - "443:443"
+    volumes:
+      - ./certs:/etc/nginx/certs:ro
     ulimits:
       nofile:
         soft: 65535

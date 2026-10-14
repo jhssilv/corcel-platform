@@ -14,6 +14,6 @@ COPY frontend/nginx.conf /etc/nginx/nginx.conf.template
 COPY frontend/docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
-EXPOSE 80
+EXPOSE 80 443
 
 CMD ["/docker-entrypoint.sh"]

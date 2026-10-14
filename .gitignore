@@ -9,6 +9,13 @@ playwright-report/
 test-results/
 api/images/
 local_files/
+certs/*
+!certs/.gitkeep
+!certs/README.md
+*.pem
+*.crt
+*.csr
+*.key
 
 .vscode/
 
