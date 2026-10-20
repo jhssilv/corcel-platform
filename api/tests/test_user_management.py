@@ -104,3 +104,56 @@ def test_set_user_role_blocks_last_admin_revoke(admin_client):
     assert response.status_code == 400
     assert response.json["error"] == "Cannot revoke admin privileges from the last admin user."
     assert response.json["code"] == "BUSINESS_RULE_VIOLATION"
+
+
+def test_reset_user_password_admin(admin_client, client, app):
+    """Test resetting user password as admin and reactivating account."""
+    with app.app_context():
+        target = User(username="targetuser", is_active=True, is_admin=False)
+        target.set_password("initialpass")
+        db.session.add(target)
+        db.session.commit()
+
+    # Admin calls reset-password
+    response = admin_client.post('/api/users/targetuser/reset-password')
+    assert response.status_code == 200
+    data = response.json
+    assert "temporaryPassword" in data
+    temp_password = data["temporaryPassword"]
+    assert len(temp_password) > 0
+
+    # User is now inactive and old password no longer works
+    with app.app_context():
+        user = db.session.query(User).filter_by(username="targetuser").first()
+        assert user.is_active is False
+        assert user.check_password("initialpass") is False
+        assert user.check_password(temp_password) is True
+
+    # User activates account with the temporary password
+    activate_response = client.post('/api/activate', json={
+        "username": "targetuser",
+        "temporaryPassword": temp_password,
+        "password": "brandnewpassword123",
+    })
+    assert activate_response.status_code == 200
+    assert activate_response.json["message"] == "Account activated successfully."
+
+    # User is active again with new password
+    with app.app_context():
+        user = db.session.query(User).filter_by(username="targetuser").first()
+        assert user.is_active is True
+        assert user.check_password("brandnewpassword123") is True
+
+
+def test_reset_user_password_non_admin(auth_client):
+    """Test that non-admin cannot reset user passwords."""
+    response = auth_client.post('/api/users/anyuser/reset-password')
+    assert response.status_code == 403
+    assert response.json["error"] == "Access forbidden: Admins only"
+
+
+def test_reset_user_password_not_found(admin_client):
+    """Test reset password on a nonexistent user returns 404."""
+    response = admin_client.post('/api/users/nonexistentuser/reset-password')
+    assert response.status_code == 404
+    assert response.json["error"] == "Usuário não existe."

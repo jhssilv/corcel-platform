@@ -27,6 +27,16 @@ class UserRegisterResponse(BaseModel):
     temporary_password: str = Field(..., alias="temporaryPassword", json_schema_extra={"example": "aB3_xK9zP1"})
     model_config = ConfigDict(populate_by_name=True)
 
+class UserResetPasswordResponse(BaseModel):
+    """Schema for user reset password response with temporary password.
+    Args:
+        message (str): Confirmation message.
+        temporary_password (str): Auto-generated temporary password.
+    """
+    message: str = Field(..., json_schema_extra={"example": "Password reset successfully"})
+    temporary_password: str = Field(..., alias="temporaryPassword", json_schema_extra={"example": "aB3_xK9zP1"})
+    model_config = ConfigDict(populate_by_name=True)
+
 class UserActivationRequest(BaseModel):
     """Schema for user activation requests.
     Args:
@@ -51,7 +61,6 @@ class LoginResponse(BaseModel):
 class SetUserActiveRequest(BaseModel):
     """Schema for explicitly setting a user's active status."""
     is_active: bool = Field(..., json_schema_extra={"example": False}, description="Desired active status.")
-
 
 class SetUserAdminRequest(BaseModel):
     """Schema for explicitly setting a user's admin role."""

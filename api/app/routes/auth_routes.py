@@ -122,13 +122,6 @@ def activate_account(body: auth_schemas.UserActivationRequest):
         if user is None:
             return error_response(error="Usuário não existe.", code=RESOURCE_NOT_FOUND, status_code=404)
 
-        if user.is_admin:
-            return error_response(
-                error="Contas de administrador não podem ser ativadas por esta rota.",
-                code=AUTH_FORBIDDEN,
-                status_code=403,
-            )
-            
         if user.is_active:
             return error_response(error="Usuário já está ativo.", code=BUSINESS_RULE_VIOLATION, status_code=400)
 
@@ -272,6 +265,42 @@ def set_user_role(username: str, body: auth_schemas.SetUserAdminRequest, current
     except Exception:
         return error_response(error="Internal server error", code=INTERNAL_SERVER_ERROR, status_code=500)
     
+@auth_bp.route('/api/users/<string:username>/reset-password', methods=['POST'])
+@limiter.limit("10 per minute")
+@admin_required()
+def reset_user_password(username: str, current_user):
+    """Resets a user's password by generating a temporary password and setting is_active to False.
+
+    Args:
+        username (str): The target user's username.
+        current_user (User): The currently logged-in admin user.
+
+    Returns:
+        JSON response with the generated temporary password.
+
+    Pre-Conditions:
+        Admin privileges.
+    """
+    try:
+        user = queries.get_user_by_username(session, username)
+
+        if user is None:
+            return error_response(error="Usuário não existe.", code=RESOURCE_NOT_FOUND, status_code=404)
+
+        temp_password = secrets.token_urlsafe(10)
+        user.set_password(temp_password)
+        user.is_active = False
+        session.commit()
+
+        response = auth_schemas.UserResetPasswordResponse(
+            message=f"Senha de {username} redefinida com sucesso.",
+            temporary_password=temp_password,
+        )
+        return jsonify(response.model_dump(by_alias=True)), 200
+    except Exception:
+        return error_response(error="Internal server error", code=INTERNAL_SERVER_ERROR, status_code=500)
+
+
 @auth_bp.route('/api/users/data', methods=['GET'])
 @admin_required()
 def get_users_data(current_user):
