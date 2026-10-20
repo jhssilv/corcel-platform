@@ -121,6 +121,7 @@ def run_text_upload_zip_pipeline(
                     tokenized_data = {token.idx: token for token in tokenized_tokens}
                     text_obj = models.Text(
                         source_file_name=base_name,
+                        raw_text=text_content,
                         upload_batch_id=batch.id,
                     )
 

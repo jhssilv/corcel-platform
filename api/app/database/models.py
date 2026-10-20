@@ -84,6 +84,7 @@ class Text(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     grade = Column(SmallInteger, nullable=True)
     source_file_name = Column(String(255), nullable=True)
+    raw_text = Column(TextType, nullable=True)
 
     normalizations = relationship('Normalization', back_populates='text', cascade="all, delete-orphan")
     texts_association = relationship('TextsUsers', back_populates='text', cascade="all, delete-orphan")

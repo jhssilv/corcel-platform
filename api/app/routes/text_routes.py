@@ -324,7 +324,7 @@ def finalize_raw_text(current_user, text_id: int, body: text_schemas.FinalizeRaw
         processed_data = process_text(text_content)
         
         # Create Text object
-        text_obj = Text(source_file_name=source_file_name)
+        text_obj = Text(source_file_name=source_file_name, raw_text=text_content)
         
         # Create tokens with candidates list
         tokens_with_candidates = []

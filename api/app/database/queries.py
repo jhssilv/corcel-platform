@@ -345,7 +345,8 @@ def add_raw_text(db, tokens: list[Token], source_file_name: str):
         The ID of the newly created text.
     """
     try:
-        text_obj = Text(source_file_name=source_file_name)
+        raw_content = "".join(token.token_text + (token.whitespace_after or "") for token in sorted(tokens, key=lambda t: t.position))
+        text_obj = Text(source_file_name=source_file_name, raw_text=raw_content)
         db.add(text_obj)
         db.flush()
 
@@ -377,6 +378,11 @@ def add_text(
         The ID of the newly created text.
     """
     try:
+        if not getattr(text_obj, 'raw_text', None) and tokens_with_candidates:
+            text_obj.raw_text = ''.join(
+                token.token_text + (token.whitespace_after or '')
+                for token, _ in sorted(tokens_with_candidates, key=lambda item: item[0].position)
+            )
         db.add(text_obj)
         db.flush()
 
