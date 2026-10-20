@@ -258,3 +258,8 @@ const UsersData = z.object({
 });
 
 export const UsersDataResponseSchema = z.array(UsersData);
+
+export const ResetPasswordResponseSchema = z.object({
+	message: z.string(),
+	temporaryPassword: z.string(),
+});

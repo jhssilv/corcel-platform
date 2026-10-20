@@ -63,3 +63,19 @@ export async function setUserAdminRole(
 	);
 	return response;
 }
+
+export interface ResetPasswordApiResponse {
+	message: string;
+	temporaryPassword: string;
+}
+
+export async function resetUserPassword(
+	username: string,
+): Promise<ResetPasswordApiResponse> {
+	const response = unwrapData(
+		await apiPrivate.post<ResetPasswordApiResponse>(
+			`/users/${encodeURIComponent(username)}/reset-password`,
+		),
+	);
+	return schemas.ResetPasswordResponseSchema.parse(response);
+}

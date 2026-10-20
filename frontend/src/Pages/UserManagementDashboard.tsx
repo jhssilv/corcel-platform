@@ -1,10 +1,16 @@
 import { useCallback, useEffect, useState, type ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import TopBar from "../Components/Layout/TopBar";
-import { getUsersData, setUserActiveStatus, setUserAdminRole } from "../Api";
+import {
+	getUsersData,
+	resetUserPassword,
+	setUserActiveStatus,
+	setUserAdminRole,
+} from "../Api";
 import { useAuth } from "../Context/Auth/UseAuth";
 import { useSnackbar } from "../Context/Generic";
 import {
+	Banner,
 	Card,
 	Stack,
 	Button,
@@ -22,7 +28,17 @@ function UserManagementDashboard() {
 	const [filteredUsers, setFilteredUsers] = useState<UserData[]>([]);
 	const [searchTerm, setSearchTerm] = useState("");
 	const [loading, setLoading] = useState(true);
-	const [confirmAdminToggle, setConfirmAdminToggle] = useState<UserData | null>(null);
+	const [confirmAdminToggle, setConfirmAdminToggle] = useState<UserData | null>(
+		null,
+	);
+	const [resetPasswordUser, setResetPasswordUser] = useState<UserData | null>(
+		null,
+	);
+	const [generatedTempPassword, setGeneratedTempPassword] = useState<
+		string | null
+	>(null);
+	const [isResetting, setIsResetting] = useState(false);
+	const [copied, setCopied] = useState(false);
 
 	const { username: currentUsername } = useAuth();
 	const navigate = useNavigate();
@@ -90,6 +106,19 @@ function UserManagementDashboard() {
 						disabled={user.username === currentUsername}
 					>
 						{user.isActive ? "Desativar" : "Ativar"}
+					</Button>
+					<Button
+						size="sm"
+						tier="secondary"
+						variant="neutral"
+						onClick={() => {
+							setResetPasswordUser(user);
+							setGeneratedTempPassword(null);
+							setCopied(false);
+						}}
+						disabled={user.username === currentUsername}
+					>
+						Redefinir Senha
 					</Button>
 				</Stack>
 			),
@@ -184,6 +213,44 @@ function UserManagementDashboard() {
 		}
 	};
 
+	const handleResetPassword = async () => {
+		if (!resetPasswordUser) {
+			return;
+		}
+
+		try {
+			setIsResetting(true);
+			const response = await resetUserPassword(resetPasswordUser.username);
+			setGeneratedTempPassword(response.temporaryPassword);
+			await fetchUsers();
+			addSnackbar({
+				text: `Senha de '${resetPasswordUser.username}' redefinida com sucesso.`,
+				type: "success",
+			});
+		} catch (err) {
+			console.error("Failed to reset password", err);
+			addSnackbar({
+				text: "Falha ao redefinir senha do usuário.",
+				type: "error",
+			});
+		} finally {
+			setIsResetting(false);
+		}
+	};
+
+	const handleCloseResetModal = () => {
+		setResetPasswordUser(null);
+		setGeneratedTempPassword(null);
+		setCopied(false);
+	};
+
+	const handleCopyPassword = () => {
+		if (!generatedTempPassword) return;
+		void navigator.clipboard.writeText(generatedTempPassword);
+		setCopied(true);
+		setTimeout(() => setCopied(false), 2000);
+	};
+
 	return (
 		<div>
 			<TopBar showSidePanel={true} />
@@ -271,13 +338,137 @@ function UserManagementDashboard() {
 						<p>
 							Tem certeza que deseja{" "}
 							<strong>
-								{confirmAdminToggle.isAdmin
-									? "remover"
-									: "conceder"}
+								{confirmAdminToggle.isAdmin ? "remover" : "conceder"}
 							</strong>{" "}
 							status de administrador para{" "}
 							<strong>{confirmAdminToggle.username}</strong>?
 						</p>
+					</Stack>
+				</ModalScaffold>
+			)}
+
+			{resetPasswordUser && (
+				<ModalScaffold
+					isOpen={!!resetPasswordUser}
+					onClose={handleCloseResetModal}
+					title={
+						generatedTempPassword
+							? "Senha Temporária Gerada"
+							: "Redefinir Senha"
+					}
+					size="sm"
+					footer={
+						generatedTempPassword ? (
+							<Button
+								tier="primary"
+								variant="action"
+								onClick={handleCloseResetModal}
+							>
+								Concluir
+							</Button>
+						) : (
+							<>
+								<Button
+									tier="secondary"
+									variant="neutral"
+									onClick={handleCloseResetModal}
+									disabled={isResetting}
+								>
+									Cancelar
+								</Button>
+								<Button
+									tier="primary"
+									variant="danger"
+									onClick={() => {
+										void handleResetPassword();
+									}}
+									isLoading={isResetting}
+									disabled={isResetting}
+								>
+									Gerar Nova Senha
+								</Button>
+							</>
+						)
+					}
+				>
+					<Stack direction="vertical" gap={16}>
+						{!generatedTempPassword ? (
+							<>
+								<p>
+									Deseja redefinir a senha do usuário{" "}
+									<strong>{resetPasswordUser.username}</strong>?
+								</p>
+								<p
+									style={{
+										fontSize: "0.88rem",
+										color: "var(--color-text-muted)",
+									}}
+								>
+									Uma nova senha temporária será gerada e o usuário será marcado
+									como inativo até que defina sua nova senha definitiva na tela
+									de ativação.
+								</p>
+							</>
+						) : (
+							<>
+								<Banner variant="success">
+									<div>
+										Senha redefinida para{" "}
+										<strong>{resetPasswordUser.username}</strong>!
+									</div>
+								</Banner>
+
+								<div>
+									<div
+										style={{
+											fontSize: "0.85rem",
+											marginBottom: "6px",
+											color: "var(--color-text-secondary)",
+										}}
+									>
+										Senha Temporária:
+									</div>
+									<Stack alignY="center" gap={10}>
+										<code
+											style={{
+												flexGrow: 1,
+												background: "var(--color-bg-control)",
+												color: "var(--color-text-primary)",
+												border: "1px solid var(--color-border-subtle)",
+												padding: "8px 12px",
+												borderRadius: "6px",
+												fontSize: "1.05rem",
+												fontFamily: "monospace",
+												letterSpacing: "1px",
+												userSelect: "all",
+											}}
+										>
+											{generatedTempPassword}
+										</code>
+										<Button
+											size="sm"
+											tier="secondary"
+											variant="neutral"
+											onClick={handleCopyPassword}
+										>
+											{copied ? "Copiado!" : "Copiar"}
+										</Button>
+									</Stack>
+								</div>
+
+								<p
+									style={{
+										fontSize: "0.85rem",
+										color: "var(--color-text-muted)",
+										marginTop: "4px",
+									}}
+								>
+									Envie esta senha temporária ao usuário. Ele deverá acessar a
+									tela de primeiro acesso da plataforma (/primeiro-acesso) para
+									cadastrar sua nova senha pessoal.
+								</p>
+							</>
+						)}
 					</Stack>
 				</ModalScaffold>
 			)}
