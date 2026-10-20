@@ -6,7 +6,12 @@ import DropdownSelect, {
 import { Icon } from "../Generic";
 import { Stack } from "../Generic";
 import { FilterGrid } from "../Generic";
-import { getRawTextsData, getTextsData, getUsernames } from "../../Api";
+import {
+	getFilteredTextsData,
+	getRawTextsData,
+	getTextsData,
+	getUsernames,
+} from "../../Api";
 import { useSnackbar } from "../../Context/Generic";
 import type { RawTextMetadata, TextMetadata } from "../../types";
 import styles from "../../styles/essay_selector.module.css";
@@ -55,7 +60,20 @@ const EssaySelector = ({
 	);
 	const [teachers, setTeachers] = useState<SelectOption<string>[]>([]);
 	const [essayInputValue, setEssayInputValue] = useState("");
+	const [contentSearch, setContentSearch] = useState("");
+	const [debouncedContentSearch, setDebouncedContentSearch] = useState("");
+	const [isSearchingContent, setIsSearchingContent] = useState(false);
 	const { addSnackbar } = useSnackbar();
+
+	useEffect(() => {
+		const timer = setTimeout(() => {
+			setDebouncedContentSearch(contentSearch.trim());
+		}, 350);
+
+		return () => {
+			clearTimeout(timer);
+		};
+	}, [contentSearch]);
 
 	useEffect(() => {
 		const fetchUsernames = async () => {
@@ -176,7 +194,74 @@ const EssaySelector = ({
 	);
 
 	useEffect(() => {
-		if (!textsData) {
+		if (onlyRaw || !debouncedContentSearch) {
+			return;
+		}
+
+		let isMounted = true;
+		const fetchFiltered = async () => {
+			setIsSearchingContent(true);
+			try {
+				const selectedGradesList = selectedGrades.map((item) => item.value);
+				const selectedTeacherList = selectedTeacher.map((item) => item.value);
+
+				const filteredData = await getFilteredTextsData({
+					grades: selectedGradesList.length > 0 ? selectedGradesList : undefined,
+					assignedUsers:
+						selectedTeacherList.length > 0 ? selectedTeacherList : undefined,
+					normalized:
+						selectedOtherFilters.length === 1
+							? selectedOtherFilters[0].value
+							: undefined,
+					fileName: essayInputValue.trim() || undefined,
+					content: debouncedContentSearch,
+				});
+
+				if (!isMounted) return;
+
+				const nextFilteredEssays = filteredData.map((item) => ({
+					value: item.id,
+					label: item.sourceFileName ?? "",
+					snippet: item.snippet,
+				}));
+
+				localStorage.setItem(
+					"textIds",
+					JSON.stringify(nextFilteredEssays.map((essay) => essay.value)),
+				);
+				setFilteredEssays(nextFilteredEssays);
+			} catch (err) {
+				console.error("Failed to fetch filtered texts by content:", err);
+				addSnackbar({
+					text: "Erro ao buscar textos por conteúdo.",
+					type: "error",
+					duration: 4000,
+				});
+			} finally {
+				if (isMounted) {
+					setIsSearchingContent(false);
+				}
+			}
+		};
+
+		void fetchFiltered();
+
+		return () => {
+			isMounted = false;
+		};
+	}, [
+		debouncedContentSearch,
+		selectedGrades,
+		selectedTeacher,
+		selectedOtherFilters,
+		essayInputValue,
+		onlyRaw,
+		addSnackbar,
+	]);
+
+	// In-memory filter when content search is empty
+	useEffect(() => {
+		if (!textsData || (!onlyRaw && debouncedContentSearch)) {
 			return;
 		}
 
@@ -193,57 +278,26 @@ const EssaySelector = ({
 		selectedTeacher,
 		selectedOtherFilters,
 		essayInputValue,
+		debouncedContentSearch,
+		onlyRaw,
 		changeFilteredEssays,
 	]);
 
 	const handleOtherFiltersChange = (
 		selectedOptions: DropdownValue<boolean>,
 	) => {
-		if (!textsData) {
-			return;
-		}
-
 		const nextSelected = Array.isArray(selectedOptions) ? selectedOptions : [];
 		setSelectedOtherFilters(nextSelected);
-		changeFilteredEssays(
-			textsData,
-			selectedGrades,
-			selectedTeacher,
-			nextSelected,
-			essayInputValue,
-		);
 	};
 
 	const handleTeacherChange = (selectedOptions: DropdownValue<string>) => {
-		if (!textsData) {
-			return;
-		}
-
 		const nextSelected = Array.isArray(selectedOptions) ? selectedOptions : [];
 		setSelectedTeacher(nextSelected);
-		changeFilteredEssays(
-			textsData,
-			selectedGrades,
-			nextSelected,
-			selectedOtherFilters,
-			essayInputValue,
-		);
 	};
 
 	const handleGradeChange = (selectedOptions: DropdownValue<number>) => {
-		if (!textsData) {
-			return;
-		}
-
 		const nextSelected = Array.isArray(selectedOptions) ? selectedOptions : [];
 		setSelectedGrades(nextSelected);
-		changeFilteredEssays(
-			textsData,
-			nextSelected,
-			selectedTeacher,
-			selectedOtherFilters,
-			essayInputValue,
-		);
 	};
 
 	const handleEssayChange = (selectedOption: DropdownValue<number>) => {
@@ -254,23 +308,48 @@ const EssaySelector = ({
 		newValue: string,
 		actionMeta: { action: string },
 	) => {
-		if (!textsData) {
-			return;
-		}
-
 		if (actionMeta.action !== "input-change") {
 			return;
 		}
-
 		setEssayInputValue(newValue);
-		changeFilteredEssays(
-			textsData,
-			selectedGrades,
-			selectedTeacher,
-			selectedOtherFilters,
-			newValue,
-		);
 	};
+
+	const formatEssayOption = useCallback(
+		(
+			option: SelectOption<number>,
+			{ context }: { context: "menu" | "value" },
+		) => {
+			if (context === "menu" && option.snippet) {
+				return (
+					<div
+						style={{
+							display: "flex",
+							flexDirection: "column",
+							gap: "2px",
+							textAlign: "left",
+						}}
+					>
+						<span style={{ fontWeight: 500 }}>{option.label}</span>
+						<span
+							style={{
+								fontSize: "0.78rem",
+								color: "var(--color-text-muted)",
+								fontStyle: "italic",
+								whiteSpace: "nowrap",
+								overflow: "hidden",
+								textOverflow: "ellipsis",
+								maxWidth: "350px",
+							}}
+						>
+							{option.snippet}
+						</span>
+					</div>
+				);
+			}
+			return option.label;
+		},
+		[],
+	);
 
 	if (!textsData) {
 		return <p>Carregando dados...</p>;
@@ -279,44 +358,96 @@ const EssaySelector = ({
 	return (
 		<form className={styles["essay-selector-container"]}>
 			<div className={styles["selector-main-search"]}>
-				<Stack
-					alignY="center"
-					gap={10}
-					className={styles["search-with-info"]}
-					style={{ width: "100%" }}
-				>
-					<div style={{ flexGrow: 1 }}>
-						<DropdownSelect
-							title="ID do Texto"
-							options={filteredEssays}
-							selectedValues={selectedEssay}
-							onChange={handleEssayChange}
-							isMulti={false}
-							filterOption={null}
-							inputValue={essayInputValue}
-							onInputChange={handleEssayInputChange}
-							controlShouldRenderValue={false}
-							blurInputOnSelect={false}
-						/>
-					</div>
+				<div className={styles["selector-search-grid"]}>
 					<Stack
-						alignX="center"
 						alignY="center"
-						className={styles["info-tooltip-container"]}
-						style={{ position: "relative", cursor: "help" }}
+						gap={10}
+						className={styles["search-with-info"]}
+						style={{ width: "100%" }}
 					>
-						<Icon
-							name="CircleHelp"
-							color="black"
-							className={styles["info-icon"]}
-							style={{ color: "currentColor" }}
-						/>
-						<div className={styles["tooltip-text"]}>
-							Digite o id do texto para buscar. Exemplo: &quot;2015 n4&quot;
-							encontrará &quot;2015_n4_12345.txt&quot;.
+						<div style={{ flexGrow: 1 }}>
+							<DropdownSelect
+								title="ID do Texto"
+								options={filteredEssays}
+								selectedValues={selectedEssay}
+								onChange={handleEssayChange}
+								isMulti={false}
+								filterOption={null}
+								inputValue={essayInputValue}
+								onInputChange={handleEssayInputChange}
+								controlShouldRenderValue={false}
+								blurInputOnSelect={false}
+								formatOptionLabel={formatEssayOption}
+							/>
 						</div>
+						<Stack
+							alignX="center"
+							alignY="center"
+							className={styles["info-tooltip-container"]}
+							style={{ position: "relative", cursor: "help" }}
+						>
+							<Icon
+								name="CircleHelp"
+								color="black"
+								className={styles["info-icon"]}
+								style={{ color: "currentColor" }}
+							/>
+							<div className={styles["tooltip-text"]}>
+								Digite o id do texto para buscar. Exemplo: &quot;2015 n4&quot;
+								encontrará &quot;2015_n4_12345.txt&quot;.
+							</div>
+						</Stack>
 					</Stack>
-				</Stack>
+
+					{!onlyRaw && (
+						<Stack
+							alignY="center"
+							gap={10}
+							className={styles["search-with-info"]}
+							style={{ width: "100%" }}
+						>
+							<div
+								style={{ flexGrow: 1 }}
+								className={styles["content-search-container"]}
+							>
+								<input
+									type="text"
+									className={styles["content-search-input"]}
+									placeholder="Buscar no conteúdo do texto..."
+									value={contentSearch}
+									onChange={(e) => setContentSearch(e.target.value)}
+								/>
+								{contentSearch && (
+									<button
+										type="button"
+										className={styles["content-search-clear-btn"]}
+										onClick={() => setContentSearch("")}
+										aria-label="Limpar busca de conteúdo"
+									>
+										<Icon name="X" color="current" size={16} />
+									</button>
+								)}
+							</div>
+							<Stack
+								alignX="center"
+								alignY="center"
+								className={styles["info-tooltip-container"]}
+								style={{ position: "relative", cursor: "help" }}
+							>
+								<Icon
+									name="CircleHelp"
+									color="black"
+									className={styles["info-icon"]}
+									style={{ color: "currentColor" }}
+								/>
+								<div className={styles["tooltip-text"]}>
+									Busca palavras ou trechos dentro dos textos (sem distinção
+									de acentos ou maiúsculas).
+								</div>
+							</Stack>
+						</Stack>
+					)}
+				</div>
 			</div>
 
 			<FilterGrid
@@ -357,22 +488,33 @@ const EssaySelector = ({
 					className={styles["corrected-count"]}
 					data-testid="corrected-count"
 				>
-					Finalizados:{" "}
-					<strong>
-						{
-							textsData.filter((item) => {
-								if (!("normalizedByUser" in item)) {
-									return false;
-								}
+					{isSearchingContent ? (
+						<span>Buscando textos no corpus...</span>
+					) : (
+						<>
+							Finalizados:{" "}
+							<strong>
+								{
+									textsData.filter((item) => {
+										if (!("normalizedByUser" in item)) {
+											return false;
+										}
 
-								return (
-									item.normalizedByUser === true &&
-									filteredEssays.some((essay) => essay.value === item.id)
-								);
-							}).length
-						}
-					</strong>{" "}
-					de {filteredEssays.length}
+										return (
+											item.normalizedByUser === true &&
+											filteredEssays.some((essay) => essay.value === item.id)
+										);
+									}).length
+								}
+							</strong>{" "}
+							de {filteredEssays.length}
+							{debouncedContentSearch && (
+								<span style={{ marginLeft: "8px", fontStyle: "italic" }}>
+									(filtrado por &quot;{debouncedContentSearch}&quot;)
+								</span>
+							)}
+						</>
+					)}
 				</div>
 			</Stack>
 		</form>

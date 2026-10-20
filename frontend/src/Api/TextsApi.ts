@@ -51,6 +51,10 @@ export async function getFilteredTextsData(
 		params.append("file_name", filters.fileName);
 	}
 
+	if (filters.content) {
+		params.append("content", filters.content);
+	}
+
 	const queryString = params.toString();
 	const url = queryString
 		? `/texts/filtered?${queryString}`

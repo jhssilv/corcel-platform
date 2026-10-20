@@ -10,6 +10,7 @@ export interface FilterTextsRequest {
 	assignedUsers?: string[];
 	normalized?: boolean;
 	fileName?: string;
+	content?: string;
 }
 
 export interface DownloadRequest {

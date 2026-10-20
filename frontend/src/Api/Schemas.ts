@@ -56,6 +56,7 @@ const TextMetadataSchema = z.object({
 	processingStatus: z
 		.enum(["PENDING", "PROCESSING", "READY", "FAILED"])
 		.default("PENDING"),
+	snippet: z.string().nullable().optional(),
 });
 
 /**

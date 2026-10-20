@@ -97,6 +97,8 @@ function AssignmentsPanel() {
 	>([]);
 	const [searchText, setSearchText] = useState("");
 	const deferredSearchText = useDeferredValue(searchText);
+	const [contentSearchText, setContentSearchText] = useState("");
+	const deferredContentSearchText = useDeferredValue(contentSearchText);
 
 	const [selectedTextIds, setSelectedTextIds] = useState<Set<number>>(
 		new Set(),
@@ -151,6 +153,10 @@ function AssignmentsPanel() {
 				filters.fileName = deferredSearchText.trim();
 			}
 
+			if (deferredContentSearchText.trim()) {
+				filters.content = deferredContentSearchText.trim();
+			}
+
 			const data = await getFilteredTextsData(filters);
 			setTextsData(data || []);
 			setSelectedTextIds(new Set());
@@ -168,6 +174,7 @@ function AssignmentsPanel() {
 		selectedAssignedUsers,
 		selectedNormalized,
 		deferredSearchText,
+		deferredContentSearchText,
 		addSnackbar,
 	]);
 
@@ -176,11 +183,11 @@ function AssignmentsPanel() {
 			() => {
 				void fetchFilteredTexts();
 			},
-			deferredSearchText ? 300 : 0,
+			deferredSearchText || deferredContentSearchText ? 300 : 0,
 		);
 
 		return () => clearTimeout(timeoutId);
-	}, [fetchFilteredTexts, deferredSearchText]);
+	}, [fetchFilteredTexts, deferredSearchText, deferredContentSearchText]);
 
 	const selectedTargetUsernames = useMemo(() => {
 		return selectedTargetUsers.map((user) => user.value);
@@ -325,8 +332,24 @@ function AssignmentsPanel() {
 			{
 				key: "sourceFileName",
 				header: "Arquivo",
-				render: (text) => text.sourceFileName || `Texto ${text.id}`,
-				truncate: true,
+				render: (text) => (
+					<div>
+						<div>{text.sourceFileName || `Texto ${text.id}`}</div>
+						{text.snippet ? (
+							<div
+								style={{
+									fontSize: "0.78rem",
+									color: "var(--color-text-muted)",
+									fontStyle: "italic",
+									marginTop: "2px",
+								}}
+							>
+								{text.snippet}
+							</div>
+						) : null}
+					</div>
+				),
+				truncate: false,
 			},
 			{
 				key: "grade",
@@ -550,6 +573,23 @@ function AssignmentsPanel() {
 									value={searchText}
 									onChange={(event: ChangeEvent<HTMLInputElement>) =>
 										setSearchText(event.target.value)
+									}
+									className={styles["assignments-search-input"]}
+								/>
+							</FormField>
+						</div>
+						<div>
+							<FormField
+								label="Buscar no conteúdo do texto"
+								htmlFor="assignments-content-search-input"
+							>
+								<input
+									id="assignments-content-search-input"
+									type="text"
+									placeholder="Digite palavras ou termos..."
+									value={contentSearchText}
+									onChange={(event: ChangeEvent<HTMLInputElement>) =>
+										setContentSearchText(event.target.value)
 									}
 									className={styles["assignments-search-input"]}
 								/>

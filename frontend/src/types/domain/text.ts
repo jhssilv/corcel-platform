@@ -10,6 +10,7 @@ export interface TextMetadata {
 	sourceFileName: Nullable<string>;
 	isRaw?: boolean;
 	processingStatus: "PENDING" | "PROCESSING" | "READY" | "FAILED";
+	snippet?: Nullable<string>;
 }
 
 export interface TextDetail {

@@ -1,4 +1,6 @@
+import type { ReactNode } from "react";
 import Select, {
+	type FormatOptionLabelMeta,
 	type InputActionMeta,
 	type MultiValue,
 	type PropsValue,
@@ -9,6 +11,7 @@ import "./dropdown_select.css";
 export interface SelectOption<TValue = string | number | boolean> {
 	value: TValue;
 	label: string;
+	snippet?: string | null;
 }
 
 export type DropdownValue<TValue = string | number | boolean> =
@@ -29,6 +32,10 @@ interface DropdownSelectProps<TValue = string | number | boolean> {
 	onInputChange?: (newValue: string, actionMeta: InputActionMeta) => void;
 	controlShouldRenderValue?: boolean;
 	blurInputOnSelect?: boolean;
+	formatOptionLabel?: (
+		data: SelectOption<TValue>,
+		formatOptionLabelMeta: FormatOptionLabelMeta<SelectOption<TValue>>,
+	) => ReactNode;
 }
 
 const DropdownSelect = <
@@ -42,6 +49,7 @@ const DropdownSelect = <
 	filterOption = null,
 	inputValue,
 	onInputChange,
+	formatOptionLabel,
 	...props
 }: DropdownSelectProps<TValue>) => {
 	const handleChange = (
@@ -80,6 +88,7 @@ const DropdownSelect = <
 				onInputChange?.(newValue, actionMeta);
 				return newValue;
 			}}
+			formatOptionLabel={formatOptionLabel}
 			{...props}
 		/>
 	);
