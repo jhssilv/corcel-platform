@@ -39,6 +39,7 @@ def get_texts_data(db, user_id):
 
     result = db.query(
         func.coalesce(normalized_subquery, False).label("normalized_by_user"),
+        Text.raw_text.label("raw_text"),
         users_agg_subquery.label("users_assigned"),
         Text.id.label("id"),
         Text.grade.label("grade"),
@@ -501,6 +502,7 @@ def get_filtered_texts(
     user_id: int = None,
     normalized: bool = None,
     file_name: str = None,
+    content: str = None,
 ):
     """
     Fetch filtered texts with optional filter criteria.
@@ -544,6 +546,7 @@ def get_filtered_texts(
         Text.processing_status.label("processing_status"),
         users_agg_subquery.label("users_assigned"),
         func.coalesce(normalized_subquery, False).label("normalized_by_user"),
+        Text.raw_text.label("raw_text"),
     )
 
     # Filter by grades
@@ -578,6 +581,15 @@ def get_filtered_texts(
         terms = file_name.split()
         pattern = "%" + "%".join(terms) + "%"
         query = query.filter(Text.source_file_name.ilike(pattern))
+
+    # Filter by text content
+    if content and content.strip():
+        search_term = content.strip()
+        pattern = f"%{search_term}%"
+        try:
+            query = query.filter(func.unaccent(Text.raw_text).ilike(func.unaccent(pattern)))
+        except Exception:
+            query = query.filter(Text.raw_text.ilike(pattern))
 
     return query.all()
 

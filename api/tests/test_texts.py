@@ -97,6 +97,51 @@ def test_get_filtered_texts_normalized_invalid(auth_client, mocker):
     assert "true" in response.json["details"][0]["message"]
     mock_get.assert_not_called()
 
+
+def test_get_filtered_texts_with_content(auth_client, mocker):
+    """Test filtered texts with content search parameter and snippet generation."""
+    mock_get = mocker.patch('app.database.queries.get_filtered_texts')
+    mock_get.return_value = [
+        MagicMock(
+            id=3,
+            grade=5,
+            normalized_by_user=False,
+            source_file_name="essay_search.txt",
+            users_assigned=["user1"],
+            processing_status="READY",
+            raw_text="No contexto atual a educação sustentável é fundamental para o futuro.",
+        )
+    ]
+
+    response = auth_client.get('/api/texts/filtered?content=sustentavel&grades=5')
+
+    assert response.status_code == 200
+    data = response.json["textsData"]
+    assert len(data) == 1
+    assert data[0]["id"] == 3
+    assert data[0]["snippet"] is not None
+    assert "sustentável" in data[0]["snippet"]
+
+    call_args = mock_get.call_args.kwargs
+    assert call_args["content"] == "sustentavel"
+    assert call_args["grades"] == [5]
+
+
+def test_text_search_snippet_utility():
+    """Test extract_search_snippet handles unaccented search and windowing."""
+    from app.utils.text_search import extract_search_snippet
+
+    text = "Era uma vez uma linda floresta onde os animais viviam em harmonia com a natureza."
+    snippet = extract_search_snippet(text, "harmonia")
+    assert snippet is not None
+    assert "harmonia" in snippet
+
+    # Accent insensitive: search 'arvore' in text with 'árvore'
+    text_accents = "O menino subiu na árvore mais alta do parque para colher frutas frescas."
+    snippet_accent = extract_search_snippet(text_accents, "arvore")
+    assert snippet_accent is not None
+    assert "árvore" in snippet_accent
+
 def test_get_text_detail(auth_client, mocker):
     """Test retrieving text details."""
     mock_get = mocker.patch('app.database.queries.get_text_by_id')

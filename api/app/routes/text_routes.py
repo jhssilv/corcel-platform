@@ -20,6 +20,7 @@ from app.utils.api_errors import (
     VALIDATION_ERROR,
     error_response,
 )
+from app.utils.text_search import extract_search_snippet
 
 session = db.session
 
@@ -76,6 +77,7 @@ def get_texts_data(current_user):
                 "source_file_name": row.source_file_name,
                 "users_assigned": row.users_assigned or [],
                 "processing_status": row.processing_status.name if hasattr(row.processing_status, 'name') else str(row.processing_status),
+                "snippet": None,
             }
             for row in texts_data_from_db
         ]
@@ -148,7 +150,8 @@ def get_filtered_texts_data(current_user, query: text_schemas.FilteredTextsQuery
             assigned_users=assigned_users,
             user_id=current_user.id,
             normalized=normalized_filter,
-            file_name=query.file_name
+            file_name=query.file_name,
+            content=query.content,
         )
         
         texts_list = [
@@ -159,6 +162,7 @@ def get_filtered_texts_data(current_user, query: text_schemas.FilteredTextsQuery
                 "source_file_name": row.source_file_name,
                 "users_assigned": row.users_assigned or [],
                 "processing_status": row.processing_status.name if hasattr(row.processing_status, 'name') else str(row.processing_status),
+                "snippet": extract_search_snippet(getattr(row, "raw_text", None), query.content) if query.content else None,
             }
             for row in texts_data_from_db
         ]
