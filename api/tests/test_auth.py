@@ -88,6 +88,11 @@ def test_login_success(client, app):
     assert cookie_header is not None
     assert "access_token_cookie" in cookie_header
 
+    # Verify last_login was updated
+    with app.app_context():
+        user_in_db = db.session.query(User).filter_by(username="loginuser").first()
+        assert user_in_db.last_login is not None
+
 def test_login_invalid_password(client, app):
     """Test login with invalid password."""
     with app.app_context():

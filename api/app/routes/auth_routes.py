@@ -2,6 +2,8 @@ from flask import Blueprint, jsonify
 from flask_jwt_extended import create_access_token, set_access_cookies, unset_jwt_cookies
 from flask_pydantic import validate
 import secrets
+from datetime import timezone
+from sqlalchemy import func
 
 from app.schemas import auth as auth_schemas
 from app.schemas import generic as generic_schemas
@@ -168,6 +170,9 @@ def login(body: auth_schemas.UserCredentials):
         
         user_is_admin = user.is_admin
         
+        user.last_login = func.now()
+        session.commit()
+
         access_token = create_access_token(identity=str(user.id))
         success_response = auth_schemas.LoginResponse(message="Login successful", isAdmin=user_is_admin)
         response = jsonify(success_response.model_dump(by_alias=True))
@@ -324,15 +329,19 @@ def get_users_data(current_user):
         users_data = []
         
         for user in users:
+            last_login = user.last_login
+            if last_login is not None and last_login.tzinfo is None:
+                last_login = last_login.replace(tzinfo=timezone.utc)
+
             data = user_schemas.UserData(
                 username=user.username,
                 isAdmin=user.is_admin,
                 isActive=user.is_active,
-                lastLogin=user.last_login
+                lastLogin=last_login,
             )
             users_data.append(data)
         
-        return jsonify(user_schemas.UsersDataResponse(usersData=users_data).model_dump(by_alias=True)), 200
+        return jsonify(user_schemas.UsersDataResponse(usersData=users_data).model_dump(mode="json", by_alias=True)), 200
     except Exception:
         return error_response(error="Internal server error", code=INTERNAL_SERVER_ERROR, status_code=500)
     
